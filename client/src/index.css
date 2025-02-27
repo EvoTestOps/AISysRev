@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body,
+html {
+  width: 100%;
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
