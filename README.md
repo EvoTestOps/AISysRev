@@ -20,9 +20,21 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 Node.js v22 LTS and Python 3.9 are required.
 
-## Running
+## Running in development mode
 
-Run `docker-compose up` in the root folder.
+Run `docker compose -f docker-compose-dev.yml up --watch` or `make dev`
+
+Open up the client: [http://localhost:3000](http://localhost:3000)
+
+`/api` is proxied to the backend container, e.g. `http://localhost:3000/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+
+API docs: [http://localhost:3000/documentation](http://localhost:3000/docs)
+
+Server: [http://localhost:8080](http://localhost:3000)
+
+## Running in production mode
+
+Run `docker compose -f docker-compose.yml up`
 
 ## Tests
 

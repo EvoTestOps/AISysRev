@@ -1,9 +1,7 @@
 import uvicorn
-from typing import Annotated
 import dotenv
 import os
-from fastapi import FastAPI, Depends
-from sqlmodel import Session, create_engine
+from fastapi import FastAPI
 
 dotenv.load_dotenv()
 
@@ -12,15 +10,6 @@ dotenv.load_dotenv()
 SECRET_KEY = os.environ["SECRET_KEY"]
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-engine = create_engine(os.environ["DB_URL"])
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
-SessionDep = Annotated[Session, Depends(get_session)]
 
 app = FastAPI()
 

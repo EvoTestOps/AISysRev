@@ -9,5 +9,16 @@ export default defineConfig({
   server: {
     open: false,
     port: 3000,
+    proxy: {
+      // This proxies API requests to the backend container
+      "/api": "http://backend:8080",
+      // Proxying documentation
+      "/documentation": {
+        target: "http://backend:8080",
+        changeOrigin: true,
+        rewrite: (path) => path.replace("/documentation", "/docs"),
+      },
+      "/openapi.json": "http://backend:8080",
+    },
   },
 });
