@@ -22,7 +22,7 @@ Node.js v22 LTS and Python 3.9 are required.
 
 ## Running in development mode
 
-Run `docker compose -f docker-compose-dev.yml up --watch`
+Run `docker compose -f docker-compose-dev.yml up --watch` or `make dev`
 
 Open up the client: [http://localhost:3000](http://localhost:3000)
 
