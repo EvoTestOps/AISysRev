@@ -24,6 +24,8 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
+    environment:
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
     ports:
       - "8080:8080"
     develop:
