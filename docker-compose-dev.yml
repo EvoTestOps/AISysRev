@@ -1,0 +1,53 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+      target: client
+    ports:
+      - "3000:3000"
+    develop:
+      watch:
+        - action: sync
+          path: ./client
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: package.json
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+      target: server
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+        - action: rebuild
+          path: package.json
+
+  postgres:
+    image: postgres:alpine
+    container_name: llm_screening_poc_dev_db
+    environment:
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: your_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
