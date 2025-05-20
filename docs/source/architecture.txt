@@ -1,0 +1,5 @@
+[Client|Port: 3000|React application {bg:green}]<- HTTP>[Server|Port: 8080|Python server{bg:orange}]
+[Server]->[PostgreSQL|Port: 5432| Relational database {bg:blue}]
+[Server]->[Redis|Port: 6379|In-memory storage {bg:red}]
+[Server]->[Celery|Task queue]
+[Redis]->[Celery]
