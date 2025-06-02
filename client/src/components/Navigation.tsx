@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { useTypedStoreState } from "../state/store";
+import universityLogo from "../assets/images/HY__LD01_LogoFP_EN_B3____BW.png";
 
 export function Navigation() {
   const user = useTypedStoreState((state) => state.user);
@@ -12,8 +13,8 @@ export function Navigation() {
         <a href="#" className="-m-1.5 p-1.5">
           <span className="sr-only">University of Helsinki</span>
           <img
-            className="h-8 w-auto"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+            className="h-20 w-auto"
+            src={universityLogo}
             alt=""
           />
         </a>
