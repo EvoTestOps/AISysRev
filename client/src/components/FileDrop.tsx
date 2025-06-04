@@ -1,9 +1,9 @@
 import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
-import { FileDropProps } from "../state/types";
+import { fileUploadToBackend } from "../services/fileUploadService";
 
-export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
+export const FileDropArea = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -15,13 +15,24 @@ export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
     )
   };
 
-  const handleFiles = (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     const validFiles = getValidCsvFiles(files);
-    
-    if (validFiles.length > 0) {
-      onFilesSelected?.(validFiles);
-    } else {
-      alert("Only CSV files are allowed.")
+    const invalidCount = files.length - validFiles.length;
+
+    if (validFiles.length === 0) {
+      alert("Only CSV files are allowed.");
+      return;
+    }
+
+    if (invalidCount > 0) {
+      alert(`${invalidCount} file(s) were skipped because they are not CSV files.`);
+    }
+
+    try {
+      await fileUploadToBackend(validFiles);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("File upload failed. Please try again.");
     }
   };
 

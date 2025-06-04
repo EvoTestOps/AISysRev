@@ -236,7 +236,7 @@ export const ScreeningPage = () => {
         <div className="flex flex-col gap-4 w-full">
           <Subtitle title="Step 1." description="Add file" />
             <div>
-              <FileDropArea onFilesSelected={(files) => console.log(files)} />
+              <FileDropArea />
             </div>
           <Subtitle title="Step 2." description="Define inclusion criteria" />
           <div>
