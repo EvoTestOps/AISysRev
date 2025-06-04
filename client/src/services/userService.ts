@@ -12,6 +12,6 @@ export const login = async (
   await axios.post("/api/v1/login", payload);
   return {
     email: "someone@example.com",
-    name: "Example Uesr",
+    name: "Example User",
   };
 };

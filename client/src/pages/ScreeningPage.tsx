@@ -14,6 +14,7 @@ import {
 } from "../example_data";
 import { query_llm } from "../llm/llm";
 import { generatePrompt } from "../llm/prompt";
+import { FileDropArea } from '../components/FileDrop'
 
 const AUTHORIZATION_TOKEN = "AUTHORIZATION_TOKEN";
 const TEMPERATURE = "TEMPERATURE";
@@ -233,7 +234,11 @@ export const ScreeningPage = () => {
           <AppInstructions loadExample={loadExample} />
         </div>
         <div className="flex flex-col gap-4 w-full">
-          <Subtitle title="Step 1." description="Define inclusion criteria" />
+          <Subtitle title="Step 1." description="Add file" />
+            <div>
+              <FileDropArea onFilesSelected={(files) => console.log(files)} />
+            </div>
+          <Subtitle title="Step 2." description="Define inclusion criteria" />
           <div>
             <form
               onSubmit={onNewCriteria}
@@ -291,7 +296,7 @@ export const ScreeningPage = () => {
                 })}
             </ol>
           </div>
-          <Subtitle title="Step 2." description="Add Title and Abstract" />
+          <Subtitle title="Step 3." description="Add Title and Abstract" />
           <div>
             <form
               onSubmit={(e) => {
