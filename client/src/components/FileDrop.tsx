@@ -1,10 +1,7 @@
 import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
-
-type FileDropProps = {
-  onFilesSelected?: (files: File[]) => void;
-};
+import { FileDropProps } from "../state/types";
 
 export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
   const [isDragging, setIsDragging] = useState(false);
