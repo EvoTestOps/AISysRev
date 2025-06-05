@@ -3,6 +3,7 @@ import dotenv
 import os
 from fastapi import FastAPI, UploadFile, File
 from typing import List
+from csv_file_validation import validate_csv
 
 dotenv.load_dotenv()
 
@@ -26,6 +27,10 @@ def health_check():
 @app.post("/api/process-csv")
 async def process_csv(files: List[UploadFile] = File(...)):
     filenames = [file.filename for file in files]
+    for f in files:
+        validate_csv(f.file, f.filename)
+
+
     return {"status": "received", "filenames": filenames}
 
 if __name__ == "__main__":
