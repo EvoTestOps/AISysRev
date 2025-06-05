@@ -36,6 +36,10 @@ Server: [http://localhost:8080](http://localhost:3000)
 
 Run `docker compose -f docker-compose.yml up`
 
+## Mock data
+
+Mock data is located in `data/mock` -folder.
+
 ## Tests
 
 Run `npm test`
