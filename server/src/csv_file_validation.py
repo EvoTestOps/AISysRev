@@ -10,17 +10,14 @@ class Publication(BaseModel):
     @field_validator('title', 'abstract', 'doi')
     @classmethod
     def check_not_empty(cls, v, field):
-        if v is None or not str(v).strip():
-            raise ValueError(f"Column {field.field_name} is empty!")
-
-
+        if not isinstance(v, str) or not str(v).strip():
+            raise ValueError(f"Column {field.field_name} must be a non-empty string!")
 
 def validate_csv(file_obj, filename: str):
     reader = csv.DictReader(
         file_obj.read().decode("utf-8").splitlines(),
         fieldnames=["title", "abstract", "doi"]
     )
-
     errors = []
 
     for idx, row in enumerate(reader):
