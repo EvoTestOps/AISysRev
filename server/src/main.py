@@ -26,14 +26,21 @@ def health_check():
 
 @app.post("/api/process-csv")
 async def process_csv(files: List[UploadFile] = File(...)):
-    filenames = [file.filename for file in files]
     errors = []
+    valid_filenames = []
+
     for f in files:
-        errors.extend(validate_csv(f.file, f.filename))
-    if errors == []:
-        return {"status": "received", "filenames": filenames}
+        validation_errors = validate_csv(f.file, f.filename)
+        if validation_errors:
+            errors.extend(validation_errors)
+        else:
+            valid_filenames.append(f.filename)
     print(errors)
-    return errors
+    return {
+        "status": "error" if errors else "received",
+        "errors": errors,
+        "valid_filenames": valid_filenames
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8080, host="0.0.0.0", reload=True)

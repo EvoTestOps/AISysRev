@@ -26,10 +26,12 @@ def validate_csv(file_obj, filename: str):
     for idx, row in enumerate(reader):
         try:
             Publication(**row)
-            print("No error!")
         except ValidationError as e:
-            print("error found!")
             for err in e.errors():
-                errors.append((filename, idx, err['type'], err['loc'], err['msg'], err['url']))
+                errors.append({
+                    "file": filename,
+                    "row": idx,
+                    "message": err["msg"]
+                })
 
     return errors
