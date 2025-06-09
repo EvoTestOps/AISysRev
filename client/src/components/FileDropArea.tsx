@@ -5,6 +5,7 @@ import { fileUploadToBackend } from "../services/fileUploadService";
 
 export const FileDropArea = () => {
   const [isDragging, setIsDragging] = useState(false);
+  const [addedFiles, setAddedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const preventDefaults = (e: DragEvent) => e.preventDefault();
@@ -40,7 +41,7 @@ export const FileDropArea = () => {
       }
 
       if (res.valid_filenames?.length > 0) {
-        alert(`Successfully added file(s):\n${res.valid_filenames.join("\n")}`);
+        setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
       }
 
     } catch (error) {
@@ -108,6 +109,16 @@ export const FileDropArea = () => {
         >
           Drag & drop CSV files here or click to upload
         </span>
+      </div>
+
+      <div className="flex flex-col">
+        <h2 className="font-semibold mb-2">Added Files</h2>
+        <ul className="text-sm text-gray-700 space-y-1">
+          {addedFiles.length === 0 && <li className="text-gray-400 italic">No files yet</li>}
+          {addedFiles.map((file, idx) => (
+            <li key={idx}>✅ {file}</li>
+          ))}
+        </ul>
       </div>
 
       <input
