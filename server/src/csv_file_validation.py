@@ -20,6 +20,7 @@ def validate_csv(file_obj, filename: str):
         file_obj.read().decode("utf-8").splitlines(),
         fieldnames=["title", "abstract", "doi"]
     )
+
     errors = []
 
     for idx, row in enumerate(reader):
@@ -31,5 +32,4 @@ def validate_csv(file_obj, filename: str):
             for err in e.errors():
                 errors.append((filename, idx, err['type'], err['loc'], err['msg'], err['url']))
 
-    for i in errors:
-        print(i)
+    return errors

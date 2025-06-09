@@ -14,7 +14,7 @@ import {
 } from "../example_data";
 import { query_llm } from "../llm/llm";
 import { generatePrompt } from "../llm/prompt";
-import { FileDropArea } from '../components/FileDrop'
+import { FileDropArea } from '../components/FileDropArea'
 
 const AUTHORIZATION_TOKEN = "AUTHORIZATION_TOKEN";
 const TEMPERATURE = "TEMPERATURE";
