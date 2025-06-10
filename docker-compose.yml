@@ -16,6 +16,10 @@ services:
       target: server
     ports:
       - "8080:8080"
+    environment:
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
 
   postgres:
     image: postgres:alpine
@@ -28,6 +32,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  
+  minio:
+    image: minio/minio:latest
+    container_name: llm_screening_poc_minio
+    environment:
+      MINIO_ROOT_USER: minio-admin
+      MINIO_ROOT_PASSWORD: minio-secret-key
+    command: server --console-address ":9001" /csv_data /data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_csv_data:/csv_data
+      - minio_data:/data
 
 volumes:
   postgres_data:
+  minio_csv_data:
+  minio_data:

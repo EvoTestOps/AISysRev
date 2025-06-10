@@ -4,6 +4,9 @@ import os
 from fastapi import FastAPI, UploadFile, File
 from typing import List
 from csv_file_validation import validate_csv
+from min_io.minio_file_uploader import minio_file_uploader
+from minio.error import S3Error
+
 
 dotenv.load_dotenv()
 
@@ -34,8 +37,12 @@ async def process_csv(files: List[UploadFile] = File(...)):
         if validation_errors:
             errors.extend(validation_errors)
         else:
+            try:
+                minio_file_uploader(f.file, f.filename)
+            except S3Error as exc:
+                print("error occurred.", exc)
             valid_filenames.append(f.filename)
-    print(errors)
+
     return {
         "status": "error" if errors else "received",
         "errors": errors,
