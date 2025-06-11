@@ -16,8 +16,16 @@ export const FileDropArea = () => {
     )
   };
 
-  const handleFiles = async (files: File[]) => {
-    const validFiles = getValidCsvFiles(files);
+  const validateCsvFiles = async (files: File[]) => {
+    let validFiles: File[] = []
+
+    try {
+      validFiles = getValidCsvFiles(files);
+    } catch (error) {
+      console.error("Failed to get valid CSV files:", error);
+      alert("An error occurred while validating files.");
+    }
+
     const invalidCount = files.length - validFiles.length;
 
     if (validFiles.length === 0) {
@@ -33,11 +41,11 @@ export const FileDropArea = () => {
       const res = await fileUploadToBackend(validFiles);
 
       if (res.status === "error") {
-        const ErrorMessages = res.errors.map((err: any) =>
+        const errorMessages = res.errors.map((err: any) =>
         `File: ${err.file}, Row: ${err.row + 1}, Message: ${err.message}`
       ).join("\n");
 
-      alert(`Some files had errors:\n\n${ErrorMessages}`)
+      alert(`Some files had errors:\n\n${errorMessages}`)
       }
 
       if (res.valid_filenames?.length > 0) {
@@ -53,7 +61,7 @@ export const FileDropArea = () => {
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     preventDefaults(e);
     setIsDragging(false);
-    handleFiles(Array.from(e.dataTransfer.files));
+    validateCsvFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleClick = () => {
@@ -62,7 +70,7 @@ export const FileDropArea = () => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      handleFiles(Array.from(e.target.files));
+      validateCsvFiles(Array.from(e.target.files));
     }
   };
 
