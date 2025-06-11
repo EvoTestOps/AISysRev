@@ -1,12 +1,12 @@
-from min_io.minio_client import MINIO_CLIENT, BUCKET_NAME
+from min_io.minio_client import minio_client, BUCKET_NAME
 
 def minio_file_uploader(file_obj, filename):
-    if not MINIO_CLIENT.bucket_exists(BUCKET_NAME):
-        MINIO_CLIENT.make_bucket(BUCKET_NAME)
+    if not minio_client.bucket_exists(BUCKET_NAME):
+        minio_client.make_bucket(BUCKET_NAME)
         print("Created bucket", BUCKET_NAME)
 
     file_obj.seek(0)
-    MINIO_CLIENT.put_object(
+    minio_client.put_object(
         bucket_name=BUCKET_NAME,
         object_name=filename,
         data=file_obj,

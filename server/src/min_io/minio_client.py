@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MINIO_CLIENT = Minio(
+minio_client = Minio(
     endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
     access_key=os.getenv("MINIO_ROOT_USER", "minio-admin"),
     secret_key=os.getenv("MINIO_ROOT_PASSWORD", "minio-secret-key"),
