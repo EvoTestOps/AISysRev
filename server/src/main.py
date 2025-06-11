@@ -3,6 +3,7 @@ import dotenv
 import os
 from fastapi import FastAPI, UploadFile, File
 from typing import List
+from database.db_check import check_database_connection
 from csv_file_validation import validate_csv
 from min_io.minio_file_uploader import minio_file_uploader
 from minio.error import S3Error
@@ -19,8 +20,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 app = FastAPI()
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     print("on_startup hook called")
+    await check_database_connection()
 
 
 @app.get("/api/v1/health")
