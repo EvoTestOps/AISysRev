@@ -1,10 +1,11 @@
 import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
-import { FileDropProps } from "../state/types";
+import { fileUploadToBackend } from "../services/fileUploadService";
 
-export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
+export const FileDropArea = () => {
   const [isDragging, setIsDragging] = useState(false);
+  const [addedFiles, setAddedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const preventDefaults = (e: DragEvent) => e.preventDefault();
@@ -15,21 +16,52 @@ export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
     )
   };
 
-  const handleFiles = (files: File[]) => {
-    const validFiles = getValidCsvFiles(files);
-    
-    if (validFiles.length > 0) {
-      onFilesSelected?.(validFiles);
-    } else {
-      alert("Only CSV files are allowed.")
+  const validateCsvFiles = async (files: File[]) => {
+    let validFiles: File[] = []
+
+    try {
+      validFiles = getValidCsvFiles(files);
+    } catch (error) {
+      console.error("Failed to get valid CSV files:", error);
+      alert("An error occurred while validating files.");
+    }
+
+    const invalidCount = files.length - validFiles.length;
+
+    if (validFiles.length === 0) {
+      alert("Only CSV files are allowed.");
+      return;
+    }
+
+    if (invalidCount > 0) {
+      alert(`${invalidCount} file(s) were skipped because they are not CSV files.`);
+    }
+
+    try {
+      const res = await fileUploadToBackend(validFiles);
+
+      if (res.status === "error") {
+        const errorMessages = res.errors.map((err: any) =>
+        `File: ${err.file}, Row: ${err.row + 1}, Message: ${err.message}`
+      ).join("\n");
+
+      alert(`Some files had errors:\n\n${errorMessages}`)
+      }
+
+      if (res.valid_filenames?.length > 0) {
+        setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
+      }
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("File upload failed. Please try again.");
     }
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     preventDefaults(e);
     setIsDragging(false);
-    handleFiles(Array.from(e.dataTransfer.files));
-
+    validateCsvFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleClick = () => {
@@ -38,7 +70,7 @@ export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      handleFiles(Array.from(e.target.files));
+      validateCsvFiles(Array.from(e.target.files));
     }
   };
 
@@ -85,6 +117,16 @@ export const FileDropArea: React.FC<FileDropProps> = ({ onFilesSelected }) => {
         >
           Drag & drop CSV files here or click to upload
         </span>
+      </div>
+
+      <div className="flex flex-col">
+        <h2 className="font-semibold mb-2">Added Files</h2>
+        <ul className="text-sm text-gray-700 space-y-1">
+          {addedFiles.length === 0 && <li className="text-gray-400 italic">No files yet</li>}
+          {addedFiles.map((file, idx) => (
+            <li key={idx}>✅ {file}</li>
+          ))}
+        </ul>
       </div>
 
       <input

@@ -14,7 +14,7 @@ import {
 } from "../example_data";
 import { query_llm } from "../llm/llm";
 import { generatePrompt } from "../llm/prompt";
-import { FileDropArea } from '../components/FileDrop'
+import { FileDropArea } from '../components/FileDropArea'
 
 const AUTHORIZATION_TOKEN = "AUTHORIZATION_TOKEN";
 const TEMPERATURE = "TEMPERATURE";
@@ -236,7 +236,7 @@ export const ScreeningPage = () => {
         <div className="flex flex-col gap-4 w-full">
           <Subtitle title="Step 1." description="Add file" />
             <div>
-              <FileDropArea onFilesSelected={(files) => console.log(files)} />
+              <FileDropArea />
             </div>
           <Subtitle title="Step 2." description="Define inclusion criteria" />
           <div>
