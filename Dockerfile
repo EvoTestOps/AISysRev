@@ -18,6 +18,8 @@ COPY client/vite.config.ts .
 COPY client/public ./public
 COPY client/src ./src
 
+COPY server/migrations ./migrations
+
 RUN npm run build
 
 FROM nginx:alpine AS client
