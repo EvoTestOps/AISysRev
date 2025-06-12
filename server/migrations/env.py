@@ -7,13 +7,12 @@ from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
 
-from src.database.models.base import Base
-
-load_dotenv()
+from src.db.session import Base
+from src.core.config import settings
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", os.getenv("DB_URL"))
+config.set_main_option("sqlalchemy.url", settings.DB_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
