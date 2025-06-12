@@ -1,4 +1,4 @@
-from min_io.minio_client import minio_client, BUCKET_NAME
+from services.minio_client import minio_client, BUCKET_NAME
 
 def minio_file_uploader(file_obj, filename):
     if not minio_client.bucket_exists(BUCKET_NAME):

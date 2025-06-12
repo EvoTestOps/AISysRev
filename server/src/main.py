@@ -1,55 +1,13 @@
 import uvicorn
-import dotenv
-import os
-from fastapi import FastAPI, UploadFile, File
-from typing import List
-from database.db_check import check_database_connection
-from csv_file_validation import validate_csv
-from min_io.minio_file_uploader import minio_file_uploader
-from minio.error import S3Error
-
-
-dotenv.load_dotenv()
-
-# to get a string like this run:
-# openssl rand -hex 32
-SECRET_KEY = os.environ["SECRET_KEY"]
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from fastapi import FastAPI
+from api.controllers import csv_processor, health_check, on_startup
+from db.db_check import check_database_connection
 
 app = FastAPI()
 
-@app.on_event("startup")
-async def on_startup():
-    print("on_startup hook called")
-    await check_database_connection()
-
-
-@app.get("/api/v1/health")
-def health_check():
-    return {"status": "ok"}
-
-@app.post("/api/process-csv")
-async def process_csv(files: List[UploadFile] = File(...)):
-    errors = []
-    valid_filenames = []
-
-    for f in files:
-        validation_errors = validate_csv(f.file, f.filename)
-        if validation_errors:
-            errors.extend(validation_errors)
-        else:
-            try:
-                minio_file_uploader(f.file, f.filename)
-            except S3Error as exc:
-                print("error occurred.", exc)
-            valid_filenames.append(f.filename)
-
-    return {
-        "status": "error" if errors else "received",
-        "errors": errors,
-        "valid_filenames": valid_filenames
-    }
+app.include_router(on_startup.router)
+app.include_router(health_check.router)
+app.include_router(csv_processor.router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8080, host="0.0.0.0", reload=True)
