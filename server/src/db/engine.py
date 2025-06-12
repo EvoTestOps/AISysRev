@@ -1,10 +1,7 @@
-import os
-from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine
+from core.config import settings
 
-load_dotenv()
-
-DB_URL = os.getenv("DB_URL")
+DB_URL = settings.DB_URL
 if not DB_URL:
     raise ValueError("Environment variable DB_URL is not set")
 

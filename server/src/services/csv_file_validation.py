@@ -1,17 +1,6 @@
-from pydantic import BaseModel, ValidationError, field_validator
 import csv
-
-
-class Publication(BaseModel):
-    title: str
-    abstract: str
-    doi: str
-
-    @field_validator('title', 'abstract', 'doi')
-    @classmethod
-    def check_not_empty(cls, v, field):
-        if not isinstance(v, str) or not str(v).strip():
-            raise ValueError(f"Column {field.field_name} must be a non-empty string!")
+from pydantic import ValidationError
+from schemas.publication import Publication
 
 def validate_csv(file_obj, filename: str):
     reader = csv.DictReader(
