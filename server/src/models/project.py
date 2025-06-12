@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
-from .base import Base
+from db.session import Base
 from .mixins import TimestampMixin
 
 class Project(Base, TimestampMixin):
