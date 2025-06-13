@@ -8,7 +8,7 @@ export const fileUploadToBackend = async (files: File[]) => {
   );
 
   try {
-    const res = await axios.post('/api/process-csv', formData);
+    const res = await axios.post('/api/files/upload', formData);
     console.log("Upload successful:", res.data);
     return res.data;
   } catch (error){

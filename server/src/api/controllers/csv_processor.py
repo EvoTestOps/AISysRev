@@ -6,7 +6,7 @@ from services.csv_processing_service import process_csv_files
 
 router = APIRouter()
 
-@router.post("/api/process-csv")
+@router.post("/api/files/upload")
 async def process_csv(
     files: List[UploadFile] = File(...), 
     db: AsyncSession = Depends(get_db)
