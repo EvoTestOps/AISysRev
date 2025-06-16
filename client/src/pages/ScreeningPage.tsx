@@ -25,15 +25,10 @@ const abortController = new AbortController();
 
 function Header() {
   return (
-    <div className="flex w-full">
-      <div className="w-full lg:w-3/4 lg:mr-auto lg:ml-auto">
-        <h1
-          className="text-3xl sm:text-4xl md:text-4xl"
-          data-testid="app-title"
-        >
+    <div className="w-full flex justify-center">
+      <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl text-center" data-testid="app-title">
           AI-automated title-abstract screening PoC
-        </h1>
-      </div>
+      </h1>
     </div>
   );
 }

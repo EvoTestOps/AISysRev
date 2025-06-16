@@ -6,10 +6,10 @@ export function Navigation() {
   const user = useTypedStoreState((state) => state.user);
   return (
     <nav
-      className="flex items-center justify-between p-6 lg:px-8"
+      className="flex items-center justify-between p-6 lg:px-8 flex-nowrap"
       aria-label="Global"
     >
-      <div className="flex lg:flex-1">
+      <div className="flex-shrink-0">
         <a href="#" className="-m-1.5 p-1.5">
           <span className="sr-only">University of Helsinki</span>
           <img
@@ -19,23 +19,25 @@ export function Navigation() {
           />
         </a>
       </div>
-      <div className="hidden lg:flex lg:gap-x-12">
-        <Link href="/" className="text-sm/6 font-semibold text-gray-900">
+
+      <div className="flex gap-x-6 sm:gap-x-8 md:gap-x-12 lg:gap-x-24 items-center">
+        <Link href="/" className="text-xs sm:text-sm font-semibold text-gray-900">
           Home
         </Link>
         <Link
           href="/terms-and-conditions"
-          className="text-sm/6 font-semibold text-gray-900"
+          className="text-xs sm:text-sm font-semibold text-gray-900"
         >
           Terms and conditions
         </Link>
-        <Link href="/privacy" className="text-sm/6 font-semibold text-gray-900">
+        <Link href="/privacy" className="text-xs sm:text-sm font-semibold text-gray-900">
           Privacy
         </Link>
       </div>
-      <div className="flex flex-1 justify-end">
+
+      <div className="flex-shrink-0">
         {!user && (
-          <Link href="/login" className="text-sm/6 font-semibold text-gray-900">
+          <Link href="/login" className="text-xs sm:text-sm font-semibold text-gray-900">
             Log in <span aria-hidden="true">&rarr;</span>
           </Link>
         )}
