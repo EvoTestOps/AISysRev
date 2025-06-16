@@ -6,5 +6,5 @@ from services.project_service import fetch_projects
 router = APIRouter(prefix="/api")
 
 @router.get("/project")
-async def get_projects(db: AsyncSession = Depends(get_db)):
+async def list_projects(db: AsyncSession = Depends(get_db)):
     return await fetch_projects(db)

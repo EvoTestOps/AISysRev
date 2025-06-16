@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from models.project import Project
-from schemas.project import ProjectCreate
+from schemas.project import ProjectCreate, ProjectRead
 
 async def create_project(db: AsyncSession, project_data: ProjectCreate) -> int:
     try:
@@ -15,8 +15,8 @@ async def create_project(db: AsyncSession, project_data: ProjectCreate) -> int:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Project creation failed: {str(e)}")
 
-async def fetch_projects(db: AsyncSession):
+async def fetch_projects(db: AsyncSession) -> list[ProjectRead]:
     stmt = select(Project.uuid, Project.name, Project.criteria)
     result = await db.execute(stmt)
-    return result.scalars().all()
-
+    projects = result.mappings().all()
+    return [ProjectRead(**project) for project in projects]
