@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from models.project import Project
-from schemas.project_create import ProjectCreate
+from schemas.project import ProjectCreate
 
 async def create_project(db: AsyncSession, project_data: ProjectCreate) -> int:
     try:

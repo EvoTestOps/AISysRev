@@ -2,6 +2,7 @@ import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
 import { fileUploadToBackend } from "../services/fileUploadService";
+import { fetch_projects } from "../services/projectService";
 
 export const FileDropArea = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -39,7 +40,7 @@ export const FileDropArea = () => {
 
     try {
       const res = await fileUploadToBackend(validFiles);
-
+      await fetch_projects()
       if (res.valid_filenames?.length > 0) {
         setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
       }

@@ -7,7 +7,7 @@ from services.csv_file_validation import validate_csv
 from services.minio_file_uploader import minio_file_uploader
 from crud.project_crud import create_project
 from crud.file_crud import create_file_record
-from schemas.project_create import ProjectCreate
+from schemas.project import ProjectCreate
 from schemas.file_create import FileCreate
 
 async def process_csv_files(db: AsyncSession, files: List[UploadFile]):
