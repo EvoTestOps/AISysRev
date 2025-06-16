@@ -20,3 +20,13 @@ async def fetch_projects(db: AsyncSession) -> list[ProjectRead]:
     result = await db.execute(stmt)
     projects = result.mappings().all()
     return [ProjectRead(**project) for project in projects]
+
+async def fetch_project_by_uuid(db: AsyncSession, uuid: str) -> ProjectRead:
+    stmt = select(Project).where(Project.uuid == uuid)
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return ProjectRead.model_validate(project)
