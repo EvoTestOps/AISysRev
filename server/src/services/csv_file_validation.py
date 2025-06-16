@@ -1,6 +1,6 @@
 import csv
 from pydantic import ValidationError
-from schemas.publication import Publication
+from schemas.publication import PublicationRowData
 
 def validate_csv(file_obj, filename: str):
     reader = csv.DictReader(
@@ -11,7 +11,7 @@ def validate_csv(file_obj, filename: str):
 
     for idx, row in enumerate(reader):
         try:
-            Publication(**row)
+            PublicationRowData(**row)
         except ValidationError as e:
             for err in e.errors():
                 errors.append({

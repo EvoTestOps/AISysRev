@@ -1,6 +1,6 @@
 from pydantic import BaseModel, field_validator
 
-class Publication(BaseModel):
+class PublicationRowData(BaseModel):
     title: str
     abstract: str
     doi: str

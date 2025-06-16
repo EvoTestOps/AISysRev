@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
 from api.controllers import csv_processor, health_check, on_startup
-from db.db_check import check_database_connection
 
 app = FastAPI()
 

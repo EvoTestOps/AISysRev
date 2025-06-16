@@ -1,4 +1,3 @@
-from .base import Base
 from .project import Project
 from .file import File
 from .job import Job
