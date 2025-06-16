@@ -40,21 +40,24 @@ export const FileDropArea = () => {
     try {
       const res = await fileUploadToBackend(validFiles);
 
-      if (res.status === "error") {
-        const errorMessages = res.errors.map((err: any) =>
-        `File: ${err.file}, Row: ${err.row + 1}, Message: ${err.message}`
-      ).join("\n");
-
-      alert(`Some files had errors:\n\n${errorMessages}`)
-      }
-
       if (res.valid_filenames?.length > 0) {
         setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
       }
 
-    } catch (error) {
-      console.error("Upload failed:", error);
-      alert("File upload failed. Please try again.");
+    } catch (error: any) {
+      if (error.response?.status === 400 && error.response?.data?.detail?.errors) {
+        const errors = error.response.data.detail.errors
+          .map(
+            (e: any) =>
+              `File: ${e.file}, Row: ${e.row + 1}, Message: ${e.message}`
+          )
+          .join("\n");
+
+        alert("Validation errors:\n\n" + errors);
+      } else {
+        console.error("Upload failed:", error);
+        alert("File upload failed. Please try again.");
+      }
     }
   };
 
