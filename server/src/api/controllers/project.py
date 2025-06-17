@@ -29,7 +29,7 @@ async def get_project(uuid: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to fetch project: {str(e)}")
 
 @router.post("/project", status_code=status.HTTP_201_CREATED)
-async def create_project(project_data: ProjectCreate, db: AsyncSession = Depends(get_db)):
+async def create_new_project(project_data: ProjectCreate, db: AsyncSession = Depends(get_db)):
     try:
         new_id = await create_project(db, project_data)
         return {"id": new_id}
