@@ -11,4 +11,4 @@ async def process_csv(
     files: List[UploadFile] = File(...), 
     db: AsyncSession = Depends(get_db)
 ):
-    return await process_csv_files(files, db)
+    return await process_csv_files(db, files)
