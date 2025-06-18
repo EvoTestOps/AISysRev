@@ -1,5 +1,5 @@
 import { Hero } from "../components/Hero";
-import { Page } from "../components/Page";
+import { Page } from "../components/Layout";
 
 const FrontPage = () => (
   <Page>
