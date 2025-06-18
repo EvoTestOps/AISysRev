@@ -37,11 +37,10 @@ export const FileDropArea = () => {
     if (invalidCount > 0) {
       alert(`${invalidCount} file(s) were skipped because they are not CSV files.`);
     }
-    await fetch_project_by_uuid('960c5035-9537-4cc4-b573-f9c97d345083')
 
     try {
       const res = await fileUploadToBackend(validFiles);
-      //await fetch_projects()
+
       if (res.valid_filenames?.length > 0) {
         setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
       }
