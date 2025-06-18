@@ -2,7 +2,6 @@ import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
 import { fileUploadToBackend } from "../services/fileUploadService";
-import { fetch_project_by_uuid, fetch_projects } from "../services/projectService";
 
 export const FileDropArea = () => {
   const [isDragging, setIsDragging] = useState(false);
