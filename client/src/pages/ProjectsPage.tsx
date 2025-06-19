@@ -3,6 +3,7 @@ import { Layout } from "../components/Layout";
 import { fetch_projects } from "../services/projectService";
 import { Project } from "../state/types";
 import { H6 } from "../components/Typography";
+import { DropdownMenu } from "../components/DropDownMenu";
 
 
 import { useEffect } from "react";
@@ -26,9 +27,18 @@ export const Projects = () => {
 
   const DisplayProjects = ({ projects }: { projects: Project[] }) => {
     return projects.map((project) => (
-      <div key={project.uuid} className="bg-zinc-50 p-4 mb-4 rounded shadow-lg">
-        <H6>{project.name}</H6>
-        <p>{project.description}</p>
+      <div key={project.uuid} className="bg-white p-4 mb-4 rounded shadow-lg hover:brightness-125 transition-all duration-200">
+        <div className="flex justify-between items-center">
+          <H6>{project.name}</H6>
+          <DropdownMenu
+            items={[
+              {
+                label: 'Delete',
+                onClick: () => console.log('Delete clicked'),
+              },
+            ]}
+          />
+        </div>
       </div>
     ));
   }

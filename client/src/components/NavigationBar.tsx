@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
+import { Plus } from "lucide-react";
 import universityLogo from "../assets/images/HY__LD01_LogoFP_EN_B3____BW.png";
 
 type NavigationBarProps = {
@@ -23,16 +24,24 @@ export const NavigationBar = ({ name }: NavigationBarProps) => {
         </a>
       </div>
 
-      <div className="flex items-end justify-between w-4xl mt-20">
+      <div className="flex items-center justify-between w-4xl mt-20">
         <div className="m-4">
           <H3>{name}</H3>
         </div>
         {name === "Projects" && (
-        <Link
-          href="/create"
-          className="m-4 inline-block bg-green-500 text-white text-sm text-center font-extrabold px-6 py-2 rounded-md hover:bg-green-500/90 transition-colors duration-200"
-        >
-          +
+        <Link href="/create" className="">
+          <Plus
+            className="
+              bg-green-500 text-white 
+              h-6 w-12 mt-4
+              rounded-full
+              brightness-110
+              shadow-sm
+              hover:bg-green-400
+              hover:drop-down-brightness-125
+              transition duration-200 ease-in-out
+            "
+          />
         </Link>
         )}
       </div>
