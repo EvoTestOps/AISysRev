@@ -11,18 +11,17 @@ export const NewProject = () => {
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
 
-  const handleInclusionChange = (index: number, value: string) => {
-    const updated = [...inclusionCriteria];
-    updated[index] = value;
-    setInclusionCriteria(updated);
+  const handleInclusionSetup = () => {
+    setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
+    setInclusionCriteriaInput("");
+    console.log(title, inclusionCriteria, exclusionCriteria);
   };
 
-  const handleExclusionChange = (index: number, value: string) => {
-    const updated = [...exclusionCriteria];
-    updated[index] = value;
-    setExclusionCriteria(updated);
+  const handleExclusionSetup = () => {
+    setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
+    setExclusionCriteriaInput("");
+    console.log(title, inclusionCriteria, exclusionCriteria);
   };
-  console.log(title, inclusionCriteria, exclusionCriteria);
 
 
   return (
@@ -70,7 +69,7 @@ export const NewProject = () => {
               <button
                 className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
                 hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput])}
+                onClick={() => handleInclusionSetup()}
               >
                 Add
               </button>
@@ -90,12 +89,36 @@ export const NewProject = () => {
               <button
                 className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
                 hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput])}
+                onClick={() => handleExclusionSetup()}
               >
                 Add
               </button>
             </div>
           </div>
+
+          <div className="flex justify-end items-end gap-4">
+            <button
+              className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              onClick={() => {
+                console.log("Project creation cancelled");
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-blue-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              onClick={() => {
+                // Handle project creation logic here
+                console.log("Project created with title:", title);
+                console.log("Inclusion Criteria:", inclusionCriteria);
+                console.log("Exclusion Criteria:", exclusionCriteria);
+              }}
+            >
+              Create
+            </button>
+          </div>
+
+
         </div>
       </div>
     </Layout>
