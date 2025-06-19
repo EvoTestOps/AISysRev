@@ -29,3 +29,13 @@ async def create_new_project(project_data: ProjectCreate, projects: ProjectServi
         return {"id": new_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Project creation failed: {str(e)}")
+
+@router.delete("/project/{uuid}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(uuid: str, projects: ProjectService = Depends(get_projects_service)):
+    try:
+        deleted = await projects.delete(uuid)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Project not found")
+        return {"detail": "Project deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete project: {str(e)}")

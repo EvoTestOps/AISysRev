@@ -1,7 +1,10 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Ellipsis } from 'lucide-react'
 
-type Item = { label: string; onClick: () => void }
+type Item = {
+  label: string; 
+  onClick: () => void;
+}
 
 export const DropdownMenu = ({ items }: { items: Item[] }) => (
   <Menu as="div" className="relative inline-block text-left">

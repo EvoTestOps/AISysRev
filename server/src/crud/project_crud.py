@@ -19,3 +19,14 @@ async def create_project(db: AsyncSession, project_data: ProjectCreate) -> int:
     await db.commit()
     await db.refresh(new_project)
     return new_project.id
+
+async def delete_project(db: AsyncSession, uuid: str) -> bool:
+    stmt = select(Project).where(Project.uuid == uuid)
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+    
+    if project:
+        await db.delete(project)
+        await db.commit()
+        return True
+    return False
