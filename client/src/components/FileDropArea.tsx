@@ -91,10 +91,10 @@ export const FileDropArea = () => {
         }}
         onDrop={handleDrop}
         className={classNames(
-          "flex flex-col justify-center items-center h-40 w-80 border-2 border-dashed border-gray-500 transition-colors duration-200 rounded-lg",
+          "flex flex-col justify-center items-center px-32 py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg",
           {
-          "bg-slate-300/90": isDragging,
-          "bg-slate-300/30": !isDragging,
+          "bg-slate-100": isDragging,
+          "bg-white": !isDragging,
           }
         )}
       >
