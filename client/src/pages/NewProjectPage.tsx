@@ -44,10 +44,10 @@ export const NewProject = () => {
   const deleteExclusionCriteria = (index: number) => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   };
-
+  
   const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
     if (criteria.length === 0) return null;
-
+    
     return (
       <div className="grid grid-cols-[200px_1fr] items-start gap-4">
         <div></div>
@@ -56,14 +56,14 @@ export const NewProject = () => {
           <ul className="list-disc pl-5 space-y-4">
             {criteria.map((criterion, index) => (
               <li
-                key={index}
-                className="text-gray-700 flex justify-between items-center"
+              key={index}
+              className="text-gray-700 flex justify-between items-center"
               >
                 <span className="flex-1">{criterion}</span>
                 <button
                   className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap"
                   onClick={() => onDelete(index)}
-                >
+                  >
                   Delete
                 </button>
               </li>
@@ -72,6 +72,29 @@ export const NewProject = () => {
         </div>
       </div>
     );
+  };
+
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      alert("Title is required");
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      alert("At least one file must be added");
+      return;
+    }
+    try {
+      await CreateProject({
+        title,
+        files: selectedFiles,
+        inclusionCriteria,
+        exclusionCriteria,
+      });
+      alert('Project created successfully!');
+    } catch (error) {
+      console.error(error);
+      alert('Creating project failed!');
+    }
   };
 
   return (
@@ -218,13 +241,7 @@ export const NewProject = () => {
             </button>
             <button
               className="bg-blue-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-              onClick={() => CreateProject({
-                title,
-                files: selectedFiles,
-                inclusionCriteria,
-                exclusionCriteria
-              })
-              }
+              onClick={handleCreate}
             >
               Create
             </button>

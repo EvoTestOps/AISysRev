@@ -3,9 +3,8 @@ import axios from 'axios';
 export const fileUploadToBackend = async (files: File[], projectId: string) => {
   const formData = new FormData();
 
-  files.forEach((file) =>
-    formData.append("files", file)
-  );
+  formData.append("projectId", projectId);
+  files.forEach((file) => formData.append("files", file));
 
   try {
     const res = await axios.post('/api/files/upload', formData);
@@ -13,7 +12,6 @@ export const fileUploadToBackend = async (files: File[], projectId: string) => {
     return res.data;
   } catch (error){
     console.error("Backend upload error", error);
-    
     throw error;
   }
 };

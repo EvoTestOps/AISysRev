@@ -23,14 +23,15 @@ export const fetch_project_by_uuid = async (uuid: string) => {
 };
 
 export const create_project = async (title: string, inclusionCriteria: string, exclusionCriteria: string) => {
+  console.log("Creating project with title:", title);
   try {
       const res = await axios.post('/api/project', {
           name: title,
-          inclusionCriteria: inclusionCriteria,
-          exclusionCriteria: exclusionCriteria
+          inclusion_criteria: inclusionCriteria,
+          exclusion_criteria: exclusionCriteria
       });
       console.log('Creating project successful', res.data);
-      return res.data;
+      return res.data.id as string;;
   } catch (error) {
       console.log("Creating project unsuccessful", error);
       throw error;

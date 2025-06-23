@@ -9,10 +9,9 @@ type CreateProjectProps = {
 };
 
 export const CreateProject = async (props: CreateProjectProps) => {
-  const { title, files, inclusionCriteria, exclusionCriteria } = props;
   let projectId: string;
   try {
-    projectId = await create_project(title, inclusionCriteria.join(", "), exclusionCriteria.join(", "));
+    projectId = await create_project(props.title, props.inclusionCriteria.join(", "), props.exclusionCriteria.join(", "));
     console.log("Project created, id: ", projectId);
   } catch (error) {
     console.error("Error creating project:", error);
@@ -20,7 +19,7 @@ export const CreateProject = async (props: CreateProjectProps) => {
   }
 
   try {
-    const uploadedFiles = await fileUploadToBackend(files, projectId);
+    const uploadedFiles = await fileUploadToBackend(props.files, projectId);
     console.log("Files uploaded successfully:", uploadedFiles);
   } catch (error) {
     console.error("Error uploading files:", error);
