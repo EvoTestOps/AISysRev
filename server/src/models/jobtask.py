@@ -2,7 +2,7 @@ import uuid
 import enum
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON, Boolean, Enum
 from sqlalchemy.dialects.postgresql import UUID
-from db.session import Base
+from src.db.session import Base
 from .mixins import TimestampMixin
 
 class JobTaskStatus(enum.Enum):

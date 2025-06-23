@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from db.session import Base
+from src.db.session import Base
 from .mixins import TimestampMixin
 
 class File(Base, TimestampMixin):

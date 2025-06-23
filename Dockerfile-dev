@@ -1,6 +1,7 @@
 FROM node:22-alpine AS client
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 COPY client/package.json .
 COPY client/package-lock.json .
