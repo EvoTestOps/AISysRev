@@ -6,10 +6,25 @@ import { useState } from "react";
 export const NewProject = () => {
   const [title, setTitle] = useState("");
   const [titleInput, setTitleInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
+
+
+  const deleteTitle = () => {
+    setTitle("");
+    setTitleInput("");
+  };
+
+  const handleFilesSelected = (files: File[]) => {
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleInclusionSetup = () => {
     setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
@@ -19,6 +34,14 @@ export const NewProject = () => {
   const handleExclusionSetup = () => {
     setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
     setExclusionCriteriaInput("");
+  };
+
+  const deleteInclusionCriteria = (index: number) => {
+    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const deleteExclusionCriteria = (index: number) => {
+    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   };
 
   const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
@@ -50,14 +73,6 @@ export const NewProject = () => {
     );
   };
 
-  const deleteInclusionCriteria = (index: number) => {
-    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const deleteExclusionCriteria = (index: number) => {
-    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
-
   return (
     <Layout title="New Project">
       <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
@@ -82,12 +97,52 @@ export const NewProject = () => {
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+            <div></div>
+            <ul className="text-sm text-gray-700 space-y-1">
+              {title ? (
+                <li className="flex justify-between items-center">
+                  <span>{title}</span>
+                  <button
+                    className="text-red-500 text-sm hover:underline"
+                    onClick={deleteTitle}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ) : (
+                <li className="text-gray-400 italic">No title yet</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <H6>
               List of papers<span className="text-red-500 font-semibold">*</span>
             </H6>
             <div className="w-full">
-              <FileDropArea />
+              <FileDropArea onFilesSelected={handleFilesSelected}/>
             </div>
+          </div>
+
+          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+            <div></div>
+
+            <ul className="text-sm text-gray-700 space-y-1">
+              {selectedFiles.length === 0 && (
+                <li className="text-gray-400 italic">No files selected yet</li>
+              )}
+              {selectedFiles.map((file, idx) => (
+                <li key={idx} className="flex justify-between items-center">
+                  <span>{file.name}</span>
+                  <button
+                    className="text-red-500 text-sm hover:underline"
+                    onClick={() => removeFile(idx)}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
@@ -96,9 +151,14 @@ export const NewProject = () => {
               <input
                 type="text"
                 className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
+                placeholder="Inclusion criterion"
                 value={inclusionCriteriaInput}
                 onChange={(e) => setInclusionCriteriaInput(e.target.value)}
-                placeholder="Inclusion criterion"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleInclusionSetup();
+                  }
+                }}
               />
               <button
                 className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
@@ -118,9 +178,14 @@ export const NewProject = () => {
               <input
                 type="text"
                 className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
+                placeholder="Exclusion criterion"
                 value={exclusionCriteriaInput}
                 onChange={(e) => setExclusionCriteriaInput(e.target.value)}
-                placeholder="Exclusion criterion"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleExclusionSetup();
+                  }
+                }}
               />
               <button
                 className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
@@ -145,6 +210,7 @@ export const NewProject = () => {
                 setTitleInput("");
                 setInclusionCriteriaInput("");
                 setExclusionCriteriaInput("");
+                setSelectedFiles([]);
               }}
             >
               Cancel
@@ -161,7 +227,6 @@ export const NewProject = () => {
               Create
             </button>
           </div>
-
         </div>
       </div>
     </Layout>
