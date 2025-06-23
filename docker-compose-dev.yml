@@ -25,11 +25,15 @@ services:
       dockerfile: Dockerfile-dev
       target: server
     environment:
+      PYTHONPATH: /app/src
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - "8080:8080"
+    volumes:
+      - ./server:/app
+      - ./server/migrations:/app/migrations
     develop:
       watch:
         - action: sync

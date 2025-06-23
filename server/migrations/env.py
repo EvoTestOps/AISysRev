@@ -1,14 +1,24 @@
 import asyncio
-import os
 from logging.config import fileConfig
+import sys
+from pathlib import Path
 
+from alembic import context
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
-from alembic import context
 from dotenv import load_dotenv
 
-from src.db.session import Base
+BASE_DIR = Path(__file__).resolve().parents[1]
+SRC_DIR = BASE_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 from src.core.config import settings
+from src.db.session import Base
+from src.models.project import Project
+from src.models.file import File
+
+load_dotenv()
 
 config = context.config
 
