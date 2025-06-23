@@ -14,15 +14,49 @@ export const NewProject = () => {
   const handleInclusionSetup = () => {
     setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
     setInclusionCriteriaInput("");
-    console.log(title, inclusionCriteria, exclusionCriteria);
   };
 
   const handleExclusionSetup = () => {
     setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
     setExclusionCriteriaInput("");
-    console.log(title, inclusionCriteria, exclusionCriteria);
   };
 
+  const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
+    if (criteria.length === 0) return null;
+
+    return (
+      <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+        <div></div>
+
+        <div className="flex flex-col gap-1">
+          <ul className="list-disc pl-5 space-y-4">
+            {criteria.map((criterion, index) => (
+              <li
+                key={index}
+                className="text-gray-700 flex justify-between items-center"
+              >
+                <span className="flex-1">{criterion}</span>
+                <button
+                  className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap"
+                  onClick={() => onDelete(index)}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  const deleteInclusionCriteria = (index: number) => {
+    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const deleteExclusionCriteria = (index: number) => {
+    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <Layout title="New Project">
@@ -76,6 +110,8 @@ export const NewProject = () => {
             </div>
           </div>
 
+          {showCriteriaList(inclusionCriteria, deleteInclusionCriteria)}
+
           <div className="grid grid-cols-[200px_1fr] items-center gap-4">
             <H6>Exclusion Criteria</H6>
             <div className="flex justify-between items-center gap-4">
@@ -96,11 +132,19 @@ export const NewProject = () => {
             </div>
           </div>
 
+          {showCriteriaList(exclusionCriteria, deleteExclusionCriteria)}
+
           <div className="flex justify-end items-end gap-4">
             <button
               className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
                 console.log("Project creation cancelled");
+                setTitle("");
+                setInclusionCriteria([]);
+                setExclusionCriteria([]);
+                setTitleInput("");
+                setInclusionCriteriaInput("");
+                setExclusionCriteriaInput("");
               }}
             >
               Cancel
@@ -117,7 +161,6 @@ export const NewProject = () => {
               Create
             </button>
           </div>
-
 
         </div>
       </div>
