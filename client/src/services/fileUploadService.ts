@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const fileUploadToBackend = async (files: File[]) => {
+export const fileUploadToBackend = async (files: File[], projectId: string) => {
   const formData = new FormData();
 
   files.forEach((file) =>
