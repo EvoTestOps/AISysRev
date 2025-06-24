@@ -1,7 +1,7 @@
 from fastapi import Depends
-from db.session import get_db
-from crud import project_crud
-from schemas.project import ProjectCreate, ProjectRead
+from src.db.session import get_db
+from src.crud import project_crud
+from src.schemas.project import ProjectCreate, ProjectRead
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ProjectService:

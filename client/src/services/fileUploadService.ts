@@ -3,7 +3,7 @@ import axios from 'axios';
 export const fileUploadToBackend = async (files: File[], projectId: string) => {
   const formData = new FormData();
 
-  formData.append("projectId", projectId);
+  formData.append("project_id", projectId);
   files.forEach((file) => formData.append("files", file));
 
   try {
