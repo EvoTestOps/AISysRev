@@ -1,6 +1,6 @@
-import { ScreeningPage } from "./pages/ScreeningPage";
-
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import { NotFoundPage } from "./pages/404";
 import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { Projects } from "./pages/ProjectsPage";
@@ -8,15 +8,26 @@ import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 
 function App() {
+  const [, navigate] = useLocation();
+  const [checkedTerms, setCheckedTerms] = useState(false);
+
+  useEffect(() => {
+    const hasReadTerms = Cookies.get("disclaimer_read");
+    if (!hasReadTerms && window.location.pathname !== "/terms-and-conditions") {
+      navigate("/terms-and-conditions");
+    }
+    setCheckedTerms(true);
+  }, [navigate]);
+  
+  if (!checkedTerms) return null;
+
   return (
     <div className="flex flex-col">
       <Switch>
         <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />
         <Route path="/create" component={NewProject} />
-
         <Route path="/about" component={AboutPage} />
-        <Route path="/screen" component={ScreeningPage} />
         <Route
           path="/terms-and-conditions"
           component={TermsAndConditionsPage}
