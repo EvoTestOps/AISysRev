@@ -47,7 +47,7 @@ export const NavigationBar = ({ name }: NavigationBarProps) => {
       </div>
 
       <div className="flex items-start mr-8 ml-8 py-4 space-x-8">
-        <Link href="/" className="text-xs sm:text-sm font-semibold text-gray-900">
+        <Link href="/about" className="text-xs sm:text-sm font-semibold text-gray-900">
           About
         </Link>
         <Link href="/privacy" className="text-xs sm:text-sm font-semibold text-gray-900">
