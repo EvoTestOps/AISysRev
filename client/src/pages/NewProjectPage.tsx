@@ -3,6 +3,7 @@ import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
+import { useLocation } from "wouter";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -12,7 +13,8 @@ export const NewProject = () => {
   const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
-
+  
+  const [_, navigate] = useLocation();
 
   const deleteTitle = () => {
     setTitle("");
@@ -90,6 +92,7 @@ export const NewProject = () => {
         inclusionCriteria,
         exclusionCriteria,
       });
+      navigate("/projects");
       alert('Project created successfully!');
     } catch (error) {
       console.error(error);

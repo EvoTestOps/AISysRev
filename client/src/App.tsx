@@ -11,7 +11,7 @@ function App() {
   return (
     <div className="flex flex-col">
       <Switch>
-        <Route path="/" component={ScreeningPage} />
+        <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />
         <Route path="/create" component={NewProject} />
 
