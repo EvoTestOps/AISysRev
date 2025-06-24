@@ -1,12 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
-from api.controllers import csv_processor, health_check, on_startup, project
+from src.api.controllers import health_check, on_startup, project, file
 
 app = FastAPI()
 
 app.include_router(on_startup.router)
 app.include_router(health_check.router)
-app.include_router(csv_processor.router)
+app.include_router(file.router)
 app.include_router(project.router)
 
 if __name__ == "__main__":

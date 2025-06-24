@@ -1,7 +1,7 @@
 from fastapi import Depends
-from db.session import get_db
-from crud import project_crud
-from schemas.project import ProjectCreate, ProjectRead
+from src.db.session import get_db
+from src.crud import project_crud
+from src.schemas.project import ProjectCreate, ProjectRead
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ProjectService:
@@ -18,6 +18,9 @@ class ProjectService:
 
     async def create(self, data: ProjectCreate) -> int:
         return await project_crud.create_project(self.db, data)
+    
+    async def delete(self, uuid: str) -> bool:
+        return await project_crud.delete_project(self.db, uuid)
     
 def get_projects_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
     return ProjectService(db)

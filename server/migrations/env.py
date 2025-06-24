@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 
 from src.db.session import Base
 from src.core.config import settings
+import src.models
+
+load_dotenv()
 
 config = context.config
 

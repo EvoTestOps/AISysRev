@@ -1,12 +1,13 @@
 import { useState, useRef, DragEvent } from "react";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
-import { fileUploadToBackend } from "../services/fileUploadService";
-import { fetch_project_by_uuid, fetch_projects } from "../services/projectService";
 
-export const FileDropArea = () => {
+type FileDropAreaProps = {
+  onFilesSelected?: (files: File[]) => void;
+};
+
+export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [addedFiles, setAddedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const preventDefaults = (e: DragEvent) => e.preventDefault();
@@ -38,38 +39,13 @@ export const FileDropArea = () => {
       alert(`${invalidCount} file(s) were skipped because they are not CSV files.`);
     }
 
-    try {
-      const res = await fileUploadToBackend(validFiles);
-
-      if (res.valid_filenames?.length > 0) {
-        setAddedFiles((prev) => [...prev, ...res.valid_filenames]);
-      }
-
-    } catch (error: any) {
-      if (error.response?.status === 400 && error.response?.data?.detail?.errors) {
-        const errors = error.response.data.detail.errors
-          .map(
-            (e: any) =>
-              `File: ${e.file}, Row: ${e.row + 1}, Message: ${e.message}`
-          )
-          .join("\n");
-
-        alert("Validation errors:\n\n" + errors);
-      } else {
-        console.error("Upload failed:", error);
-        alert("File upload failed. Please try again.");
-      }
-    }
+    onFilesSelected?.(validFiles);
   };
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     preventDefaults(e);
     setIsDragging(false);
     validateCsvFiles(Array.from(e.dataTransfer.files));
-  };
-
-  const handleClick = () => {
-    fileInputRef.current?.click();
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +57,7 @@ export const FileDropArea = () => {
   return (
     <div>
       <div
-        onClick={handleClick}
+        onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => {
           preventDefaults(e);
           setIsDragging(true);
@@ -92,10 +68,10 @@ export const FileDropArea = () => {
         }}
         onDrop={handleDrop}
         className={classNames(
-          "flex flex-col justify-center items-center h-40 w-80 border-2 border-dashed border-gray-500 transition-colors duration-200 rounded-lg",
+          "flex flex-col justify-center items-center px-32 py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg",
           {
-          "bg-slate-300/90": isDragging,
-          "bg-slate-300/30": !isDragging,
+          "bg-slate-100": isDragging,
+          "bg-white": !isDragging,
           }
         )}
       >
@@ -121,16 +97,6 @@ export const FileDropArea = () => {
         >
           Drag & drop CSV files here or click to upload
         </span>
-      </div>
-
-      <div className="flex flex-col">
-        <h2 className="font-semibold mb-2">Added Files</h2>
-        <ul className="text-sm text-gray-700 space-y-1">
-          {addedFiles.length === 0 && <li className="text-gray-400 italic">No files yet</li>}
-          {addedFiles.map((file, idx) => (
-            <li key={idx}>✅ {file}</li>
-          ))}
-        </ul>
       </div>
 
       <input

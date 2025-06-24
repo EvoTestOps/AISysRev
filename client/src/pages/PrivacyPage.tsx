@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { Page } from "../components/Page";
+import { Page } from "../components/Layout";
 import { H1 } from "../components/Typography";
 
 export const PrivacyPage = () => (
