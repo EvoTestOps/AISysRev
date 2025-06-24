@@ -4,7 +4,7 @@ from models.project import Project
 from schemas.project import ProjectCreate, ProjectRead
 
 async def fetch_projects(db: AsyncSession) -> list[ProjectRead]:
-    stmt = select(Project.uuid, Project.name, Project.criteria)
+    stmt = select(Project.uuid, Project.name, Project.inclusion_criteria, Project.exclusion_criteria)
     result = await db.execute(stmt)
     return result.mappings().all()
 
