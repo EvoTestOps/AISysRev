@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
@@ -15,35 +15,35 @@ export const NewProject = () => {
   
   const [, navigate] = useLocation();
 
-  const deleteTitle = () => {
+  const deleteTitle = useCallback(() => {
     setTitle("");
-  };
+  }, []);
 
-  const handleFilesSelected = (files: File[]) => {
+  const handleFilesSelected = useCallback((files: File[]) => {
     setSelectedFiles((prev) => [...prev, ...files]);
-  };
+  }, []);
 
-  const removeFile = (index: number) => {
+  const removeFile = useCallback((index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const handleInclusionSetup = () => {
+  const handleInclusionSetup = useCallback(() => {
     setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
     setInclusionCriteriaInput("");
-  };
+  }, [inclusionCriteria, inclusionCriteriaInput]);
 
-  const handleExclusionSetup = () => {
+  const handleExclusionSetup = useCallback(() => {
     setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
     setExclusionCriteriaInput("");
-  };
+  }, [exclusionCriteria, exclusionCriteriaInput]);
 
-  const deleteInclusionCriteria = (index: number) => {
+  const deleteInclusionCriteria = useCallback((index: number) => {
     setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const deleteExclusionCriteria = (index: number) => {
+  const deleteExclusionCriteria = (useCallback((index: number) => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []));
   
   const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
     if (criteria.length === 0) return null;
