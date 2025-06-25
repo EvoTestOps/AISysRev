@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
+import { useLocation } from "wouter";
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
-import { useLocation } from "wouter";
+import { showCriteriaList } from "../components/CriteriaList";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -41,40 +42,11 @@ export const NewProject = () => {
     setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const deleteExclusionCriteria = (useCallback((index: number) => {
+  const deleteExclusionCriteria = useCallback((index: number) => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []));
-  
-  const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
-    if (criteria.length === 0) return null;
-    
-    return (
-      <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-        <div></div>
+  }, []);
 
-        <div className="flex flex-col gap-1">
-          <ul className="list-disc pl-5 space-y-4">
-            {criteria.map((criterion, index) => (
-              <li
-              key={index}
-              className="text-gray-700 flex justify-between items-center"
-              >
-                <span className="flex-1">{criterion}</span>
-                <button
-                  className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap"
-                  onClick={() => onDelete(index)}
-                  >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     if (!title.trim()) {
       alert("Title is required");
       return;
@@ -96,7 +68,7 @@ export const NewProject = () => {
       console.error(error);
       alert('Creating project failed!');
     }
-  };
+  }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
