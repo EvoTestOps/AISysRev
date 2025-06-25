@@ -143,8 +143,8 @@ export const NewProject = () => {
                 }}
               />
               <button
-                className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
+                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
                 onClick={() => handleInclusionSetup()}
               >
                 Add
@@ -171,8 +171,8 @@ export const NewProject = () => {
                 }}
               />
               <button
-                className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
+                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
                 onClick={() => handleExclusionSetup()}
               >
                 Add

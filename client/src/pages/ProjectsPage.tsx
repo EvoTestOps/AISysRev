@@ -26,7 +26,7 @@ export const Projects = () => {
     try {
       await delete_project(uuid);
       setProjects((prevProjects) =>
-        prevProjects.filter((project) => project.uuid !== uuid)
+        [...prevProjects.filter((project) => project.uuid !== uuid)]
       );
       console.log("Project deleted successfully");
     } catch (error) {
