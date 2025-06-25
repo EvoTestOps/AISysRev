@@ -7,7 +7,6 @@ import { useLocation } from "wouter";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
-  const [titleInput, setTitleInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
@@ -18,7 +17,6 @@ export const NewProject = () => {
 
   const deleteTitle = () => {
     setTitle("");
-    setTitleInput("");
   };
 
   const handleFilesSelected = (files: File[]) => {
@@ -113,13 +111,8 @@ export const NewProject = () => {
               type="text"
               className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
               placeholder="Enter project title"
-              value={titleInput}
-              onChange={(e) => setTitleInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setTitle(titleInput);
-                }
-              }}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
@@ -234,7 +227,6 @@ export const NewProject = () => {
                 setTitle("");
                 setInclusionCriteria([]);
                 setExclusionCriteria([]);
-                setTitleInput("");
                 setInclusionCriteriaInput("");
                 setExclusionCriteriaInput("");
                 setSelectedFiles([]);
