@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { Page } from "../components/Page";
+import { Layout } from "../components/Layout";
 import { H1, H3 } from "../components/Typography";
 import { useLocation } from "wouter";
 import Cookies from "js-cookie";
@@ -7,7 +7,7 @@ import Cookies from "js-cookie";
 export const TermsAndConditionsPage = () => {
   const [, navigate] = useLocation();
   return (
-    <Page>
+    <Layout title="Terms and Conditions">
       <Helmet>
         <title>Terms and conditions</title>
       </Helmet>
@@ -48,6 +48,6 @@ export const TermsAndConditionsPage = () => {
           </div>
         </div>
       </div>
-    </Page>
+    </Layout>
   );
 };

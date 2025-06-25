@@ -2,14 +2,22 @@ import csv
 from pydantic import ValidationError
 from schemas.publication import PublicationRowData
 
+REQUIRED_FIELDS = {"title", "abstract", "doi"}
+
 def validate_csv(file_obj, filename: str):
-    reader = csv.DictReader(
-        file_obj.read().decode("utf-8").splitlines(),
-        fieldnames=["title", "abstract", "doi"]
-    )
+    reader = csv.DictReader(file_obj.read().decode("utf-8-sig").splitlines())
     errors = []
 
-    for idx, row in enumerate(reader):
+    fieldnames = {name.strip().lower() for name in (reader.fieldnames or [])}
+    missing = REQUIRED_FIELDS - fieldnames
+    if missing:
+        return [{
+            "file": filename,
+            "row": "header",
+            "message": f"Missing required columns: {', '.join(missing)}"
+        }]
+
+    for idx, row in enumerate(reader, start=2):
         try:
             PublicationRowData(**row)
         except ValidationError as e:

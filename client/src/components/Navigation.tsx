@@ -1,10 +1,9 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useTypedStoreState } from "../state/store";
 import universityLogo from "../assets/images/HY__LD01_LogoFP_EN_B3____BW.png";
 
 export function Navigation() {
   const user = useTypedStoreState((state) => state.user);
-  const [, navigate] = useLocation();
   return (
     <nav
       className="flex items-center justify-between p-6 lg:px-8 flex-nowrap"

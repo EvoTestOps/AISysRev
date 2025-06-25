@@ -1,82 +1,48 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useLocation } from "wouter";
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
-import { useLocation } from "wouter";
+import { CriteriaList } from "../components/CriteriaList";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
-  const [titleInput, setTitleInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
   
-  const [_, navigate] = useLocation();
+  const [, navigate] = useLocation();
 
-  const deleteTitle = () => {
-    setTitle("");
-    setTitleInput("");
-  };
-
-  const handleFilesSelected = (files: File[]) => {
+  const handleFilesSelected = useCallback((files: File[]) => {
     setSelectedFiles((prev) => [...prev, ...files]);
-  };
+  }, []);
 
-  const removeFile = (index: number) => {
+  const removeFile = useCallback((index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const handleInclusionSetup = () => {
+  const handleInclusionSetup = useCallback(() => {
     setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
     setInclusionCriteriaInput("");
-  };
+  }, [inclusionCriteria, inclusionCriteriaInput]);
 
-  const handleExclusionSetup = () => {
+  const handleExclusionSetup = useCallback(() => {
     setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
     setExclusionCriteriaInput("");
-  };
+  }, [exclusionCriteria, exclusionCriteriaInput]);
 
-  const deleteInclusionCriteria = (index: number) => {
+  const deleteInclusionCriteria = useCallback((index: number) => {
     setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
+  }, []);
 
-  const deleteExclusionCriteria = (index: number) => {
+  const deleteExclusionCriteria = useCallback((index: number) => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  };
-  
-  const showCriteriaList = (criteria: string[], onDelete: (index: number) => void) => {
-    if (criteria.length === 0) return null;
-    
-    return (
-      <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-        <div></div>
+  }, []);
 
-        <div className="flex flex-col gap-1">
-          <ul className="list-disc pl-5 space-y-4">
-            {criteria.map((criterion, index) => (
-              <li
-              key={index}
-              className="text-gray-700 flex justify-between items-center"
-              >
-                <span className="flex-1">{criterion}</span>
-                <button
-                  className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap"
-                  onClick={() => onDelete(index)}
-                  >
-                  Delete
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  const handleCreate = async () => {
+  const handleCreate = useCallback(async () => {
     if (!title.trim()) {
       alert("Title is required");
       return;
@@ -94,11 +60,20 @@ export const NewProject = () => {
       });
       navigate("/projects");
       alert('Project created successfully!');
-    } catch (error) {
-      console.error(error);
-      alert('Creating project failed!');
+    } catch (error: any) {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (Array.isArray(parsed)) {
+          const msg = parsed.map((e) => `File: ${e.file}, Row: ${e.row}, Message: ${e.message}`).join("\n");
+          alert("Validation errors:\n" + msg);
+        } else {
+          alert("Project creation failed.");
+        }
+      } catch {
+        alert("Project creation failed!");
+      }
     }
-  };
+  }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
@@ -113,33 +88,9 @@ export const NewProject = () => {
               type="text"
               className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
               placeholder="Enter project title"
-              value={titleInput}
-              onChange={(e) => setTitleInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setTitle(titleInput);
-                }
-              }}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
-          </div>
-
-          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-            <div></div>
-            <ul className="text-sm text-gray-700 space-y-1">
-              {title ? (
-                <li className="flex justify-between items-center">
-                  <span>{title}</span>
-                  <button
-                    className="text-red-500 text-sm hover:underline"
-                    onClick={deleteTitle}
-                  >
-                    Delete
-                  </button>
-                </li>
-              ) : (
-                <li className="text-gray-400 italic">No title yet</li>
-              )}
-            </ul>
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
@@ -154,22 +105,26 @@ export const NewProject = () => {
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <div></div>
 
-            <ul className="text-sm text-gray-700 space-y-1">
-              {selectedFiles.length === 0 && (
-                <li className="text-gray-400 italic">No files selected yet</li>
-              )}
-              {selectedFiles.map((file, idx) => (
-                <li key={idx} className="flex justify-between items-center">
-                  <span>{file.name}</span>
-                  <button
-                    className="text-red-500 text-sm hover:underline"
-                    onClick={() => removeFile(idx)}
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-col gap-1 pl-4">
+                {selectedFiles.length === 0 && (
+                  <p className="text-gray-400 italic">No files selected yet</p>
+                )}
+              <ol className="list-decimal text-gray-700 space-y-4 pl-4">
+                {selectedFiles.map((file, idx) => (
+                  <li key={idx}>
+                    <div className="flex justify-between items-center pr-2">
+                      <span>{file.name}</span>
+                      <button
+                        className="text-red-500 text-sm hover:underline"
+                        onClick={() => removeFile(idx)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
@@ -188,16 +143,17 @@ export const NewProject = () => {
                 }}
               />
               <button
-                className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
+                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
                 onClick={() => handleInclusionSetup()}
               >
                 Add
               </button>
             </div>
           </div>
+          
+          <CriteriaList criteria={inclusionCriteria} onDelete={deleteInclusionCriteria} />
 
-          {showCriteriaList(inclusionCriteria, deleteInclusionCriteria)}
 
           <div className="grid grid-cols-[200px_1fr] items-center gap-4">
             <H6>Exclusion Criteria</H6>
@@ -215,8 +171,8 @@ export const NewProject = () => {
                 }}
               />
               <button
-                className="bg-green-500 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-400 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
+                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
                 onClick={() => handleExclusionSetup()}
               >
                 Add
@@ -224,7 +180,7 @@ export const NewProject = () => {
             </div>
           </div>
 
-          {showCriteriaList(exclusionCriteria, deleteExclusionCriteria)}
+          <CriteriaList criteria={exclusionCriteria} onDelete={deleteExclusionCriteria} />
 
           <div className="flex justify-end items-end gap-4">
             <button
@@ -234,7 +190,6 @@ export const NewProject = () => {
                 setTitle("");
                 setInclusionCriteria([]);
                 setExclusionCriteria([]);
-                setTitleInput("");
                 setInclusionCriteriaInput("");
                 setExclusionCriteriaInput("");
                 setSelectedFiles([]);
