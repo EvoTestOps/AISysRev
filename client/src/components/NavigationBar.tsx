@@ -10,10 +10,10 @@ type NavigationBarProps = {
 export const NavigationBar = ({ name }: NavigationBarProps) => {
   return (
     <nav
-      className="bg-zinc-50 flex justify-between items-start ml-4 py-8"
+      className="bg-neutral-50 flex justify-between items-start py-8"
       aria-label="Global"
     >
-      <div className="flex items-start mr-8 ml-4 flex-shrink-0">
+      <div className="flex items-start mr-8 ml-8 flex-shrink-0">
         <a href="https://www.helsinki.fi/en" className="m-0">
           <span className="sr-only">University of Helsinki</span>
           <img

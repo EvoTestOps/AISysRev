@@ -22,7 +22,7 @@ function App() {
   if (!checkedTerms) return null;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-gray-200">
       <Switch>
         <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />
