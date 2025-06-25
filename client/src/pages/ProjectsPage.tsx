@@ -19,7 +19,8 @@ export const Projects = () => {
 
   useEffect(() => {
     loadProjects();
-  }, [loadProjects]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const handleProjectDelete = useCallback(async (uuid: string) => {
     try {
