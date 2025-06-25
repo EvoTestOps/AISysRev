@@ -13,16 +13,20 @@ export const CreateProject = async (props: CreateProjectProps) => {
   try {
     projectId = await create_project(props.title, props.inclusionCriteria.join(", "), props.exclusionCriteria.join(", "));
     console.log("Project created, id: ", projectId);
-  } catch (error) {
-    console.error("Error creating project:", error);
+  } catch (error: any) {
+    if (error.response?.data?.detail?.errors) {
+      throw new Error(JSON.stringify(error.response.data.detail.errors));
+    }
     throw error;
   }
 
   try {
     const uploadedFiles = await fileUploadToBackend(props.files, projectId);
     console.log("Files uploaded successfully:", uploadedFiles);
-  } catch (error) {
-    console.error("Error uploading files:", error);
+  } catch (error: any) {
+    if (error.response?.data?.detail?.errors) {
+      throw new Error(JSON.stringify(error.response.data.detail.errors));
+    }
     throw error;
   }
 };

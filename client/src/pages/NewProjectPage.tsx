@@ -64,9 +64,18 @@ export const NewProject = () => {
       });
       navigate("/projects");
       alert('Project created successfully!');
-    } catch (error) {
-      console.error(error);
-      alert('Creating project failed!');
+    } catch (error: any) {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (Array.isArray(parsed)) {
+          const msg = parsed.map((e) => `File: ${e.file}, Row: ${e.row}, Message: ${e.message}`).join("\n");
+          alert("Validation errors:\n" + msg);
+        } else {
+          alert("Project creation failed.");
+        }
+      } catch {
+        alert("Project creation failed!");
+      }
     }
   }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
