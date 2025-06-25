@@ -14,7 +14,7 @@ export const NewProject = () => {
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
   
-  const [_, navigate] = useLocation();
+  const [, navigate] = useLocation();
 
   const deleteTitle = () => {
     setTitle("");

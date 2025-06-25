@@ -8,16 +8,16 @@ import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 
 function App() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [checkedTerms, setCheckedTerms] = useState(false);
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
-    if (!hasReadTerms && window.location.pathname !== "/terms-and-conditions") {
+    if (!hasReadTerms && location !== "/terms-and-conditions") {
       navigate("/terms-and-conditions");
     }
     setCheckedTerms(true);
-  }, [navigate]);
+  }, [location, navigate]);
   
   if (!checkedTerms) return null;
 
@@ -28,10 +28,7 @@ function App() {
         <Route path="/projects" component={Projects} />
         <Route path="/create" component={NewProject} />
         <Route path="/about" component={AboutPage} />
-        <Route
-          path="/terms-and-conditions"
-          component={TermsAndConditionsPage}
-        />
+        <Route path="/terms-and-conditions" component={TermsAndConditionsPage}/>
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
