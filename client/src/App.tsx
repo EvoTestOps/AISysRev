@@ -25,7 +25,7 @@ function App() {
 
   return (
     <div className="flex flex-col bg-gray-200">
-      <ToastContainer autoClose={3000}/>
+      <ToastContainer autoClose={4000}/>
       <Switch>
         <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />

@@ -8,6 +8,7 @@ import { CreateProject } from "../components/CreateProject";
 import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
+import { fileUploadToBackend } from "../services/fileUploadService";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -16,7 +17,7 @@ export const NewProject = () => {
   const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
-  
+
   const [, navigate] = useLocation();
 
   const handleFilesSelected = useCallback((files: File[]) => {
@@ -54,16 +55,22 @@ export const NewProject = () => {
       toast.error("At least one file must be added");
       return;
     }
+
+    let id: string;
+    let uuid: string | null = null;
+
     try {
-      const projectUuid = await CreateProject({
+      const res = await CreateProject({
         title,
         files: selectedFiles,
         inclusionCriteria,
         exclusionCriteria,
       });
 
+      id = res.id;
+      uuid = res.uuid;
+
       toast.success('Project created successfully!');
-      navigate(`/project/${projectUuid}`);
     } catch (error: any) {
       try {
         const parsed = JSON.parse(error.message);
@@ -75,14 +82,27 @@ export const NewProject = () => {
       } catch {
         toast.error("Project creation failed!");
       }
+      return;
     }
+
+    try {
+      await fileUploadToBackend(selectedFiles, id);
+    } catch (error: any) {
+      toast.warn("Project created, but file upload failed.");
+      console.log("File upload error:", error);
+      }
+    
+    if (uuid) {
+      navigate(`/project/${uuid}`);
+    }
+    
   }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
       <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
         <div className="flex flex-col gap-8">
-        
+
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <H6>
               Title<span className="text-red-500 font-semibold">*</span>
@@ -101,7 +121,7 @@ export const NewProject = () => {
               List of papers<span className="text-red-500 font-semibold">*</span>
             </H6>
             <div className="w-full">
-              <FileDropArea onFilesSelected={handleFilesSelected}/>
+              <FileDropArea onFilesSelected={handleFilesSelected} />
             </div>
           </div>
 
@@ -109,9 +129,9 @@ export const NewProject = () => {
             <div></div>
 
             <div className="flex flex-col gap-1 pl-4">
-                {selectedFiles.length === 0 && (
-                  <p className="text-gray-400 italic">No files selected yet</p>
-                )}
+              {selectedFiles.length === 0 && (
+                <p className="text-gray-400 italic">No files selected yet</p>
+              )}
               <ol className="list-decimal text-gray-700 space-y-4 pl-4">
                 {selectedFiles.map((file, idx) => (
                   <li key={idx}>
@@ -137,7 +157,7 @@ export const NewProject = () => {
             setCriteriaInput={setInclusionCriteriaInput}
             handleSetup={handleInclusionSetup}
           />
-          
+
           <CriteriaList
             criteria={inclusionCriteria}
             onDelete={deleteInclusionCriteria}
