@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
+import { toast } from 'react-toastify';
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
 import { CriteriaList } from "../components/CriteriaList";
+import { ExpandableToast } from "../components/ExpandableToast";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -44,11 +46,11 @@ export const NewProject = () => {
 
   const handleCreate = useCallback(async () => {
     if (!title.trim()) {
-      alert("Title is required");
+      toast.error("Title is required");
       return;
     }
     if (selectedFiles.length === 0) {
-      alert("At least one file must be added");
+      toast.error("At least one file must be added");
       return;
     }
     try {
@@ -58,19 +60,18 @@ export const NewProject = () => {
         inclusionCriteria,
         exclusionCriteria,
       });
+      toast.success('Project created successfully!');
       navigate("/projects");
-      alert('Project created successfully!');
     } catch (error: any) {
       try {
         const parsed = JSON.parse(error.message);
         if (Array.isArray(parsed)) {
-          const msg = parsed.map((e) => `File: ${e.file}, Row: ${e.row}, Message: ${e.message}`).join("\n");
-          alert("Validation errors:\n" + msg);
+          ExpandableToast(parsed);
         } else {
-          alert("Project creation failed.");
+          toast.error("Project creation failed.");
         }
       } catch {
-        alert("Project creation failed!");
+        toast.error("Project creation failed!");
       }
     }
   }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);

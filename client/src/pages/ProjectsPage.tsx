@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { DisplayProjects } from "../components/DisplayProjects";
 import { fetch_projects, delete_project } from "../services/projectService";
@@ -29,6 +30,7 @@ export const Projects = () => {
         [...prevProjects.filter((project) => project.uuid !== uuid)]
       );
       console.log("Project deleted successfully");
+      toast.success("Project deleted successfully");
     } catch (error) {
       console.error("Error deleting project:", error);
     }
