@@ -8,6 +8,7 @@ import { Projects } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { Project } from "./pages/ProjectPage";
+import { ScreeningPage } from "./pages/ScreeningPage";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -33,6 +34,7 @@ function App() {
         <Route path="/project/:uuid" component={Project} />
         <Route path="/about" component={AboutPage} />
         <Route path="/terms-and-conditions" component={TermsAndConditionsPage}/>
+        <Route path="/screening" component={ScreeningPage}/>
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>

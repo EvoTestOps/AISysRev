@@ -1,20 +1,40 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, HTMLAttributes } from "react";
+import { twMerge } from "tailwind-merge";
 
-export const H1: React.FC<PropsWithChildren> = ({ children }) => (
-  <h1 className="text-5xl font-semibold tracking-normal">{children}</h1>
+type HeadingProps = PropsWithChildren & HTMLAttributes<HTMLHeadingElement>;
+
+export const H1 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h1 className={twMerge("text-5xl font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h1>
 );
-export const H2: React.FC<PropsWithChildren> = ({ children }) => (
-  <h2 className="text-4xl font-semibold tracking-normal">{children}</h2>
+
+export const H2 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h2 className={twMerge("text-4xl font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h2>
 );
-export const H3: React.FC<PropsWithChildren> = ({ children }) => (
-  <h3 className="text-3xl font-semibold tracking-normal">{children}</h3>
+
+export const H3 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h3 className={twMerge("text-3xl font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h3>
 );
-export const H4: React.FC<PropsWithChildren> = ({ children }) => (
-  <h4 className="text-2xl font-semibold tracking-normal">{children}</h4>
+
+export const H4 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h4 className={twMerge("text-2xl font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h4>
 );
-export const H5: React.FC<PropsWithChildren> = ({ children }) => (
-  <h5 className="text-xl font-semibold tracking-normal">{children}</h5>
+
+export const H5 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h5 className={twMerge("text-xl font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h5>
 );
-export const H6: React.FC<PropsWithChildren> = ({ children }) => (
-  <h6 className="text-lg font-semibold tracking-normal">{children}</h6>
+
+export const H6 = ({ children, className = "", ...props }: HeadingProps) => (
+  <h6 className={twMerge("text-lg font-semibold tracking-normal", className)} {...props}>
+    {children}
+  </h6>
 );
