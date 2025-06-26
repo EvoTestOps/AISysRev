@@ -15,8 +15,8 @@ export const CreateProject = async (props: CreateProjectProps) => {
   try {
     const res = await create_project(
       props.title,
-      props.inclusionCriteria.join(", "),
-      props.exclusionCriteria.join(", ")
+      props.inclusionCriteria.join(";"),
+      props.exclusionCriteria.join(";")
     );
     
     projectId = res.id;
