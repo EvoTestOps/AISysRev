@@ -55,14 +55,15 @@ export const NewProject = () => {
       return;
     }
     try {
-      await CreateProject({
+      const projectUuid = await CreateProject({
         title,
         files: selectedFiles,
         inclusionCriteria,
         exclusionCriteria,
       });
+
       toast.success('Project created successfully!');
-      navigate("/projects");
+      navigate(`/project/${projectUuid}`);
     } catch (error: any) {
       try {
         const parsed = JSON.parse(error.message);

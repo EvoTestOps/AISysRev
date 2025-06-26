@@ -1,6 +1,7 @@
 import { H6 } from "../components/Typography";
 import { DropdownMenu } from "../components/DropDownMenu";
 import { Project } from "../state/types";
+import { Link } from "wouter";
 
 type DisplayProjectsProps = {
   projects: Project[];
@@ -24,7 +25,14 @@ export const DisplayProjects = ({ projects, handleProjectDelete }: DisplayProjec
           className="bg-white p-4 mb-4 rounded shadow-lg hover:brightness-125 transition-all duration-200"
         >
           <div className="flex justify-between items-center">
-            <H6>{project.name}</H6>
+            <H6>
+              <Link
+                href={`/project/${project.uuid}`}
+                className="inline-block hover:scale-105 transition duration-200"
+              >
+                {project.name}
+              </Link>
+            </H6>
             <DropdownMenu
               items={[
                 {

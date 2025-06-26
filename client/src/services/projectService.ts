@@ -31,7 +31,7 @@ export const create_project = async (title: string, inclusionCriteria: string, e
           exclusion_criteria: exclusionCriteria
       });
       console.log('Creating project successful', res.data);
-      return res.data.id as string;;
+      return res.data;
   } catch (error) {
       console.log("Creating project unsuccessful", error);
       throw error;

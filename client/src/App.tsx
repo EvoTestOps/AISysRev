@@ -7,6 +7,7 @@ import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { Projects } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
+import { Project } from "./pages/ProjectPage";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -29,6 +30,7 @@ function App() {
         <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />
         <Route path="/create" component={NewProject} />
+        <Route path="/project/:uuid" component={Project} />
         <Route path="/about" component={AboutPage} />
         <Route path="/terms-and-conditions" component={TermsAndConditionsPage}/>
         <Route path="*" component={NotFoundPage} />
