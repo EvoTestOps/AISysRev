@@ -1,5 +1,6 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import { ToastContainer } from "react-toastify";
 import Cookies from "js-cookie";
 import { NotFoundPage } from "./pages/404";
 import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
@@ -23,6 +24,7 @@ function App() {
 
   return (
     <div className="flex flex-col bg-gray-200">
+      <ToastContainer />
       <Switch>
         <Route path="/" component={Projects} />
         <Route path="/projects" component={Projects} />
