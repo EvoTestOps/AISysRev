@@ -1,4 +1,5 @@
 import { useState, useRef, DragEvent } from "react";
+import { toast } from "react-toastify";
 import classNames from 'classnames';
 import DragAndDropIcon from "../assets/images/DragDropIcon.png";
 
@@ -25,18 +26,18 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
       validFiles = getValidCsvFiles(files);
     } catch (error) {
       console.error("Failed to get valid CSV files:", error);
-      alert("An error occurred while validating files.");
+      toast.error("An error occurred while validating files.");
     }
 
     const invalidCount = files.length - validFiles.length;
 
     if (validFiles.length === 0) {
-      alert("Only CSV files are allowed.");
+      toast.error("Only CSV files are allowed.");
       return;
     }
 
     if (invalidCount > 0) {
-      alert(`${invalidCount} file(s) were skipped because they are not CSV files.`);
+      toast.error(`${invalidCount} file(s) were skipped because they are not CSV files.`);
     }
 
     onFilesSelected?.(validFiles);
