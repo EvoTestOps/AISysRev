@@ -5,6 +5,7 @@ import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
+import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
 
@@ -128,66 +129,36 @@ export const NewProject = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-            <H6>Inclusion Criteria</H6>
-            <div className="flex justify-between items-center gap-4">
-              <input
-                type="text"
-                className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
-                placeholder="Inclusion criterion"
-                value={inclusionCriteriaInput}
-                onChange={(e) => setInclusionCriteriaInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleInclusionSetup();
-                  }
-                }}
-              />
-              <button
-                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => handleInclusionSetup()}
-              >
-                Add
-              </button>
-            </div>
-          </div>
+          <CriteriaInput
+            label="Inclusion Criteria"
+            placeholder="Inclusion criterion"
+            value={inclusionCriteriaInput}
+            setCriteriaInput={setInclusionCriteriaInput}
+            handleSetup={handleInclusionSetup}
+          />
           
-          <CriteriaList criteria={inclusionCriteria} onDelete={deleteInclusionCriteria} />
+          <CriteriaList
+            criteria={inclusionCriteria}
+            onDelete={deleteInclusionCriteria}
+          />
 
+          <CriteriaInput
+            label="Exclusion Criteria"
+            placeholder="Exclusion criterion"
+            value={exclusionCriteriaInput}
+            setCriteriaInput={setExclusionCriteriaInput}
+            handleSetup={handleExclusionSetup}
+          />
 
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <H6>Exclusion Criteria</H6>
-            <div className="flex justify-between items-center gap-4">
-              <input
-                type="text"
-                className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
-                placeholder="Exclusion criterion"
-                value={exclusionCriteriaInput}
-                onChange={(e) => setExclusionCriteriaInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleExclusionSetup();
-                  }
-                }}
-              />
-              <button
-                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => handleExclusionSetup()}
-              >
-                Add
-              </button>
-            </div>
-          </div>
-
-          <CriteriaList criteria={exclusionCriteria} onDelete={deleteExclusionCriteria} />
+          <CriteriaList
+            criteria={exclusionCriteria}
+            onDelete={deleteExclusionCriteria}
+          />
 
           <div className="flex justify-end items-end gap-4">
             <button
               className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
-                console.log("Project creation cancelled");
                 setTitle("");
                 setInclusionCriteria([]);
                 setExclusionCriteria([]);
