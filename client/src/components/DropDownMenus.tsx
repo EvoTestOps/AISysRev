@@ -50,13 +50,13 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => (
 export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect }) => {
   return (
     <Menu as="div" className="relative inline-block text-center">
-      <MenuButton className="w-48 bg-natural-100 border-gray-300 border-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer">
+      <MenuButton className="w-48 p-1 bg-natural-100 border-gray-300 border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer">
         {selected || "Select model"}
       </MenuButton>
 
       <MenuItems
         anchor="bottom end"
-        className="block mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
+        className="block border-spacing-0.5 border-gray-300 w-48 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
       >
         {options.map((option) =>
           <MenuItem

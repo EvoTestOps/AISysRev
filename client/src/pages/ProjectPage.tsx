@@ -11,10 +11,13 @@ import { DropdownMenuText } from "../components/DropDownMenus";
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [selectedLlm, setSelectedLlm] = useState<string>("");
+  const [selectedLlm, setSelectedLlm] = useState<string>('');
+  const [temperature, setTemperature] = useState<number>(0.5);
+  const [seed, setSeed] = useState<number>(128);
+  const [top_p, setTop_p] = useState<number>(0.5);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -83,19 +86,73 @@ export const ProjectPage = () => {
 
         </div>
 
-        <div className="flex bg-neutral-50 p-4 rounded-2xl">
-          <H5 className="pr-16">LLM</H5>
-          <DropdownMenuText
-            options={[
-              "gpt-3.5-turbo",
-              "gpt-4o-mini",
-              "chatgpt-4o",
-              "claude-3.5-sonnet",
-              "mistral",
-            ]}
-            selected={selectedLlm}
-            onSelect={setSelectedLlm}
-          />
+        <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
+          <div className="flex pb-4">
+            <H5 className="pr-16">LLM</H5>
+            <DropdownMenuText
+              options={[
+                "gpt-3.5-turbo",
+                "gpt-4o-mini",
+                "chatgpt-4o",
+                "claude-3.5-sonnet",
+                "mistral",
+              ]}
+              selected={selectedLlm}
+              onSelect={setSelectedLlm}
+            />
+          </div>
+
+          <p className="text-md font-bold pt-4 pb-4">LLM configuration</p>
+
+          <div className="flex pt-4 pb-4 justify-between">
+            <p className="text-md font-semibold">Temperature ({temperature})</p>
+            <input
+              type="range"
+              className="pl-2 cursor-pointer bg-gray-200"
+              data-testid="temperature-input"
+              min={0}
+              max={1}
+              step={0.1}
+              value={temperature}
+              onChange={(e) => {
+                e.preventDefault();
+                setTemperature(e.target.valueAsNumber);
+              }}
+            />
+
+          </div>
+
+          <div className="flex pt-4 pb-4 justify-between items-center">
+            <p className="text-md font-semibold">Seed</p>
+            <input
+              type="number"
+              className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
+              data-testid="seed-input"
+              value={seed}
+              onChange={(e) => {
+                e.preventDefault();
+                setSeed(e.target.valueAsNumber);
+              }}
+            />
+          </div>
+
+          <div className="flex pt-4 pb-4 justify-between items-center">
+            <p className="text-md font-semibold">top_p ({top_p})</p>
+            <input
+              type="range"
+              className="pl-2 cursor-pointer bg-gray-200"
+              data-testid="temperature-input"
+              min={0}
+              max={1}
+              step={0.1}
+              value={top_p}
+              onChange={(e) => {
+                e.preventDefault();
+                setTop_p(e.target.valueAsNumber);
+              }}
+            />
+          </div>
+
 
         </div>
       </div>
