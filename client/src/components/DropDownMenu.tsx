@@ -1,12 +1,16 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Ellipsis } from 'lucide-react'
 
-type Item = {
-  label: string; 
+type DropdownItem = {
+  label: string;
   onClick: () => void;
-}
+};
 
-export const DropdownMenu = ({ items }: { items: Item[] }) => (
+type DropdownMenuProps = {
+  items: DropdownItem[];
+};
+
+export const DropdownMenu: React.FC<DropdownMenuProps> = ({ items }) => (
   <Menu as="div" className="relative inline-block text-left">
     <MenuButton
       className="
@@ -22,7 +26,7 @@ export const DropdownMenu = ({ items }: { items: Item[] }) => (
       anchor="bottom end"
       className="z-10 mt-2 w-40 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
     >
-      {items.map((item) => (
+      {items.map((item: DropdownItem) => (
         <MenuItem
           key={item.label}
           as="button"
