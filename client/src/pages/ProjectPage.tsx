@@ -4,18 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import { fetch_project_by_uuid } from "../services/projectService"
 import { H1, H2, H3, H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
+import { Project } from "../state/types";
+import { DropdownMenuText } from "../components/DropDownMenus";
 
-export const Project = () => {
+
+export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [name, setName] = useState<string>("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
+  const [selectedLlm, setSelectedLlm] = useState<string>("");
 
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const project = await fetch_project_by_uuid(uuid);
+        const project: Project = await fetch_project_by_uuid(uuid);
         console.log("Fetched project:", project);
         setName(project.name);
         setInclusionCriteria(
@@ -45,10 +49,10 @@ export const Project = () => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  if (!name) return <div>Loading...</div>;
+  if (!name) return <div>Error</div>;
 
   return (
-    <Layout title={name} className="">
+    <Layout title={name} className="w-5xl">
       <div className="flex space-x-8 items-start">
         <div className="flex flex-col space-y-4 w-7xl">
 
@@ -79,9 +83,20 @@ export const Project = () => {
 
         </div>
 
-        <div className="flex bg-neutral-50 p-24 rounded-2xl">
-          <H5>LLM</H5>
-          
+        <div className="flex bg-neutral-50 p-4 rounded-2xl">
+          <H5 className="pr-16">LLM</H5>
+          <DropdownMenuText
+            options={[
+              "gpt-3.5-turbo",
+              "gpt-4o-mini",
+              "chatgpt-4o",
+              "claude-3.5-sonnet",
+              "mistral",
+            ]}
+            selected={selectedLlm}
+            onSelect={setSelectedLlm}
+          />
+
         </div>
       </div>
     </Layout>

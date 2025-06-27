@@ -1,5 +1,5 @@
 import { H6 } from "../components/Typography";
-import { DropdownMenu } from "../components/DropDownMenu";
+import { DropdownMenuEllipsis } from "./DropDownMenus";
 import { Project } from "../state/types";
 import { Link } from "wouter";
 
@@ -8,7 +8,7 @@ type DisplayProjectsProps = {
   handleProjectDelete: (uuid: string) => void;
 };
 
-export const DisplayProjects = ({ projects, handleProjectDelete }: DisplayProjectsProps) => {
+export const DisplayProjects: React.FC<DisplayProjectsProps> = ({ projects, handleProjectDelete }) => {
   if (projects.length === 0) {
     return (
       <div className="text-center text-gray-500 mt-8">
@@ -33,7 +33,7 @@ export const DisplayProjects = ({ projects, handleProjectDelete }: DisplayProjec
                 {project.name}
               </Link>
             </H6>
-            <DropdownMenu
+            <DropdownMenuEllipsis
               items={[
                 {
                   label: "Delete",
