@@ -158,10 +158,13 @@ export const NewProject = () => {
             handleSetup={handleInclusionSetup}
           />
 
+          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+            <div></div>
           <CriteriaList
             criteria={inclusionCriteria}
             onDelete={deleteInclusionCriteria}
           />
+          </div>
 
           <CriteriaInput
             label="Exclusion Criteria"
@@ -170,11 +173,13 @@ export const NewProject = () => {
             setCriteriaInput={setExclusionCriteriaInput}
             handleSetup={handleExclusionSetup}
           />
-
+          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+            <div></div>
           <CriteriaList
             criteria={exclusionCriteria}
             onDelete={deleteExclusionCriteria}
           />
+          </div>
 
           <div className="flex justify-end items-end gap-4">
             <button

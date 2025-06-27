@@ -1,13 +1,15 @@
 import { PropsWithChildren } from "react";
 import { Helmet } from "react-helmet-async";
-import { NavigationBar } from "./NavigationBar";
 import { useLocation } from "wouter";
+import { twMerge } from "tailwind-merge";
+import { NavigationBar } from "./NavigationBar";
 
 type LayoutProps = {
   title: string;
+  className?: string;
 };
 
-export const Layout = ({ title, children }: PropsWithChildren<LayoutProps>) => {
+export const Layout = ({ title, children, className }: PropsWithChildren<LayoutProps>) => {
   const [location] = useLocation();
 
   const hideNavBar = location === "/terms";
@@ -20,7 +22,7 @@ export const Layout = ({ title, children }: PropsWithChildren<LayoutProps>) => {
 
       {!hideNavBar && <NavigationBar name={title} />}
 
-      <div className="bg-lightgray mt-8 w-4xl p-4 mr-auto ml-auto">{children}</div>
+      <div className={twMerge("mt-8 w-4xl mr-auto ml-auto", className)}>{children}</div>
 
     </div>
   );
