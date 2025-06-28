@@ -1,12 +1,19 @@
-import { Layout } from "../components/Layout";
 import { useParams } from "wouter";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
-import { H1, H2, H3, H4, H5, H6 } from "../components/Typography";
+import { H3, H5 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
 import { Project } from "../state/types";
 import { DropdownMenuText } from "../components/DropDownMenus";
 
+type ScreeningTask = {
+  llm: string;
+  temperature: number;
+  seed: number;
+  top_p: number;
+};
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -18,6 +25,7 @@ export const ProjectPage = () => {
   const [temperature, setTemperature] = useState<number>(0.5);
   const [seed, setSeed] = useState<number>(128);
   const [top_p, setTop_p] = useState<number>(0.5);
+  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -52,13 +60,26 @@ export const ProjectPage = () => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const createTask = () => {
+    if (!selectedLlm) {
+      toast.error("Please select a llm model before creating a task.");
+      return;
+    }
+    const newScreeningTask: ScreeningTask = {
+      llm: selectedLlm,
+      temperature: temperature,
+      seed: seed,
+      top_p: top_p
+    }
+    setScreeningTasks((prev) => ([...prev, newScreeningTask]))
+  }
+
   if (!name) return <div>Error</div>;
 
   return (
     <Layout title={name} className="w-5xl">
       <div className="flex space-x-8 items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-
 
           <div className="grid grid-cols-3 gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
             <p className="col-span-1 font-semibold text-sm">List of papers</p>
@@ -78,12 +99,32 @@ export const ProjectPage = () => {
             </div>
           </div>
 
-
           <H3>Screening tasks</H3>
-          <div className="flex bg-neutral-50 py-12 rounded-2xl">
-            {/* Screening content */}
-          </div>
-
+          {screeningTasks.map(task => (
+            <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+              <p className="flex pl-4 items-center">Task #1</p>
+              <div className="flex">
+                <div className="relative w-48 h-8 px-4">
+                  <progress
+                    value={50}
+                    max={100}
+                    className="h-full w-full
+                      [&::-webkit-progress-bar]:rounded-xl
+                      [&::-webkit-progress-bar]:bg-gray-400
+                      [&::-webkit-progress-value]:bg-blue-200
+                      [&::-webkit-progress-value]:rounded-xl
+"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                    647/4678
+                  </div>
+                </div>
+                <div className="flex px-8 text-md text-red-500 items-center cursor-pointer">
+                  Cancel
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
@@ -119,7 +160,6 @@ export const ProjectPage = () => {
                 setTemperature(e.target.valueAsNumber);
               }}
             />
-
           </div>
 
           <div className="flex pt-4 pb-4 justify-between items-center">
@@ -153,6 +193,16 @@ export const ProjectPage = () => {
             />
           </div>
 
+          <div className="flex justify-end p-4">
+            <button
+              onClick={createTask}
+              title="New Task"
+              aria-label="Learn more about this purple button"
+              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl hover:bg-green-500 cursor-pointer"
+            >
+              New Task
+            </button>
+          </div>
 
         </div>
       </div>

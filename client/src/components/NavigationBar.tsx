@@ -7,7 +7,7 @@ type NavigationBarProps = {
   name: string;
 };
 
-export const NavigationBar = ({ name }: NavigationBarProps) => {
+export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
   return (
     <nav
       className="bg-neutral-50 flex justify-between items-start py-8"
