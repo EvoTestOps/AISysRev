@@ -197,7 +197,7 @@ export const ProjectPage = () => {
             <button
               onClick={createTask}
               title="New Task"
-              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl
+              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl shadow-md
                 hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
             >
               New Task
