@@ -193,12 +193,12 @@ export const ProjectPage = () => {
             />
           </div>
 
-          <div className="flex justify-end p-4">
+          <div className="flex justify-end p-4 pb-2">
             <button
               onClick={createTask}
               title="New Task"
-              aria-label="Learn more about this purple button"
-              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl hover:bg-green-500 cursor-pointer"
+              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl
+                hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
             >
               New Task
             </button>
