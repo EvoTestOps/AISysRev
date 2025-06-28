@@ -73,29 +73,44 @@ export const NewProject = () => {
       toast.success('Project created successfully!');
     } catch (error: any) {
       try {
-        const parsed = JSON.parse(error.message);
+        const msg = typeof error?.message === "string" ? error.message : "";
+        const parsed = JSON.parse(msg);
+
         if (Array.isArray(parsed)) {
           ExpandableToast(parsed);
         } else {
-          toast.error("Project creation failed.");
-        }
-      } catch {
-        toast.error("Project creation failed!");
-      }
+          toast.error("Project creation failed (non-array error).");
+        };
+      } catch (parseError) {
+        console.error("JSON parsing failed:", parseError);
+        toast.error(`Project creation failed: ${error.message || "Unknown error"}`);
+      };
+
       return;
-    }
+    };
 
     try {
       await fileUploadToBackend(selectedFiles, id);
     } catch (error: any) {
-      toast.warn("Project created, but file upload failed.");
+      try {
+        const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
+        const errors = parsed?.detail?.errors;
+        if (Array.isArray(errors)) {
+          ExpandableToast(errors);
+        } else {
+          toast.warn("Project created, but file upload failed.");
+        };
+      } catch {
+        toast.warn("Project created, but file upload failed.");
+      };
+
       console.log("File upload error:", error);
-      }
-    
+    };
+
     if (uuid) {
       navigate(`/project/${uuid}`);
-    }
-    
+    };
+
   }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
@@ -160,10 +175,10 @@ export const NewProject = () => {
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <div></div>
-          <CriteriaList
-            criteria={inclusionCriteria}
-            onDelete={deleteInclusionCriteria}
-          />
+            <CriteriaList
+              criteria={inclusionCriteria}
+              onDelete={deleteInclusionCriteria}
+            />
           </div>
 
           <CriteriaInput
@@ -175,10 +190,10 @@ export const NewProject = () => {
           />
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <div></div>
-          <CriteriaList
-            criteria={exclusionCriteria}
-            onDelete={deleteExclusionCriteria}
-          />
+            <CriteriaList
+              criteria={exclusionCriteria}
+              onDelete={deleteExclusionCriteria}
+            />
           </div>
 
           <div className="flex justify-end items-end gap-4">
