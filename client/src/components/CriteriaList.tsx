@@ -6,7 +6,7 @@ export type CriteriaListProps = {
 };
 
 export const CriteriaList: React.FC<CriteriaListProps> = ({ criteria, onDelete }) => {
-  if (criteria.length === 0) return null;
+  if (!criteria) return null;
 
   return (
     <div className="flex flex-col gap-1 pl-4">

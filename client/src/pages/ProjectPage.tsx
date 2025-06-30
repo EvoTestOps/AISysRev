@@ -5,8 +5,8 @@ import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
 import { H3, H5 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
-import { Project } from "../state/types";
 import { DropdownMenuText } from "../components/DropDownMenus";
+import { Project } from "../state/types";
 
 type ScreeningTask = {
   llm: string;
@@ -18,13 +18,13 @@ type ScreeningTask = {
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState('');
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [selectedLlm, setSelectedLlm] = useState<string>('');
-  const [temperature, setTemperature] = useState<number>(0.5);
-  const [seed, setSeed] = useState<number>(128);
-  const [top_p, setTop_p] = useState<number>(0.5);
+  const [selectedLlm, setSelectedLlm] = useState('');
+  const [temperature, setTemperature] = useState(0.5);
+  const [seed, setSeed] = useState(128);
+  const [top_p, setTop_p] = useState(0.5);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
 
   useEffect(() => {

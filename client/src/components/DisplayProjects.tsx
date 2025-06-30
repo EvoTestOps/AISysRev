@@ -9,7 +9,7 @@ type DisplayProjectsProps = {
 };
 
 export const DisplayProjects: React.FC<DisplayProjectsProps> = ({ projects, handleProjectDelete }) => {
-  if (projects.length === 0) {
+  if (!projects.length) {
     return (
       <div className="text-center text-gray-500 mt-8">
         No Projects

@@ -11,12 +11,12 @@ import { ExpandableToast } from "../components/ExpandableToast";
 import { fileUploadToBackend } from "../services/fileUploadService";
 
 export const NewProject = () => {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState('');
+  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState('');
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
-  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
 
   const [, navigate] = useLocation();
 
@@ -51,7 +51,7 @@ export const NewProject = () => {
       toast.error("Title is required");
       return;
     }
-    if (selectedFiles.length === 0) {
+    if (!selectedFiles.length) {
       toast.error("At least one file must be added");
       return;
     }
@@ -144,7 +144,7 @@ export const NewProject = () => {
             <div></div>
 
             <div className="flex flex-col gap-1 pl-4">
-              {selectedFiles.length === 0 && (
+              {!selectedFiles && (
                 <p className="text-gray-400 italic">No files selected yet</p>
               )}
               <ol className="list-decimal text-gray-700 space-y-4 pl-4">
@@ -166,7 +166,7 @@ export const NewProject = () => {
           </div>
 
           <CriteriaInput
-            label="Inclusion Criteria"
+            label="Inclusion criteria"
             placeholder="Inclusion criterion"
             value={inclusionCriteriaInput}
             setCriteriaInput={setInclusionCriteriaInput}
@@ -182,7 +182,7 @@ export const NewProject = () => {
           </div>
 
           <CriteriaInput
-            label="Exclusion Criteria"
+            label="Exclusion criteria"
             placeholder="Exclusion criterion"
             value={exclusionCriteriaInput}
             setCriteriaInput={setExclusionCriteriaInput}
