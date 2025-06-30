@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
-import { H3, H5 } from "../components/Typography";
+import { H4, H5 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
 import { DropdownMenuText } from "../components/DropDownMenus";
 import { Project } from "../state/types";
@@ -25,6 +25,7 @@ export const ProjectPage = () => {
   const [temperature, setTemperature] = useState(0.5);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.5);
+  const [isLlmSelected, setIsLlmSelected] = useState(true)
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
 
   useEffect(() => {
@@ -63,6 +64,7 @@ export const ProjectPage = () => {
   const createTask = () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
+      setIsLlmSelected(false)
       return;
     }
     const newScreeningTask: ScreeningTask = {
@@ -99,8 +101,8 @@ export const ProjectPage = () => {
             </div>
           </div>
 
-          <H3>Screening tasks</H3>
-          {screeningTasks.map(task => (
+          <H4>Screening tasks</H4>
+          {screeningTasks.map(() => (
             <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
               <p className="flex pl-4 items-center">Task #1</p>
               <div className="flex">
@@ -113,13 +115,13 @@ export const ProjectPage = () => {
                       [&::-webkit-progress-bar]:bg-gray-400
                       [&::-webkit-progress-value]:bg-blue-200
                       [&::-webkit-progress-value]:rounded-xl
-"
+                    "
                   />
                   <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
                     647/4678
                   </div>
                 </div>
-                <div className="flex px-8 text-md text-red-500 items-center cursor-pointer">
+                <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
                   Cancel
                 </div>
               </div>
@@ -140,6 +142,8 @@ export const ProjectPage = () => {
               ]}
               selected={selectedLlm}
               onSelect={setSelectedLlm}
+              isLlmSelected={isLlmSelected}
+              setIsLlmSelected={setIsLlmSelected}
             />
           </div>
 

@@ -1,5 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Ellipsis } from 'lucide-react'
+import { twMerge } from 'tailwind-merge';
 
 type EllipsisItem = {
   label: string;
@@ -14,6 +15,8 @@ export type TextProps = {
   options: string[];
   selected: string;
   onSelect: (value: string) => void;
+  isLlmSelected: boolean;
+  setIsLlmSelected: (isLlmSelected: boolean) => void;
 };
 
 export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
@@ -48,10 +51,14 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
   );
 };
 
-export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect }) => {
+export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect, isLlmSelected, setIsLlmSelected }) => {
+  let className: string = 'border-gray-300';
+  if (!isLlmSelected) {
+    className = 'border-red-500'
+  }
   return (
     <Menu as="div" className="relative inline-block text-center">
-      <MenuButton className="w-48 p-1 bg-natural-100 border-gray-300 border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer">
+      <MenuButton className={twMerge("w-48 p-1 bg-natural-100 {borderColor} border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer", className)}>
         {selected || "Select model"}
       </MenuButton>
 
@@ -64,7 +71,10 @@ export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSel
             className={"block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"}
             key={option}
             as="button"
-            onClick={() => onSelect(option)}
+            onClick={() => {
+              onSelect(option);
+              setIsLlmSelected(true);
+            }}
           >
             {option}
           </MenuItem>
