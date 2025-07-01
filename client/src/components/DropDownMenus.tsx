@@ -54,7 +54,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
 export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect, isLlmSelected, setIsLlmSelected }) => {
   let className: string = 'border-gray-300';
   if (!isLlmSelected) {
-    className = 'border-red-500'
+    className = 'border-red-500 animate-pulse'
   }
   return (
     <Menu as="div" className="relative inline-block text-center">
