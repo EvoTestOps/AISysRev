@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Layout } from "../components/Layout";
-import { H1, H3 } from "../components/Typography";
+import { H3 } from "../components/Typography";
 import { useLocation } from "wouter";
 import Cookies from "js-cookie";
 
@@ -11,7 +11,6 @@ export const TermsAndConditionsPage = () => {
       <Helmet>
         <title>Terms and conditions</title>
       </Helmet>
-      <H1>Terms and conditions</H1>
       <div className="p-2 flex flex-col gap-4 w-full md:w-3/4 xl:w-2/3 2xl:w-2/3 md:mr-auto md:ml-auto">
         <div className="mt-8 mb-4">
           <H3>AI-automated title-abstract screening PoC</H3>
@@ -36,7 +35,7 @@ export const TermsAndConditionsPage = () => {
           </p>
           <div className="p-2 flex justify-center">
             <button
-              className="bg-slate-300 p-2 rounded-md"
+              className="bg-slate-300 p-2 rounded-md shadow-md"
               data-testid="accept-terms-and-conditions"
               onClick={() => {
                 Cookies.set("disclaimer_read", "true", { expires: 14 });

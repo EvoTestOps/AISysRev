@@ -6,5 +6,6 @@ export interface UserModel {
 export type Project = {
   uuid: string;
   name: string;
-  description: string;
+  inclusion_criteria: string;
+  exclusion_criteria: string;
 };

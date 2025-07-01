@@ -5,12 +5,12 @@ import { DisplayProjects } from "../components/DisplayProjects";
 import { fetch_projects, delete_project } from "../services/projectService";
 import { Project } from "../state/types";
 
-export const Projects = () => {
+export const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
   const loadProjects = useCallback(async () => {
     try {
-      const projectsData = await fetch_projects();
+      const projectsData: Project[] = await fetch_projects();
       setProjects(projectsData);
       console.log("Projects loaded successfully");
     } catch (error) {
@@ -30,7 +30,7 @@ export const Projects = () => {
         [...prevProjects.filter((project) => project.uuid !== uuid)]
       );
       console.log("Project deleted successfully");
-      toast.success("Project deleted successfully");
+      toast.success("Project deleted successfully", {autoClose: 1500});
     } catch (error) {
       console.error("Error deleting project:", error);
     }

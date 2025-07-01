@@ -17,15 +17,15 @@ async def get_project(uuid: str, projects: ProjectService = Depends(get_projects
         project = await projects.fetch_by_uuid(uuid)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        return ProjectRead.model_validate(project)
+        return project
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch project: {str(e)}")
 
 @router.post("/project", status_code=status.HTTP_201_CREATED)
 async def create_new_project(project_data: ProjectCreate, projects: ProjectService = Depends(get_projects_service)):
     try:
-        new_id = await projects.create(project_data)
-        return {"id": new_id}
+        new_id, new_uuid = await projects.create(project_data)
+        return {"id": new_id, "uuid": str(new_uuid)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Project creation failed: {str(e)}")
 

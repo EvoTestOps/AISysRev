@@ -70,6 +70,6 @@ export async function query_llm(
     if (errorResponse.success) {
       return right(errorResponse.data.error.message);
     }
-    return right("Unkown error. Please check console");
+    return right("Unknown error. Please check console");
   }
 }

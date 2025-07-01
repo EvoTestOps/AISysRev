@@ -5,17 +5,19 @@ import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
+import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
+import { fileUploadToBackend } from "../services/fileUploadService";
 
 export const NewProject = () => {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState('');
+  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState('');
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
-  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
-  
+
   const [, navigate] = useLocation();
 
   const handleFilesSelected = useCallback((files: File[]) => {
@@ -49,38 +51,73 @@ export const NewProject = () => {
       toast.error("Title is required");
       return;
     }
-    if (selectedFiles.length === 0) {
+    if (!selectedFiles.length) {
       toast.error("At least one file must be added");
       return;
     }
+
+    let id: string;
+    let uuid: string | null = null;
+
     try {
-      await CreateProject({
+      const res = await CreateProject({
         title,
         files: selectedFiles,
         inclusionCriteria,
         exclusionCriteria,
       });
+
+      id = res.id;
+      uuid = res.uuid;
+
       toast.success('Project created successfully!');
-      navigate("/projects");
     } catch (error: any) {
       try {
-        const parsed = JSON.parse(error.message);
+        const msg = typeof error?.message === "string" ? error.message : "";
+        const parsed = JSON.parse(msg);
+
         if (Array.isArray(parsed)) {
           ExpandableToast(parsed);
         } else {
-          toast.error("Project creation failed.");
-        }
+          toast.error("Project creation failed (non-array error).");
+        };
+      } catch (parseError) {
+        console.error("JSON parsing failed:", parseError);
+        toast.error(`Project creation failed: ${error.message || "Unknown error"}`);
+      };
+
+      return;
+    };
+
+    try {
+      await fileUploadToBackend(selectedFiles, id);
+    } catch (error: any) {
+      try {
+        const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
+        const errors = parsed?.detail?.errors;
+        if (Array.isArray(errors)) {
+          ExpandableToast(errors);
+        } else {
+          toast.warn("Project created, but file upload failed.");
+        };
       } catch {
-        toast.error("Project creation failed!");
-      }
-    }
+        toast.warn("Project created, but file upload failed.");
+      };
+
+      console.log("File upload error:", error);
+    };
+
+    if (uuid) {
+      navigate(`/project/${uuid}`);
+    };
+
   }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
       <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
         <div className="flex flex-col gap-8">
-        
+
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <H6>
               Title<span className="text-red-500 font-semibold">*</span>
@@ -99,7 +136,7 @@ export const NewProject = () => {
               List of papers<span className="text-red-500 font-semibold">*</span>
             </H6>
             <div className="w-full">
-              <FileDropArea onFilesSelected={handleFilesSelected}/>
+              <FileDropArea onFilesSelected={handleFilesSelected} />
             </div>
           </div>
 
@@ -107,9 +144,9 @@ export const NewProject = () => {
             <div></div>
 
             <div className="flex flex-col gap-1 pl-4">
-                {selectedFiles.length === 0 && (
-                  <p className="text-gray-400 italic">No files selected yet</p>
-                )}
+              {!selectedFiles && (
+                <p className="text-gray-400 italic">No files selected yet</p>
+              )}
               <ol className="list-decimal text-gray-700 space-y-4 pl-4">
                 {selectedFiles.map((file, idx) => (
                   <li key={idx}>
@@ -128,66 +165,41 @@ export const NewProject = () => {
             </div>
           </div>
 
+          <CriteriaInput
+            label="Inclusion criteria"
+            placeholder="Inclusion criterion"
+            value={inclusionCriteriaInput}
+            setCriteriaInput={setInclusionCriteriaInput}
+            handleSetup={handleInclusionSetup}
+          />
+
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-            <H6>Inclusion Criteria</H6>
-            <div className="flex justify-between items-center gap-4">
-              <input
-                type="text"
-                className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
-                placeholder="Inclusion criterion"
-                value={inclusionCriteriaInput}
-                onChange={(e) => setInclusionCriteriaInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleInclusionSetup();
-                  }
-                }}
-              />
-              <button
-                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => handleInclusionSetup()}
-              >
-                Add
-              </button>
-            </div>
-          </div>
-          
-          <CriteriaList criteria={inclusionCriteria} onDelete={deleteInclusionCriteria} />
-
-
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <H6>Exclusion Criteria</H6>
-            <div className="flex justify-between items-center gap-4">
-              <input
-                type="text"
-                className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
-                placeholder="Exclusion criterion"
-                value={exclusionCriteriaInput}
-                onChange={(e) => setExclusionCriteriaInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleExclusionSetup();
-                  }
-                }}
-              />
-              <button
-                className="bg-green-600 text-white h-8 w-16 rounded-full brightness-110 shadow-sm
-                hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-                onClick={() => handleExclusionSetup()}
-              >
-                Add
-              </button>
-            </div>
+            <div></div>
+            <CriteriaList
+              criteria={inclusionCriteria}
+              onDelete={deleteInclusionCriteria}
+            />
           </div>
 
-          <CriteriaList criteria={exclusionCriteria} onDelete={deleteExclusionCriteria} />
+          <CriteriaInput
+            label="Exclusion criteria"
+            placeholder="Exclusion criterion"
+            value={exclusionCriteriaInput}
+            setCriteriaInput={setExclusionCriteriaInput}
+            handleSetup={handleExclusionSetup}
+          />
+          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+            <div></div>
+            <CriteriaList
+              criteria={exclusionCriteria}
+              onDelete={deleteExclusionCriteria}
+            />
+          </div>
 
           <div className="flex justify-end items-end gap-4">
             <button
               className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
-                console.log("Project creation cancelled");
                 setTitle("");
                 setInclusionCriteria([]);
                 setExclusionCriteria([]);

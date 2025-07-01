@@ -16,7 +16,7 @@ class ProjectService:
         row = await project_crud.fetch_project_by_uuid(self.db, uuid)
         return None if row is None else ProjectRead.model_validate(row)
 
-    async def create(self, data: ProjectCreate) -> int:
+    async def create(self, data: ProjectCreate) -> ProjectRead:
         return await project_crud.create_project(self.db, data)
     
     async def delete(self, uuid: str) -> bool:

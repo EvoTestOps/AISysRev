@@ -1,14 +1,15 @@
 import { H6 } from "../components/Typography";
-import { DropdownMenu } from "../components/DropDownMenu";
+import { DropdownMenuEllipsis } from "./DropDownMenus";
 import { Project } from "../state/types";
+import { Link } from "wouter";
 
 type DisplayProjectsProps = {
   projects: Project[];
   handleProjectDelete: (uuid: string) => void;
 };
 
-export const DisplayProjects = ({ projects, handleProjectDelete }: DisplayProjectsProps) => {
-  if (projects.length === 0) {
+export const DisplayProjects: React.FC<DisplayProjectsProps> = ({ projects, handleProjectDelete }) => {
+  if (!projects.length) {
     return (
       <div className="text-center text-gray-500 mt-8">
         No Projects
@@ -24,8 +25,15 @@ export const DisplayProjects = ({ projects, handleProjectDelete }: DisplayProjec
           className="bg-white p-4 mb-4 rounded shadow-lg hover:brightness-125 transition-all duration-200"
         >
           <div className="flex justify-between items-center">
-            <H6>{project.name}</H6>
-            <DropdownMenu
+            <H6>
+              <Link
+                href={`/project/${project.uuid}`}
+                className="inline-block hover:scale-105 transition duration-200"
+              >
+                {project.name}
+              </Link>
+            </H6>
+            <DropdownMenuEllipsis
               items={[
                 {
                   label: "Delete",
