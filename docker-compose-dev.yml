@@ -87,7 +87,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
-    command: celery -A app.worker worker --loglevel=info
+    command: celery -A src.worker worker --loglevel=info
     environment:
       PYTHONPATH: /app
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -96,6 +96,21 @@ services:
       - redis
     volumes:
       - ./server:/app
+
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+      target: server
+    command: celery -A src.worker flower --port=5555
+    environment:
+      PYTHONPATH: /app
+      CELERY_BROKER_URL: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - backend
+      - redis
 
 volumes:
   postgres_data:
