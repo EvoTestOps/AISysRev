@@ -6,8 +6,10 @@ celery_app = Celery(
     backend="redis://redis:6379/0"
 )
 
-celery_app.conf.task_routes = {
-    "tasks.*": {"queue": "default"},
-}
-
-import src.tasks.example
+celery_app.conf.update(
+    task_serializer='json',
+    result_serializer='json',
+    accept_content=['json'],
+    timezone='UTC',
+    enable_utc=True,
+)
