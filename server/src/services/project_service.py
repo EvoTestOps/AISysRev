@@ -22,5 +22,5 @@ class ProjectService:
     async def delete(self, uuid: str) -> bool:
         return await project_crud.delete_project(self.db, uuid)
     
-def get_projects_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
+def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
     return ProjectService(db)

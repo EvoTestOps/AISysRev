@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 class ProjectCreate(BaseModel):
     uuid: UUID | None = None
     name: str = Field(max_length=255)
-    inclusion_criteria: Optional[str]
-    exclusion_criteria: Optional[str]
+    inclusion_criteria: str
+    exclusion_criteria: str
 
     @field_validator("name", "inclusion_criteria", "exclusion_criteria")
     @classmethod
@@ -18,7 +18,7 @@ class ProjectCreate(BaseModel):
 class ProjectRead(BaseModel):
     uuid: UUID
     name: str = Field(max_length=255)
-    inclusion_criteria: Optional[str]
-    exclusion_criteria: Optional[str]
+    inclusion_criteria: str
+    exclusion_criteria: str
 
     model_config = ConfigDict(from_attributes=True)

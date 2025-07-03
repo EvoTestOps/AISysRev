@@ -11,6 +11,14 @@ class JobService:
     async def fetch_all(self) -> list[JobRead]:
         rows = await job_crud.fetch_jobs(self.db)
         return [JobRead(**row) for row in rows]
+    
+    async def create(self, job_data: JobCreate):
+        new_job = await job_crud.create_jobs(self.db, job_data)
+        return JobRead(
+            uuid=new_job.uuid,
+            project_uuid=job_data.project_uuid,
+            model_conf=new_job.model_config
+        )
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
     return JobService(db)
