@@ -10,7 +10,7 @@ async def fetch_jobs(db: AsyncSession) -> list[JobRead]:
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.model_config.label("model_conf")
+            Job.llm_config
         )
         .join(Project, Project.id == Job.project_id)
     )
@@ -22,7 +22,7 @@ async def fetch_jobs_by_project(db: AsyncSession, project_uuid: UUID):
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.model_config.label("model_conf")
+            Job.llm_config
         )
         .join(Project, Project.id == Job.project_id)
         .where(Project.uuid == project_uuid)
@@ -35,7 +35,7 @@ async def fetch_job_by_uuid(db: AsyncSession, uuid: UUID) -> JobRead:
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.model_config.label("model_conf")
+            Job.llm_config
         )
         .join(Project, Project.id == Job.project_id)
         .where(Job.uuid == uuid)
@@ -55,10 +55,9 @@ async def create_jobs(db: AsyncSession, job_data: JobCreate):
 
     new_job = Job(
         project_id=project.id,
-        model_config=job_data.model_conf.model_dump()
+        llm_config=job_data.llm_config.model_dump()
     )
     db.add(new_job)
     await db.commit()
     await db.refresh(new_job)
     return new_job
-

@@ -9,11 +9,11 @@ class ModelConfig(BaseModel):
 
 class JobCreate(BaseModel):
     project_uuid: UUID
-    model_conf: ModelConfig
+    llm_config: ModelConfig
 
 class JobRead(BaseModel):
     uuid: UUID
     project_uuid: UUID
-    model_conf: ModelConfig
+    llm_config: ModelConfig
 
     model_config = ConfigDict(from_attributes=True)

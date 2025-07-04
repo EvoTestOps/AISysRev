@@ -26,7 +26,7 @@ class JobService:
         return JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
-            model_conf=new_job.model_config
+            llm_config=new_job.llm_config
         )
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
