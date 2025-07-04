@@ -6,9 +6,32 @@ from schemas.job import JobCreate, JobRead
 from uuid import UUID
 
 async def fetch_jobs(db: AsyncSession) -> list[JobRead]:
-    stmt = select(Job)
+    stmt = (
+        select(
+            Job.uuid,
+            Project.uuid.label("project_uuid"),
+            Job.model_config.label("model_conf")
+        )
+        .join(Project, Project.id == Job.project_id)
+    )
     result = await db.execute(stmt)
     return result.mappings().all()
+
+async def fetch_job_by_uuid(db: AsyncSession, uuid: int) -> JobRead:
+    stmt = (
+        select(
+            Job.uuid,
+            Project.uuid.label("project_uuid"),
+            Job.model_config.label("model_conf")
+        )
+        .where(Job.uuid == uuid)
+        .join(Project, Project.id == Job.project_id)
+    )
+    result = await db.execute(stmt)
+    job = result.mappings().one_or_none()
+    if not job:
+        raise ValueError(f"Job with uuid {uuid} not found")
+    return job
 
 async def create_jobs(db: AsyncSession, job_data: JobCreate):
     stmt = select(Project).where(Project.uuid == job_data.project_uuid)
