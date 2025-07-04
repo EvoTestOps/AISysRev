@@ -17,15 +17,28 @@ async def fetch_jobs(db: AsyncSession) -> list[JobRead]:
     result = await db.execute(stmt)
     return result.mappings().all()
 
-async def fetch_job_by_uuid(db: AsyncSession, uuid: int) -> JobRead:
+async def fetch_jobs_by_project(db: AsyncSession, project_uuid: UUID):
     stmt = (
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
             Job.model_config.label("model_conf")
         )
-        .where(Job.uuid == uuid)
         .join(Project, Project.id == Job.project_id)
+        .where(Project.uuid == project_uuid)
+    )
+    result = await db.execute(stmt)
+    return result.mappings().all()
+
+async def fetch_job_by_uuid(db: AsyncSession, uuid: UUID) -> JobRead:
+    stmt = (
+        select(
+            Job.uuid,
+            Project.uuid.label("project_uuid"),
+            Job.model_config.label("model_conf")
+        )
+        .join(Project, Project.id == Job.project_id)
+        .where(Job.uuid == uuid)
     )
     result = await db.execute(stmt)
     job = result.mappings().one_or_none()
@@ -39,7 +52,6 @@ async def create_jobs(db: AsyncSession, job_data: JobCreate):
     project = result.scalar_one_or_none()
     if not project:
         raise ValueError(f"Project with uuid {job_data.project_uuid} not found")
-
 
     new_job = Job(
         project_id=project.id,

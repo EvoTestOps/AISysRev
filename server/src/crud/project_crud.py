@@ -9,7 +9,7 @@ async def fetch_projects(db: AsyncSession) -> list[ProjectRead]:
     result = await db.execute(stmt)
     return result.mappings().all()
 
-async def fetch_project_by_uuid(db: AsyncSession, uuid: str) -> ProjectRead:
+async def fetch_project_by_uuid(db: AsyncSession, uuid: UUID) -> ProjectRead:
     stmt = select(Project).where(Project.uuid == uuid)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -21,7 +21,7 @@ async def create_project(db: AsyncSession, project_data: ProjectCreate) -> tuple
     await db.refresh(new_project)
     return new_project.id, new_project.uuid
 
-async def delete_project(db: AsyncSession, uuid: str) -> bool:
+async def delete_project(db: AsyncSession, uuid: UUID) -> bool:
     stmt = select(Project).where(Project.uuid == uuid)
     result = await db.execute(stmt)
     project = result.scalar_one_or_none()

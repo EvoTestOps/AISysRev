@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.schemas.project import ProjectCreate, ProjectRead
 from src.services.project_service import ProjectService, get_project_service
@@ -12,7 +13,7 @@ async def list_projects(projects: ProjectService = Depends(get_project_service))
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch projects: {str(e)}")
     
 @router.get("/project/{uuid}", status_code=status.HTTP_200_OK, response_model=ProjectRead)
-async def get_project(uuid: str, projects: ProjectService = Depends(get_project_service)):
+async def get_project(uuid: UUID, projects: ProjectService = Depends(get_project_service)):
     try:
         project = await projects.fetch_by_uuid(uuid)
         if not project:
@@ -30,7 +31,7 @@ async def create_new_project(project_data: ProjectCreate, projects: ProjectServi
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Project creation failed: {str(e)}")
 
 @router.delete("/project/{uuid}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(uuid: str, projects: ProjectService = Depends(get_project_service)):
+async def delete_project(uuid: UUID, projects: ProjectService = Depends(get_project_service)):
     try:
         deleted = await projects.delete(uuid)
         if not deleted:

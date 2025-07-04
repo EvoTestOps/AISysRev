@@ -1,18 +1,23 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
 from src.schemas.job import JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
 router = APIRouter(prefix="/api")
 
 @router.get("/job", status_code=status.HTTP_200_OK, response_model=list[JobRead])
-async def get_jobs(jobs: JobService = Depends(get_job_service)):
+async def get_jobs(project: Optional[UUID] = None, jobs: JobService = Depends(get_job_service)):
     try:
-        return await jobs.fetch_all()
+        if project:
+            return await jobs.fetch_by_project(project)
+        else:
+            return await jobs.fetch_all()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch jobs: {str(e)}")
 
 @router.get("/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead)
-async def get_single_job(uuid: str, jobs: JobService = Depends(get_job_service)):
+async def get_single_job(uuid: UUID, jobs: JobService = Depends(get_job_service)):
     try:
         job = await jobs.fetch_by_uuid(uuid)
         if not job:
@@ -20,8 +25,6 @@ async def get_single_job(uuid: str, jobs: JobService = Depends(get_job_service))
         return job
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch job: {str(e)}")
-
-from fastapi import APIRouter, Depends, HTTPException, status, Body
 
 @router.post("/job", status_code=status.HTTP_201_CREATED)
 async def create_job(job_data: JobCreate, jobs: JobService = Depends(get_job_service)):
