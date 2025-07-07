@@ -3,8 +3,7 @@ FROM node:22-alpine AS client
 WORKDIR /app
 ENV PYTHONPATH=/app
 
-COPY client/package.json .
-COPY client/package-lock.json .
+COPY client/package.json client/package-lock.json ./
 
 RUN npm ci
 
@@ -27,8 +26,11 @@ FROM python:3.11-alpine AS server
 
 WORKDIR /app
 
-COPY server/ .
+COPY server/requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server/ .
 
 EXPOSE 8080
 
