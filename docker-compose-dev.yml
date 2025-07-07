@@ -27,10 +27,12 @@ services:
     environment:
       PYTHONPATH: /app
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
+      CELERY_BROKER_URL: redis://redis:6379/0
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - "8080:8080"
+    command: ["./start.sh"]
     volumes:
       - ./server:/app
     develop:
@@ -81,21 +83,6 @@ services:
     container_name: llm_screening_poc_redis
     ports:
       - "6379:6379"
-
-  celery:
-    build:
-      context: .
-      dockerfile: Dockerfile-dev
-      target: server
-    command: celery -A src.worker worker --loglevel=info
-    environment:
-      PYTHONPATH: /app
-      CELERY_BROKER_URL: redis://redis:6379/0
-    depends_on:
-      - backend
-      - redis
-    volumes:
-      - ./server:/app
 
   flower:
     build:

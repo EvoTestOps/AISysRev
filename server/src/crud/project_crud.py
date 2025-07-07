@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.project import Project
-from schemas.project import ProjectCreate, ProjectRead
+from src.models.project import Project
+from src.schemas.project import ProjectCreate, ProjectRead
 from uuid import UUID
 
 async def fetch_projects(db: AsyncSession) -> list[ProjectRead]:

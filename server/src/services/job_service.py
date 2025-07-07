@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import Depends
 from src.db.session import get_db
 from src.crud import job_crud
-from schemas.job import JobCreate, JobRead
+from src.schemas.job import JobCreate, JobRead
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class JobService:

@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models.job import Job
-from models.project import Project
-from schemas.job import JobCreate, JobRead
+from src.models.job import Job
+from src.models.project import Project
+from src.schemas.job import JobCreate, JobRead
 from uuid import UUID
 
 async def fetch_jobs(db: AsyncSession) -> list[JobRead]:

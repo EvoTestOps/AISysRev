@@ -1,7 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.url import make_url
-from db.engine import engine
+from src.db.engine import engine
 
 url = make_url(engine.url)
 print(f"Dialect: {url.get_dialect().__module__}")

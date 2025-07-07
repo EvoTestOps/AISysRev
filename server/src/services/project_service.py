@@ -1,9 +1,9 @@
 from uuid import UUID
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
 from src.crud import project_crud
 from src.schemas.project import ProjectCreate, ProjectRead
-from sqlalchemy.ext.asyncio import AsyncSession
 
 class ProjectService:
     def __init__(self, db: AsyncSession):

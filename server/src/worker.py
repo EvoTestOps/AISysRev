@@ -1,9 +1,12 @@
+import os
 from celery import Celery
+
+broker_url = os.getenv("CELERY_BROKER_URL")
 
 celery_app = Celery(
     "worker",
-    broker="redis://redis:6379/0",
-    backend="redis://redis:6379/0"
+    broker=broker_url,
+    backend=broker_url
 )
 
 celery_app.conf.update(
@@ -13,3 +16,6 @@ celery_app.conf.update(
     timezone='UTC',
     enable_utc=True,
 )
+
+def get_celery():
+    return celery_app
