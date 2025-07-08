@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { toast } from 'react-toastify';
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
-import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
 import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
@@ -19,10 +18,6 @@ export const NewProject = () => {
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
 
   const [, navigate] = useLocation();
-
-  const handleFilesSelected = useCallback((files: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...files]);
-  }, []);
 
   const removeFile = useCallback((index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -129,15 +124,6 @@ export const NewProject = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-          </div>
-
-          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-            <H6>
-              List of papers<span className="text-red-500 font-semibold">*</span>
-            </H6>
-            <div className="w-full">
-              <FileDropArea onFilesSelected={handleFilesSelected} />
-            </div>
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
