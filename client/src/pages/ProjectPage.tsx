@@ -27,6 +27,7 @@ export const ProjectPage = () => {
   const [top_p, setTop_p] = useState(0.5);
   const [isLlmSelected, setIsLlmSelected] = useState(true)
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -46,7 +47,13 @@ export const ProjectPage = () => {
             .map((criterion: string) => criterion.trim())
             .filter(Boolean)
         );
-      } catch (error) {
+        setError(null);
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          setError("Project not found");
+        } else {
+          setError("Failed to fetch Project");
+        }
         console.log("Failed to fetch Project", error)
       }
     };
@@ -68,7 +75,13 @@ export const ProjectPage = () => {
     setScreeningTasks((prev) => ([...prev, newScreeningTask]))
   }
 
-  if (!name) return <div>Error</div>;
+  if (error) {
+    return <div className="font-semibold">{error}</div>;
+  }
+
+  if (!name) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Layout title={name} className="w-5xl">
