@@ -76,11 +76,19 @@ export const ProjectPage = () => {
   }
 
   if (error) {
-    return <div className="font-semibold">{error}</div>;
+    return (
+      <Layout title="Error">
+        <div className="font-semibold">{error}</div>
+      </Layout>
+    )
   }
 
   if (!name) {
-    return <div>Loading...</div>;
+    return (
+      <Layout title="">
+        <div>Loading...</div>
+      </Layout>
+    )
   }
 
   return (
@@ -88,9 +96,8 @@ export const ProjectPage = () => {
       <div className="flex space-x-8 items-start">
         <div className="flex flex-col space-y-4 w-7xl">
 
-          <div className="grid grid-cols-3 gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
-            <p className="col-span-1 font-semibold text-sm">List of papers</p>
-            <div className="col-span-2 flex flex-col text-sm text-gray-700 max-w-sm">
+          <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
+            <div className="flex flex-col text-sm text-gray-700 max-w-md">
               <p className="font-bold pb-2">Inclusion criteria:</p>
               <CriteriaList criteria={inclusionCriteria} />
               <p className="font-bold pb-2 mt-4">Exclusion criteria:</p>
@@ -99,10 +106,10 @@ export const ProjectPage = () => {
           </div>
 
           <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 italic">No screening tasks</p>)}
-          {screeningTasks.map(() => (
-            <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-              <p className="flex pl-4 items-center">Task #1</p>
+          {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
+          {screeningTasks.map((task, idx) => (
+            <div key={idx} className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+              <p className="flex pl-4 items-center">Task #{idx + 1}</p>
               <div className="flex">
                 <div className="relative w-48 h-8 px-4">
                   <progress

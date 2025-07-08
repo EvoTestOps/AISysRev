@@ -28,7 +28,7 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({ projects, hand
             <H6>
               <Link
                 href={`/project/${project.uuid}`}
-                className="inline-block hover:scale-105 transition duration-200"
+                className="inline-block hover:text-blue-900 transition duration-200"
               >
                 {project.name}
               </Link>
