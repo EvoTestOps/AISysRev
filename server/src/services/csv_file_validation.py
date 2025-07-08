@@ -1,6 +1,6 @@
 import csv
 from pydantic import ValidationError
-from schemas.publication import PublicationRowData
+from src.schemas.publication import PublicationRowData
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
 

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.file import File
-from schemas.file_create import FileCreate
+from src.models.file import File
+from src.schemas.file_create import FileCreate
 
 async def create_file_record(db: AsyncSession, file_data: FileCreate):
     new_file = File(**file_data.model_dump(exclude_none=True))

@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Ellipsis } from 'lucide-react'
 import { twMerge } from 'tailwind-merge';
@@ -52,13 +53,17 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
 };
 
 export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect, isLlmSelected, setIsLlmSelected }) => {
-  let className: string = 'border-gray-300';
-  if (!isLlmSelected) {
-    className = 'border-red-500'
-  }
   return (
     <Menu as="div" className="relative inline-block text-center">
-      <MenuButton className={twMerge("w-48 p-1 bg-natural-100 {borderColor} border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer", className)}>
+      <MenuButton
+        className={classNames(
+          "w-48 p-1 bg-natural-100 {borderColor} border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer",
+          {
+            "border-gray-300": isLlmSelected,
+            "border-red-500 animate-pulse": !isLlmSelected,
+          }
+        )}
+      >
         {selected || "Select model"}
       </MenuButton>
 
@@ -66,12 +71,12 @@ export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSel
         anchor="bottom end"
         className="block border-spacing-0.5 border-gray-300 w-48 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
       >
-        {options.map((option) =>
+        {options.map((option: string) =>
           <MenuItem
             className={"block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"}
             key={option}
             as="button"
-            onClick={() => {
+            onClick={(): void => {
               onSelect(option);
               setIsLlmSelected(true);
             }}
