@@ -198,7 +198,7 @@ export const NewProject = () => {
 
           <div className="flex justify-end items-end gap-4">
             <button
-              className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-red-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
                 setTitle("");
                 setInclusionCriteria([]);
@@ -211,7 +211,7 @@ export const NewProject = () => {
               Cancel
             </button>
             <button
-              className="bg-blue-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-blue-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={handleCreate}
             >
               Create
