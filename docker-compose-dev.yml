@@ -28,6 +28,7 @@ services:
       PYTHONPATH: /app
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
       CELERY_BROKER_URL: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/0
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
