@@ -45,6 +45,10 @@ services:
             - dist/
         - action: rebuild
           path: package.json
+    depends_on:
+      - postgres
+      - minio
+      - redis
 
   postgres:
     image: postgres:alpine
