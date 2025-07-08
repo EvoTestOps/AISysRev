@@ -32,6 +32,6 @@ async def create_job(job_data: JobCreate, jobs: JobService = Depends(get_job_ser
         create_job = await jobs.create(job_data)
         return create_job
     except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Job creation failed: {str(e)}")
