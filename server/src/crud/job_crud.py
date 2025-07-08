@@ -10,7 +10,9 @@ async def fetch_jobs(db: AsyncSession) -> list[JobRead]:
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.llm_config
+            Job.llm_config,
+            Job.created_at,
+            Job.updated_at
         )
         .join(Project, Project.id == Job.project_id)
     )
@@ -22,7 +24,9 @@ async def fetch_jobs_by_project(db: AsyncSession, project_uuid: UUID):
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.llm_config
+            Job.llm_config,
+            Job.created_at,
+            Job.updated_at
         )
         .join(Project, Project.id == Job.project_id)
         .where(Project.uuid == project_uuid)
@@ -35,7 +39,9 @@ async def fetch_job_by_uuid(db: AsyncSession, uuid: UUID) -> JobRead:
         select(
             Job.uuid,
             Project.uuid.label("project_uuid"),
-            Job.llm_config
+            Job.llm_config,
+            Job.created_at,
+            Job.updated_at
         )
         .join(Project, Project.id == Job.project_id)
         .where(Job.uuid == uuid)
