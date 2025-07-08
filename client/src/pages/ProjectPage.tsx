@@ -86,6 +86,7 @@ export const ProjectPage = () => {
           </div>
 
           <H4>Screening tasks</H4>
+          {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 italic">No screening tasks</p>)}
           {screeningTasks.map(() => (
             <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
               <p className="flex pl-4 items-center">Task #1</p>
@@ -185,7 +186,7 @@ export const ProjectPage = () => {
             <button
               onClick={createTask}
               title="New Task"
-              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl shadow-md
+              className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
                 hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
             >
               New Task
