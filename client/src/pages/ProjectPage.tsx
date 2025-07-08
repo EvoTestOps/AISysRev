@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
@@ -27,6 +27,7 @@ export const ProjectPage = () => {
   const [top_p, setTop_p] = useState(0.5);
   const [isLlmSelected, setIsLlmSelected] = useState(true)
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -46,20 +47,18 @@ export const ProjectPage = () => {
             .map((criterion: string) => criterion.trim())
             .filter(Boolean)
         );
-      } catch (error) {
+        setError(null);
+      } catch (error: any) {
+        if (error.response?.status === 404) {
+          setError("Project not found");
+        } else {
+          setError("Failed to fetch Project");
+        }
         console.log("Failed to fetch Project", error)
       }
     };
     fetchProject()
   }, [uuid]);
-
-  const deleteInclusionCriteria = useCallback((index: number) => {
-    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const deleteExclusionCriteria = useCallback((index: number) => {
-    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
 
   const createTask = () => {
     if (!selectedLlm) {
@@ -76,35 +75,41 @@ export const ProjectPage = () => {
     setScreeningTasks((prev) => ([...prev, newScreeningTask]))
   }
 
-  if (!name) return <div>Error</div>;
+  if (error) {
+    return (
+      <Layout title="Error">
+        <div className="font-semibold">{error}</div>
+      </Layout>
+    )
+  }
+
+  if (!name) {
+    return (
+      <Layout title="">
+        <div>Loading...</div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout title={name} className="w-5xl">
       <div className="flex space-x-8 items-start">
         <div className="flex flex-col space-y-4 w-7xl">
 
-          <div className="grid grid-cols-3 gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
-            <p className="col-span-1 font-semibold text-sm">List of papers</p>
-            <div className="col-span-2 flex flex-col text-sm text-gray-700 max-w-sm">
+          <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
+            <div className="flex flex-col text-sm text-gray-700 max-w-md">
               <p className="font-bold pb-2">Inclusion criteria:</p>
-              <CriteriaList
-                criteria={inclusionCriteria}
-                onDelete={deleteInclusionCriteria}
-              />
-              <p className="font-bold pb-2 mt-4">
-                Exclusion criteria:
-              </p>
-              <CriteriaList
-                criteria={exclusionCriteria}
-                onDelete={deleteExclusionCriteria}
-              />
+              <CriteriaList criteria={inclusionCriteria} />
+              <p className="font-bold pb-2 mt-4">Exclusion criteria:</p>
+              <CriteriaList criteria={exclusionCriteria} />
             </div>
           </div>
 
           <H4>Screening tasks</H4>
-          {screeningTasks.map(() => (
-            <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-              <p className="flex pl-4 items-center">Task #1</p>
+          {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
+          {screeningTasks.map((task, idx) => (
+            <div key={idx} className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+              <p className="flex pl-4 items-center">Task #{idx + 1}</p>
               <div className="flex">
                 <div className="relative w-48 h-8 px-4">
                   <progress
@@ -201,7 +206,7 @@ export const ProjectPage = () => {
             <button
               onClick={createTask}
               title="New Task"
-              className="bg-green-600 text-white w-fit py-2 px-4 text-md rounded-2xl shadow-md
+              className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
                 hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
             >
               New Task
