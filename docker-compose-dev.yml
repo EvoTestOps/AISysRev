@@ -32,7 +32,6 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - "8080:8080"
-    command: ["./start.sh"]
     volumes:
       - ./server:/app
     develop:
@@ -77,12 +76,27 @@ services:
     volumes:
       - minio_csv_data:/csv_data
       - minio_data:/data
-      
+
   redis:
     image: redis:7
     container_name: llm_screening_poc_redis
     ports:
       - "6379:6379"
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+      target: server
+    command: celery -A src.worker worker --loglevel=info
+    environment:
+      PYTHONPATH: /app
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+    volumes:
+      - ./server:/app
 
   flower:
     build:

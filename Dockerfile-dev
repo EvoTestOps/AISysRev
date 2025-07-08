@@ -26,11 +26,15 @@ FROM python:3.11-alpine AS server
 
 WORKDIR /app
 
+RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
+
 COPY server/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server/ .
+
+USER celeryuser
 
 EXPOSE 8080
 
