@@ -2,7 +2,7 @@ import React from 'react';
 
 export type CriteriaListProps = {
   criteria: string[];
-  onDelete: (index: number) => void;
+  onDelete?: (index: number) => void;
 };
 
 export const CriteriaList: React.FC<CriteriaListProps> = ({ criteria, onDelete }) => {
@@ -15,12 +15,14 @@ export const CriteriaList: React.FC<CriteriaListProps> = ({ criteria, onDelete }
           <li key={index}>
             <div className="text-gray-700 flex justify-between items-center pr-2">
               <span className="flex-1">{criterion}</span>
-              <button
-                className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap cursor-pointer"
-                onClick={() => onDelete(index)}
-              >
-                Delete
-              </button>
+              {onDelete && (
+                <button
+                  className="text-red-500 text-sm ml-4 hover:underline whitespace-nowrap cursor-pointer"
+                  onClick={() => onDelete(index)}
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </li>
         ))}

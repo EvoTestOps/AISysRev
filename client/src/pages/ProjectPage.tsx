@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
@@ -53,14 +53,6 @@ export const ProjectPage = () => {
     fetchProject()
   }, [uuid]);
 
-  const deleteInclusionCriteria = useCallback((index: number) => {
-    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const deleteExclusionCriteria = useCallback((index: number) => {
-    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
   const createTask = () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
@@ -87,17 +79,9 @@ export const ProjectPage = () => {
             <p className="col-span-1 font-semibold text-sm">List of papers</p>
             <div className="col-span-2 flex flex-col text-sm text-gray-700 max-w-sm">
               <p className="font-bold pb-2">Inclusion criteria:</p>
-              <CriteriaList
-                criteria={inclusionCriteria}
-                onDelete={deleteInclusionCriteria}
-              />
-              <p className="font-bold pb-2 mt-4">
-                Exclusion criteria:
-              </p>
-              <CriteriaList
-                criteria={exclusionCriteria}
-                onDelete={deleteExclusionCriteria}
-              />
+              <CriteriaList criteria={inclusionCriteria} />
+              <p className="font-bold pb-2 mt-4">Exclusion criteria:</p>
+              <CriteriaList criteria={exclusionCriteria} />
             </div>
           </div>
 
