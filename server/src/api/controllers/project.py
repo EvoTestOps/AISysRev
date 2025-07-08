@@ -35,7 +35,7 @@ async def delete_project(uuid: UUID, projects: ProjectService = Depends(get_proj
     try:
         deleted = await projects.delete(uuid)
         if not deleted:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Project not found")
         return {"detail": "Project deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to delete project: {str(e)}")

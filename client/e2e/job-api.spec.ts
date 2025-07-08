@@ -33,6 +33,9 @@ test.beforeAll(async ({ request }) => {
   expect(createJobRes.status(), 'job should be created').toBe(201);
 
   mockCreateJob = await createJobRes.json()
+
+  expect(mockCreateJob.uuid).toBeTruthy();
+  expect(mockCreateJob.project_uuid).toBe(mockProject.uuid);
 });
 
 test('Fetch all jobs returns 200 and an array with the mock job', async ({
@@ -71,7 +74,7 @@ test('Fetch single job by UUID returns the correct job', async ({ request }) => 
   expect(job.llm_config.top_p).toBe(0.9)
 });
 
-test('Creating a job with invalid project UUID returns 404', async ({ request }) => {
+test('Creating a job with invalid project UUID returns 400', async ({ request }) => {
   const res = await request.post('/api/job', {
     data: {
       project_uuid: '00000000-0000-0000-0000-000000000000',
@@ -83,7 +86,7 @@ test('Creating a job with invalid project UUID returns 404', async ({ request })
       },
     },
   });
-  expect(res.status()).toBe(404);
+  expect(res.status()).toBe(400);
   const body = await res.json();
   expect(body.detail).toContain('not found');
 });
