@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import Depends, HTTPException, UploadFile
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,7 @@ class FileService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def process_files(self, project_id: str, files: List[UploadFile]) -> dict:
+    async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:
         errors = []
         valid_filenames = []
 
@@ -24,7 +25,7 @@ class FileService:
 
             try:
                 file_data = FileCreate(
-                    project_id=int(project_id),
+                    project_uuid=project_uuid,
                     filename=f.filename,
                     mime_type=f.content_type
                 )

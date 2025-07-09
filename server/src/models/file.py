@@ -9,6 +9,6 @@ class File(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
-    project_id = Column(Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False)
+    project_uuid = Column(UUID(as_uuid=True), nullable=False)
     filename = Column(String(255), nullable=False)
     mime_type = Column(String(255), nullable=False)

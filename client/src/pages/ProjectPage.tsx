@@ -97,7 +97,7 @@ export const ProjectPage = () => {
         if (Array.isArray(errors)) {
           ExpandableToast(errors);
         } else {
-          toast.warn("Project created, but file upload failed.");
+          toast.warn("File upload failed.");
         };
       } catch {
         toast.warn("Project created, but file upload failed.");

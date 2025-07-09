@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class FileCreate(BaseModel):
     uuid: UUID | None = None
-    project_id: int = Field(gt=0)
+    project_uuid: UUID
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
 
