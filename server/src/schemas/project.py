@@ -1,5 +1,6 @@
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class ProjectCreate(BaseModel):
@@ -20,5 +21,7 @@ class ProjectRead(BaseModel):
     name: str = Field(max_length=255)
     inclusion_criteria: str
     exclusion_criteria: str
+    created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

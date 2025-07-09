@@ -26,7 +26,9 @@ class JobService:
         return JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
-            llm_config=new_job.llm_config
+            llm_config=new_job.llm_config,
+            created_at=new_job.created_at,
+            updated_at=new_job.updated_at
         )
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
