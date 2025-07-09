@@ -7,7 +7,7 @@ import { CreateProject } from "../components/CreateProject";
 import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
-import { fileUploadToBackend } from "../services/fileUploadService";
+import { fileUploadToBackend } from "../services/fileService";
 
 export const NewProject = () => {
   const [title, setTitle] = useState('');

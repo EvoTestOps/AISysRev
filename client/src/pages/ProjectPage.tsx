@@ -8,7 +8,7 @@ import { CriteriaList } from "../components/CriteriaList";
 import { DropdownMenuText } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { Project } from "../state/types";
-import { fileUploadToBackend } from "../services/fileUploadService";
+import { fileUploadToBackend } from "../services/fileService";
 import { ExpandableToast } from "../components/ExpandableToast";
 
 type ScreeningTask = {
@@ -118,6 +118,8 @@ export const ProjectPage = () => {
       }
     })();
   }, [selectedFiles.length, uploadFilesToBackend])
+
+  
 
   if (error) {
     return (

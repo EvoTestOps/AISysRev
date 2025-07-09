@@ -19,4 +19,7 @@ async def process_csv(
     files: List[UploadFile] = File(...), 
     file_service: FileService = Depends(get_file_service),
 ):
-    return await file_service.process_files(project_uuid, files)
+    try:
+        return await file_service.process_files(project_uuid, files)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to upload files: {str(e)}")

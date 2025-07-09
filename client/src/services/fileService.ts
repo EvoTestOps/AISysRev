@@ -15,3 +15,14 @@ export const fileUploadToBackend = async (files: File[], projectUuid: string) =>
     throw error;
   }
 };
+
+export const fileFetchFromBackend = async (projectUuid: string) => {
+  try {
+    const res = await axios.get(`/api/files/${projectUuid}`);
+    console.log("Fetch successful:", res.data);
+    return res.data;
+  } catch (error) {
+    console.log("File fetch error: ", error);
+    throw error;
+  }
+};
