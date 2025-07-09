@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { toast } from 'react-toastify';
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
-import { FileDropArea } from '../components/FileDropArea'
 import { CreateProject } from "../components/CreateProject";
 import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
@@ -19,10 +18,6 @@ export const NewProject = () => {
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
 
   const [, navigate] = useLocation();
-
-  const handleFilesSelected = useCallback((files: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...files]);
-  }, []);
 
   const removeFile = useCallback((index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -132,15 +127,6 @@ export const NewProject = () => {
           </div>
 
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-            <H6>
-              List of papers<span className="text-red-500 font-semibold">*</span>
-            </H6>
-            <div className="w-full">
-              <FileDropArea onFilesSelected={handleFilesSelected} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <div></div>
 
             <div className="flex flex-col gap-1 pl-4">
@@ -198,7 +184,7 @@ export const NewProject = () => {
 
           <div className="flex justify-end items-end gap-4">
             <button
-              className="bg-red-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-red-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
                 setTitle("");
                 setInclusionCriteria([]);
@@ -211,7 +197,7 @@ export const NewProject = () => {
               Cancel
             </button>
             <button
-              className="bg-blue-600 text-white font-semibold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-blue-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={handleCreate}
             >
               Create
