@@ -6,12 +6,16 @@ from minio.error import S3Error
 from src.db.session import get_db
 from src.services.csv_file_validation import validate_csv
 from src.services.minio_file_uploader import minio_file_uploader
-from src.crud.file_crud import create_file_record
-from src.schemas.file_create import FileCreate
+from src.crud import file_crud
+from src.schemas.file import FileCreate, FileRead
 
 class FileService:
     def __init__(self, db: AsyncSession):
         self.db = db
+    
+    async def fetch_all(self, project_uuid: UUID):
+        rows = await file_crud.fetch_files(project_uuid)
+        return [FileRead(**row) for row in rows]
 
     async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:
         errors = []
@@ -30,7 +34,7 @@ class FileService:
                     mime_type=f.content_type
                 )
 
-                await create_file_record(self.db, file_data)
+                await file_crud.create_file_record(self.db, file_data)
                 
                 minio_file_uploader(f.file, f.filename)
                 valid_filenames.append(f.filename)

@@ -13,3 +13,9 @@ class FileCreate(BaseModel):
         if not v.strip():
             raise ValueError(f"{field.field_name} must be a non-empty string")
         return v
+
+class FileRead(BaseModel):
+    uuid: UUID
+    project_uuid: UUID
+    filename: str = Field(max_length=255)
+    mime_type: str = Field(max_length=255)
