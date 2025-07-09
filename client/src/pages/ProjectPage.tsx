@@ -1,12 +1,15 @@
 import { useParams } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
-import { H4, H5 } from "../components/Typography";
+import { H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
 import { DropdownMenuText } from "../components/DropDownMenus";
+import { FileDropArea } from "../components/FileDropArea";
 import { Project } from "../state/types";
+import { fileUploadToBackend } from "../services/fileUploadService";
+import { ExpandableToast } from "../components/ExpandableToast";
 
 type ScreeningTask = {
   llm: string;
@@ -19,6 +22,7 @@ export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [name, setName] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [selectedLlm, setSelectedLlm] = useState('');
@@ -51,8 +55,10 @@ export const ProjectPage = () => {
       } catch (error: any) {
         if (error.response?.status === 404) {
           setError("Project not found");
+          toast.error("Project not found");
         } else {
           setError("Failed to fetch Project");
+          toast.error("Failed to fetch Project")
         }
         console.log("Failed to fetch Project", error)
       }
@@ -74,6 +80,43 @@ export const ProjectPage = () => {
     }
     setScreeningTasks((prev) => ([...prev, newScreeningTask]))
   }
+
+  const handleFilesSelected = useCallback((files: File[]) => {
+    setSelectedFiles((prev) => [...prev, ...files]);
+
+  }, []);
+
+  const uploadFilesToBackend = useCallback(async () => {
+    try {
+      await fileUploadToBackend(selectedFiles, uuid);
+    } catch (error: any) {
+      try {
+        const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
+        const errors = parsed?.detail?.errors;
+        if (Array.isArray(errors)) {
+          ExpandableToast(errors);
+        } else {
+          toast.warn("Project created, but file upload failed.");
+        };
+      } catch {
+        toast.warn("Project created, but file upload failed.");
+      };
+      console.log("File upload error:", error);
+      throw error;
+    };
+  }, [selectedFiles, uuid]);
+
+  useEffect(() => {
+    if (selectedFiles.length === 0) return;
+
+    (async () => {
+      try {
+        await uploadFilesToBackend();
+      } catch (error) {
+        console.error("Problem uploading the files", error);
+      }
+    })();
+  }, [uuid, selectedFiles, uploadFilesToBackend])
 
   if (error) {
     return (
@@ -134,83 +177,90 @@ export const ProjectPage = () => {
           ))}
         </div>
 
-        <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
-          <div className="flex pb-4">
-            <H5 className="pr-16">LLM</H5>
-            <DropdownMenuText
-              options={[
-                "gpt-3.5-turbo",
-                "gpt-4o-mini",
-                "chatgpt-4o",
-                "claude-3.5-sonnet",
-                "mistral",
-              ]}
-              selected={selectedLlm}
-              onSelect={setSelectedLlm}
-              isLlmSelected={isLlmSelected}
-              setIsLlmSelected={setIsLlmSelected}
-            />
+        <div className="flex flex-col space-y-4">
+          <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
+            <FileDropArea onFilesSelected={handleFilesSelected} />
+            <H6 className="pt-4 pb-4">List of papers</H6>
           </div>
 
-          <p className="text-md font-bold pt-4 pb-4">LLM configuration</p>
+          <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
+            <div className="flex pb-4">
+              <H5 className="pr-16">LLM</H5>
+              <DropdownMenuText
+                options={[
+                  "gpt-3.5-turbo",
+                  "gpt-4o-mini",
+                  "chatgpt-4o",
+                  "claude-3.5-sonnet",
+                  "mistral",
+                ]}
+                selected={selectedLlm}
+                onSelect={setSelectedLlm}
+                isLlmSelected={isLlmSelected}
+                setIsLlmSelected={setIsLlmSelected}
+              />
+            </div>
 
-          <div className="flex pt-4 pb-4 justify-between">
-            <p className="text-md font-semibold">Temperature ({temperature})</p>
-            <input
-              type="range"
-              className="pl-2 cursor-pointer bg-gray-200"
-              data-testid="temperature-input"
-              min={0}
-              max={1}
-              step={0.1}
-              value={temperature}
-              onChange={(e) => {
-                e.preventDefault();
-                setTemperature(e.target.valueAsNumber);
-              }}
-            />
-          </div>
+            <p className="text-md font-bold pt-4 pb-4">LLM configuration</p>
 
-          <div className="flex pt-4 pb-4 justify-between items-center">
-            <p className="text-md font-semibold">Seed</p>
-            <input
-              type="number"
-              className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
-              data-testid="seed-input"
-              value={seed}
-              onChange={(e) => {
-                e.preventDefault();
-                setSeed(e.target.valueAsNumber);
-              }}
-            />
-          </div>
+            <div className="flex pt-4 pb-4 justify-between">
+              <p className="text-md font-semibold">Temperature ({temperature})</p>
+              <input
+                type="range"
+                className="pl-2 cursor-pointer bg-gray-200"
+                data-testid="temperature-input"
+                min={0}
+                max={1}
+                step={0.1}
+                value={temperature}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setTemperature(e.target.valueAsNumber);
+                }}
+              />
+            </div>
 
-          <div className="flex pt-4 pb-4 justify-between items-center">
-            <p className="text-md font-semibold">top_p ({top_p})</p>
-            <input
-              type="range"
-              className="pl-2 cursor-pointer bg-gray-200"
-              data-testid="temperature-input"
-              min={0}
-              max={1}
-              step={0.1}
-              value={top_p}
-              onChange={(e) => {
-                e.preventDefault();
-                setTop_p(e.target.valueAsNumber);
-              }}
-            />
-          </div>
+            <div className="flex pt-4 pb-4 justify-between items-center">
+              <p className="text-md font-semibold">Seed</p>
+              <input
+                type="number"
+                className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
+                data-testid="seed-input"
+                value={seed}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSeed(e.target.valueAsNumber);
+                }}
+              />
+            </div>
 
-          <div className="flex justify-end p-4 pb-2">
-            <button
-              onClick={createTask}
-              title="New Task"
-              className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
-            >
-              New Task
-            </button>
+            <div className="flex pt-4 pb-4 justify-between items-center">
+              <p className="text-md font-semibold">top_p ({top_p})</p>
+              <input
+                type="range"
+                className="pl-2 cursor-pointer bg-gray-200"
+                data-testid="temperature-input"
+                min={0}
+                max={1}
+                step={0.1}
+                value={top_p}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setTop_p(e.target.valueAsNumber);
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end p-4 pb-2">
+              <button
+                onClick={createTask}
+                title="New Task"
+                className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
+                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
+              >
+                New Task
+              </button>
+            </div>
           </div>
 
         </div>

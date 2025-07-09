@@ -46,23 +46,16 @@ export const NewProject = () => {
       toast.error("Title is required");
       return;
     }
-    if (!selectedFiles.length) {
-      toast.error("At least one file must be added");
-      return;
-    }
 
-    let id: string;
     let uuid: string | null = null;
 
     try {
       const res = await CreateProject({
         title,
-        files: selectedFiles,
         inclusionCriteria,
         exclusionCriteria,
       });
 
-      id = res.id;
       uuid = res.uuid;
 
       toast.success('Project created successfully!');
@@ -84,29 +77,11 @@ export const NewProject = () => {
       return;
     };
 
-    try {
-      await fileUploadToBackend(selectedFiles, id);
-    } catch (error: any) {
-      try {
-        const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
-        const errors = parsed?.detail?.errors;
-        if (Array.isArray(errors)) {
-          ExpandableToast(errors);
-        } else {
-          toast.warn("Project created, but file upload failed.");
-        };
-      } catch {
-        toast.warn("Project created, but file upload failed.");
-      };
-
-      console.log("File upload error:", error);
-    };
-
     if (uuid) {
       navigate(`/project/${uuid}`);
     };
 
-  }, [title, selectedFiles, inclusionCriteria, exclusionCriteria, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
