@@ -89,6 +89,7 @@ export const ProjectPage = () => {
   const uploadFilesToBackend = useCallback(async () => {
     try {
       await fileUploadToBackend(selectedFiles, uuid);
+      setSelectedFiles([]);
     } catch (error: any) {
       try {
         const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
@@ -116,7 +117,7 @@ export const ProjectPage = () => {
         console.error("Problem uploading the files", error);
       }
     })();
-  }, [uuid, selectedFiles, uploadFilesToBackend])
+  }, [selectedFiles.length, uploadFilesToBackend])
 
   if (error) {
     return (
