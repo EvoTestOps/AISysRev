@@ -1,28 +1,23 @@
 import { useParams } from "wouter";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
-import { Layout } from "../components/Layout";
 import { fetch_project_by_uuid } from "../services/projectService"
+import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
 import { DropdownMenuText } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
-import { Project } from "../state/types";
-import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ExpandableToast } from "../components/ExpandableToast";
+import { TruncatedFileNames } from "../components/TruncatedFileNames";
+import { Project } from "../state/types";
+import { FetchedFile } from "../state/types";
+import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 
 type ScreeningTask = {
   llm: string;
   temperature: number;
   seed: number;
   top_p: number;
-};
-
-type FetchedFile = {
-  uuid: string;
-  project_uuid: string;
-  filename: string;
-  mime_type: string;
 };
 
 export const ProjectPage = () => {
@@ -208,13 +203,7 @@ export const ProjectPage = () => {
           <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
             <FileDropArea onFilesSelected={handleFilesSelected} />
             <H6 className="pt-4 pb-4">List of papers</H6>
-            <div className="flex flex-col space-y-2">
-              {fetchedFiles.length == 0 && <p className="text-gray-400 ml-1 italic">No files added</p>}
-              {fetchedFiles.map((file, idx) => (
-                console.log("File:", file),
-                <p key={idx} className="text-sm font-medium">{file.filename}</p>
-              ))}
-            </div>
+            <TruncatedFileNames files={fetchedFiles} maxLength={25} />
           </div>
 
           <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
