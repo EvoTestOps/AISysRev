@@ -8,7 +8,7 @@ import { CriteriaList } from "../components/CriteriaList";
 import { DropdownMenuText } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { Project } from "../state/types";
-import { fileUploadToBackend } from "../services/fileService";
+import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ExpandableToast } from "../components/ExpandableToast";
 
 type ScreeningTask = {
@@ -23,6 +23,7 @@ export const ProjectPage = () => {
   const uuid = params.uuid;
   const [name, setName] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fetchedFiles, setFetchedFiles] = useState<File[]>([])
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [selectedLlm, setSelectedLlm] = useState('');
@@ -115,7 +116,26 @@ export const ProjectPage = () => {
     })();
   }, [selectedFiles.length, uploadFilesToBackend])
 
+  const fetchFiles = useCallback(async () => {
+    try {
+      const files = await fileFetchFromBackend(uuid);
+      setFetchedFiles(files);
+    } catch (error) {
+      toast.warn("Fetching file(s) failed.");
+      console.log("File fetch error:", error);
+      throw error;
+    }
+  }, [uuid]);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        await fetchFiles();
+      } catch (error) {
+        console.error("Problem fetching the files", error);
+      }
+    })();
+  }, [fetchFiles]);
 
   if (error) {
     return (

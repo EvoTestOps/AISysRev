@@ -6,7 +6,7 @@ from src.schemas.file import FileRead
 
 router = APIRouter(prefix="/api")
 
-@router.get("/files", status_code=status.HTTP_200_OK, response_model=list[FileRead])
+@router.get("/files/{project_uuid}", status_code=status.HTTP_200_OK, response_model=list[FileRead])
 async def list_files(project_uuid: UUID, files: FileService = Depends(get_file_service)):
     try:
         return await files.fetch_all(project_uuid)

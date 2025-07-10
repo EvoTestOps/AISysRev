@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export const fileFetchFromBackend = async (projectUuid: string) => {
   try {
+    console.log("Fetching files for project UUID:", projectUuid);
     const res = await axios.get(`/api/files/${projectUuid}`);
     console.log("Fetch successful:", res.data);
     return res.data;

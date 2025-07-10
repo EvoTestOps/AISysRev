@@ -1,5 +1,5 @@
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class FileCreate(BaseModel):
     uuid: UUID | None = None
@@ -19,3 +19,5 @@ class FileRead(BaseModel):
     project_uuid: UUID
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
+
+    model_config = ConfigDict(from_attributes=True)

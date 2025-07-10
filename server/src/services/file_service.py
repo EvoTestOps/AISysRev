@@ -14,7 +14,7 @@ class FileService:
         self.db = db
     
     async def fetch_all(self, project_uuid: UUID):
-        rows = await file_crud.fetch_files(project_uuid)
+        rows = await file_crud.fetch_files(self.db, project_uuid)
         return [FileRead(**row) for row in rows]
 
     async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:
