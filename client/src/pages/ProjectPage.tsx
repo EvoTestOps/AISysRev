@@ -37,7 +37,6 @@ export const ProjectPage = () => {
     const fetchProject = async () => {
       try {
         const project: Project = await fetch_project_by_uuid(uuid);
-        console.log("Fetched project:", project);
         setName(project.name);
         setInclusionCriteria(
           project.inclusion_criteria
@@ -88,20 +87,15 @@ export const ProjectPage = () => {
 
   const uploadFilesToBackend = useCallback(async () => {
     try {
-      await fileUploadToBackend(selectedFiles, uuid);
-      setSelectedFiles([]);
+      const res = await fileUploadToBackend(selectedFiles, uuid);
+      if (res.valid_filenames && res.valid_filenames.length > 0) {
+        toast.success(`${res.valid_filenames.length} file(s) uploaded`);
+      }
+      if (res.errors && res.errors.length > 0) {
+        ExpandableToast(res.errors);
+      }
     } catch (error: any) {
-      try {
-        const parsed = JSON.parse(error?.response?.request?.response ?? error.message);
-        const errors = parsed?.detail?.errors;
-        if (Array.isArray(errors)) {
-          ExpandableToast(errors);
-        } else {
-          toast.warn("File upload failed.");
-        };
-      } catch {
-        toast.warn("Project created, but file upload failed.");
-      };
+      toast.warn("File upload failed.");
       console.log("File upload error:", error);
       throw error;
     };
@@ -113,13 +107,15 @@ export const ProjectPage = () => {
     (async () => {
       try {
         await uploadFilesToBackend();
+        setSelectedFiles([]);
       } catch (error) {
+        setSelectedFiles([]);
         console.error("Problem uploading the files", error);
       }
     })();
   }, [selectedFiles.length, uploadFilesToBackend])
 
-  
+
 
   if (error) {
     return (

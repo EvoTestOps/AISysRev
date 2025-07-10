@@ -33,27 +33,16 @@ class FileService:
                     filename=f.filename,
                     mime_type=f.content_type
                 )
-
                 await file_crud.create_file_record(self.db, file_data)
-                
                 minio_file_uploader(f.file, f.filename)
                 valid_filenames.append(f.filename)
 
             except S3Error as e:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"MinIO upload failed: {str(e)}"
-                )
-
-        if errors:
-            raise HTTPException(
-                status_code=400, 
-                detail={"errors": errors}
-            )
+                errors.append({"file": f.filename, "message": f"MinIO upload failed: {str(e)}"})
         
         return {
-            "status": "received",
-            "valid_filenames": valid_filenames
+            "valid_filenames": valid_filenames,
+            "errors": errors,
         }
 
 def get_file_service(db: AsyncSession = Depends(get_db)) -> FileService:
