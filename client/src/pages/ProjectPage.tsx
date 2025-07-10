@@ -18,12 +18,19 @@ type ScreeningTask = {
   top_p: number;
 };
 
+type FetchedFile = {
+  uuid: string;
+  project_uuid: string;
+  filename: string;
+  mime_type: string;
+};
+
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [name, setName] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [fetchedFiles, setFetchedFiles] = useState<File[]>([])
+  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [selectedLlm, setSelectedLlm] = useState('');
@@ -101,21 +108,7 @@ export const ProjectPage = () => {
       throw error;
     };
   }, [selectedFiles, uuid]);
-
-  useEffect(() => {
-    if (selectedFiles.length === 0) return;
-
-    (async () => {
-      try {
-        await uploadFilesToBackend();
-        setSelectedFiles([]);
-      } catch (error) {
-        setSelectedFiles([]);
-        console.error("Problem uploading the files", error);
-      }
-    })();
-  }, [selectedFiles.length, uploadFilesToBackend])
-
+  
   const fetchFiles = useCallback(async () => {
     try {
       const files = await fileFetchFromBackend(uuid);
@@ -126,7 +119,22 @@ export const ProjectPage = () => {
       throw error;
     }
   }, [uuid]);
-
+  
+    useEffect(() => {
+      if (selectedFiles.length === 0) return;
+  
+      (async () => {
+        try {
+          await uploadFilesToBackend();
+          setSelectedFiles([]);
+          await fetchFiles();
+        } catch (error) {
+          setSelectedFiles([]);
+          console.error("Problem uploading the files", error);
+        }
+      })();
+    }, [selectedFiles.length, uploadFilesToBackend, fetchFiles])
+  
   useEffect(() => {
     (async () => {
       try {
@@ -200,6 +208,13 @@ export const ProjectPage = () => {
           <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
             <FileDropArea onFilesSelected={handleFilesSelected} />
             <H6 className="pt-4 pb-4">List of papers</H6>
+            <div className="flex flex-col space-y-2">
+              {fetchedFiles.length == 0 && <p className="text-gray-400 ml-1 italic">No files added</p>}
+              {fetchedFiles.map((file, idx) => (
+                console.log("File:", file),
+                <p key={idx} className="text-sm font-medium">{file.filename}</p>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
