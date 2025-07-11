@@ -1,3 +1,6 @@
+start:
+	docker compose -f docker-compose.yml up
+
 # Start dev containers with live reloading and force rebuild (use when dependencies or Dockerfiles change)
 dev-build:
 	docker compose -f docker-compose-dev.yml up --watch --build
