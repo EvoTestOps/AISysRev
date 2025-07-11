@@ -22,20 +22,17 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.11-alpine AS server
+FROM python:3.13-alpine AS server
 
 WORKDIR /app
 
-RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
-
 COPY server/requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server/ .
-
-USER celeryuser
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
