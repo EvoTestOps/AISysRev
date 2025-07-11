@@ -12,7 +12,7 @@ export const TruncatedFileNames: React.FC<TruncatedFileNamesProps> = ({
   maxLength = 20
 }) => {
   if (!files || files.length === 0) {
-    return <p className="text-gray-400 italic">"No files added"</p>;
+    return <p className="text-gray-400 italic">No files added</p>;
   }
 
   return (
