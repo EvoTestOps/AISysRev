@@ -1,7 +1,5 @@
 # AI-automated screening PoC
 
-![alt text](docs/client/assets/image-1.png)
-
 ## Introduction
 
 This proof-of-concept (PoC) application demonstrates the current capabilities of AI-automated title-abstract screening of systematic reviews (SRs). This PoC is based on a conference paper "The Promise and Challenges of Using LLMs to Accelerate the Screening Process of Systematic Reviews" by Huotala et al.
