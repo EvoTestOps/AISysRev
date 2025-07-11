@@ -5,10 +5,14 @@ load_dotenv()
 
 class Settings:
     APP_ENV: str = os.getenv("APP_ENV", "dev")
-    DB_URL: str = os.getenv("DB_URL")
-    TEST_DB_URL: str = os.getenv("TEST_DB_URL")
     if APP_ENV == "test":
-        DB_URL = TEST_DB_URL
+        DB_URL: str = os.getenv("TEST_DB_URL")
+    else:
+        DB_URL: str = os.getenv("DB_URL")
+    if not DB_URL:
+        raise ValueError("Database URL not set in environment")
+    print(f"Using APP_ENV: {APP_ENV}")
+    print(f"Using DB_URL: {DB_URL}")
     
     SECRET_KEY: str = os.getenv("SECRET_KEY", "default-secret-key")
     ALGORITHM: str = "HS256"

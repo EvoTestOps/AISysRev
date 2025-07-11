@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from 'path';
 
+const startScript = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../start-test-servers.sh');
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -72,8 +74,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    command: startScript,
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
 });
