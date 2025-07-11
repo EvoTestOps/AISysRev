@@ -15,10 +15,6 @@ m-create:
 m-up:
 	docker compose -f docker-compose-dev.yml exec backend alembic upgrade head
 
-# Revert the last applied migration (useful for rollback during development)
-m-down:
-	docker compose -f docker-compose-dev.yml exec backend alembic downgrade -1
-
 # Show the full history of migrations with details
 m-hist:
 	docker compose -f docker-compose-dev.yml exec backend alembic history --verbose
