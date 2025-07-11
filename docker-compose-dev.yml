@@ -43,6 +43,8 @@ services:
           ignore:
             - node_modules/
             - dist/
+            - migrations/
+            - server/migrations/
         - action: rebuild
           path: package.json
     depends_on:
