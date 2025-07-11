@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 
 let mockProject: { uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
 
-test.beforeAll(async ({ request }) => {
+// TODO: Think of a better solution to reset and create fixtures
+test.beforeEach(async ({ request }) => {
+  const fixtureRes = await request.post("/api/v1/fixtures/reset")
+  expect(fixtureRes.status()).toBe(200)
   const createRes = await request.post('/api/project', {
     data: { name: 'Test Project', inclusion_criteria: 'Test inclusion criteria', exclusion_criteria: 'Test exclusion criteria' },
   });
@@ -27,6 +30,8 @@ test('Fetch all projects returns 200 and an array with the mock project', async 
 
   const data: Array<{ uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string }> =
     await res.json();
+  
+  expect(data.length).toBe(1)
 
   expect(Array.isArray(data)).toBe(true);
 

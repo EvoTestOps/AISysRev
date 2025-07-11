@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test';
 let mockProject: { id: number, uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
 let mockCreateJob: { uuid: string, project_uuid: string, llm_config: Record<string, unknown> }
 
-test.beforeAll(async ({ request }) => {
+// TODO: Think of a better solution to reset and create fixtures
+test.beforeEach(async ({ request }) => {
+  const fixtureRes = await request.post("/api/v1/fixtures/reset")
+  expect(fixtureRes.status()).toBe(200)
   const createRes = await request.post('/api/project', {
     data: {
       name: 'Test Project for Job',
@@ -46,7 +49,7 @@ test('Fetch all jobs returns 200 and an array with the mock job', async ({
 
   const data: Array<{ project_uuid: string; llm_config: Record<string, unknown> }> =
     await res.json();
-    
+    expect(data.length).toBe(1)
     expect(Array.isArray(data)).toBe(true)
     expect(data.some(job => job.project_uuid === mockProject.uuid)).toBe(true);
 });
@@ -57,6 +60,7 @@ test('Fetch jobs by project returns array with jobs for the given project', asyn
 
   const data: Array<{ uuid: string; project_uuid: string; llm_config: Record<string, unknown> }> = await res.json();
   expect(Array.isArray(data)).toBe(true);
+  expect(data.length).toBe(1)
   expect(data.every(job => job.project_uuid === mockProject.uuid)).toBe(true);
   expect(data.some(job => job.uuid === mockCreateJob.uuid)).toBe(true);
 });
