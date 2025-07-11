@@ -19,13 +19,4 @@ for i in {1..30}; do
   sleep 2
 done
 
-for i in {1..30}; do
-  if curl -sSf http://localhost:3000 > /dev/null; then
-    echo "Frontend is ready"
-    break
-  fi
-  echo "Waiting for frontend... ($i/30)"
-  sleep 2
-done
-
 wait
