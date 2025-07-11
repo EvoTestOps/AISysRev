@@ -56,8 +56,12 @@ export const NewProject = () => {
       });
 
       uuid = res.uuid;
-
       toast.success('Project created successfully!');
+
+      if (uuid) {
+        navigate(`/project/${uuid}`);
+      };
+
     } catch (error: any) {
       try {
         const msg = typeof error?.message === "string" ? error.message : "";
@@ -74,10 +78,6 @@ export const NewProject = () => {
       };
 
       return;
-    };
-
-    if (uuid) {
-      navigate(`/project/${uuid}`);
     };
 
   }, [title, inclusionCriteria, exclusionCriteria, navigate]);

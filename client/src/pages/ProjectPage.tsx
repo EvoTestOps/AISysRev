@@ -24,7 +24,6 @@ export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [name, setName] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
@@ -83,14 +82,9 @@ export const ProjectPage = () => {
     setScreeningTasks((prev) => ([...prev, newScreeningTask]))
   }
 
-  const handleFilesSelected = useCallback((files: File[]) => {
-    setSelectedFiles((prev) => [...prev, ...files]);
-
-  }, []);
-
-  const uploadFilesToBackend = useCallback(async () => {
+  const uploadFilesToBackend = useCallback(async (files: File[]) => {
     try {
-      const res = await fileUploadToBackend(selectedFiles, uuid);
+      const res = await fileUploadToBackend(files, uuid);
       if (res.valid_filenames && res.valid_filenames.length > 0) {
         toast.success(`${res.valid_filenames.length} file(s) uploaded`);
       }
@@ -102,8 +96,8 @@ export const ProjectPage = () => {
       console.log("File upload error:", error);
       throw error;
     };
-  }, [selectedFiles, uuid]);
-  
+  }, [uuid]);
+
   const fetchFiles = useCallback(async () => {
     try {
       const files = await fileFetchFromBackend(uuid);
@@ -114,22 +108,16 @@ export const ProjectPage = () => {
       throw error;
     }
   }, [uuid]);
-  
-    useEffect(() => {
-      if (selectedFiles.length === 0) return;
-  
-      (async () => {
-        try {
-          await uploadFilesToBackend();
-          setSelectedFiles([]);
-          await fetchFiles();
-        } catch (error) {
-          setSelectedFiles([]);
-          console.error("Problem uploading the files", error);
-        }
-      })();
-    }, [selectedFiles.length, uploadFilesToBackend, fetchFiles])
-  
+
+  const handleFilesSelected = useCallback(async (files: File[]) => {
+    try {
+      await uploadFilesToBackend(files);
+      await fetchFiles();
+    } catch (error) {
+      console.error("Problem uploading the files", error);
+    }
+  }, [uploadFilesToBackend, fetchFiles]);
+
   useEffect(() => {
     (async () => {
       try {
