@@ -1,9 +1,9 @@
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class FileCreate(BaseModel):
     uuid: UUID | None = None
-    project_id: int = Field(gt=0)
+    project_uuid: UUID
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
 
@@ -13,3 +13,11 @@ class FileCreate(BaseModel):
         if not v.strip():
             raise ValueError(f"{field.field_name} must be a non-empty string")
         return v
+
+class FileRead(BaseModel):
+    uuid: UUID
+    project_uuid: UUID
+    filename: str = Field(max_length=255)
+    mime_type: str = Field(max_length=255)
+
+    model_config = ConfigDict(from_attributes=True)

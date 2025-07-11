@@ -2,7 +2,6 @@ import { create_project } from "../services/projectService";
 
 type CreateProjectProps = {
   title: string;
-  files: File[];
   inclusionCriteria: string[];
   exclusionCriteria: string[];
 };

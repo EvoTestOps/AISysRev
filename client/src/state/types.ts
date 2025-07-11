@@ -9,3 +9,10 @@ export type Project = {
   inclusion_criteria: string;
   exclusion_criteria: string;
 };
+
+export type FetchedFile = {
+  uuid: string;
+  project_uuid: string;
+  filename: string;
+  mime_type: string;
+};
