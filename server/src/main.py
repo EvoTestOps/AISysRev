@@ -1,8 +1,12 @@
 import uvicorn
+import os
 from fastapi import FastAPI
-from src.api.controllers import health_check, on_startup, project, file, job
+from src.api.controllers import health_check, on_startup, fixture, project, file, job
 
 app = FastAPI()
+
+if os.getenv("TEST_MODE", False):
+    app.include_router(fixture.router)
 
 app.include_router(on_startup.router)
 app.include_router(health_check.router)

@@ -19,6 +19,7 @@ services:
     depends_on:
       - backend
 
+
   backend:
     build:
       context: .
@@ -26,7 +27,10 @@ services:
       target: server
     environment:
       PYTHONPATH: /app
+      APP_ENV: dev
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
+      TEST_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test"
+      TEST_MODE: "${TEST_MODE:-false}"
       CELERY_BROKER_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
       MINIO_ROOT_USER: your_username
@@ -63,6 +67,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
       image: adminer

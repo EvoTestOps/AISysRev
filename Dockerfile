@@ -29,7 +29,7 @@ COPY --from=client-build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
-FROM python:3.11-alpine AS server
+FROM python:3.13-alpine AS server
 
 WORKDIR /app
 
