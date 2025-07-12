@@ -1,4 +1,4 @@
-FROM node:22-alpine AS client
+FROM node:22-alpine@sha256:10962e8568729b0cfd506170c5a2d1918a2c10ac08c0e6900180b4bac061adc9 AS client
 
 WORKDIR /app
 ENV PYTHONPATH=/app
@@ -22,7 +22,7 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.13-alpine AS server
+FROM python:3.13-alpine@sha256:9b4929a72599b6c6389ece4ecbf415fd1355129f22bb92bb137eea098f05e975 AS server
 
 WORKDIR /app
 
@@ -36,3 +36,19 @@ EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
+
+FROM python:3.13-alpine@sha256:9b4929a72599b6c6389ece4ecbf415fd1355129f22bb92bb137eea098f05e975 AS celery
+
+RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
+
+WORKDIR /app
+
+COPY server/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server/ .
+
+RUN chown -R celeryuser:celerygroup /app
+USER celeryuser
+
+CMD ["celery", "-A", "src.worker", "worker", "--loglevel=info"]
