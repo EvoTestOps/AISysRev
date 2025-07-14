@@ -12,7 +12,7 @@ app = FastAPI()
 v1_router = APIRouter(prefix="/api/v1")
 
 if os.getenv("TEST_MODE", False):
-    app.include_router(fixture_router)
+    v1_router.include_router(fixture_router)
 
 v1_router.include_router(on_startup_router)
 v1_router.include_router(health_check_router)

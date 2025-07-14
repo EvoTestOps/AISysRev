@@ -1,8 +1,10 @@
 import axios from 'axios';
 
+const prefix = '/api/v1';
+
 export const fetch_projects = async () => {
   try {
-    const res = await axios.get('/api/project');
+    const res = await axios.get(`${prefix}/project`);
     console.log('Fetching projects successful', res.data);
     return res.data;
   } catch (error) {
@@ -13,7 +15,7 @@ export const fetch_projects = async () => {
 
 export const fetch_project_by_uuid = async (uuid: string) => {
   try {
-    const res = await axios.get(`/api/project/${uuid}`);
+    const res = await axios.get(`${prefix}/project/${uuid}`);
     return res.data;
   } catch (error) {
     console.log("Fetching project by UUID unsuccessful", error);
@@ -24,7 +26,7 @@ export const fetch_project_by_uuid = async (uuid: string) => {
 export const create_project = async (title: string, inclusionCriteria: string, exclusionCriteria: string) => {
   console.log("Creating project with title:", title);
   try {
-      const res = await axios.post('/api/project', {
+      const res = await axios.post(`${prefix}/project`, {
           name: title,
           inclusion_criteria: inclusionCriteria,
           exclusion_criteria: exclusionCriteria
