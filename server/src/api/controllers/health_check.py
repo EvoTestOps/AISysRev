@@ -1,4 +1,3 @@
-import os
 import redis.asyncio as redis
 from fastapi import APIRouter
 from celery.result import AsyncResult
@@ -9,7 +8,7 @@ from src.db.db_check import check_database_connection
 
 router = APIRouter()
 
-@router.get("/api/v1/health")
+@router.get("/health")
 async def health_check():
     db_status = "ok"
     redis_status = "ok"

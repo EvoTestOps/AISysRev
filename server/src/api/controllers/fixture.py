@@ -6,7 +6,7 @@ from src.db.session import Base
 router = APIRouter()
 
 
-@router.post("/api/v1/fixtures/reset")
+@router.post("/fixtures/reset")
 async def reset_fixtures():
     try:
         test_mode = os.getenv("TEST_MODE", False)
