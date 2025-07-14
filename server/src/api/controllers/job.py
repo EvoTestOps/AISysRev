@@ -4,7 +4,7 @@ from typing import Optional
 from src.schemas.job import JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
-router = APIRouter(prefix="/api")
+router = APIRouter()
 
 @router.get("/job", status_code=status.HTTP_200_OK, response_model=list[JobRead])
 async def get_jobs(project: Optional[UUID] = None, jobs: JobService = Depends(get_job_service)):

@@ -1,17 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+const prefix = '/api/v1';
+
 let mockProject: { uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
 
 // TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
-  const fixtureRes = await request.post("/api/v1/fixtures/reset")
+  const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
   expect(fixtureRes.status()).toBe(200)
-  const createRes = await request.post('/api/project', {
+  const createRes = await request.post(`${prefix}/project`, {
     data: { name: 'Test Project', inclusion_criteria: 'Test inclusion criteria', exclusion_criteria: 'Test exclusion criteria' },
   });
   expect(createRes.status(), 'project should be created').toBe(201);
 
-  const listRes = await request.get('/api/project');
+  const listRes = await request.get(`${prefix}/project`);
   expect(listRes.status()).toBe(200);
   const projects: Array<{ uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string }> =
     await listRes.json();
@@ -25,7 +27,7 @@ test.beforeEach(async ({ request }) => {
 test('Fetch all projects returns 200 and an array with the mock project', async ({
   request,
 }) => {
-  const res = await request.get('/api/project');
+  const res = await request.get(`${prefix}/project`);
   expect(res.status()).toBe(200);
 
   const data: Array<{ uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string }> =
@@ -49,7 +51,7 @@ test('Fetch all projects returns 200 and an array with the mock project', async 
 test('Fetch single project by UUID returns the correct record', async ({
   request,
 }) => {
-  const res = await request.get(`/api/project/${mockProject.uuid}`);
+  const res = await request.get(`${prefix}/project/${mockProject.uuid}`);
   expect(res.status()).toBe(200);
 
   const project = await res.json();
@@ -59,7 +61,7 @@ test('Fetch single project by UUID returns the correct record', async ({
 });
 
 test('Create project returns 201 and returns the new project ID', async ({ request }) => {
-  const res = await request.post('/api/project', {
+  const res = await request.post(`${prefix}/project`, {
     data: { name: 'Another Test Project', inclusion_criteria: 'New Test Inclusion Criteria', exclusion_criteria: 'New Test Exclusion Criteria' },
   });
 

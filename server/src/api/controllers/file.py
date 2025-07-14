@@ -4,7 +4,7 @@ from typing import List
 from src.services.file_service import FileService, get_file_service
 from src.schemas.file import FileRead
 
-router = APIRouter(prefix="/api")
+router = APIRouter()
 
 @router.get("/files/{project_uuid}", status_code=status.HTTP_200_OK, response_model=list[FileRead])
 async def list_files(project_uuid: UUID, files: FileService = Depends(get_file_service)):

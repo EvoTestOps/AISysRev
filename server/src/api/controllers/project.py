@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.schemas.project import ProjectCreate, ProjectRead
 from src.services.project_service import ProjectService, get_project_service
 
-router = APIRouter(prefix="/api")
+router = APIRouter()
 
 @router.get("/project", status_code=status.HTTP_200_OK, response_model=list[ProjectRead])
 async def list_projects(projects: ProjectService = Depends(get_project_service)):

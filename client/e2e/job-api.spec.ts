@@ -1,13 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+const prefix = '/api/v1';
+
 let mockProject: { id: number, uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
 let mockCreateJob: { uuid: string, project_uuid: string, llm_config: Record<string, unknown> }
 
 // TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
-  const fixtureRes = await request.post("/api/v1/fixtures/reset")
+  const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
   expect(fixtureRes.status()).toBe(200)
-  const createRes = await request.post('/api/project', {
+  const createRes = await request.post(`${prefix}/project`, {
     data: {
       name: 'Test Project for Job',
       inclusion_criteria: 'Test inclusion criteria',
@@ -17,12 +19,12 @@ test.beforeEach(async ({ request }) => {
   expect(createRes.status(), 'project should be created').toBe(201);
 
   const createdProject = await createRes.json();
-  const projectRes = await request.get(`/api/project/${createdProject.uuid}`);
+  const projectRes = await request.get(`${prefix}/project/${createdProject.uuid}`);
   expect(projectRes.status()).toBe(200);
 
   mockProject = await projectRes.json();
 
-  const createJobRes = await request.post('/api/job', {
+  const createJobRes = await request.post(`${prefix}/job`, {
     data: {
       project_uuid: mockProject.uuid,
       llm_config: {
@@ -44,7 +46,7 @@ test.beforeEach(async ({ request }) => {
 test('Fetch all jobs returns 200 and an array with the mock job', async ({
   request,
 }) => {
-  const res = await request.get('/api/job');
+  const res = await request.get(`${prefix}/job`);
   expect(res.status()).toBe(200)
 
   const data: Array<{ project_uuid: string; llm_config: Record<string, unknown> }> =
@@ -55,7 +57,7 @@ test('Fetch all jobs returns 200 and an array with the mock job', async ({
 });
 
 test('Fetch jobs by project returns array with jobs for the given project', async ({ request }) => {
-  const res = await request.get(`/api/job?project=${mockProject.uuid}`);
+  const res = await request.get(`${prefix}/job?project=${mockProject.uuid}`);
   expect(res.status()).toBe(200);
 
   const data: Array<{ uuid: string; project_uuid: string; llm_config: Record<string, unknown> }> = await res.json();
@@ -66,7 +68,7 @@ test('Fetch jobs by project returns array with jobs for the given project', asyn
 });
 
 test('Fetch single job by UUID returns the correct job', async ({ request }) => {
-  const res = await request.get(`/api/job/${mockCreateJob.uuid}`);
+  const res = await request.get(`${prefix}/job/${mockCreateJob.uuid}`);
   expect(res.status()).toBe(200);
 
   const job: { uuid: string; project_uuid: string; llm_config: Record<string, unknown> } = await res.json();
@@ -79,7 +81,7 @@ test('Fetch single job by UUID returns the correct job', async ({ request }) => 
 });
 
 test('Creating a job with invalid project UUID returns 400', async ({ request }) => {
-  const res = await request.post('/api/job', {
+  const res = await request.post(`${prefix}/job`, {
     data: {
       project_uuid: '00000000-0000-0000-0000-000000000000',
       llm_config: {
