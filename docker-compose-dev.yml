@@ -37,8 +37,6 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - "8080:8080"
-    volumes:
-      - ./server:/app
     develop:
       watch:
         - action: sync
@@ -57,7 +55,7 @@ services:
       - redis
 
   postgres:
-    image: postgres:alpine
+    image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
     container_name: llm_screening_poc_dev_db
     environment:
       POSTGRES_USER: your_username
@@ -70,13 +68,13 @@ services:
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
-      image: adminer
+      image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
       restart: always
       ports:
         - 8081:8080
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
     container_name: llm_screening_poc_minio
     environment:
       MINIO_ROOT_USER: your_username
@@ -90,8 +88,11 @@ services:
       - minio_data:/data
 
   redis:
-    image: redis:7
+    image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: llm_screening_poc_redis
+    privileged: true
+    volumes: 
+      - redis_data:/data
     ports:
       - "6379:6379"
 
@@ -99,8 +100,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-dev
-      target: server
-    command: celery -A src.worker worker --loglevel=info
+      target: celery
     environment:
       PYTHONPATH: /app
       CELERY_BROKER_URL: redis://redis:6379/0
@@ -129,3 +129,4 @@ volumes:
   postgres_data:
   minio_csv_data:
   minio_data:
+  redis_data:
