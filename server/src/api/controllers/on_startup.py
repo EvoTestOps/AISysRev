@@ -1,10 +1,10 @@
 import os
 import asyncio
-import redis.asyncio as redis
 from fastapi import APIRouter
 from alembic import command
 from alembic.config import Config
 from src.db.db_check import check_database_connection
+from src.api.controllers.health_check import check_redis_connection
 
 router = APIRouter()
 
@@ -16,22 +16,6 @@ async def run_migration():
     except Exception as e:
         print(f"Error during migration: {e}")
         raise
-
-
-async def check_redis_connection():
-    redis_url = os.getenv("REDIS_URL")
-    client = redis.from_url(redis_url)
-    try:
-        pong = await client.ping()
-        if pong:
-            print("Redis connection OK")
-        else:
-            raise ConnectionError("Redis ping failed")
-    except Exception as e:
-        print(f"Redis connection failed: {e}")
-        raise
-    finally:
-        await client.close()
 
 @router.on_event("startup")
 async def on_startup():

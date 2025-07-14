@@ -1,7 +1,7 @@
-import os
 from celery import Celery
+from src.core.config import settings
 
-broker_url = os.getenv("CELERY_BROKER_URL")
+broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery(
     "worker",
