@@ -22,7 +22,6 @@ services:
     depends_on:
       - backend
 
-
   backend:
     container_name: backend_${APP_ENV:-dev}
     build:

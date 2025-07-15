@@ -20,7 +20,7 @@ Node.js v22 LTS and Python 3.9 are required.
 
 ## Running in development mode
 
-Run `docker compose -f docker-compose-dev.yml up --watch` or `make dev`
+Run `make start-dev`
 
 Open up the client: [http://localhost:3000](http://localhost:3000)
 
@@ -32,7 +32,7 @@ Server: [http://localhost:8080](http://localhost:3000)
 
 ## Running in production mode
 
-Run `make start`
+Run `make start-prod`
 
 ## Mock data
 
@@ -40,7 +40,7 @@ Mock data is located in `data/mock` -folder.
 
 ## Tests
 
-Run `npm test`
+Run `npm test` in [client/](./client/)
 
 ## Makefile Commands
 
@@ -50,8 +50,12 @@ The project includes a `Makefile` for common development and database operations
 
 | Command         | Description                                  |
 |----------------|----------------------------------------------|
-| `make start-dev`      | Start dev containers with live reloading     |
-| `make build-dev`| Start dev containers and rebuild images      |
+| `make start-dev` | Start dev containers with live reloading and build on startup (default setup) |
+| `make start-test` | Start test containers and rebuild images (isolated test environment) |
+| `make start-prod` | Start production container and rebuild images |
+
+> **Note:** Run all commands from the project root.  
+> Containers are isolated by environment using the Docker Compose `-p` flag.
 
 ### Database Migrations (Alembic)
 
