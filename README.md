@@ -50,8 +50,8 @@ The project includes a `Makefile` for common development and database operations
 
 | Command         | Description                                  |
 |----------------|----------------------------------------------|
-| `make dev`      | Start dev containers with live reloading     |
-| `make dev-build`| Start dev containers and rebuild images      |
+| `make start-dev`      | Start dev containers with live reloading     |
+| `make build-dev`| Start dev containers and rebuild images      |
 
 ### Database Migrations (Alembic)
 
