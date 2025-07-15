@@ -1,11 +1,6 @@
 # DEV
-# Start dev containers with live reloading (default development setup)
+# Start dev containers with live reloading and build on startup (default development setup)
 start-dev:
-	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
-	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev up --watch
-
-# Start dev containers with live reloading and force rebuild (use when dependencies or Dockerfiles change)
-build-dev:
 	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
 	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev up --watch --build
 # TEST
