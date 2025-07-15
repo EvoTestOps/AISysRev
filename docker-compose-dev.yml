@@ -21,6 +21,7 @@ services:
 
 
   backend:
+    container_name: backend_${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile-dev
@@ -28,9 +29,7 @@ services:
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
-      DEV_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_dev"
-      TEST_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test"
-      PROD_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_prod"
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
       MINIO_ROOT_USER: your_username
@@ -60,7 +59,7 @@ services:
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database_dev
+      POSTGRES_DB: your_database_${APP_ENV:-dev}
     ports:
       - "5432:5432"
     volumes:
@@ -103,6 +102,8 @@ services:
       target: celery
     environment:
       PYTHONPATH: /app
+      APP_ENV: ${APP_ENV:-dev}
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
       - backend
@@ -118,6 +119,8 @@ services:
     command: celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
+      APP_ENV: ${APP_ENV:-dev}
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis:6379/0
     ports:
       - "5555:5555"

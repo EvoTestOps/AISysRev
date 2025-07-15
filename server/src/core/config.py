@@ -5,13 +5,8 @@ load_dotenv()
 
 class Settings:
     def __init__(self):
-        self.APP_ENV: str = os.getenv("APP_ENV")
-        if self.APP_ENV == "test":
-            self.DB_URL: str = os.getenv("TEST_DB_URL")
-        elif self.APP_ENV == "prod":
-            self.DB_URL: str = os.getenv("PROD_DB_URL")
-        else:
-            self.DB_URL: str = os.getenv("DEV_DB_URL")
+        self.APP_ENV: str = os.getenv("APP_ENV", "dev")
+        self.DB_URL: str = os.getenv("DB_URL")
         if not self.DB_URL:
             raise ValueError("Database URL not set in environment")
         print(f"Using APP_ENV: {self.APP_ENV}")
