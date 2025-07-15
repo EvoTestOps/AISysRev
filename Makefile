@@ -1,13 +1,12 @@
 # Start dev containers with live reloading (default development setup)
 dev:
-    APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch
+	APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch
 
 # Start dev containers with live reloading and force rebuild (use when dependencies or Dockerfiles change)
 dev-build:
 	APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch --build
 
 start-test:
-	docker compose -f docker-compose-dev.yml down
 	APP_ENV=test docker compose -f docker-compose-dev.yml up
 
 start-prod:
