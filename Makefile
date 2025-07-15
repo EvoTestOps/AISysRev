@@ -1,8 +1,11 @@
 start:
 	docker compose -f docker-compose.yml up
 
+start-prod:
+	APP_ENV=prod docker compose -f docker-compose.yml up
+
 start-dev-test:
-	TEST_MODE=true docker compose -f docker-compose-dev.yml up
+	APP_ENV=test docker compose -f docker-compose-dev.yml up
 
 # Start dev containers with live reloading and force rebuild (use when dependencies or Dockerfiles change)
 dev-build:

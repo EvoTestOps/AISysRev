@@ -27,10 +27,10 @@ services:
       target: server
     environment:
       PYTHONPATH: /app
-      APP_ENV: dev
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
+      APP_ENV: ${APP_ENV:-dev}
+      DEV_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_dev"
       TEST_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test"
-      TEST_MODE: "${TEST_MODE:-false}"
+      PROD_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis:6379/0
       REDIS_URL: redis://redis:6379/0
       MINIO_ROOT_USER: your_username
@@ -60,7 +60,7 @@ services:
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database
+      POSTGRES_DB: your_database_dev
     ports:
       - "5432:5432"
     volumes:

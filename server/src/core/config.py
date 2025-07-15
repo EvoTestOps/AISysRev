@@ -4,24 +4,27 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings:
-    APP_ENV: str = os.getenv("APP_ENV", "dev")
-    if APP_ENV == "test":
-        DB_URL: str = os.getenv("TEST_DB_URL")
-    else:
-        DB_URL: str = os.getenv("DB_URL")
-    if not DB_URL:
-        raise ValueError("Database URL not set in environment")
-    print(f"Using APP_ENV: {APP_ENV}")
-    print(f"Using DB_URL: {DB_URL}")
-    
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "default-secret-key")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REDIS_URL: str = os.getenv("REDIS_URL")
-    CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL")
-    MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-    MINIO_ROOT_USER: str = os.getenv("MINIO_ROOT_USER", "minio-admin")
-    MINIO_ROOT_PASSWORD: str = os.getenv("MINIO_ROOT_PASSWORD", "minio-secret-key")
-    MINIO_BUCKET: str = os.getenv("MINIO_BUCKET", "default-bucket")
+    def __init__(self):
+        self.APP_ENV: str = os.getenv("APP_ENV")
+        if self.APP_ENV == "test":
+            self.DB_URL: str = os.getenv("TEST_DB_URL")
+        elif self.APP_ENV == "prod":
+            self.DB_URL: str = os.getenv("PROD_DB_URL")
+        else:
+            self.DB_URL: str = os.getenv("DEV_DB_URL")
+        if not self.DB_URL:
+            raise ValueError("Database URL not set in environment")
+        print(f"Using APP_ENV: {self.APP_ENV}")
+        print(f"Using DB_URL: {self.DB_URL}")
+
+        self.SECRET_KEY: str = os.getenv("SECRET_KEY", "default-secret-key")
+        self.ALGORITHM: str = "HS256"
+        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+        self.REDIS_URL: str = os.getenv("REDIS_URL")
+        self.CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL")
+        self.MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "localhost:9000")
+        self.MINIO_ROOT_USER: str = os.getenv("MINIO_ROOT_USER", "minio-admin")
+        self.MINIO_ROOT_PASSWORD: str = os.getenv("MINIO_ROOT_PASSWORD", "minio-secret-key")
+        self.MINIO_BUCKET: str = os.getenv("MINIO_BUCKET", "default-bucket")
 
 settings = Settings()

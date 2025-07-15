@@ -1,6 +1,7 @@
 import uvicorn
 import os
 from fastapi import FastAPI, APIRouter
+from src.core.config import settings
 from src.api.controllers.fixture import router as fixture_router
 from src.api.controllers.on_startup import router as on_startup_router
 from src.api.controllers.health_check import router as health_check_router
@@ -11,7 +12,7 @@ from src.api.controllers.job import router as job_router
 app = FastAPI()
 v1_router = APIRouter(prefix="/api/v1")
 
-if os.getenv("TEST_MODE", False):
+if settings.APP_ENV == "test":
     v1_router.include_router(fixture_router)
 
 v1_router.include_router(on_startup_router)
