@@ -1,9 +1,11 @@
 # Start dev containers with live reloading (default development setup)
 dev:
+	APP_ENV=dev docker compose -f docker-compose-dev.yml down
 	APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch
 
 # Start dev containers with live reloading and force rebuild (use when dependencies or Dockerfiles change)
 dev-build:
+	APP_ENV=dev docker compose -f docker-compose-dev.yml down
 	APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch --build
 
 start-test:
@@ -11,21 +13,23 @@ start-test:
 	APP_ENV=test docker compose -f docker-compose-dev.yml up
 
 start-prod:
+	APP_ENV=prod docker compose -f docker-compose.yml down
 	APP_ENV=prod docker compose -f docker-compose.yml up
 
 # Create a new database migration based on model changes
 # Usage: make migration-create m="Add new table"
+# Migration commands here should only be run against the development environment
 m-create:
-	docker compose -f docker-compose-dev.yml exec backend alembic revision --autogenerate -m "$(m)"
+	APP_ENV=dev docker compose -f docker-compose-dev.yml exec backend alembic revision --autogenerate -m "$(m)"
 
 # Apply all unapplied migrations to bring the database up to date
 m-up:
-	docker compose -f docker-compose-dev.yml exec backend alembic upgrade head
+	APP_ENV=dev docker compose -f docker-compose-dev.yml exec backend alembic upgrade head
 
 # Show the full history of migrations with details
 m-hist:
-	docker compose -f docker-compose-dev.yml exec backend alembic history --verbose
+	APP_ENV=dev docker compose -f docker-compose-dev.yml exec backend alembic history --verbose
 
 # Display the current migration version applied to the database
 m-current:
-	docker compose -f docker-compose-dev.yml exec backend alembic current
+	APP_ENV=dev docker compose -f docker-compose-dev.yml exec backend alembic current
