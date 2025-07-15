@@ -7,7 +7,7 @@ dev-build:
 	APP_ENV=dev docker compose -f docker-compose-dev.yml up --watch --build
 
 start-test:
-	APP_ENV=dev docker compose -f docker-compose-dev.yml down
+	APP_ENV=test docker compose -f docker-compose-dev.yml down
 	APP_ENV=test docker compose -f docker-compose-dev.yml up
 
 start-prod:
