@@ -31,12 +31,8 @@ jobs:
         run: npm run lint
         working-directory: client
       - name: Run Playwright tests
-        continue-on-error: true
         run: npx playwright test
         working-directory: client
-      - name: Dump backend logs on failure
-        if: failure()
-        run: docker compose -f docker-compose-dev.yml -p test logs backend_test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

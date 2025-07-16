@@ -1,2 +1,2 @@
-CREATE DATABASE your_database_test;
-CREATE DATABASE your_database_prod;
+CREATE DATABASE IF NOT EXISTS your_database_test;
+CREATE DATABASE IF NOT EXISTS your_database_prod;
