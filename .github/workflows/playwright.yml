@@ -12,6 +12,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
            node-version-file: '.nvmrc'
+      - name: Client - Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
         run: npm ci
         working-directory: client
@@ -29,6 +36,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+      - name: Client - Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
         run: npm ci
         working-directory: client
@@ -46,6 +60,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
            node-version-file: '.nvmrc'
+      - name: Client - Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: client/node_modules
+          key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
         run: npm ci
         working-directory: client
