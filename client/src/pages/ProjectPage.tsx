@@ -160,7 +160,7 @@ export const ProjectPage = () => {
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
-          {screeningTasks.map((task, idx) => (
+          {screeningTasks.map((_, idx) => (
             <div key={idx} className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
               <p className="flex pl-4 items-center">Task #{idx + 1}</p>
               <div className="flex">

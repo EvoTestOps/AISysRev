@@ -1,7 +1,6 @@
 import classNames from 'classnames';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Ellipsis } from 'lucide-react'
-import { twMerge } from 'tailwind-merge';
 
 type EllipsisItem = {
   label: string;
