@@ -31,19 +31,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-      minio:
-        image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-        env:
-          MINIO_ROOT_USER: your_username
-          MINIO_ROOT_PASSWORD: minio-secret-key
-        ports:
-          - 9000:9000
-        options:
-          --entrypoint "minio"
-          --health-cmd="curl -f http://localhost:9000/minio/health/ready || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
