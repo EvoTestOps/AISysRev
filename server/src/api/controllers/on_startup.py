@@ -8,6 +8,18 @@ from src.api.controllers.health_check import check_redis_connection
 
 router = APIRouter()
 
+async def wait_for_db():
+    max_retries = 30
+    for i in range(max_retries):
+        try:
+            await check_database_connection()
+            print("Database is ready!")
+            return
+        except Exception as e:
+            print(f"Database not ready (attempt {i+1}/{max_retries}): {e}")
+            await asyncio.sleep(1)
+    raise Exception("Database failed to become ready")
+
 async def run_migration():
     alembic_cfg = Config(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'alembic.ini'))
     loop = asyncio.get_running_loop()
@@ -20,6 +32,19 @@ async def run_migration():
 @router.on_event("startup")
 async def on_startup():
     print("on_startup hook called")
-    await run_migration()
-    await check_database_connection()
-    await check_redis_connection()
+    try:
+        await wait_for_db()
+        print("Starting migration...")
+        await run_migration()
+        print("Migration complete!")
+
+        print("Checking database connection...")
+        await check_database_connection()
+
+        print("Checking Redis connection...")
+        await check_redis_connection()
+
+        print("Application startup complete!")
+    except Exception as e:
+        print(f"Startup failed: {e}")
+        raise
