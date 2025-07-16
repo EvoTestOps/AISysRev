@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      - name: Install dependencies
+      - name: Install client dependencies
         run: npm ci
         working-directory: client
       - name: Build client
@@ -24,10 +24,10 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         working-directory: client
-      - name: Run Typecheck
+      - name: Run client Typecheck
         run: npx tsc --noEmit
         working-directory: client
-      - name: Run ESLint
+      - name: Run client ESLint
         run: npm run lint
         working-directory: client
       - name: Run Playwright tests
