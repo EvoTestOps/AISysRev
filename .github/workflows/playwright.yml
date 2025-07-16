@@ -30,20 +30,13 @@ jobs:
       - name: Run ESLint
         run: npm run lint
         working-directory: client
-      - name: Wait for backend to be ready
-        run: |
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/docs; then
-              echo "Backend is up!";
-              break;
-            fi
-            echo "Waiting for backend...";
-            sleep 2
-          done
       - name: Run Playwright tests
         continue-on-error: true
         run: npx playwright test
         working-directory: client
+      - name: Dump backend logs on failure
+        if: failure()
+        run: docker compose -f docker-compose-dev.yml -p test logs backend_test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
