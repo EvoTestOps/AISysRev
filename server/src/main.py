@@ -1,5 +1,4 @@
 import uvicorn
-import os
 from fastapi import FastAPI, APIRouter
 from src.core.config import settings
 from src.api.controllers.fixture import router as fixture_router
