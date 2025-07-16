@@ -39,6 +39,7 @@ jobs:
         ports:
           - 9000:9000
         options:
+          --entrypoint "minio"
           --health-cmd="curl -f http://localhost:9000/minio/health/ready || exit 1"
           --health-interval=10s
           --health-timeout=5s
