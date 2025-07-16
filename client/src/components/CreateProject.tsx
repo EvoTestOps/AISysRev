@@ -19,6 +19,7 @@ export const CreateProject = async (props: CreateProjectProps): Promise<{
     );
     console.log("Project created, res: ", res);
     return {"id": res.id, "uuid": res.uuid};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (error.response?.data?.detail?.errors) {
       throw new Error(JSON.stringify(error.response.data.detail.errors));

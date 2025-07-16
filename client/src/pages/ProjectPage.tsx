@@ -53,6 +53,7 @@ export const ProjectPage = () => {
             .filter(Boolean)
         );
         setError(null);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.response?.status === 404) {
           setError("Project not found");
@@ -91,6 +92,7 @@ export const ProjectPage = () => {
       if (res.errors && res.errors.length > 0) {
         ExpandableToast(res.errors);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.warn("File upload failed.");
       console.log("File upload error:", error);
