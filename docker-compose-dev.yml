@@ -1,11 +1,14 @@
 services:
   frontend:
+    container_name: frontend_${APP_ENV:-dev}
+    environment:
+      VITE_APP_ENV: ${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile-dev
       target: client
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     develop:
       watch:
         - action: sync
@@ -19,24 +22,20 @@ services:
     depends_on:
       - backend
 
-
   backend:
+    container_name: backend_${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile-dev
       target: server
     environment:
       PYTHONPATH: /app
-      APP_ENV: dev
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
-      TEST_DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test"
-      TEST_MODE: "${TEST_MODE:-false}"
-      CELERY_BROKER_URL: redis://redis:6379/0
-      REDIS_URL: redis://redis:6379/0
+      APP_ENV: ${APP_ENV:-dev}
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-    ports:
-      - "8080:8080"
     develop:
       watch:
         - action: sync
@@ -56,53 +55,50 @@ services:
 
   postgres:
     image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
-    container_name: llm_screening_poc_dev_db
+    container_name: postgres_${APP_ENV:-dev}
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: your_database_${APP_ENV:-dev}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_${APP_ENV:-dev}:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
+      container_name: adminer_${APP_ENV:-dev}
       image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
       restart: always
       ports:
-        - 8081:8080
+        - ${ADMINER_PORT:-8080}:8080
 
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-    container_name: llm_screening_poc_minio
+    container_name: minio_${APP_ENV:-dev}
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     command: server --console-address ":9001" /csv_data /data
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
-      - minio_csv_data:/csv_data
-      - minio_data:/data
+      - minio_csv_data_${APP_ENV:-dev}:/csv_data
+      - minio_data_${APP_ENV:-dev}:/data
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
-    container_name: llm_screening_poc_redis
+    container_name: redis_${APP_ENV:-dev}
     privileged: true
     volumes: 
-      - redis_data:/data
-    ports:
-      - "6379:6379"
+      - redis_data_${APP_ENV:-dev}:/data
 
   celery:
+    container_name: celery_${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile-dev
       target: celery
     environment:
       PYTHONPATH: /app
+      APP_ENV: ${APP_ENV:-dev}
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
       - backend
@@ -111,6 +107,7 @@ services:
       - ./server:/app
 
   flower:
+    container_name: flower_${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile-dev
@@ -118,15 +115,25 @@ services:
     command: celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
-      CELERY_BROKER_URL: redis://redis:6379/0
+      APP_ENV: ${APP_ENV:-dev}
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
     ports:
-      - "5555:5555"
+      - ${FLOWER_PORT:-5555}:5555
     depends_on:
       - backend
       - redis
 
 volumes:
-  postgres_data:
-  minio_csv_data:
-  minio_data:
-  redis_data:
+  postgres_data_dev:
+  postgres_data_test:
+  postgres_data_prod:
+  minio_csv_data_dev:
+  minio_csv_data_test:
+  minio_csv_data_prod:
+  minio_data_dev:
+  minio_data_test:
+  minio_data_prod:
+  redis_data_dev:
+  redis_data_test:
+  redis_data_prod:

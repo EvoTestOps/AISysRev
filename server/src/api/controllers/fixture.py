@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 import os
+from src.core.config import settings
 from src.db.engine import engine
 from src.db.session import Base
 
@@ -9,8 +10,7 @@ router = APIRouter()
 @router.post("/fixtures/reset")
 async def reset_fixtures():
     try:
-        test_mode = os.getenv("TEST_MODE", False)
-        if not test_mode:
+        if settings.APP_ENV != "test":
             # Lets return HTTP 404 so it behaves like a non-existing route
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         async with engine.begin() as conn:
