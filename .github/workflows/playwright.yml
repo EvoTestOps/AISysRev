@@ -10,29 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: test
-    services:
-      postgres:
-        image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
-        env:
-          POSTGRES_USER: your_username
-          POSTGRES_PASSWORD: your_password
-          POSTGRES_DB: your_database_test
-        ports:
-          - 5432:5432
-        options:
-          --health-cmd="pg_isready -U your_username"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-      redis:
-        image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
-        ports:
-          - 6379:6379
-        options:
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
