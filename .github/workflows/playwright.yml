@@ -15,12 +15,12 @@ jobs:
       - name: Client - Cache node_modules
         uses: actions/cache@v4
         with:
-          path: client/node_modules
+          path: ~/.npm
           key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
-        run: npm ci
+        run: npm ci --cache ~/.npm
         working-directory: client
       - name: Client - Run Typecheck
         run: npm run typecheck
@@ -39,12 +39,12 @@ jobs:
       - name: Client - Cache node_modules
         uses: actions/cache@v4
         with:
-          path: client/node_modules
+          path: ~/.npm
           key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
-        run: npm ci
+        run: npm ci --cache ~/.npm
         working-directory: client
       - name: Client - Build client
         run: npm run build
@@ -63,12 +63,12 @@ jobs:
       - name: Client - Cache node_modules
         uses: actions/cache@v4
         with:
-          path: client/node_modules
+          path: ~/.npm
           key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
           restore-keys: |
             node-modules-${{ runner.os }}-
       - name: Client - Install dependencies
-        run: npm ci
+        run: npm ci --cache ~/.npm
         working-directory: client
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
