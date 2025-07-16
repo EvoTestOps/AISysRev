@@ -99,7 +99,7 @@ services:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
-      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
     depends_on:
       - backend
       - redis
