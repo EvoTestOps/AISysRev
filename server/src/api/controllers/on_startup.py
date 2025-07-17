@@ -10,7 +10,7 @@ from src.api.controllers.health_check import check_redis_connection
 router = APIRouter()
 
 async def wait_for_db():
-    max_retries = 30
+    max_retries = 7
     for i in range(max_retries):
         try:
             await check_database_connection()
@@ -18,7 +18,7 @@ async def wait_for_db():
             return
         except Exception as e:
             print(f"Database not ready (attempt {i+1}/{max_retries}): {e}")
-            await asyncio.sleep(1)
+            await asyncio.sleep(2**i)
     raise Exception("Database failed to become ready")
 
 
@@ -38,12 +38,13 @@ async def on_startup():
 
     try:
         await wait_for_db()
-        print("Starting migration...")
-        await run_migration()
-        print("Migration complete!")
 
         print("Checking database connection...")
         await check_database_connection()
+
+        print("Starting migration...")
+        await run_migration()
+        print("Migration complete!")
 
         print("Checking Redis connection...")
         await check_redis_connection()
