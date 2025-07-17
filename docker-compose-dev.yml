@@ -59,7 +59,7 @@ services:
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database_${APP_ENV:-dev}
+      POSTGRES_DB: your_database_dev
     volumes:
       - postgres_data_${APP_ENV:-dev}:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
@@ -77,9 +77,8 @@ services:
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-    command: server --console-address ":9001" /csv_data /data
+    command: server /data --console-address ":9001"
     volumes:
-      - minio_csv_data_${APP_ENV:-dev}:/csv_data
       - minio_data_${APP_ENV:-dev}:/data
 
   redis:
@@ -99,9 +98,8 @@ services:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
-      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
     depends_on:
-      - backend
       - redis
     volumes:
       - ./server:/app
@@ -121,8 +119,8 @@ services:
     ports:
       - ${FLOWER_PORT:-5555}:5555
     depends_on:
-      - backend
       - redis
+      - celery
 
 volumes:
   postgres_data_dev:

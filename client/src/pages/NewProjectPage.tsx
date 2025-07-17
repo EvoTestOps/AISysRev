@@ -61,7 +61,7 @@ export const NewProject = () => {
       if (uuid) {
         navigate(`/project/${uuid}`);
       };
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       try {
         const msg = typeof error?.message === "string" ? error.message : "";

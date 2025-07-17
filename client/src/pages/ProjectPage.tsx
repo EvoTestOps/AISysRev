@@ -53,6 +53,7 @@ export const ProjectPage = () => {
             .filter(Boolean)
         );
         setError(null);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.response?.status === 404) {
           setError("Project not found");
@@ -91,6 +92,7 @@ export const ProjectPage = () => {
       if (res.errors && res.errors.length > 0) {
         ExpandableToast(res.errors);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.warn("File upload failed.");
       console.log("File upload error:", error);
@@ -160,7 +162,7 @@ export const ProjectPage = () => {
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
-          {screeningTasks.map((task, idx) => (
+          {screeningTasks.map((_, idx) => (
             <div key={idx} className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
               <p className="flex pl-4 items-center">Task #{idx + 1}</p>
               <div className="flex">
