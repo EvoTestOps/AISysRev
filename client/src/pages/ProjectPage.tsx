@@ -12,9 +12,10 @@ import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
+import { createJob } from "../services/jobService";
 
 type ScreeningTask = {
-  llm: string;
+  model_name: string;
   temperature: number;
   seed: number;
   top_p: number;
@@ -68,20 +69,29 @@ export const ProjectPage = () => {
     fetchProject()
   }, [uuid]);
 
-  const createTask = () => {
+  const createTask = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
       setIsLlmSelected(false)
       return;
     }
     const newScreeningTask: ScreeningTask = {
-      llm: selectedLlm,
+      model_name: selectedLlm,
       temperature: temperature,
       seed: seed,
       top_p: top_p
     }
+
+    try {
+      const res = await createJob(uuid, newScreeningTask);
+      console.log("Job created successfully:", res);
+      toast.success("Job created successfully!");
+    } catch (error) {
+      console.error("Error creating job:", error);
+      toast.error("Error creating job");
+    }
     setScreeningTasks((prev) => ([...prev, newScreeningTask]))
-  }
+  }, [uuid, selectedLlm, temperature, seed, top_p]);
 
   const uploadFilesToBackend = useCallback(async (files: File[]) => {
     try {
