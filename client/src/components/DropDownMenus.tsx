@@ -41,7 +41,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
             key={item.label}
             as="button"
             onClick={item.onClick}
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"
+            className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer"
           >
             {item.label}
           </MenuItem>
