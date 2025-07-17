@@ -18,8 +18,9 @@ def validate_csv(file_obj, filename: str):
         }]
 
     for idx, row in enumerate(reader, start=2):
+        row_lower = {key.strip().lower(): value for key, value in row.items()}
         try:
-            PublicationRowData(**row)
+            PublicationRowData(**row_lower)
         except ValidationError as e:
             for err in e.errors():
                 errors.append({
