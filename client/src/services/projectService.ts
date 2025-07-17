@@ -40,7 +40,7 @@ export const create_project = async (title: string, inclusionCriteria: string, e
 
 export const delete_project = async (uuid: string) => {
   try {
-      const res = await axios.delete(`/api/project/${uuid}`);
+      const res = await axios.delete(`${prefix}/project/${uuid}`);
       console.log('Deleting project successful', res.data);
       return res.data;
   } catch (error) {
