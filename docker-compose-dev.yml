@@ -77,9 +77,8 @@ services:
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-    command: minio server --console-address ":9001" /csv_data /data
+    command: server /data --console-address ":9001"
     volumes:
-      - minio_csv_data_${APP_ENV:-dev}:/csv_data
       - minio_data_${APP_ENV:-dev}:/data
 
   redis:
