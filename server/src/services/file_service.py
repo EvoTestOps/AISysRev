@@ -1,3 +1,4 @@
+import csv
 from uuid import UUID
 from fastapi import Depends, HTTPException, UploadFile
 from typing import List
@@ -6,8 +7,10 @@ from minio.error import S3Error
 from src.db.session import get_db
 from src.services.csv_file_validation import validate_csv
 from src.services.minio_file_uploader import minio_file_uploader
+from src.services.minio_client import minio_client
 from src.crud import file_crud
 from src.schemas.file import FileCreate, FileRead
+from src.core.config import settings
 
 class FileService:
     def __init__(self, db: AsyncSession):
@@ -16,6 +19,26 @@ class FileService:
     async def fetch_all(self, project_uuid: UUID):
         rows = await file_crud.fetch_files(self.db, project_uuid)
         return [FileRead(**row) for row in rows]
+    
+    async def fetch_papers(self, project_uuid: UUID):
+        files = await file_crud.fetch_files(self.db, project_uuid)
+        papers = []
+        for file in files:
+            try:
+                res = minio_client.get_object(settings.MINIO_BUCKET, file.filename)
+                content = res.read().decode("utf-8-sig")
+            finally:
+                if res:
+                    res.close()
+                    res.release_conn()
+        reader = csv.DictReader(content.splitlines())
+        for row in reader:
+            papers.append({
+                "title": row["title"],
+                "abstract": row["abstract"],
+                "doi": row["doi"]
+            })
+        return papers
 
     async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:
         errors = []
