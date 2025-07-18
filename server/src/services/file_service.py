@@ -31,13 +31,14 @@ class FileService:
                 if res:
                     res.close()
                     res.release_conn()
-        reader = csv.DictReader(content.splitlines())
-        for row in reader:
-            papers.append({
-                "title": row["title"],
-                "abstract": row["abstract"],
-                "doi": row["doi"]
-            })
+            reader = csv.DictReader(content.splitlines())
+            for row in reader:
+                normalized = {key.lower(): value for key, value in row.items()}
+                papers.append({
+                    "title": normalized.get("title"),
+                    "abstract": normalized.get("abstract"),
+                    "doi": normalized.get("doi")
+                })
         return papers
 
     async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:

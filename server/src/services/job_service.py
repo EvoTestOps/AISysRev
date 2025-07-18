@@ -27,7 +27,7 @@ class JobService:
         file_service = FileService(self.db)
         jobtask_service = JobTaskService(self.db)
         new_job = await job_crud.create_jobs(self.db, job_data)
-        papers = await file_service.fetch_papers(self.db, job_data.project_uuid)
+        papers = await file_service.fetch_papers(job_data.project_uuid)
         await jobtask_service.bulk_create(new_job.id, papers)
 
         return JobRead(

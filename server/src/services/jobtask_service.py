@@ -7,10 +7,10 @@ class JobTaskService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def bulk_create(self, job_uuid: UUID, papers: list[dict]):
+    async def bulk_create(self, job_id: UUID, papers: list[dict]):
         jobtasks = [
             JobTaskCreate(
-                job_uuid=job_uuid,
+                job_id=job_id,
                 doi=paper["doi"],
                 title=paper["title"],
                 abstract=paper["abstract"]
