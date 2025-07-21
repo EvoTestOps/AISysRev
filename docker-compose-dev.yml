@@ -34,6 +34,7 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      MINIO_ENDPOINT: minio_${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     develop:
