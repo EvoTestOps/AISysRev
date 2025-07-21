@@ -1,3 +1,4 @@
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.models.job import Job
@@ -9,7 +10,7 @@ class JobCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_jobs(self) -> list[JobRead]:
+    async def fetch_jobs(self) -> List[JobRead]:
         stmt = (
             select(
                 Job.uuid,
