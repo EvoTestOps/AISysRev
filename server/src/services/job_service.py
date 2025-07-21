@@ -3,6 +3,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
 from src.crud import job_crud
+from src.crud.jobtask_crud import JobTaskCrud
 from src.schemas.job import JobCreate, JobRead
 from src.services.jobtask_service import JobTaskService
 from src.services.file_service import FileService
@@ -10,7 +11,10 @@ from src.services.file_service import FileService
 class JobService:
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+        self.file_service = FileService(self.db)
+        self.jobtask_crud = JobTaskCrud(self.db)
+        self.jobtask_service = JobTaskService(self.jobtask_crud)
+
     async def fetch_all(self) -> list[JobRead]:
         rows = await job_crud.fetch_jobs(self.db)
         return [JobRead(**row) for row in rows]
@@ -24,11 +28,9 @@ class JobService:
         return JobRead(**job)
     
     async def create(self, job_data: JobCreate):
-        file_service = FileService(self.db)
-        jobtask_service = JobTaskService(self.db)
         new_job = await job_crud.create_jobs(self.db, job_data)
-        papers = await file_service.fetch_papers(job_data.project_uuid)
-        await jobtask_service.bulk_create(new_job.id, papers)
+        papers = await self.file_service.fetch_papers(job_data.project_uuid)
+        await self.jobtask_service.bulk_create(new_job.id, papers)
 
         return JobRead(
             uuid=new_job.uuid,

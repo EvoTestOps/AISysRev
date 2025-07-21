@@ -1,11 +1,11 @@
 from uuid import UUID
 from src.schemas.jobtask import JobTaskCreate
-from src.crud import jobtask_crud
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.crud.jobtask_crud import JobTaskCrud
 
 class JobTaskService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
+    def __init__(self, jobtask_crud: JobTaskCrud):
+        self.jobtask_crud = jobtask_crud
 
     async def bulk_create(self, job_id: UUID, papers: list[dict]):
         jobtasks = [
@@ -17,4 +17,4 @@ class JobTaskService:
             )
             for paper in papers
         ]
-        return await jobtask_crud.bulk_create_jobtasks(self.db, jobtasks)
+        return await self.jobtask_crud.bulk_create_jobtasks(jobtasks)
