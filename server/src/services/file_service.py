@@ -5,7 +5,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from minio.error import S3Error
 from src.db.session import get_db
-from src.services.csv_file_validation import validate_csv
+from src.tools.csv_file_validation import validate_csv
 from src.services.minio_file_uploader import minio_file_uploader
 from src.services.minio_client import minio_client
 from src.crud.file_crud import FileCrud
