@@ -8,20 +8,21 @@ from src.db.session import get_db
 from src.services.csv_file_validation import validate_csv
 from src.services.minio_file_uploader import minio_file_uploader
 from src.services.minio_client import minio_client
-from src.crud import file_crud
+from src.crud.file_crud import FileCrud
 from src.schemas.file import FileCreate, FileRead
 from src.core.config import settings
 
 class FileService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, file_crud: FileCrud):
         self.db = db
-    
+        self.file_crud = file_crud
+
     async def fetch_all(self, project_uuid: UUID):
-        rows = await file_crud.fetch_files(self.db, project_uuid)
+        rows = await self.file_crud.fetch_files(project_uuid)
         return [FileRead(**row) for row in rows]
     
     async def fetch_papers(self, project_uuid: UUID):
-        files = await file_crud.fetch_files(self.db, project_uuid)
+        files = await self.file_crud.fetch_files(project_uuid)
         papers = []
         for file in files:
             try:
@@ -57,7 +58,7 @@ class FileService:
                     filename=f.filename,
                     mime_type=f.content_type
                 )
-                await file_crud.create_file_record(self.db, file_data)
+                await self.file_crud.create_file_record(file_data)
                 minio_file_uploader(f.file, f.filename)
                 valid_filenames.append(f.filename)
 
@@ -70,4 +71,4 @@ class FileService:
         }
 
 def get_file_service(db: AsyncSession = Depends(get_db)) -> FileService:
-    return FileService(db)
+    return FileService(db, FileCrud(db))

@@ -4,7 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud.jobtask_crud import JobTaskCrud
 
 class JobTaskService:
-    def __init__(self, jobtask_crud: JobTaskCrud):
+    def __init__(self, db: AsyncSession, jobtask_crud: JobTaskCrud):
+        self.db = db
         self.jobtask_crud = jobtask_crud
 
     async def bulk_create(self, job_id: UUID, papers: list[dict]):

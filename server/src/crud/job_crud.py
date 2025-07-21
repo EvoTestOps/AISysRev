@@ -9,7 +9,7 @@ class JobCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_jobs(db: AsyncSession) -> list[JobRead]:
+    async def fetch_jobs(self) -> list[JobRead]:
         stmt = (
             select(
                 Job.uuid,
@@ -20,10 +20,10 @@ class JobCrud:
             )
             .join(Project, Project.id == Job.project_id)
         )
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         return result.mappings().all()
 
-    async def fetch_jobs_by_project(db: AsyncSession, project_uuid: UUID):
+    async def fetch_jobs_by_project(self, project_uuid: UUID):
         stmt = (
             select(
                 Job.uuid,
@@ -35,10 +35,10 @@ class JobCrud:
             .join(Project, Project.id == Job.project_id)
             .where(Project.uuid == project_uuid)
         )
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         return result.mappings().all()
 
-    async def fetch_job_by_uuid(db: AsyncSession, uuid: UUID) -> JobRead:
+    async def fetch_job_by_uuid(self, uuid: UUID) -> JobRead:
         stmt = (
             select(
                 Job.uuid,
@@ -50,15 +50,15 @@ class JobCrud:
             .join(Project, Project.id == Job.project_id)
             .where(Job.uuid == uuid)
         )
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         job = result.mappings().one_or_none()
         if not job:
             raise ValueError(f"Job with uuid {uuid} not found")
         return job
 
-    async def create_jobs(db: AsyncSession, job_data: JobCreate):
+    async def create_jobs(self, job_data: JobCreate):
         stmt = select(Project).where(Project.uuid == job_data.project_uuid)
-        result = await db.execute(stmt)
+        result = await self.db.execute(stmt)
         project = result.scalar_one_or_none()
         if not project:
             raise ValueError(f"Project with uuid {job_data.project_uuid} not found")
@@ -67,7 +67,7 @@ class JobCrud:
             project_id=project.id,
             llm_config=job_data.llm_config.model_dump()
         )
-        db.add(new_job)
-        await db.commit()
-        await db.refresh(new_job)
+        self.db.add(new_job)
+        await self.db.commit()
+        await self.db.refresh(new_job)
         return new_job
