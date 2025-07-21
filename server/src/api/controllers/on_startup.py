@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter
 from alembic import command
 from alembic.config import Config
-from src.services.minio_client import check_and_create_s3_bucket
+from src.tools.minio_client import check_and_create_s3_bucket
 from src.core.config import settings
 from src.db.db_check import check_database_connection
 from src.api.controllers.health_check import check_redis_connection

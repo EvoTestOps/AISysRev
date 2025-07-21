@@ -1,13 +1,13 @@
 import csv
 from uuid import UUID
-from fastapi import Depends, HTTPException, UploadFile
+from fastapi import Depends, UploadFile
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from minio.error import S3Error
 from src.db.session import get_db
 from src.tools.csv_file_validation import validate_csv
-from src.services.minio_file_uploader import minio_file_uploader
-from src.services.minio_client import minio_client
+from src.tools.minio_file_uploader import minio_file_uploader
+from src.tools.minio_client import minio_client
 from src.crud.file_crud import FileCrud
 from src.schemas.file import FileCreate, FileRead
 from src.core.config import settings
