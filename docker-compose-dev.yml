@@ -37,6 +37,8 @@ services:
       MINIO_ENDPOINT: minio_${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+    volumes:
+      - ./server:/app
     develop:
       watch:
         - action: sync
