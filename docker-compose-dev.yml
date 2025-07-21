@@ -62,7 +62,7 @@ services:
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database_dev
     volumes:
-      - postgres_data_${APP_ENV:-dev}:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
@@ -83,14 +83,19 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio_data_${APP_ENV:-dev}:/data
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: redis_${APP_ENV:-dev}
     privileged: true
     volumes: 
-      - redis_data_${APP_ENV:-dev}:/data
+      - redis_data:/data
 
   celery:
     container_name: celery_${APP_ENV:-dev}
@@ -127,15 +132,6 @@ services:
       - celery
 
 volumes:
-  postgres_data_dev:
-  postgres_data_test:
-  postgres_data_prod:
-  minio_csv_data_dev:
-  minio_csv_data_test:
-  minio_csv_data_prod:
-  minio_data_dev:
-  minio_data_test:
-  minio_data_prod:
-  redis_data_dev:
-  redis_data_test:
-  redis_data_prod:
+  postgres_data:
+  minio_data:
+  redis_data:
