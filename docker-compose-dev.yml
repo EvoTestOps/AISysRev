@@ -34,7 +34,7 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
-      MINIO_ENDPOINT: minio_${APP_ENV:-dev}:9000
+      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     volumes:
@@ -55,6 +55,7 @@ services:
       - postgres
       - minio
       - redis
+      - celery
 
   postgres:
     image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
@@ -76,7 +77,7 @@ services:
 
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-    container_name: minio_${APP_ENV:-dev}
+    container_name: minio${APP_ENV:-dev}
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
