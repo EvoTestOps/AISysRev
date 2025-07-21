@@ -101,6 +101,7 @@ export const ProjectPage = () => {
       }
       if (res.errors && res.errors.length > 0) {
         ExpandableToast(res.errors);
+        console.log("File upload errors:", res.errors);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
