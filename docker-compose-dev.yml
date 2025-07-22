@@ -31,11 +31,15 @@ services:
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
+      SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+    volumes:
+      - ./server:/app
     develop:
       watch:
         - action: sync
@@ -52,6 +56,7 @@ services:
       - postgres
       - minio
       - redis
+      - celery
 
   postgres:
     image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
@@ -61,7 +66,7 @@ services:
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database_dev
     volumes:
-      - postgres_data_${APP_ENV:-dev}:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
@@ -73,20 +78,28 @@ services:
 
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-    container_name: minio_${APP_ENV:-dev}
+    container_name: minio${APP_ENV:-dev}
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - minio_data_${APP_ENV:-dev}:/data
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: redis_${APP_ENV:-dev}
     privileged: true
     volumes: 
-      - redis_data_${APP_ENV:-dev}:/data
+      - redis_data:/data
 
   celery:
     container_name: celery_${APP_ENV:-dev}
@@ -97,8 +110,13 @@ services:
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
+      SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
       - redis
     volumes:
@@ -114,8 +132,13 @@ services:
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
+      SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - ${FLOWER_PORT:-5555}:5555
     depends_on:
@@ -123,15 +146,6 @@ services:
       - celery
 
 volumes:
-  postgres_data_dev:
-  postgres_data_test:
-  postgres_data_prod:
-  minio_csv_data_dev:
-  minio_csv_data_test:
-  minio_csv_data_prod:
-  minio_data_dev:
-  minio_data_test:
-  minio_data_prod:
-  redis_data_dev:
-  redis_data_test:
-  redis_data_prod:
+  postgres_data:
+  minio_data:
+  redis_data:

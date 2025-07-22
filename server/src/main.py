@@ -7,6 +7,7 @@ from src.api.controllers.health_check import router as health_check_router
 from src.api.controllers.project import router as project_router
 from src.api.controllers.file import router as file_router
 from src.api.controllers.job import router as job_router
+from src.tools.diagnostics.celery_check import router as celery_test_router
 
 app = FastAPI()
 v1_router = APIRouter(prefix="/api/v1")
@@ -19,6 +20,7 @@ v1_router.include_router(health_check_router)
 v1_router.include_router(project_router)
 v1_router.include_router(file_router)
 v1_router.include_router(job_router)
+v1_router.include_router(celery_test_router)
 
 app.include_router(v1_router)
 
