@@ -8,7 +8,6 @@ from alembic.config import Config
 from src.db.engine import engine
 
 url = make_url(engine.url)
-print(f"Dialect: {url.get_dialect().__module__}")
 
 async def check_database_connection():
     try:
