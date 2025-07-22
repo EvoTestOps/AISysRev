@@ -38,14 +38,8 @@ class JobService:
         new_job = await self.job_crud.create_jobs(job_data)
         papers = await self.file_service.fetch_papers(job_data.project_uuid)
         await self.jobtask_service.bulk_create(new_job.id, papers)
-
-        return JobRead(
-            uuid=new_job.uuid,
-            project_uuid=job_data.project_uuid,
-            llm_config=new_job.llm_config,
-            created_at=new_job.created_at,
-            updated_at=new_job.updated_at
-        )
+        return await self.jobtask_service.start_job_tasks(new_job.id)
+    
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
     job_crud = JobCrud(db)
