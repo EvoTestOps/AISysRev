@@ -1,14 +1,20 @@
 import asyncio
+from fastapi import APIRouter
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
 from src.schemas.jobtask import JobTaskStatus
 from src.crud.jobtask_crud import JobTaskCrud
 
+router = APIRouter()
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self, job_id: int):
-    print(f"Processing job with ID: {job_id}")
-    return asyncio.run(async_process_job(self, job_id))
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    r
 
 async def async_process_job(celery_task, job_id: int):
     async with AsyncSessionLocal() as db:
@@ -32,6 +38,7 @@ async def async_process_job(celery_task, job_id: int):
                     meta={"error": str(e)},
                 )
                 raise
+
         return {"result": "all job tasks processed"}
 
         
