@@ -14,7 +14,6 @@ def process_job_task(self, job_id: int):
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    r
 
 async def async_process_job(celery_task, job_id: int):
     async with AsyncSessionLocal() as db:
