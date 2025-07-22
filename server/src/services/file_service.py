@@ -1,7 +1,7 @@
 import csv
 from uuid import UUID
 from fastapi import Depends, UploadFile
-from typing import List
+from typing import Any, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from minio.error import S3Error
 from src.db.session import get_db
@@ -21,7 +21,7 @@ class FileService:
         rows = await self.file_crud.fetch_files(project_uuid)
         return [FileRead(**row) for row in rows]
     
-    async def fetch_papers(self, project_uuid: UUID):
+    async def fetch_papers(self, project_uuid: UUID) -> List[Any]:
         files = await self.file_crud.fetch_files(project_uuid)
         papers = []
         for file in files:
@@ -42,7 +42,7 @@ class FileService:
                 })
         return papers
 
-    async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> dict:
+    async def process_files(self, project_uuid: UUID, files: List[UploadFile]) -> Dict:
         errors = []
         valid_filenames = []
 

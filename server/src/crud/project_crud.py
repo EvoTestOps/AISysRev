@@ -1,3 +1,4 @@
+from typing import List, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,7 +9,7 @@ class ProjectCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_projects(self) -> list[ProjectRead]:
+    async def fetch_projects(self) -> List[ProjectRead]:
         stmt = select(
             Project.uuid,
             Project.name,
@@ -25,7 +26,7 @@ class ProjectCrud:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def create_project(self, project_data: ProjectCreate) -> tuple[int, UUID]:
+    async def create_project(self, project_data: ProjectCreate) -> Tuple[int, UUID]:
         new_project = Project(**project_data.model_dump(exclude_none=True))
         self.db.add(new_project)
         await self.db.commit()
