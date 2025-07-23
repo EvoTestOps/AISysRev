@@ -1,9 +1,10 @@
+from uuid import UUID
 from typing import List
-from src.schemas.jobtask import JobTaskCreate
-from src.models.jobtask import JobTask
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-
+from src.schemas.jobtask import JobTaskCreate
+from src.models.job import Job
+from src.models.jobtask import JobTask
 
 class JobTaskCrud:
     def __init__(self, db: AsyncSession):
@@ -17,6 +18,15 @@ class JobTaskCrud:
     
     async def fetch_job_tasks_by_job_id(self, job_id: int) -> List[JobTask]:
         stmt = select(JobTask).where(JobTask.job_id == job_id)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+    
+    async def fetch_job_tasks_by_job_uuid(self, job_uuid: UUID) -> List[JobTask]:
+        stmt = (
+            select(JobTask)
+            .join(Job, JobTask.job_id == Job.id)
+            .where(Job.uuid == job_uuid)
+        )
         result = await self.db.execute(stmt)
         return result.scalars().all()
     

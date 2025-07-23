@@ -12,13 +12,41 @@ import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
-import { createJob } from "../services/jobService";
+import { createJob, fetchJobTasksFromBackend, fetchJobsForProject } from "../services/jobService";
 
-type ScreeningTask = {
+type LlmConfig = {
   model_name: string;
   temperature: number;
   seed: number;
   top_p: number;
+};
+
+type CreatedJob = {
+  uuid: string;
+  project_uuid: string;
+  llm_config: LlmConfig;
+  created_at: string;
+  updated_at: string;
+};
+
+enum ScreeningTaskStatus {
+  NOT_STARTED = "NOT_STARTED",
+  PENDING = "PENDING",
+  RUNNING = "RUNNING",
+  DONE = "DONE",
+  ERROR = "ERROR"
+}
+
+type ScreeningTask = {
+  uuid: string;
+  job_uuid: string;
+  doi: string;
+  title: string;
+  abstract: string;
+  status: ScreeningTaskStatus;
+  result: string | null;
+  human_result: string | null;
+  status_metadata: Record<string, any> | null;
 };
 
 export const ProjectPage = () => {
@@ -33,6 +61,7 @@ export const ProjectPage = () => {
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.5);
   const [isLlmSelected, setIsLlmSelected] = useState(true)
+  const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
   const [error, setError] = useState<string | null>(null);
 
@@ -69,13 +98,25 @@ export const ProjectPage = () => {
     fetchProject()
   }, [uuid]);
 
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const jobs = await fetchJobsForProject(uuid);
+        setCreatedJobs(jobs);
+      } catch (error) {
+        console.error("Failed to fetch jobs for project", error);
+      }
+    };
+    fetchJobs();
+  }, [uuid]);
+
   const createTask = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
       setIsLlmSelected(false)
       return;
     }
-    const newScreeningTask: ScreeningTask = {
+    const llmConfig: LlmConfig = {
       model_name: selectedLlm,
       temperature: temperature,
       seed: seed,
@@ -83,14 +124,20 @@ export const ProjectPage = () => {
     }
 
     try {
-      const res = await createJob(uuid, newScreeningTask);
-      console.log("Job created successfully:", res);
+      const res = await createJob(uuid, llmConfig);
       toast.success("Job created successfully!");
+      const createdJob: CreatedJob = {
+        uuid: res.uuid,
+        project_uuid: res.project_uuid,
+        llm_config: res.llm_config,
+        created_at: res.created_at,
+        updated_at: res.updated_at
+      };
+      setCreatedJobs((prev) => ([...prev, createdJob]));
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Error creating job");
     }
-    setScreeningTasks((prev) => ([...prev, newScreeningTask]))
   }, [uuid, selectedLlm, temperature, seed, top_p]);
 
   const uploadFilesToBackend = useCallback(async (files: File[]) => {
@@ -141,13 +188,27 @@ export const ProjectPage = () => {
     })();
   }, [fetchFiles]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (createdJobs.length === 0) return;
+      Promise.all(createdJobs.map(job => fetchJobTasksFromBackend(job.uuid)))
+        .then(results => {
+          setScreeningTasks(results.flat());
+        })
+        .catch(error => {
+          console.error("Error fetching job tasks:", error);
+        });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [createdJobs]);
+
   if (error) {
     return (
       <Layout title="Error">
         <div className="font-semibold">{error}</div>
       </Layout>
     )
-  }
+  };
 
   if (!name) {
     return (
@@ -155,7 +216,7 @@ export const ProjectPage = () => {
         <div>Loading...</div>
       </Layout>
     )
-  }
+  };
 
   return (
     <Layout title={name} className="w-5xl">
@@ -173,31 +234,39 @@ export const ProjectPage = () => {
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
-          {screeningTasks.map((_, idx) => (
-            <div key={idx} className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-              <p className="flex pl-4 items-center">Task #{idx + 1}</p>
-              <div className="flex">
-                <div className="relative w-48 h-8 px-4">
-                  <progress
-                    value={50}
-                    max={100}
-                    className="h-full w-full
-                      [&::-webkit-progress-bar]:rounded-xl
-                      [&::-webkit-progress-bar]:bg-gray-400
-                      [&::-webkit-progress-value]:bg-blue-200
-                      [&::-webkit-progress-value]:rounded-xl
-                    "
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                    647/4678
+          {createdJobs.map((job, jobIdx) => {
+            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
+            const doneCount = jobTasks.filter(task => task.status === ScreeningTaskStatus.DONE).length;
+            const totalCount = jobTasks.length;
+            const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+            return (
+              <div key={job.uuid} className="mb-6">
+                <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+                  <p className="flex pl-4 items-center font-semibold">Task #{jobIdx + 1}</p>
+                  <div className="flex">
+                    <div className="relative w-48 h-8 px-4">
+                      <progress
+                        value={progress}
+                        max={100}
+                        className="h-full w-full
+                            [&::-webkit-progress-bar]:rounded-xl
+                            [&::-webkit-progress-bar]:bg-gray-400
+                            [&::-webkit-progress-value]:bg-blue-200
+                            [&::-webkit-progress-value]:rounded-xl
+                          "
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                        {doneCount}/{totalCount}
+                      </div>
+                    </div>
+                    <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
+                      Cancel
+                    </div>
                   </div>
                 </div>
-                <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
-                  Cancel
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="flex flex-col space-y-4">

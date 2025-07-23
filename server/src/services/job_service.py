@@ -3,6 +3,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
 from src.schemas.job import JobCreate, JobRead
+from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService
 from src.services.file_service import FileService
 from src.crud.job_crud import JobCrud
@@ -34,6 +35,21 @@ class JobService:
         job = await self.job_crud.fetch_job_by_uuid(uuid)
         return JobRead(**job)
     
+    async def fetch_job_tasks(self, job_uuid: UUID):
+        job_tasks = await self.jobtask_service.jobtask_crud.fetch_job_tasks_by_job_uuid(job_uuid)
+        
+        return [JobTaskRead(
+            uuid=task.uuid,
+            job_uuid=job_uuid,
+            doi=task.doi,
+            title=task.title,
+            abstract=task.abstract,
+            status=task.status,
+            result=task.result,
+            human_result=task.human_result,
+            status_metadata=task.status_metadata
+        ) for task in job_tasks]
+    
     async def create(self, job_data: JobCreate):
         new_job = await self.job_crud.create_jobs(job_data)
         papers = await self.file_service.fetch_papers(job_data.project_uuid)
@@ -47,8 +63,6 @@ class JobService:
             created_at=new_job.created_at,
             updated_at=new_job.updated_at
         )
-
-    
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
     job_crud = JobCrud(db)

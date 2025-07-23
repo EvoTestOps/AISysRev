@@ -19,7 +19,7 @@ class JobTaskCreate(BaseModel):
 
 class JobTaskRead(BaseModel):
     uuid: UUID
-    job_id: int
+    job_uuid: UUID
     doi: str
     title: str
     abstract: str
@@ -27,5 +27,3 @@ class JobTaskRead(BaseModel):
     result: Optional[dict]
     human_result: Optional[str]
     status_metadata: Optional[dict]
-    created_at: str
-    updated_at: str

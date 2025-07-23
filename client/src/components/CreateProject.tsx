@@ -17,7 +17,6 @@ export const CreateProject = async (props: CreateProjectProps): Promise<{
       props.inclusionCriteria.join(";"),
       props.exclusionCriteria.join(";")
     );
-    console.log("Project created, res: ", res);
     return {"id": res.id, "uuid": res.uuid};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
