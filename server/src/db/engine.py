@@ -1,3 +1,4 @@
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine
 from src.core.config import settings
 import os
@@ -8,4 +9,4 @@ if not DB_URL:
 
 db_echo = os.getenv("APP_ENV", "dev") != "test"
 
-engine = create_async_engine(DB_URL, echo=db_echo)
+engine = create_async_engine(DB_URL, echo=db_echo, poolclass=NullPool)
