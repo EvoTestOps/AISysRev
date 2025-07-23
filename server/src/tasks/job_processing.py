@@ -8,17 +8,8 @@ from src.crud.jobtask_crud import JobTaskCrud
 router = APIRouter()
 
 @celery_app.task(name="tasks.process_job", bind=True)
-<<<<<<< Updated upstream
-def process_job_task(self, job_id: int):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-=======
 def process_job_task(self: asyncio.Task, job_id: int):
     asyncio.run(async_process_job(self, job_id))
->>>>>>> Stashed changes
 
 async def async_process_job(celery_task: asyncio.Task, job_id: int):
     async with AsyncSessionLocal() as db:
