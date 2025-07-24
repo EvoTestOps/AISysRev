@@ -29,7 +29,6 @@ export const ProjectsPage = () => {
       setProjects((prevProjects) =>
         [...prevProjects.filter((project) => project.uuid !== uuid)]
       );
-      console.log("Project deleted successfully");
       toast.success("Project deleted successfully", {autoClose: 1500});
     } catch (error) {
       console.error("Error deleting project:", error);

@@ -28,6 +28,18 @@ async def get_single_job(uuid: UUID, jobs: JobService = Depends(get_job_service)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch job: {str(e)}")
 
+@router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
+async def get_job_tasks(uuid: UUID, jobs: JobService = Depends(get_job_service)):
+    try:
+        job_tasks = await jobs.fetch_job_tasks(uuid)
+        if not job_tasks:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job tasks not found")
+        return job_tasks
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch job tasks: {str(e)}")
+
 @router.post("/job", status_code=status.HTTP_201_CREATED)
 async def create_job(job_data: JobCreate, jobs: JobService = Depends(get_job_service)):
     try:

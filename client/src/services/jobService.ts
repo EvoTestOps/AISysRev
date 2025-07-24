@@ -25,3 +25,24 @@ export const createJob = async (projectUuid: string, llmConfig: {
     throw error;
   }
 };
+
+export const fetchJobsForProject = async (projectUuid: string) => {
+  try {
+    const res = await axios.get(`${prefix}/job?project=${projectUuid}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+    throw error;
+  }
+};
+
+export const fetchJobTasksFromBackend = async (jobUuid: string) => {
+  try {
+    const res = await axios.get(`${prefix}/jobtask/${jobUuid}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching job tasks:", error);
+    console.error("Request URL:", `${prefix}/jobtask/${jobUuid}`);
+    throw error;
+  }
+};
