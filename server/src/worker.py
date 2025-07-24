@@ -17,5 +17,7 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
+from src.tasks.job_processing import process_job_task
+
 def get_celery():
     return celery_app

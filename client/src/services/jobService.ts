@@ -18,6 +18,7 @@ export const createJob = async (projectUuid: string, llmConfig: {
         top_p: llmConfig.top_p
       }
     });
+    console.log("Job created successfully:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error creating job:", error);

@@ -12,6 +12,7 @@ export const ProjectsPage = () => {
     try {
       const projectsData: Project[] = await fetch_projects();
       setProjects(projectsData);
+      console.log("Projects loaded successfully");
     } catch (error) {
       console.error("Error loading projects:", error);
     }
