@@ -46,7 +46,7 @@ type ScreeningTask = {
   status: ScreeningTaskStatus;
   result: string | null;
   human_result: string | null;
-  status_metadata: Record<string, unknown> | null;
+  status_metadata: Record<string, any> | null;
 };
 
 export const ProjectPage = () => {
