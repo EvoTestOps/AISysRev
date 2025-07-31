@@ -29,3 +29,7 @@ m-hist:
 # Display the current migration version applied to the database
 m-current:
 	APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev exec backend alembic current
+
+# Run all tests in the backend
+backend-test:
+	source server/venv/bin/activate && cd server && source .env.test && PYTHONPATH=. pytest src/tests
