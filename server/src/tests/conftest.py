@@ -1,6 +1,9 @@
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.main import app
+from src.db.session import AsyncSessionLocal
 
 @pytest.fixture(scope="function")
 def test_client():
@@ -15,10 +18,8 @@ def project_payload():
         "exclusion_criteria": "Not in English"
     }
 
-@pytest.fixture(scope="function")
-def project_endpoint():
-    return "/api/v1/project"
-
-@pytest.fixture(scope="function") 
-def health_endpoint():
-    return "/api/v1/health"
+@pytest_asyncio.fixture(scope="function")
+async def db_session():
+    async_session = AsyncSessionLocal()
+    async with async_session as session:
+        yield session

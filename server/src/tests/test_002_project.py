@@ -1,19 +1,24 @@
 import pytest
+from src.crud.project_crud import ProjectCrud
+from src.schemas.project import ProjectCreate, ProjectRead
 
-@pytest.mark.api
-@pytest.mark.integration
-def test_create_and_get_project(test_client, project_payload, project_endpoint):
-    response = test_client.post(project_endpoint, json=project_payload)
-    assert response.status_code == 201
-    project_res = response.json()
-    assert "uuid" in project_res
+@pytest.mark.asyncio
+async def test_create_and_fetch_project_crud(db_session):
+    crud = ProjectCrud(db_session)
+    project_data = ProjectCreate(
+        name="Test",
+        inclusion_criteria="A",
+        exclusion_criteria="B"
+    )
+    id, uuid = await crud.create_project(project_data)
+    assert uuid
+    assert id
 
-    response = test_client.get(f"{project_endpoint}/{project_res['uuid']}")
-    assert response.status_code == 200
-    project = response.json()
-    assert project["uuid"] == project_res["uuid"]
-    assert project["name"] == project_payload["name"]
-    assert project["inclusion_criteria"] == project_payload["inclusion_criteria"]
-    assert project["exclusion_criteria"] == project_payload["exclusion_criteria"]
-    assert "created_at" in project
-    assert "updated_at" in project
+    project = await crud.fetch_project_by_uuid(uuid)
+    assert project is not None
+
+    project_read = ProjectRead.model_validate(project)
+    assert project_read.uuid == uuid
+    assert project_read.name == project_data.name
+    assert project_read.inclusion_criteria == project_data.inclusion_criteria
+    assert project_read.exclusion_criteria == project_data.exclusion_criteria
