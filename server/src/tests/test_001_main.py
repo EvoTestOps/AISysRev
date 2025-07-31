@@ -1,11 +1,9 @@
-from fastapi.testclient import TestClient
-from src.main import app
+import pytest
 
-client = TestClient(app)
-prefix = "/api/v1"
-
-def test_health_check():
-    response = client.get(f"{prefix}/health")
+@pytest.mark.api
+@pytest.mark.integration
+def test_health_check(test_client, health_endpoint):
+    response = test_client.get(health_endpoint)
     assert response.status_code == 200
     data = response.json()
     assert "db" in data
