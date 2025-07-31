@@ -46,6 +46,7 @@ pydantic_core==2.27.2
 Pygments==2.19.1
 PyMySQL==1.1.1
 pytest==8.4.1
+pytest-asyncio==1.1.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.20
