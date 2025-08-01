@@ -57,7 +57,7 @@ class JobCrud:
             raise ValueError(f"Job with uuid {uuid} not found")
         return job
 
-    async def create_jobs(self, job_data: JobCreate):
+    async def create_job(self, job_data: JobCreate):
         stmt = select(Project).where(Project.uuid == job_data.project_uuid)
         result = await self.db.execute(stmt)
         project = result.scalar_one_or_none()
