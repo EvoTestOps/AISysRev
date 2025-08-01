@@ -36,5 +36,6 @@ backend-test:
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s --cov=src $(REPORT)
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
 
+# Run all tests in the backend and create HTML coverage report
 backend-test-html:
 	make backend-test REPORT="--cov-report=html"
