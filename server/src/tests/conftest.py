@@ -1,7 +1,10 @@
 import pytest
 import pytest_asyncio
 import asyncio
+from io import BytesIO
+from fastapi import UploadFile
 from fastapi.testclient import TestClient
+from starlette.datastructures import Headers
 from src.main import app
 from src.core.config import settings
 from src.db.session import AsyncSessionLocal, Base, engine
@@ -25,6 +28,20 @@ async def test_project_uuid(db_session):
     id, project_uuid = await crud.create_project(project_data)
     assert project_uuid
     return project_uuid
+
+@pytest_asyncio.fixture
+async def test_files_working():
+    file1 = UploadFile(
+        filename="test_file1.csv",
+        file=BytesIO(b"title,abstract,doi\nA,B,C"),
+        headers=Headers({"content-type": "text/csv"})
+    )
+    file2 = UploadFile(
+        filename="test_file2.csv",
+        file=BytesIO(b"title,abstract,doi\nX,Y,Z"),
+        headers=Headers({"content-type": "text/csv"})
+    )
+    yield [file1, file2]
 
 @pytest.fixture(scope="session", autouse=True)
 def reset_db():
