@@ -43,6 +43,25 @@ async def test_files_working():
     )
     yield [file1, file2]
 
+@pytest_asyncio.fixture
+async def test_files_invalid():
+    invalid_file1 = UploadFile(
+        filename="invalid_file1.txt",
+        file=BytesIO(b"abstract,doi\nTest Abstract,10.1234/test"),
+        headers=Headers({"content-type": "text/plain"})
+    )
+    invalid_file2 = UploadFile(
+        filename="invalid_file2.txt",
+        file=BytesIO(b"title,doi\nTest Title,10.1234/test"),
+        headers=Headers({"content-type": "text/plain"})
+    )
+    invalid_file3 = UploadFile(
+        filename="invalid_file3.txt",
+        file=BytesIO(b"title,abstract\nTest Title,Test Abstract"),
+        headers=Headers({"content-type": "text/plain"})
+    )
+    yield [invalid_file1, invalid_file2, invalid_file3]
+
 @pytest.fixture(scope="session", autouse=True)
 def reset_db():
     if settings.APP_ENV == "test":

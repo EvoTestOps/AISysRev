@@ -40,7 +40,21 @@ async def test_file_service(db_session, test_project_uuid, test_files_working):
     assert all("title" in paper and "abstract" in paper and "doi" in paper for paper in papers)
 
 @pytest.mark.asyncio
-async def test_get_file_service(db_session, test_project_uuid):
+async def test_files_service_invalid_data(db_session, test_project_uuid, test_files_invalid):
+    crud = FileCrud(db_session)
+    service = FileService(db_session, crud)
+    errors_msgs = ['Missing required columns: title', 
+                   'Missing required columns: abstract', 
+                   'Missing required columns: doi']
+
+    result = await service.process_files(test_project_uuid, test_files_invalid)
+    assert "errors" in result
+    assert len(result["errors"]) == 3
+    for error in result["errors"]:
+        assert error['message'] in errors_msgs
+
+@pytest.mark.asyncio
+async def test_get_file_service(db_session):
     service = get_file_service(db_session)
     assert service is not None
     assert isinstance(service, FileService)
