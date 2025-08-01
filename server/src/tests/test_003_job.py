@@ -3,6 +3,7 @@ from random import random
 from src.crud.job_crud import JobCrud
 from src.models.job import Job
 from src.schemas.job import JobCreate, JobRead, ModelConfig
+from src.services.job_service import JobService, get_job_service
 
 @pytest.mark.asyncio
 async def test_fetch_jobs(db_session, test_project_uuid):
@@ -65,3 +66,8 @@ async def test_fetch_jobs_by_project(db_session, test_project_uuid):
     for job in jobs:
         assert job.project_uuid == test_project_uuid
     
+@pytest.mark.asyncio
+async def test_get_job_service(db_session):
+    service = get_job_service(db_session)
+    assert service is not None
+    assert isinstance(service, JobService)

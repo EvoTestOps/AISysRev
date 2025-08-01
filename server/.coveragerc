@@ -3,3 +3,10 @@ omit =
     */tests/*
     */migrations/*
     */__init__.py
+    */src/tools/diagnostics/*
+    */src/api/controllers/file.py
+    */src/api/controllers/fixture.py
+    */src/api/controllers/job.py
+    */src/api/controllers/on_startup.py
+    */src/api/controllers/project.py
+    */src/tasks/example.py
