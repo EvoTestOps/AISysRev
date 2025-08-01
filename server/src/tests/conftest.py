@@ -2,10 +2,10 @@ import pytest
 import pytest_asyncio
 import asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from src.main import app
 from src.db.session import AsyncSessionLocal, Base, engine
 from src.core.config import settings
+from src.tools.diagnostics.db_check import run_migration
 
 @pytest.fixture(scope="function")
 def test_client():
@@ -19,6 +19,7 @@ def reset_db():
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.drop_all)
                 await conn.run_sync(Base.metadata.create_all)
+            await run_migration()
         asyncio.run(drop_and_create())
 
 @pytest_asyncio.fixture(scope="function")
