@@ -40,7 +40,9 @@ Mock data is located in `data/mock` -folder.
 
 ## Tests
 
-Run `npm test` in [client/](./client/)
+Run `npm test` for e2e tests in [client/](./client/)
+
+Run `make backend-test` for backend tests in root
 
 ## Makefile Commands
 

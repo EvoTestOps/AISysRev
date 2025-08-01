@@ -32,8 +32,6 @@ m-current:
 
 # Run all tests in the backend
 backend-test:
-	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d --build
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d backend postgres redis celery
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
