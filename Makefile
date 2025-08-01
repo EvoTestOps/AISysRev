@@ -33,5 +33,8 @@ m-current:
 # Run all tests in the backend
 backend-test:
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d backend postgres redis celery
-	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s --cov=src $(REPORT)
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
+
+backend-test-html:
+	make backend-test REPORT="--cov-report=html"
