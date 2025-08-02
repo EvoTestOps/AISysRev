@@ -46,7 +46,7 @@ class FileService:
         errors = []
         valid_filenames = []
 
-        async with self.db.begin():
+        async with self.db.begin_nested() if self.db.in_transaction() else self.db.begin():
             for f in files:
                 validation_errors = validate_csv(f.file, f.filename)
                 if validation_errors:

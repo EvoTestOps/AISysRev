@@ -69,6 +69,6 @@ class JobCrud:
             llm_config=job_data.llm_config.model_dump()
         )
         self.db.add(new_job)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(new_job)
         return new_job
