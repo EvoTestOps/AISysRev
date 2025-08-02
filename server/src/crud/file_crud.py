@@ -24,6 +24,6 @@ class FileCrud:
     async def create_file_record(self, file_data: FileCreate):
         new_file = File(**file_data.model_dump(exclude_none=True))
         self.db.add(new_file)
-        await self.db.commit()
+        await self.db.flush()
         await self.db.refresh(new_file)
         return new_file
