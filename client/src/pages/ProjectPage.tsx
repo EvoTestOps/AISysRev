@@ -52,6 +52,7 @@ type ScreeningTask = {
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
+  const jobTaskRefetchIntervalMs = 5000;
   const [name, setName] = useState('');
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
@@ -198,7 +199,7 @@ export const ProjectPage = () => {
         .catch(error => {
           console.error("Error fetching job tasks:", error);
         });
-    }, 5000);
+    }, jobTaskRefetchIntervalMs);
     return () => clearInterval(interval);
   }, [createdJobs]);
 
