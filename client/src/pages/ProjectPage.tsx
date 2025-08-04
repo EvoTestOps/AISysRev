@@ -198,7 +198,7 @@ export const ProjectPage = () => {
         .catch(error => {
           console.error("Error fetching job tasks:", error);
         });
-    }, 500);
+    }, 5000);
     return () => clearInterval(interval);
   }, [createdJobs]);
 
