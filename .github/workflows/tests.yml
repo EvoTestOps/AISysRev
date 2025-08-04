@@ -49,30 +49,11 @@ jobs:
         image: redis:7.4.5-alpine
         ports:
           - 6379:6379
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: your_username
-          MINIO_ROOT_PASSWORD: minio-secret-key
-        ports:
-          - 9000:9000
-          - 9001:9001
-        options: >-
-          --entrypoint minio
-          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          server /data --console-address ":9001"
     env:
       APP_ENV: test
       DB_URL: postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
-      MINIO_BUCKET: llm-screening-poc-bucket
       SECRET_KEY: yoursecretkey
     steps:
       - uses: actions/checkout@v4
