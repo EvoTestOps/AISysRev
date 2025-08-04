@@ -79,15 +79,28 @@ jobs:
 
       - name: Wait for Postgres
         run: |
-          for i in {1..90}; do
-            if pg_isready -h postgres_test -U your_username; then
+          for i in {1..20}; do
+            if pg_isready -h postgres -U your_username; then
               echo "Postgres is ready!"
               exit 0
             fi
-            echo "Waiting for Postgres ($i/90)..."
+            echo "Waiting for Postgres ($i/20)..."
             sleep 2
           done
           echo "Postgres did not become ready in time!" >&2
+          exit 1
+
+      - name: Wait for MinIO
+        run: |
+          for i in {1..20}; do
+            if curl -f http://minio:9000/minio/health/live; then
+              echo "MinIO is ready!"
+              exit 0
+            fi
+            echo "Waiting for MinIO ($i/20)..."
+            sleep 2
+          done
+          echo "MinIO did not become ready in time!" >&2
           exit 1
 
       - name: Run Alembic migrations
