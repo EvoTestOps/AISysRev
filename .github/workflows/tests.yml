@@ -31,9 +31,19 @@ jobs:
   backend-test:
     runs-on: ubuntu-latest
     needs: lint-typecheck
+    env:
+      APP_ENV: test
+      DB_URL: postgresql+asyncpg://your_username:your_password@postgres_test:5432/your_database_test
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      SECRET_KEY: yoursecretkey
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
+      MINIO_BUCKET: llm-screening-poc-bucket
     services:
       postgres:
-        image: postgres:15
+        image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
         env:
           POSTGRES_USER: your_username
           POSTGRES_PASSWORD: your_password
@@ -46,15 +56,23 @@ jobs:
           --health-timeout=5s
           --health-retries=5
       redis:
-        image: redis:7.4.5-alpine
+        image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
         ports:
           - 6379:6379
-    env:
-      APP_ENV: test
-      DB_URL: postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      SECRET_KEY: yoursecretkey
+      minio:
+        image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+        env:
+          MINIO_ROOT_USER: your_username
+          MINIO_ROOT_PASSWORD: minio-secret-key
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+          server /data --console-address ":9001"
     steps:
       - uses: actions/checkout@v4
 
@@ -68,9 +86,16 @@ jobs:
 
       - name: Wait for Postgres
         run: |
-          until pg_isready -h postgres -U your_username; do
-            sleep 1
+          for i in {1..90}; do
+            if pg_isready -h postgres_test -U your_username; then
+              echo "Postgres is ready!"
+              exit 0
+            fi
+            echo "Waiting for Postgres ($i/90)..."
+            sleep 2
           done
+          echo "Postgres did not become ready in time!" >&2
+          exit 1
 
       - name: Run Alembic migrations
         run: alembic upgrade head
