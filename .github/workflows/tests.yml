@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Tests
 on:
   push:
     branches: [ main ]
@@ -82,3 +82,78 @@ jobs:
           name: playwright-report
           path: client/playwright-report/
           retention-days: 30
+  backend-test:
+    runs-on: ubuntu-latest
+    needs: test
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: your_username
+          POSTGRES_PASSWORD: your_password
+          POSTGRES_DB: your_database_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U your_username"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7.4.5-alpine
+        ports:
+          - 6379:6379
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: your_username
+          MINIO_ROOT_PASSWORD: minio-secret-key
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --entrypoint "minio server /data --console-address ':9001'"
+          --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      APP_ENV: test
+      DB_URL: postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
+      MINIO_BUCKET: llm-screening-poc-bucket
+      SECRET_KEY: yoursecretkey
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: pip install --upgrade pip && pip install -r server/requirements.txt
+
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h postgres -U your_username; do
+            sleep 1
+          done
+
+      - name: Run Alembic migrations
+        run: alembic upgrade head
+        working-directory: server
+
+      - name: Run backend pytest
+        run: pytest --maxfail=1 --disable-warnings --cov=src
+        working-directory: server
+
+      - name: Upload backend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: server/htmlcov/
