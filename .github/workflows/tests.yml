@@ -62,12 +62,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --entrypoint minio
           --health-cmd="pg_isready -U your_username"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-          server /data --console-address ":9001"
       redis:
         image: redis:7.4.5-alpine
         ports:
@@ -81,11 +79,12 @@ jobs:
           - 9000:9000
           - 9001:9001
         options: >-
-          --entrypoint "minio server /data --console-address ':9001'"
+          --entrypoint minio
           --health-cmd="curl -f http://localhost:9000/minio/health/live || exit 1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          server /data --console-address ":9001"
     env:
       APP_ENV: test
       DB_URL: postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test
