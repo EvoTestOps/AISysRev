@@ -33,14 +33,13 @@ jobs:
     needs: lint-typecheck
     env:
       APP_ENV: test
-      DB_URL: postgresql+asyncpg://your_username:your_password@postgres_test:5432/your_database_test
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
       SECRET_KEY: yoursecretkey
-      MINIO_ENDPOINT: minio:9000
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
+      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-      MINIO_BUCKET: llm-screening-poc-bucket
     services:
       postgres:
         image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
@@ -51,10 +50,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U your_username"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
         ports:
