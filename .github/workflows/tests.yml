@@ -49,39 +49,6 @@ jobs:
       - name: Client - Build client
         run: npm run build
         working-directory: client
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    timeout-minutes: 60
-    env:
-      APP_ENV: test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-           node-version-file: '.nvmrc'
-      - name: Client - Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-      - name: Client - Install dependencies
-        run: npm ci --cache ~/.npm
-        working-directory: client
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-        working-directory: client
-      - name: Run Playwright tests
-        run: npx playwright test
-        working-directory: client
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: client/playwright-report/
-          retention-days: 30
   backend-test:
     runs-on: ubuntu-latest
     needs: test
@@ -95,10 +62,12 @@ jobs:
         ports:
           - 5432:5432
         options: >-
+          --entrypoint minio
           --health-cmd="pg_isready -U your_username"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          server /data --console-address ":9001"
       redis:
         image: redis:7.4.5-alpine
         ports:
@@ -157,3 +126,36 @@ jobs:
         with:
           name: backend-coverage-report
           path: server/htmlcov/
+  e2e-test:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 60
+    env:
+      APP_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+           node-version-file: '.nvmrc'
+      - name: Client - Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            node-modules-${{ runner.os }}-
+      - name: Client - Install dependencies
+        run: npm ci --cache ~/.npm
+        working-directory: client
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: client
+      - name: Run Playwright tests
+        run: npx playwright test
+        working-directory: client
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          retention-days: 30
