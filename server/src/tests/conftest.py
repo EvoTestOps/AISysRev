@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 from io import BytesIO
+from random import random
 from fastapi import UploadFile
 from fastapi.testclient import TestClient
 from starlette.datastructures import Headers
@@ -11,6 +12,7 @@ from src.db.session import AsyncSessionLocal, Base, engine
 from src.tools.diagnostics.db_check import run_migration
 from src.crud.project_crud import ProjectCrud
 from src.schemas.project import ProjectCreate
+from src.schemas.job import JobCreate, ModelConfig
 
 @pytest.fixture(scope="function")
 def test_client():
@@ -28,6 +30,18 @@ async def test_project_uuid(db_session):
     id, project_uuid = await crud.create_project(project_data)
     assert project_uuid
     return project_uuid
+
+@pytest.fixture
+def test_job_data(test_project_uuid):
+    return JobCreate(
+        project_uuid=test_project_uuid,
+        llm_config=ModelConfig(
+            model_name="test-model",
+            temperature=round(random(), 1),
+            seed=42,
+            top_p=round(random(), 1)
+        )
+    )
 
 @pytest_asyncio.fixture
 async def test_files_working():

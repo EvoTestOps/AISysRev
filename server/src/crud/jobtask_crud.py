@@ -13,7 +13,7 @@ class JobTaskCrud:
     async def bulk_create_jobtasks(self, jobtasks: List[JobTaskCreate]):
         db_objs = [JobTask(**task.model_dump()) for task in jobtasks]
         self.db.add_all(db_objs)
-        await self.db.commit()
+        await self.db.flush()
         return db_objs
     
     async def fetch_job_tasks_by_job_id(self, job_id: int) -> List[JobTask]:
