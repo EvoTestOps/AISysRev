@@ -2,16 +2,18 @@ import asyncio
 from fastapi import APIRouter
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
+from src.schemas.job import CreateJob
 from src.schemas.jobtask import JobTaskStatus
 from src.crud.jobtask_crud import JobTaskCrud
+from src.tools.llm_decision_creator import create_decision
 
 router = APIRouter()
 
 @celery_app.task(name="tasks.process_job", bind=True)
-def process_job_task(self: asyncio.Task, job_id: int):
-    asyncio.run(async_process_job(self, job_id))
+def process_job_task(self: asyncio.Task, job_id: int, job_data: CreateJob):
+    asyncio.run(async_process_job(self, job_id, job_data))
 
-async def async_process_job(celery_task: asyncio.Task, job_id: int):
+async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: CreateJob):
     async with AsyncSessionLocal() as db:
         jobtask_crud = JobTaskCrud(db)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
@@ -24,6 +26,7 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int):
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
+                await create_decision(job_task, job_data)
                 await jobtask_crud.update_job_task_status(job_task.id, JobTaskStatus.DONE)
             except Exception as e:
                 await jobtask_crud.update_job_task_status(job_task.id, JobTaskStatus.ERROR)
@@ -34,5 +37,3 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int):
                 raise
 
         return {"result": "all job tasks processed"}
-
-        
