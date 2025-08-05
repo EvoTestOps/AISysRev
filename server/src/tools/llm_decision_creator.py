@@ -2,13 +2,9 @@ from src.schemas.job import JobRead
 from src.models.jobtask import JobTask
 from src.core.llm import prompt, LikertDecision, BinaryDecision, Decision, Criterion, StructuredResponse
 
-async def create_decision(jobtask: JobTask, job_data: JobRead, inclusion_criteria: str, exclusion_criteria: str) -> str:
-    title = jobtask.title
-    abstract = jobtask.abstract
+async def _create_criteria(inclusion_criteria: str, exclusion_criteria: str) -> str:
     ic = inclusion_criteria.split(';')
     ec = exclusion_criteria.split(';')
-    additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
-    llm_model = job_data.llm_config.model_name
 
     criteria = "\nInclusion criteria:\n\n"
     for i, criterion in enumerate(ic):
@@ -16,10 +12,34 @@ async def create_decision(jobtask: JobTask, job_data: JobRead, inclusion_criteri
     criteria += "\nExclusion criteria:\n\n"
     for i, criterion in enumerate(ec):
         criteria += f"- EC{i+1}: {criterion.strip()}\n"
-    
-    prompt_text = prompt.format(title, abstract, criteria, additional_instructions)
+    return criteria
 
-    print(prompt_text)
-    print(f"Using LLM model: {llm_model}")
+async def _llm_response() -> StructuredResponse:
+    decision = Decision(
+        binary_decision=BinaryDecision.exclude,
+        probability_decision=0.45,
+        likert_decision=LikertDecision.likert_3,
+        reason="The study meets the inclusion criteria but matches one exclusion criteria."
+    )
 
-    
+    return StructuredResponse(
+        overall_decision=decision,
+        inclusion_criteria=[
+            Criterion(name="IC1", decision=decision),
+            Criterion(name="IC2", decision=decision)
+        ],
+        exclusion_criteria=[
+            Criterion(name="EC1", decision=decision)
+        ]
+    )
+
+async def create_decision(jobtask: JobTask, job_data: JobRead, inclusion_criteria: str, exclusion_criteria: str) -> str:
+    additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
+    llm_model = job_data.llm_config.model_name
+
+    criteria = await _create_criteria(inclusion_criteria, exclusion_criteria)
+    prompt_text = prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
+
+    res = await _llm_response(prompt_text, llm_model)
+
+    return res.model_dump_json()
