@@ -16,9 +16,9 @@ async def _create_criteria(inclusion_criteria: str, exclusion_criteria: str) -> 
 
 async def _llm_response() -> StructuredResponse:
     decision = Decision(
-        binary_decision=BinaryDecision.exclude,
+        binary_decision=False,
         probability_decision=0.45,
-        likert_decision=LikertDecision.likert_3,
+        likert_decision=LikertDecision.somewhatDisagree,
         reason="The study meets the inclusion criteria but matches one exclusion criteria."
     )
 
@@ -39,7 +39,7 @@ async def create_decision(jobtask: JobTask, job_data: JobRead, inclusion_criteri
 
     criteria = await _create_criteria(inclusion_criteria, exclusion_criteria)
     prompt_text = prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
-
-    res = await _llm_response(prompt_text, llm_model)
+    print(prompt_text)
+    res = await _llm_response()
 
     return res.model_dump_json()

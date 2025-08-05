@@ -39,3 +39,8 @@ class JobTaskCrud:
         stmt = update(JobTask).where(JobTask.job_id == job_id).values(status=status)
         await self.db.execute(stmt)
         await self.db.commit()
+    
+    async def update_job_task_result(self, job_task_id: int, result: dict):
+        stmt = update(JobTask).where(JobTask.id == job_task_id).values(result=result)
+        await self.db.execute(stmt)
+        await self.db.commit()
