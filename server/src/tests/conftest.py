@@ -24,8 +24,8 @@ async def test_project_uuid(db_session):
     crud = ProjectCrud(db_session)
     project_data = ProjectCreate(
         name="Project for Job Test",
-        inclusion_criteria="A",
-        exclusion_criteria="B"
+        inclusion_criteria="A;B;C",
+        exclusion_criteria="D;E;F"
     )
     id, project_uuid = await crud.create_project(project_data)
     assert project_uuid
