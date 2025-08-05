@@ -98,7 +98,7 @@ async def test_async_process_job(db_session, test_job_data):
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
 
-    await async_process_job(celery_task, job.id, test_job_data.project_uuid)
+    await async_process_job(celery_task, job.id, test_job_data)
 
     calls = [
         call(state="PROGRESS", meta={"current": 1, "total": 2}),
@@ -142,7 +142,7 @@ async def test_async_process_job_failure(db_session, test_job_data, monkeypatch)
     )
 
     with pytest.raises(Exception, match="Simulated failure"):
-        await async_process_job(celery_task, job.id, test_job_data.project_uuid)
+        await async_process_job(celery_task, job.id, test_job_data)
 
     calls = [
         call(state='PROGRESS', meta={'current': 1, 'total': 2}),
