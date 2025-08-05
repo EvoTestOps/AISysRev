@@ -1,6 +1,5 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.schemas.job import CreateJob
 from src.schemas.jobtask import JobTaskCreate
 from src.crud.jobtask_crud import JobTaskCrud
 from src.tasks.job_processing import process_job_task
@@ -22,5 +21,5 @@ class JobTaskService:
         ]
         return await self.jobtask_crud.bulk_create_jobtasks(jobtasks)
     
-    async def start_job_tasks(self, job_id: int, job_data: CreateJob):
-        return process_job_task.delay(job_id, job_data)
+    async def start_job_tasks(self, job_id: int, project_uuid: UUID):
+        return process_job_task.delay(job_id, project_uuid)

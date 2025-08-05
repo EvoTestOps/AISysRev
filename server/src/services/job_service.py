@@ -55,7 +55,7 @@ class JobService:
             new_job = await self.job_crud.create_job(job_data)
             papers = await self.file_service.fetch_papers(job_data.project_uuid)
             await self.jobtask_service.bulk_create(new_job.id, papers)
-        await self.jobtask_service.start_job_tasks(new_job.id, job_data)
+        await self.jobtask_service.start_job_tasks(new_job.id, job_data.project_uuid)
 
         return JobRead(
             uuid=new_job.uuid,
