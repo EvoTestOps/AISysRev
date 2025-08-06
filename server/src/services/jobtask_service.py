@@ -21,6 +21,5 @@ class JobTaskService:
         ]
         return await self.jobtask_crud.bulk_create_jobtasks(jobtasks)
     
-    async def start_job_tasks(self, job_id: int):
-        return process_job_task.delay(job_id)
-        
+    async def start_job_tasks(self, job_id: int, job_data: dict):
+        return process_job_task.delay(job_id, job_data)
