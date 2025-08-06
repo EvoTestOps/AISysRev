@@ -2,7 +2,7 @@ from src.schemas.job import JobRead
 from src.models.jobtask import JobTask
 from src.core.llm import prompt, LikertDecision, BinaryDecision, Decision, Criterion, StructuredResponse
 
-async def _create_criteria(inclusion_criteria: str, exclusion_criteria: str) -> str:
+def _create_criteria(inclusion_criteria: str, exclusion_criteria: str) -> str:
     ic = inclusion_criteria.split(';')
     ec = exclusion_criteria.split(';')
 
@@ -37,7 +37,7 @@ async def create_decision(jobtask: JobTask, job_data: JobRead, inclusion_criteri
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
     llm_model = job_data.llm_config.model_name
 
-    criteria = await _create_criteria(inclusion_criteria, exclusion_criteria)
+    criteria = _create_criteria(inclusion_criteria, exclusion_criteria)
     prompt_text = prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
     print(prompt_text)
     res = await _llm_response()
