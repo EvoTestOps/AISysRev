@@ -187,6 +187,9 @@ async def generate_answer_async(
             },
             json=data,
         ) as response:
+            print("Status:", response.status)
+            print("Content-type:", response.headers["content-type"])
+
             if response.status != 200:
                 text = await response.text()
                 raise Exception(
