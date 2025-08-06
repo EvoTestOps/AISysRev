@@ -13,6 +13,7 @@ import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { createJob, fetchJobTasksFromBackend, fetchJobsForProject } from "../services/jobService";
+import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 
 type LlmConfig = {
   model_name: string;
@@ -65,6 +66,7 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
   const [error, setError] = useState<string | null>(null);
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -202,6 +204,10 @@ export const ProjectPage = () => {
     }, jobTaskRefetchIntervalMs);
     return () => clearInterval(interval);
   }, [createdJobs]);
+
+  const openManualEvaluation = () => {
+    setIsManualModalOpen(true);
+  };
 
   if (error) {
     return (
@@ -359,6 +365,19 @@ export const ProjectPage = () => {
 
         </div>
       </div>
+
+      <div className="fixed z-40 bottom-0 left-1/2 transform -translate-x-1/2 m-4">
+        <button
+          onClick={openManualEvaluation}
+          className="bg-purple-700 text-white w-fit py-2 px-6 text-md font-bold rounded-xl shadow-md
+            hover:bg-purple-600 transition duration-200 ease-in-out cursor-pointer"
+        >
+          Start manual evaluation
+        </button>
+      </div>
+      {isManualModalOpen && (
+        <ManualEvaluationModal onClose={() => setIsManualModalOpen(false)} />
+      )}
     </Layout>
   );
 };
