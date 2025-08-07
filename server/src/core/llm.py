@@ -1,7 +1,49 @@
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Optional
+from pydantic import BaseModel, Field, ValidationError
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
+
+system_prompt = "You are an expert research assistant."
+
+# Openrouter recommends instructing the LLM to respond in JSON format.
+# Tested to be working with Fireworks.ai provided LLaMA 4 Maverick
+json_instruct_prompt = """Output **ONLY JSON**. You should include **EVERY FIELD** defined in the schema - every field in the schema is required. Respond strictly in valid JSON format, using the following schema:
+
+{
+  "overall_decision": {
+    "binary_decision": <boolean>,               // true or false
+    "probability_decision": <float>,            // Value between 0.000 and 1.000
+    "likert_decision": <string>,                // Integer in string format, on a Likert scale (1–7)
+    "reason": <string>                          // Reason for the decision
+  },
+  "inclusion_criteria": [
+    {
+      "name": <string>,                         // Identifier for the inclusion criterion (IC1, IC2, etc.).
+      "decision": {
+        "binary_decision": <boolean>,
+        "probability_decision": <float>,
+        "likert_decision": <string>,
+        "reason": <string>                      // Reason for the decision
+      }
+    }
+    // Repeat for each inclusion criterion. All inclusion criteria should be listed here.
+  ],
+  "exclusion_criteria": [
+    {
+      "name": <string>,                         // Identifier for the exclusion criterion (EC1, EC2, etc.).
+      "decision": {
+        "binary_decision": <boolean>,
+        "probability_decision": <float>,
+        "likert_decision": <string>,
+        "reason": <string>                      // Reason for the decision
+      }
+    }
+    // Repeat for each exclusion criterion. All exclusion criteria should be listed here.
+  ]
+}"""
+
+# Task prompt
 
 prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
 
@@ -99,3 +141,177 @@ class StructuredResponse(BaseModel, extra="forbid"):
     overall_decision: Decision
     inclusion_criteria: list[Criterion]
     exclusion_criteria: list[Criterion]
+
+
+openrouter_base_url = "https://openrouter.ai/api/v1/chat/completions"
+
+from abc import ABC, abstractmethod
+
+
+class LLMConfiguration(BaseModel):
+    base_url: str
+    model: str
+    api_key: str
+    # Defaults to "You are an expert research assistant."
+    system_prompt: Optional[str] = "You are an expert research assistant."
+    # Default seed 128
+    seed: Optional[int] = 128
+    # Default temperature 0
+    temperature: Optional[float] = 0
+    # Default top_p 0.1
+    top_p: Optional[float] = 0.1
+
+
+class LLM(ABC):
+
+    @abstractmethod
+    def __init__(self, config: LLMConfiguration):
+        pass
+
+    @abstractmethod
+    async def generate_answer_async(
+        self, prompt: str
+    ) -> tuple[StructuredResponse, str]:
+        pass
+
+    @property
+    @abstractmethod
+    def config(self) -> LLMConfiguration:
+        pass
+
+
+class MockLLM(LLM):
+    def __init__(self, config):
+        self._config = config
+
+    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+        import json
+
+        return (
+            StructuredResponse(
+                overall_decision=Decision(
+                    binary_decision=False,
+                    probability_decision=0.0,
+                    likert_decision=1,
+                    reason="Excluded",
+                ),
+                inclusion_criteria=[
+                    Criterion(
+                        name="Foo",
+                        decision=Decision(
+                            binary_decision=False,
+                            probability_decision=0.0,
+                            likert_decision=1,
+                            reason="Does not match",
+                        ),
+                    )
+                ],
+                exclusion_criteria=[
+                    Criterion(
+                        name="Bar",
+                        decision=Decision(
+                            binary_decision=True,
+                            probability_decision=0.8,
+                            likert_decision=6,
+                            reason="Matches",
+                        ),
+                    )
+                ],
+            ),
+            json.dumps({"Foo": "Bar"}),
+        )
+
+    @property
+    def config(self):
+        raise NotImplementedError
+
+
+class OpenrouterLLM(LLM):
+
+    def __init__(self, config):
+        self._config = config
+
+    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+        import aiohttp
+        from openai.lib._pydantic import to_strict_json_schema
+        import json
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        content = None
+        data = None
+        async with aiohttp.ClientSession() as session:
+            data = {
+                "model": self.config.model,
+                "messages": [
+                    (
+                        {
+                            "role": "system",
+                            # "content": system_prompt + "\r\n" + json_instruct_prompt, <-- Test if JSON responses work without this
+                            "content": self.config.system_prompt,
+                        }
+                    ),
+                    {"role": "user", "content": prompt},
+                ],
+                "provider": {"require_parameters": True},
+                "max_tokens": 8193,
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "structured_response",
+                        "strict": True,
+                        "schema": to_strict_json_schema(StructuredResponse),
+                    },
+                },
+            }
+
+            async with session.post(
+                self.config.base_url,
+                headers={
+                    "Authorization": f"Bearer {self.config.api_key}",
+                    "Content-type": "application/json",
+                },
+                json=data,
+            ) as response:
+                logger.info("Status:", response.status)
+                logger.info("Content-type:", response.headers["content-type"])
+
+                if response.status != 200:
+                    text = await response.text()
+                    raise Exception(
+                        response.request_info,
+                        response.history,
+                        status=response.status,
+                        message=text,
+                    )
+
+                completion = await response.json()
+                data = json.dumps(completion)
+
+                # For type-safety, validate the response JSON
+                # Things might have gotten better in OpenRouter's infrastructure, so JSON is properly outputted from the OpenRouter interface.
+                import re
+
+                json_match = re.search(
+                    r"json\s*(\{.*\})",
+                    completion["choices"][0]["message"]["content"],
+                    re.DOTALL,
+                )
+                json_str = (
+                    # First, check if the response starts with "json"
+                    json_match.group(1).strip()
+                    if json_match
+                    # Assume that the content is valid JSON
+                    else completion["choices"][0]["message"]["content"].strip()
+                )
+                try:
+                    content = StructuredResponse.model_validate_json(json_str)
+                except ValidationError as e:
+                    logger.error(e)
+                    raise e
+        return content, data
+
+    @property
+    def config(self) -> str:
+        return self._config
