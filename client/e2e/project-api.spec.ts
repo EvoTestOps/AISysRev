@@ -9,7 +9,13 @@ test.beforeEach(async ({ request }) => {
   const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
   expect(fixtureRes.status()).toBe(200)
   const createRes = await request.post(`${prefix}/project`, {
-    data: { name: 'Test Project', inclusion_criteria: 'Test inclusion criteria', exclusion_criteria: 'Test exclusion criteria' },
+    data: {
+      name: 'Test Project',
+      criteria: {
+        inclusion_criteria: 'Test inclusion criteria',
+        exclusion_criteria: 'Test exclusion criteria'
+      }
+    }
   });
   expect(createRes.status(), 'project should be created').toBe(201);
 

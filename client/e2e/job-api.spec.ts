@@ -12,8 +12,10 @@ test.beforeEach(async ({ request }) => {
   const createRes = await request.post(`${prefix}/project`, {
     data: {
       name: 'Test Project for Job',
-      inclusion_criteria: 'Test inclusion criteria',
-      exclusion_criteria: 'Test exclusion criteria'
+      criteria: {
+        inclusion_criteria: 'Test inclusion criteria',
+        exclusion_criteria: 'Test exclusion criteria'
+      }
     },
   });
   expect(createRes.status(), 'project should be created').toBe(201);
