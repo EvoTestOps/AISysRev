@@ -2,19 +2,30 @@ import { test, expect } from '@playwright/test';
 
 const prefix = '/api/v1';
 
-let mockProject: { id: number, uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
-let mockCreateJob: { uuid: string, project_uuid: string, llm_config: Record<string, unknown> }
+let mockProject: {
+  uuid: string;
+  name: string;
+  criteria: {
+    inclusion_criteria: string[];
+    exclusion_criteria: string[];
+  };
+};
+let mockCreateJob: {
+  uuid: string;
+  project_uuid: string;
+  llm_config: Record<string, unknown>;
+};
 
 // TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
-  const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
-  expect(fixtureRes.status()).toBe(200)
+  const fixtureRes = await request.post(`${prefix}/fixtures/reset`);
+  expect(fixtureRes.status()).toBe(200);
   const createRes = await request.post(`${prefix}/project`, {
     data: {
       name: 'Test Project for Job',
       criteria: {
-        inclusion_criteria: 'Test inclusion criteria',
-        exclusion_criteria: 'Test exclusion criteria'
+        inclusion_criteria: ['Test inclusion criteria'],
+        exclusion_criteria: ['Test exclusion criteria']
       }
     },
   });

@@ -2,7 +2,14 @@ import { test, expect } from '@playwright/test';
 
 const prefix = '/api/v1';
 
-let mockProject: { uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string };
+let mockProject: {
+  uuid: string;
+  name: string;
+  criteria: {
+    inclusion_criteria: string[];
+    exclusion_criteria: string[];
+  };
+};
 
 // TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
@@ -12,8 +19,8 @@ test.beforeEach(async ({ request }) => {
     data: {
       name: 'Test Project',
       criteria: {
-        inclusion_criteria: 'Test inclusion criteria',
-        exclusion_criteria: 'Test exclusion criteria'
+        inclusion_criteria: ['Test inclusion criteria'],
+        exclusion_criteria: ['Test exclusion criteria']
       }
     }
   });
@@ -21,7 +28,7 @@ test.beforeEach(async ({ request }) => {
 
   const listRes = await request.get(`${prefix}/project`);
   expect(listRes.status()).toBe(200);
-  const projects: Array<{ uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string }> =
+  const projects: Array<{ uuid: string; name: string; criteria: { inclusion_criteria: string[]; exclusion_criteria: string[] } }> =
     await listRes.json();
 
   const found = projects.find((p) => p.name === 'Test Project');
@@ -36,7 +43,7 @@ test('Fetch all projects returns 200 and an array with the mock project', async 
   const res = await request.get(`${prefix}/project`);
   expect(res.status()).toBe(200);
 
-  const data: Array<{ uuid: string; name: string; inclusion_criteria: string, exclusion_criteria: string }> =
+  const data: Array<{ uuid: string; name: string; criteria: { inclusion_criteria: string[]; exclusion_criteria: string[] } }> =
     await res.json();
   
   expect(data.length).toBe(1)
@@ -46,8 +53,9 @@ test('Fetch all projects returns 200 and an array with the mock project', async 
   if (data.length > 0) {
     expect(data[0]).toHaveProperty('uuid');
     expect(data[0]).toHaveProperty('name');
-    expect(data[0]).toHaveProperty('inclusion_criteria');
-    expect(data[0]).toHaveProperty('exclusion_criteria')
+    expect(data[0]).toHaveProperty('criteria');
+    expect(data[0].criteria).toHaveProperty('inclusion_criteria');
+    expect(data[0].criteria).toHaveProperty('exclusion_criteria');
   }
 
   const exists = data.some((p) => p.uuid === mockProject.uuid);
@@ -62,13 +70,13 @@ test('Fetch single project by UUID returns the correct record', async ({
 
   const project = await res.json();
   expect(project.name).toBe(mockProject.name);
-  expect(project.inclusion_criteria).toBe(mockProject.inclusion_criteria);
-  expect(project.exclusion_criteria).toBe(mockProject.exclusion_criteria);
+  expect(project.criteria.inclusion_criteria).toEqual(mockProject.criteria.inclusion_criteria);
+  expect(project.criteria.exclusion_criteria).toEqual(mockProject.criteria.exclusion_criteria);
 });
 
 test('Create project returns 201 and returns the new project ID', async ({ request }) => {
   const res = await request.post(`${prefix}/project`, {
-    data: { name: 'Another Test Project', inclusion_criteria: 'New Test Inclusion Criteria', exclusion_criteria: 'New Test Exclusion Criteria' },
+    data: { name: 'Another Test Project', criteria: { inclusion_criteria: ['New Test Inclusion Criteria'], exclusion_criteria: ['New Test Exclusion Criteria'] } },
   });
 
   expect(res.status()).toBe(201);
