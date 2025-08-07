@@ -13,8 +13,7 @@ class ProjectCrud:
         stmt = select(
             Project.uuid,
             Project.name,
-            Project.inclusion_criteria,
-            Project.exclusion_criteria,
+            Project.criteria,
             Project.created_at,
             Project.updated_at
         )

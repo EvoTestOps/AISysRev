@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Criteria } from '../state/types';
 
 const prefix = '/api/v1';
 
@@ -23,13 +24,12 @@ export const fetch_project_by_uuid = async (uuid: string) => {
   }
 };
 
-export const create_project = async (title: string, inclusionCriteria: string, exclusionCriteria: string) => {
+export const create_project = async (title: string, criteria: Criteria) => {
   try {
     console.log("Creating project with title:", title);
     const res = await axios.post(`${prefix}/project`, {
       name: title,
-      inclusion_criteria: inclusionCriteria,
-      exclusion_criteria: exclusionCriteria
+      criteria: criteria
     });
     return res.data;
   } catch (error) {

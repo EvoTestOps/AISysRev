@@ -74,14 +74,12 @@ export const ProjectPage = () => {
         const project: Project = await fetch_project_by_uuid(uuid);
         setName(project.name);
         setInclusionCriteria(
-          project.inclusion_criteria
-            .split(";")
+          project.criteria.inclusion_criteria
             .map((criterion: string) => criterion.trim())
             .filter(Boolean)
         );
         setExclusionCriteria(
-          project.exclusion_criteria
-            .split(";")
+          project.criteria.exclusion_criteria
             .map((criterion: string) => criterion.trim())
             .filter(Boolean)
         );

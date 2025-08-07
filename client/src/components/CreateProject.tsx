@@ -1,4 +1,5 @@
 import { create_project } from "../services/projectService";
+import { Criteria } from "../state/types";
 
 type CreateProjectProps = {
   title: string;
@@ -11,11 +12,15 @@ export const CreateProject = async (props: CreateProjectProps): Promise<{
   uuid:string
 }> => {
 
+  const criteria: Criteria = {
+    inclusion_criteria: props.inclusionCriteria,
+    exclusion_criteria: props.exclusionCriteria
+  };
+
   try {
     const res = await create_project(
       props.title,
-      props.inclusionCriteria.join(";"),
-      props.exclusionCriteria.join(";")
+      criteria
     );
     console.log("Project created, res: ", res);
     return {"id": res.id, "uuid": res.uuid};
