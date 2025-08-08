@@ -388,9 +388,9 @@ export const ProjectPage = () => {
       </div>
       {match && selectedTaskUuid && (
         <ManualEvaluationModal
-          jobTaskUuids={screeningTasks.map(task => task.uuid)}
+          screeningTaskUuids={screeningTasks.map(task => task.uuid)}
           currentTaskUuid={selectedTaskUuid}
-          tasks={screeningTasks}
+          screeningTasks={screeningTasks}
           onClose={() => navigate(`/project/${uuid}`)}
         />
       )}

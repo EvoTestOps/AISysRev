@@ -10,29 +10,33 @@ import { useMemo } from "react";
 import { ScreeningTask } from ".../state/types.ts"
 
 type ManualEvaluationProps = {
-  jobTaskUuids: string[];
+  screeningTaskUuids: string[];
   currentTaskUuid: string;
-  tasks: ScreeningTask[];
+  screeningTasks: ScreeningTask[];
   onClose: () => void;
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
-  jobTaskUuids,
+  screeningTaskUuids,
   currentTaskUuid,
-  tasks,
+  screeningTasks,
   onClose,
 }) => {
-  const jobTask = useMemo(
-    () => tasks.find(t => t.uuid === currentTaskUuid),
-    [currentTaskUuid, tasks]
+  const addHumanResult = (result: "INCLUDE" | "UNSURE" | "EXCLUDE") => {
+    console.log(result);
+  }
+
+  const screeningTask = useMemo(
+    () => screeningTasks.find(t => t.uuid === currentTaskUuid),
+    [currentTaskUuid, screeningTasks]
   );
 
   const taskIndex = useMemo(() => {
-    const idx = jobTaskUuids.indexOf(currentTaskUuid);
+    const idx = screeningTaskUuids.indexOf(currentTaskUuid);
     return idx + 1;
-  }, [jobTaskUuids, currentTaskUuid]);
+  }, [screeningTaskUuids, currentTaskUuid]);
 
-  if (!jobTask) return <div>Loading...</div>;
+  if (!screeningTask) return <div>Loading...</div>;
 
   return (
     <Dialog
@@ -47,10 +51,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <DialogTitle className="text-lg font-bold mb-2">
-          Paper #{taskIndex}: {jobTask.title}
+          Paper #{taskIndex}: {screeningTask.title}
         </DialogTitle>
         <Description className="text-sm mb-4">
-          {jobTask.abstract}
+          {screeningTask.abstract}
         </Description>
 
         <div className="flex flex-wrap justify-evenly gap-4">
@@ -81,13 +85,22 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         </div>
 
         <div className="flex justify-center m-4 pt-2 ">
-          <button className="bg-green-600 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-green-500">
+          <button
+            className="bg-green-600 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-green-500"
+            onClick={() => addHumanResult("INCLUDE")}
+          >
             Include (Y)
           </button>
-          <button className="bg-yellow-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-yellow-400">
+          <button
+            className="bg-yellow-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-yellow-400"
+            onClick={() => addHumanResult("UNSURE")}
+          >
             Unsure (U)
           </button>
-          <button className="bg-red-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-red-400">
+          <button 
+            className="bg-red-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-red-400"
+            onClick={() => addHumanResult("EXCLUDE")}
+          >
             Exclude (N)
           </button>
         </div>
