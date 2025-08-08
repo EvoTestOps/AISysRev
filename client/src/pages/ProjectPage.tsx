@@ -1,5 +1,6 @@
 import { useParams } from "wouter";
 import { useEffect, useState, useCallback } from "react";
+import { useRoute, useLocation } from "wouter";
 import { toast } from "react-toastify";
 import { fetch_project_by_uuid } from "../services/projectService"
 import { Layout } from "../components/Layout";
@@ -53,6 +54,9 @@ type ScreeningTask = {
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
+  const [, navigate] = useLocation();
+  const [match] = useRoute("/project/:uuid/evaluate");
+  const [selectedTaskUuid, setSelectedTaskUuid] = useState<string | undefined>();
   const jobTaskRefetchIntervalMs = 5000;
   const [name, setName] = useState('');
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
@@ -66,7 +70,6 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
   const [error, setError] = useState<string | null>(null);
-  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -203,9 +206,18 @@ export const ProjectPage = () => {
     return () => clearInterval(interval);
   }, [createdJobs]);
 
-  const openManualEvaluation = () => {
-    setIsManualModalOpen(true);
+  const openManualEvaluation = (taskUuid: string | undefined) => {
+    const taskUuidToOpen = taskUuid ?? screeningTasks[0]?.uuid;
+    if (!taskUuidToOpen) return;
+    setSelectedTaskUuid(taskUuidToOpen);
+    navigate(`/project/${uuid}/evaluate`);
   };
+
+  useEffect(() => {
+    if (!selectedTaskUuid && screeningTasks.length > 0) {
+      setSelectedTaskUuid(screeningTasks[0].uuid);
+    }
+  }, [screeningTasks, selectedTaskUuid]);
 
   if (error) {
     return (
@@ -366,15 +378,21 @@ export const ProjectPage = () => {
 
       <div className="fixed z-40 bottom-0 left-1/2 transform -translate-x-1/2 m-4">
         <button
-          onClick={openManualEvaluation}
+          onClick={() => openManualEvaluation(selectedTaskUuid)}
+          disabled={screeningTasks.length === 0}
           className="bg-purple-700 text-white w-fit py-2 px-6 text-md font-bold rounded-xl shadow-md
             hover:bg-purple-600 transition duration-200 ease-in-out cursor-pointer"
         >
           Start manual evaluation
         </button>
       </div>
-      {isManualModalOpen && (
-        <ManualEvaluationModal onClose={() => setIsManualModalOpen(false)} />
+      {match && selectedTaskUuid && (
+        <ManualEvaluationModal
+          jobTaskUuids={screeningTasks.map(task => task.uuid)}
+          currentTaskUuid={selectedTaskUuid}
+          tasks={screeningTasks}
+          onClose={() => navigate(`/project/${uuid}`)}
+        />
       )}
     </Layout>
   );

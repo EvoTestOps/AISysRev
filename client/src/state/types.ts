@@ -20,3 +20,15 @@ export type FetchedFile = {
   filename: string;
   mime_type: string;
 };
+
+export type ScreeningTask = {
+  uuid: string;
+  job_uuid: string;
+  doi: string;
+  title: string;
+  abstract: string;
+  status: string;
+  results: unknown[] | null;
+  human_result: unknown[] | null;
+  status_metadata: Record<string, unknown> | null;
+};

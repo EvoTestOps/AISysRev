@@ -6,14 +6,34 @@ import {
 } from "@headlessui/react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
+import { useMemo } from "react";
+import { ScreeningTask } from ".../state/types.ts"
 
 type ManualEvaluationProps = {
+  jobTaskUuids: string[];
+  currentTaskUuid: string;
+  tasks: ScreeningTask[];
   onClose: () => void;
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
+  jobTaskUuids,
+  currentTaskUuid,
+  tasks,
   onClose,
 }) => {
+  const jobTask = useMemo(
+    () => tasks.find(t => t.uuid === currentTaskUuid),
+    [currentTaskUuid, tasks]
+  );
+
+  const taskIndex = useMemo(() => {
+    const idx = jobTaskUuids.indexOf(currentTaskUuid);
+    return idx + 1;
+  }, [jobTaskUuids, currentTaskUuid]);
+
+  if (!jobTask) return <div>Loading...</div>;
+
   return (
     <Dialog
       open={true}
@@ -27,12 +47,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <DialogTitle className="text-lg font-bold mb-2">
-          Paper #622: The title of the paper
+          Paper #{taskIndex}: {jobTask.title}
         </DialogTitle>
         <Description className="text-sm mb-4">
-          Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean
-          commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus
-          et magnis dis parturient montes, nascetur ridiculus mus...
+          {jobTask.abstract}
         </Description>
 
         <div className="flex flex-wrap justify-evenly gap-4">
