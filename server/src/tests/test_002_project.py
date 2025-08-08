@@ -1,6 +1,6 @@
 import pytest
 from src.crud.project_crud import ProjectCrud
-from src.schemas.project import ProjectCreate, ProjectRead
+from src.schemas.project import ProjectCreate, ProjectRead, Criteria
 
 @pytest.mark.asyncio
 async def test_fetch_projects_crud(db_session):
@@ -8,8 +8,10 @@ async def test_fetch_projects_crud(db_session):
     for i in range(1, 6):
         project_data = ProjectCreate(
             name=f"Test Project {i}",
-            inclusion_criteria="Must be peer reviewed",
-            exclusion_criteria="Not in English"
+            criteria = Criteria(
+                inclusion_criteria=["Must be peer reviewed"],
+                exclusion_criteria=["Not in English"]
+            )
         )
         await crud.create_project(project_data)
 
@@ -21,8 +23,10 @@ async def test_create_and_fetch_project_crud(db_session):
     crud = ProjectCrud(db_session)
     project_data = ProjectCreate(
         name="Test",
-        inclusion_criteria="A",
-        exclusion_criteria="B"
+        criteria = Criteria(
+            inclusion_criteria=["A"],
+            exclusion_criteria=["B"]
+        )
     )
     id, uuid = await crud.create_project(project_data)
     assert uuid
@@ -34,16 +38,18 @@ async def test_create_and_fetch_project_crud(db_session):
     project_read = ProjectRead.model_validate(project)
     assert project_read.uuid == uuid
     assert project_read.name == project_data.name
-    assert project_read.inclusion_criteria == project_data.inclusion_criteria
-    assert project_read.exclusion_criteria == project_data.exclusion_criteria
+    assert project_read.criteria.inclusion_criteria == project_data.criteria.inclusion_criteria
+    assert project_read.criteria.exclusion_criteria == project_data.criteria.exclusion_criteria
 
 @pytest.mark.asyncio
 async def test_delete_project_crud(db_session):
     crud = ProjectCrud(db_session)
     project_data = ProjectCreate(
         name="To Be Deleted",
-        inclusion_criteria="A",
-        exclusion_criteria="B"
+        criteria = Criteria(
+            inclusion_criteria=["A"],
+            exclusion_criteria=["B"]
+        )
     )
     id, uuid = await crud.create_project(project_data)
 

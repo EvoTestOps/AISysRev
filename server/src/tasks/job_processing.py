@@ -32,7 +32,7 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: Jo
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
-                llm_result = await create_decision(job_task, job_data, project.inclusion_criteria, project.exclusion_criteria)
+                llm_result = await create_decision(job_task, job_data, project.criteria)
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 print(job_task.result)
                 await jobtask_crud.update_job_task_status(job_task.id, JobTaskStatus.DONE)

@@ -1,15 +1,25 @@
-from typing import Optional
+from typing import List
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, Field, ConfigDict, field_validator, Json
+
+class Criteria(BaseModel):
+    inclusion_criteria: List[str]
+    exclusion_criteria: List[str]
+
+    @field_validator("inclusion_criteria", "exclusion_criteria")
+    @classmethod
+    def non_empty_list(cls, v: List[str], field):
+        if not isinstance(v, list) or not all(isinstance(i, str) and i.strip() for i in v):
+            raise ValueError(f"{field.field_name} must be a list of non-empty strings")
+        return v
 
 class ProjectCreate(BaseModel):
     uuid: UUID | None = None
     name: str = Field(max_length=255)
-    inclusion_criteria: str
-    exclusion_criteria: str
+    criteria: Criteria
 
-    @field_validator("name", "inclusion_criteria", "exclusion_criteria")
+    @field_validator("name")
     @classmethod
     def non_empty(cls, v: str, field):
         if not v.strip():
@@ -19,8 +29,7 @@ class ProjectCreate(BaseModel):
 class ProjectRead(BaseModel):
     uuid: UUID
     name: str = Field(max_length=255)
-    inclusion_criteria: str
-    exclusion_criteria: str
+    criteria: Criteria
     created_at: datetime
     updated_at: datetime
 

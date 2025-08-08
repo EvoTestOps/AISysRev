@@ -11,7 +11,7 @@ from src.core.config import settings
 from src.db.session import AsyncSessionLocal, Base, engine
 from src.tools.diagnostics.db_check import run_migration
 from src.crud.project_crud import ProjectCrud
-from src.schemas.project import ProjectCreate
+from src.schemas.project import ProjectCreate, Criteria
 from src.schemas.job import JobCreate, ModelConfig
 
 @pytest.fixture(scope="function")
@@ -24,8 +24,10 @@ async def test_project_uuid(db_session):
     crud = ProjectCrud(db_session)
     project_data = ProjectCreate(
         name="Project for Job Test",
-        inclusion_criteria="A;B;C",
-        exclusion_criteria="D;E;F"
+        criteria=Criteria(
+            inclusion_criteria=["A", "B", "C"],
+            exclusion_criteria=["D", "E", "F"]
+        )
     )
     id, project_uuid = await crud.create_project(project_data)
     assert project_uuid
