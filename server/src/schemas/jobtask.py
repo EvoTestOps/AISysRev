@@ -41,4 +41,4 @@ class JobTaskRead(BaseModel):
             return v
         if isinstance(v, str):
             return json.loads(v)
-        raise ValueError("result must be a dict or JSON string")
+        raise ValueError("JobTaskRead.result must be a dict or JSON string")
