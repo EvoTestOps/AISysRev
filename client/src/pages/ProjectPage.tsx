@@ -13,7 +13,8 @@ import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
-import { createJob, fetchJobTasksFromBackend, fetchJobsForProject } from "../services/jobService";
+import { createJob, fetchJobsForProject } from "../services/jobService";
+import { fetchJobTasksFromBackend } from "../services/jobTaskService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 
 type LlmConfig = {

@@ -13,7 +13,7 @@ router = APIRouter()
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: asyncio.Task, job_id: int, job_data: dict):
     job = JobRead(**job_data)
-    asyncio.run(async_process_job(self, job_id, job_data))
+    asyncio.run(async_process_job(self, job_id, job))
 
 async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: JobRead):
     async with AsyncSessionLocal() as db:
@@ -34,7 +34,7 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: Jo
                 )
                 llm_result = await create_decision(job_task, job_data, project.criteria)
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
-                print(job_task.result)
+                await db.refresh(job_task)
                 await jobtask_crud.update_job_task_status(job_task.id, JobTaskStatus.DONE)
             except Exception as e:
                 await jobtask_crud.update_job_task_status(job_task.id, JobTaskStatus.ERROR)

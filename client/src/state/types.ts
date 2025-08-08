@@ -32,3 +32,9 @@ export type ScreeningTask = {
   human_result: unknown[] | null;
   status_metadata: Record<string, unknown> | null;
 };
+
+export enum JobTaskResult {
+  INCLUDE = "INCLUDE",
+  UNSURE = "UNSURE",
+  EXCLUDE = "EXCLUDE"
+}

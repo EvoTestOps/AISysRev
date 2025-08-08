@@ -7,7 +7,7 @@ import {
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { useMemo } from "react";
-import { ScreeningTask } from ".../state/types.ts"
+import { ScreeningTask, JobTaskResult } from "../state/types.ts"
 
 type ManualEvaluationProps = {
   screeningTaskUuids: string[];
@@ -22,7 +22,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   screeningTasks,
   onClose,
 }) => {
-  const addHumanResult = (result: "INCLUDE" | "UNSURE" | "EXCLUDE") => {
+  const addHumanResult = (result: JobTaskResult) => {
     console.log(result);
   }
 
