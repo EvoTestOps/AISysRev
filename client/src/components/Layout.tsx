@@ -22,7 +22,7 @@ export const Layout = ({ title, children, className }: PropsWithChildren<LayoutP
 
       {!hideNavBar && <NavigationBar name={title} />}
 
-      <div className={twMerge("mt-8 w-4xl mr-auto ml-auto", className)}>{children}</div>
+      <div className={twMerge("mt-8 lg:w-4xl mr-auto ml-auto", className)}>{children}</div>
 
     </div>
   );

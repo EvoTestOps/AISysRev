@@ -7,7 +7,7 @@ type LlmModelCardProps = {
 
 export const LlmModelCard: React.FC<LlmModelCardProps> = ({ modelName, binary, likertScale, probability }) => {
   return (
-    <div className="flex flex-col gap-4 bg-blue-50 shadow-md p-4 w-fit rounded-lg pr-20" aria-label="Model Card">
+    <div className="flex flex-col gap-4 bg-blue-50 shadow-md p-4 rounded-lg" aria-label="Model Card">
       <span className="font-bold">{modelName}</span>
       <div className="flex flex-col">
         <div className="whitespace-nowrap">

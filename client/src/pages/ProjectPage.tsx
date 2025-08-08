@@ -224,8 +224,8 @@ export const ProjectPage = () => {
   };
 
   return (
-    <Layout title={name} className="w-5xl">
-      <div className="flex space-x-8 items-start">
+    <Layout title={name}>
+      <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
 
           <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">

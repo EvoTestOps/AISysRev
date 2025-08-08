@@ -18,7 +18,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     <Dialog
       open={true}
       onClose={onClose}
-      className="fixed z-50 inset-0 flex items-center justify-center"
+      className="fixed z-50 inset-0 flex items-center justify-center m-8 md:m-0"
     >
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
       <DialogPanel className="relative bg-white rounded-2xl shadow-2xl pt-8 pb-4 pl-8 pr-8 w-[800px] max-w-full">
@@ -35,26 +35,30 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           et magnis dis parturient montes, nascetur ridiculus mus...
         </Description>
 
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-wrap justify-evenly gap-4">
           <LlmModelCard
-            modelName="Model A"
+            modelName="GPT-4.1 Nano"
             binary="Include"
             likertScale={6}
             probability={0.85}
           />
-
           <LlmModelCard
-            modelName="Model B"
+            modelName="GPT-4.1 Mini"
             binary="Include"
             likertScale={5}
             probability={0.75}
           />
-
           <LlmModelCard
-            modelName="Model C"
+            modelName="Claude 3.7"
             binary="Exclude"
             likertScale={4}
             probability={0.45}
+          />
+          <LlmModelCard
+            modelName="GPT-5"
+            binary="Include"
+            likertScale={6}
+            probability={0.85}
           />
         </div>
 
