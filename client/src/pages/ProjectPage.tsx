@@ -12,15 +12,9 @@ import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
-import {
-  fileUploadToBackend,
-  fileFetchFromBackend,
-} from "../services/fileService";
-import {
-  createJob,
-  fetchJobTasksFromBackend,
-  fetchJobsForProject,
-} from "../services/jobService";
+import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
+import { createJob, fetchJobsForProject } from "../services/jobService";
+import { fetchJobTasksFromBackend } from "../services/jobTaskService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
 

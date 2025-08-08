@@ -59,6 +59,7 @@ class JobService:
             for task in job_tasks
         ]
 
+    
     async def create(self, job_data: JobCreate):
         logger.info("Begin transaction")
         async with (
@@ -73,6 +74,14 @@ class JobService:
 
         logger.info("Starting job tasks")
         await self.jobtask_service.start_job_tasks(new_job.id, job_data.model_dump())
+        job_read = JobRead(
+            uuid=new_job.uuid,
+            project_uuid=job_data.project_uuid,
+            llm_config=new_job.llm_config,
+            created_at=new_job.created_at,
+            updated_at=new_job.updated_at,
+        )
+        await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
 
         return JobRead(
             uuid=new_job.uuid,
