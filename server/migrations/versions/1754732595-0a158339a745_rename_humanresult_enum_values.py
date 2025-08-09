@@ -18,16 +18,13 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    # Rename old type
+    op.execute("ALTER TYPE humanresult RENAME TO humanresult_old;")
+    # Create new type with desired labels
+    op.execute("CREATE TYPE humanresult AS ENUM ('INCLUDE','EXCLUDE','UNSURE');")
+    # Alter column, remapping old values
     op.execute("""
-    BEGIN;
-      -- Rename old type
-      ALTER TYPE humanresult RENAME TO humanresult_old;
-
-      -- Create new type with desired labels
-      CREATE TYPE humanresult AS ENUM ('INCLUDE','EXCLUDE','UNSURE');
-
-      -- Alter column, remapping old values
-      ALTER TABLE jobtask
+        ALTER TABLE jobtask
         ALTER COLUMN human_result
         TYPE humanresult
         USING (
@@ -37,18 +34,15 @@ def upgrade() -> None:
             ELSE human_result::text::humanresult
           END
         );
-
-      -- Drop old type
-      DROP TYPE humanresult_old;
-    COMMIT;
     """)
+    # Drop old type
+    op.execute("DROP TYPE humanresult_old;")
 
 def downgrade() -> None:
+    op.execute("ALTER TYPE humanresult RENAME TO humanresult_new;")
+    op.execute("CREATE TYPE humanresult AS ENUM ('INCLUSION','EXCLUSION','UNSURE');")
     op.execute("""
-    BEGIN;
-      ALTER TYPE humanresult RENAME TO humanresult_new;
-      CREATE TYPE humanresult AS ENUM ('INCLUSION','EXCLUSION','UNSURE');
-      ALTER TABLE jobtask
+        ALTER TABLE jobtask
         ALTER COLUMN human_result
         TYPE humanresult
         USING (
@@ -58,6 +52,5 @@ def downgrade() -> None:
             ELSE human_result::text::humanresult
           END
         );
-      DROP TYPE humanresult_new;
-    COMMIT;
     """)
+    op.execute("DROP TYPE humanresult_new;")
