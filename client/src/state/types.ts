@@ -28,13 +28,13 @@ export type ScreeningTask = {
   title: string;
   abstract: string;
   status: string;
-  results: unknown[] | null;
-  human_result: unknown[] | null;
+  results: Record<string, unknown> | null;
+  human_result: JobTaskHumanResult | null;
   status_metadata: Record<string, unknown> | null;
 };
 
-export enum JobTaskResult {
+export enum JobTaskHumanResult {
   INCLUDE = "INCLUDE",
-  UNSURE = "UNSURE",
-  EXCLUDE = "EXCLUDE"
+  EXCLUDE = "EXCLUDE",
+  UNSURE = "UNSURE"
 }

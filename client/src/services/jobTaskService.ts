@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { JobTaskResult } from '../state/types';
+import { JobTaskHumanResult } from '../state/types';
 
 const prefix = '/api/v1';
 
@@ -24,10 +24,10 @@ export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   }
 };
 
-export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskResult) => {
+export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {
-    const res = await axios.post(`${prefix}/jobtask/${jobTaskUuid}`, result);
-    return res.data;
+    await axios.post(`${prefix}/jobtask/${jobTaskUuid}`, { human_result: result });
+    return res.data
   } catch (error) {
     console.error("Error adding job task result:", error);
     throw error;

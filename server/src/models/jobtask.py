@@ -1,6 +1,6 @@
 import uuid
 import enum
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, JSON, Boolean, Enum
+from sqlalchemy import Column, Integer, Text, ForeignKey, JSON, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from src.db.session import Base
 from .mixins import TimestampMixin
@@ -13,9 +13,9 @@ class JobTaskStatus(enum.Enum):
     ERROR = "ERROR"
 
 class HumanResult(enum.Enum):
-    BOOLEAN = "BOOLEAN"
-    INCLUSION = "INCLUSION"
-    EXCLUSION = "EXCLUSION"
+    INCLUDE = "INCLUDE"
+    EXCLUDE = "EXCLUDE"
+    UNSURE = "UNSURE"
 
 class JobTask(Base, TimestampMixin):
     __tablename__ = 'jobtask'

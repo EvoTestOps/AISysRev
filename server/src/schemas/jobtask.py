@@ -4,10 +4,12 @@ from pydantic import BaseModel, field_validator
 from typing import Dict, Optional, Any
 from enum import Enum
 
-class HumanResult(str, Enum):
+class JobTaskHumanResult(str, Enum):
     INCLUDE = "INCLUDE"
     EXCLUDE = "EXCLUDE"
     UNSURE = "UNSURE"
+class JobTaskHumanResultUpdate(BaseModel):
+    human_result: JobTaskHumanResult
 
 class JobTaskStatus(str, Enum):
     NOT_STARTED = "NOT_STARTED"
@@ -31,7 +33,7 @@ class JobTaskRead(BaseModel):
     abstract: str
     status: JobTaskStatus
     result: Optional[Dict[str, Any]] = None
-    human_result: Optional[HumanResult] = None
+    human_result: Optional[JobTaskHumanResult] = None
     status_metadata: Optional[Dict[str, Any]] = None
     
     @field_validator("result", mode="before")
