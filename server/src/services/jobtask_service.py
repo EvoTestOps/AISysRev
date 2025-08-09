@@ -4,7 +4,7 @@ from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
-from src.schemas.jobtask import JobTaskCreate, JobTaskRead
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskRead
 from src.crud.jobtask_crud import JobTaskCrud
 import logging
 
@@ -30,6 +30,9 @@ class JobTaskService:
             human_result=task.human_result,
             status_metadata=task.status_metadata
         ) for task in job_tasks]
+    
+    async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
+        await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
 
     async def bulk_create(self, job_id: UUID, papers: list[dict]):
         jobtasks = [
