@@ -1,8 +1,9 @@
+import json
 from uuid import UUID
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from src.schemas.jobtask import JobTaskCreate
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
 from src.models.job import Job
 from src.models.jobtask import JobTask
 
@@ -42,5 +43,10 @@ class JobTaskCrud:
     
     async def update_job_task_result(self, job_task_id: int, result: dict):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(result=result)
+        await self.db.execute(stmt)
+        await self.db.commit()
+
+    async def add_jobtask_human_result(self, job_task_uuid: UUID, human_result: JobTaskHumanResult):
+        stmt = update(JobTask).where(JobTask.uuid == job_task_uuid).values(human_result=human_result)
         await self.db.execute(stmt)
         await self.db.commit()

@@ -1,4 +1,3 @@
-
 import { H6 } from "./Typography";
 
 type CriteriaInputProps = {

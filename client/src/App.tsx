@@ -32,6 +32,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:uuid" component={ProjectPage} />
+        <Route path="/project/:uuid/evaluate" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/terms-and-conditions" component={TermsAndConditionsPage}/>
         <Route path="/screening" component={ScreeningPage}/>

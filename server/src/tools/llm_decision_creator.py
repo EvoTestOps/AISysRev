@@ -36,7 +36,6 @@ async def create_decision(jobtask: JobTask, job_data: JobRead, criteria: dict) -
 
     criteria = _create_criteria(criteria['inclusion_criteria'], criteria['exclusion_criteria'])
     prompt_text = prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
-    print(prompt_text)
     res = await _llm_response()
 
-    return res.model_dump_json()
+    return res.model_dump(mode="json")
