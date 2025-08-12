@@ -4,10 +4,11 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
+import { Button } from "./Button"
 import { addJobTaskResult } from "../services/jobTaskService.ts";
 import { ScreeningTask, JobTaskHumanResult } from "../state/types.ts"
 
@@ -46,6 +47,20 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
       console.error("Error adding human result:", error);
     }
   }, [currentTaskUuid, onEvaluated]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "y" || e.key === "Y") {
+        addHumanResult(JobTaskHumanResult.INCLUDE);
+      } else if (e.key === "u" || e.key === "U") {
+        addHumanResult(JobTaskHumanResult.UNSURE);
+      } else if (e.key === "n" || e.key === "N") {
+        addHumanResult(JobTaskHumanResult.EXCLUDE);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [addHumanResult]);
 
   if (!screeningTask) return <div>Loading...</div>;
 
@@ -105,24 +120,24 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         </div>
 
         <div className="flex justify-center m-4 pt-2 ">
-          <button
-            className="bg-green-600 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-green-500"
+          <Button
+            variant="green"
             onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
           >
             Include (Y)
-          </button>
-          <button
-            className="bg-yellow-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-yellow-400"
+          </Button>
+          <Button
+            variant="yellow"
             onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
           >
             Unsure (U)
-          </button>
-          <button
-            className="bg-red-500 text-white ml-4 mr-4 px-4 py-2 text-sm font-semibold rounded-3xl shadow-md cursor-pointer hover:bg-red-400"
+          </Button>
+          <Button
+            variant="red"
             onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
           >
             Exclude (N)
-          </button>
+          </Button>
         </div>
       </DialogPanel>
     </Dialog>
