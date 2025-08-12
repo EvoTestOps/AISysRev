@@ -13,7 +13,7 @@ import { fetchJobTasksFromBackend } from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
-import { Project, FetchedFile, ScreeningTask, JobTaskHumanResult, JobTaskStatus } from "../state/types";
+import { Project, FetchedFile, ScreeningTask, JobTaskStatus } from "../state/types";
 
 type LlmConfig = {
   model_name: string;
@@ -49,7 +49,6 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
   const [error, setError] = useState<string | null>(null);
-  const initialTotalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -215,6 +214,9 @@ export const ProjectPage = () => {
     )
   };
 
+  if (!inclusionCriteria || !exclusionCriteria) return <div>Loading...</div>;
+
+
   return (
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -370,6 +372,8 @@ export const ProjectPage = () => {
         <ManualEvaluationModal
           screeningTasks={screeningTasks}
           currentTaskUuid={selectedTaskUuid}
+          inclusionCriteria={inclusionCriteria}
+          exclusionCriteria={exclusionCriteria}
           onEvaluated={(doneUuid) => {
             setScreeningTasks(prev => {
               const next = prev.filter(task => task.uuid !== doneUuid);
