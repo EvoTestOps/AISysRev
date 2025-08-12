@@ -1,7 +1,5 @@
-import axios from 'axios';
 import { api } from '../services/api'
 import { Criteria } from '../state/types';
-
 
 export const fetch_projects = async () => {
   try {

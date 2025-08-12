@@ -1,5 +1,5 @@
 import { useParams, useRoute, useLocation } from "wouter";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
