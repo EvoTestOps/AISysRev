@@ -56,7 +56,6 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const initialTotalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -240,6 +239,9 @@ export const ProjectPage = () => {
     );
   }
 
+  if (!inclusionCriteria || !exclusionCriteria) return <div>Loading...</div>;
+
+
   return (
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -397,6 +399,8 @@ export const ProjectPage = () => {
         <ManualEvaluationModal
           screeningTasks={screeningTasks}
           currentTaskUuid={selectedTaskUuid}
+          inclusionCriteria={inclusionCriteria}
+          exclusionCriteria={exclusionCriteria}
           onEvaluated={(doneUuid) => {
             setScreeningTasks(prev => {
               const next = prev.filter(task => task.uuid !== doneUuid);
