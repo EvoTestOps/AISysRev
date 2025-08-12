@@ -17,7 +17,7 @@ async def get_job_tasks(uuid: UUID, jobtasks: JobTaskService = Depends(get_jobta
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to fetch job tasks: {str(e)}")
 
-@router.post("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
+@router.patch("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
 async def add_job_task_human_result(
     uuid: UUID,
     result: JobTaskHumanResultUpdate,

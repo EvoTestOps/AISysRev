@@ -24,7 +24,7 @@ export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
 
 export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {
-  const res = await api.post(`/jobtask/${jobTaskUuid}`, { human_result: result });
+  const res = await api.patch(`/jobtask/${jobTaskUuid}`, { human_result: result });
   return res.data;
   } catch (error) {
     console.error("Error adding job task result:", error);
