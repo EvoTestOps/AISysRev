@@ -1,11 +1,9 @@
-import axios from 'axios';
+import { api } from '../services/api';
 import { JobTaskHumanResult } from '../state/types';
-
-const prefix = '/api/v1';
 
 export const fetchJobTasksFromBackend = async (jobUuid: string) => {
   try {
-    const res = await axios.get(`${prefix}/jobtask/${jobUuid}`);
+    const res = await api.get(`/jobtask/${jobUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching job tasks:", error);
@@ -16,7 +14,7 @@ export const fetchJobTasksFromBackend = async (jobUuid: string) => {
 
 export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   try {
-    const res = await axios.get(`${prefix}/jobtask/${jobTaskUuid}`);
+    const res = await api.get(`/jobtask/${jobTaskUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching job task by UUID:", error);
@@ -26,7 +24,7 @@ export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
 
 export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {
-  const res = await axios.post(`${prefix}/jobtask/${jobTaskUuid}`, { human_result: result });
+  const res = await api.post(`/jobtask/${jobTaskUuid}`, { human_result: result });
   return res.data;
   } catch (error) {
     console.error("Error adding job task result:", error);
