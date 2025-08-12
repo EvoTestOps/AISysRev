@@ -1,8 +1,6 @@
-import { useParams } from "wouter";
-import { useEffect, useState, useCallback } from "react";
-import { useRoute, useLocation } from "wouter";
+import { useParams, useRoute, useLocation } from "wouter";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
-import { fetch_project_by_uuid } from "../services/projectService";
 import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
@@ -10,13 +8,13 @@ import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { Project } from "../state/types";
-import { FetchedFile } from "../state/types";
-import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
-import { createJob, fetchJobsForProject } from "../services/jobService";
+import { fetch_project_by_uuid } from "../services/projectService"
 import { fetchJobTasksFromBackend } from "../services/jobTaskService";
+import { createJob, fetchJobsForProject } from "../services/jobService";
+import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
+import { Project, FetchedFile, ScreeningTask, JobTaskStatus } from "../state/types";
 
 type LlmConfig = {
   model_name: string;
@@ -33,25 +31,6 @@ type CreatedJob = {
   updated_at: string;
 };
 
-enum ScreeningTaskStatus {
-  NOT_STARTED = "NOT_STARTED",
-  PENDING = "PENDING",
-  RUNNING = "RUNNING",
-  DONE = "DONE",
-  ERROR = "ERROR",
-}
-
-type ScreeningTask = {
-  uuid: string;
-  job_uuid: string;
-  doi: string;
-  title: string;
-  abstract: string;
-  status: ScreeningTaskStatus;
-  result: string | null;
-  human_result: string | null;
-  status_metadata: Record<string, unknown> | null;
-};
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -77,6 +56,7 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const initialTotalRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -278,12 +258,8 @@ export const ProjectPage = () => {
             <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
           )}
           {createdJobs.map((job, jobIdx) => {
-            const jobTasks = screeningTasks.filter(
-              (task) => task.job_uuid === job.uuid
-            );
-            const doneCount = jobTasks.filter(
-              (task) => task.status === ScreeningTaskStatus.DONE
-            ).length;
+            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
+            const doneCount = jobTasks.filter(task => task.status === JobTaskStatus.DONE || task.human_result !== null).length;
             const totalCount = jobTasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
@@ -419,9 +395,17 @@ export const ProjectPage = () => {
       </div>
       {match && selectedTaskUuid && (
         <ManualEvaluationModal
-          screeningTaskUuids={screeningTasks.map(task => task.uuid)}
-          currentTaskUuid={selectedTaskUuid}
           screeningTasks={screeningTasks}
+          currentTaskUuid={selectedTaskUuid}
+          onEvaluated={(doneUuid) => {
+            setScreeningTasks(prev => {
+              const next = prev.filter(task => task.uuid !== doneUuid);
+              if (!next.find(task => task.uuid === selectedTaskUuid)) {
+                setSelectedTaskUuid(next[0]?.uuid);
+              }
+              return next;
+            });
+          }}
           onClose={() => navigate(`/project/${uuid}`)}
         />
       )}

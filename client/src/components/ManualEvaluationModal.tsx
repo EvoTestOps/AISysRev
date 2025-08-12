@@ -11,35 +11,36 @@ import { addJobTaskResult } from "../services/jobTaskService.ts";
 import { ScreeningTask, JobTaskHumanResult } from "../state/types.ts"
 
 type ManualEvaluationProps = {
-  screeningTaskUuids: string[];
-  currentTaskUuid: string;
   screeningTasks: ScreeningTask[];
+  currentTaskUuid: string;
   onClose: () => void;
+  onEvaluated: (uuid: string) => void;
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
-  screeningTaskUuids,
-  currentTaskUuid,
   screeningTasks,
+  currentTaskUuid,
   onClose,
+  onEvaluated,
 }) => {
-  const addHumanResult = useCallback(async (humanResult: JobTaskHumanResult) => {
-    try {
-      await addJobTaskResult(currentTaskUuid, humanResult);
-    } catch (error) {
-      console.error("Error adding human result:", error);
-    }
-  }, [currentTaskUuid]);
-
   const screeningTask = useMemo(
     () => screeningTasks.find(t => t.uuid === currentTaskUuid),
     [currentTaskUuid, screeningTasks]
   );
 
   const taskIndex = useMemo(() => {
-    const idx = screeningTaskUuids.indexOf(currentTaskUuid);
+    const idx = screeningTasks.findIndex(t => t.uuid === currentTaskUuid);
     return idx + 1;
-  }, [screeningTaskUuids, currentTaskUuid]);
+  }, [screeningTasks, currentTaskUuid]);
+
+  const addHumanResult = useCallback(async (humanResult: JobTaskHumanResult) => {
+    try {
+      await addJobTaskResult(currentTaskUuid, humanResult);
+      onEvaluated(currentTaskUuid);
+    } catch (error) {
+      console.error("Error adding human result:", error);
+    }
+  }, [currentTaskUuid, onEvaluated]);
 
   if (!screeningTask) return <div>Loading...</div>;
 
