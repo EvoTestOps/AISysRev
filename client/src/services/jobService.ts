@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const prefix = '/api/v1';
+import { api } from '../services/api'
 
 export const createJob = async (projectUuid: string, llmConfig: {
     model_name: string;
@@ -9,7 +7,7 @@ export const createJob = async (projectUuid: string, llmConfig: {
     top_p: number;
 }) => {
   try {
-    const res = await axios.post(`${prefix}/job`, {
+    const res = await api.post('/job', {
       project_uuid: projectUuid,
       llm_config: {
         model_name: llmConfig.model_name,
@@ -28,7 +26,7 @@ export const createJob = async (projectUuid: string, llmConfig: {
 
 export const fetchJobsForProject = async (projectUuid: string) => {
   try {
-    const res = await axios.get(`${prefix}/job?project=${projectUuid}`);
+    const res = await api.get(`/job?project=${projectUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching jobs:", error);
