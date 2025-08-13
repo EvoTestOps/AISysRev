@@ -20,7 +20,6 @@ export const fileUploadToBackend = async (files: File[], projectUuid: string) =>
 
   try {
     const res = await api.post(`/files/upload`, formData);
-
     return res.data;
   } catch (error){
     console.error("Backend upload error", error);
