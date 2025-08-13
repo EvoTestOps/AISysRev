@@ -7,7 +7,6 @@ export const fetchJobTasksFromBackend = async (jobUuid: string) => {
     return res.data;
   } catch (error) {
     console.error("Error fetching job tasks:", error);
-    console.error("Request URL:", `${prefix}/jobtask/${jobUuid}`);
     throw error;
   }
 };
