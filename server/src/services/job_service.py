@@ -26,15 +26,15 @@ class JobService:
     async def fetch_all(self) -> list[JobRead]:
         rows = await self.job_crud.fetch_jobs()
         return [JobRead(**row) for row in rows]
-    
+
     async def fetch_by_project(self, project_uuid: UUID) -> list[JobRead]:
         rows = await self.job_crud.fetch_jobs_by_project(project_uuid)
         return [JobRead(**row) for row in rows]
-    
+
     async def fetch_by_uuid(self, uuid: UUID) -> JobRead:
         job = await self.job_crud.fetch_job_by_uuid(uuid)
         return JobRead(**job)
-    
+
     async def create(self, job_data: JobCreate):
         async with self.db.begin_nested() if self.db.in_transaction() else self.db.begin():
             new_job = await self.job_crud.create_job(job_data)
