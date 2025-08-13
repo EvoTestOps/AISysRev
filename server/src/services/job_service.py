@@ -69,11 +69,8 @@ class JobService:
             new_job = await self.job_crud.create_job(job_data)
             logger.info("Retrieving papers for project", job_data.project_uuid)
             papers = await self.file_service.fetch_papers(job_data.project_uuid)
-            logger.info("Bulk-creating job tasks")
-            await self.jobtask_service.bulk_create(new_job.id, papers)
-
-        logger.info("Starting job tasks")
-        await self.jobtask_service.start_job_tasks(new_job.id, job_data.model_dump())
+            await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, papers)
+        
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
@@ -83,13 +80,7 @@ class JobService:
         )
         await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
 
-        return JobRead(
-            uuid=new_job.uuid,
-            project_uuid=job_data.project_uuid,
-            llm_config=new_job.llm_config,
-            created_at=new_job.created_at,
-            updated_at=new_job.updated_at,
-        )
+        return job_read
 
 
 def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:

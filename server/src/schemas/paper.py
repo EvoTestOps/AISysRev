@@ -6,7 +6,7 @@ from datetime import datetime
 
 class PaperCreate(BaseModel):
     paper_id: int
-    job_id: int
+    project_uuid: UUID
     file_uuid: UUID
     doi: str
     title: str
@@ -14,7 +14,7 @@ class PaperCreate(BaseModel):
 
 class PaperRead(BaseModel):
     uuid: UUID
-    paper_id: int
+    project_uuid: UUID
     file_uuid: UUID
     doi: str
     title: str

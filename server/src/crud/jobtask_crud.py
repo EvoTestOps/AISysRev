@@ -30,11 +30,10 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_papers_by_job_uuid(self, job_uuid: UUID) -> List[Paper]:
+    async def fetch_papers_by_project_uuid(self, project_uuid: UUID) -> List[Paper]:
         stmt = (
             select(Paper)
-            .join(Job, Paper.job_id == Job.id)
-            .where(Job.uuid == job_uuid)
+            .where(Paper.project_uuid == project_uuid)
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()

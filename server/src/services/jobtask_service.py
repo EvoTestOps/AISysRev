@@ -31,18 +31,18 @@ class JobTaskService:
             status_metadata=task.status_metadata
         ) for task in job_tasks]
 
-    async def fetch_papers(self, job_uuid: UUID):
-        papers = await self.jobtask_crud.fetch_papers_by_job_uuid(job_uuid)
+    async def fetch_papers(self, project_uuid: UUID):
+        papers = await self.jobtask_crud.fetch_papers_by_project_uuid(project_uuid)
         return [PaperRead(**paper) for paper in papers]
 
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
 
-    async def bulk_create(self, job_id: UUID, papers: list[dict]):
+    async def bulk_create(self, job_id: int, project_uuid: UUID, papers: list[dict]):
         created_papers = [
             PaperCreate(
                 paper_id=idx,
-                job_id=job_id,
+                project_uuid=project_uuid,
                 file_uuid=paper["file_uuid"],
                 doi=paper["doi"],
                 title=paper["title"],
