@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict, field_validator, Json
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class Criteria(BaseModel):
     inclusion_criteria: List[str]
