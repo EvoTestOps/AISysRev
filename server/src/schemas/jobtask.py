@@ -8,6 +8,7 @@ class JobTaskHumanResult(str, Enum):
     INCLUDE = "INCLUDE"
     EXCLUDE = "EXCLUDE"
     UNSURE = "UNSURE"
+
 class JobTaskHumanResultUpdate(BaseModel):
     human_result: JobTaskHumanResult
 

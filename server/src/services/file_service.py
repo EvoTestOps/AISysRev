@@ -38,7 +38,8 @@ class FileService:
                 papers.append({
                     "title": normalized.get("title"),
                     "abstract": normalized.get("abstract"),
-                    "doi": normalized.get("doi")
+                    "doi": normalized.get("doi"),
+                    "file_uuid": file.uuid
                 })
         return papers
 
