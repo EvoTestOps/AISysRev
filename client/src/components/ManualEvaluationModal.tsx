@@ -4,15 +4,17 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button"
-import { addJobTaskResult } from "../services/jobTaskService.ts";
+import { addJobTaskResult, fetchPapersFromBackend } from "../services/jobTaskService.ts";
 import { ScreeningTask, JobTaskHumanResult } from "../state/types.ts"
+import { UUID } from "crypto";
 
 type ManualEvaluationProps = {
+  projectUuid: string;
   screeningTasks: ScreeningTask[];
   currentTaskUuid: string;
   inclusionCriteria: string[];
@@ -21,7 +23,20 @@ type ManualEvaluationProps = {
   onEvaluated: (uuid: string) => void;
 };
 
+type Papers = {
+  uuid: UUID
+  paper_id: number
+  project_uuid: UUID
+  file_uuid: UUID
+  doi: string
+  title: string
+  abstract: string
+  created_at: Date | null
+  updated_at: Date | null
+}
+
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
+  projectUuid,
   screeningTasks,
   currentTaskUuid,
   inclusionCriteria,
@@ -29,24 +44,38 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   onClose,
   onEvaluated,
 }) => {
-  const screeningTask = useMemo(
-    () => screeningTasks.find(t => t.uuid === currentTaskUuid),
-    [currentTaskUuid, screeningTasks]
-  );
+  const [papers, setPapers] = useState<Papers[]>([]);
+  const [currentPaperId, setCurrentPaperId] = useState<number>(1)
 
-  const taskIndex = useMemo(() => {
-    const idx = screeningTasks.findIndex(t => t.uuid === currentTaskUuid);
-    return idx + 1;
-  }, [screeningTasks, currentTaskUuid]);
+  useEffect(() => {
+    const fetchPapers = async () => {
+      const fetchedPapers = await fetchPapersFromBackend(projectUuid);
+      setPapers(fetchedPapers);
+      setCurrentPaperId(1);
+    };
+    fetchPapers();
+  }, [projectUuid]);
+
+  const currentPaper = papers.find(paper => paper.paper_id === currentPaperId);
+
+  const nextPaper = useCallback(() => {
+    const nextIndex = papers.findIndex(paper => paper.paper_id === currentPaperId) + 1;
+    if (nextIndex < papers.length) {
+      setCurrentPaperId(papers[nextIndex].paper_id);
+    } else {
+      onClose();
+    }
+  }, [currentPaperId, papers, onClose]);
 
   const addHumanResult = useCallback(async (humanResult: JobTaskHumanResult) => {
     try {
       await addJobTaskResult(currentTaskUuid, humanResult);
       onEvaluated(currentTaskUuid);
+      nextPaper();
     } catch (error) {
       console.error("Error adding human result:", error);
     }
-  }, [currentTaskUuid, onEvaluated]);
+  }, [currentTaskUuid, onEvaluated, nextPaper]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,7 +91,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [addHumanResult]);
 
-  if (!screeningTask) return <div>Loading...</div>;
+  if (!currentPaper) return <div>Loading...</div>;
 
   return (
     <Dialog
@@ -77,10 +106,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <DialogTitle className="text-lg font-bold mb-2">
-          Paper #{taskIndex}: {screeningTask.title}
+          Paper #{currentPaper.paper_id}: {currentPaper.title}
         </DialogTitle>
         <Description className="text-sm mb-4">
-          {screeningTask.abstract}
+          {currentPaper.abstract}
         </Description>
 
         <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl mb-4">

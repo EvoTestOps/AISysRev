@@ -1,6 +1,16 @@
 import { api } from '../services/api';
 import { JobTaskHumanResult } from '../state/types';
 
+export const fetchPapersFromBackend = async (projectUuid: string) => {
+  try {
+    const res = await api.get(`/paper/${projectUuid}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching papers:", error);
+    throw error;
+  }
+};
+
 export const fetchJobTasksFromBackend = async (jobUuid: string) => {
   try {
     const res = await api.get(`/jobtask/${jobUuid}`);

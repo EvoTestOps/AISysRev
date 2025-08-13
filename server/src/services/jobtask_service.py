@@ -33,7 +33,7 @@ class JobTaskService:
 
     async def fetch_papers(self, project_uuid: UUID):
         papers = await self.jobtask_crud.fetch_papers_by_project_uuid(project_uuid)
-        return [PaperRead(**paper) for paper in papers]
+        return [PaperRead.from_orm(paper) for paper in papers]
 
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)

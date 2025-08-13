@@ -397,6 +397,7 @@ export const ProjectPage = () => {
       </div>
       {match && selectedTaskUuid && (
         <ManualEvaluationModal
+          projectUuid={uuid}
           screeningTasks={screeningTasks}
           currentTaskUuid={selectedTaskUuid}
           inclusionCriteria={inclusionCriteria}
