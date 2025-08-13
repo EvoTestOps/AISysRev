@@ -39,7 +39,7 @@ class JobService:
         async with self.db.begin_nested() if self.db.in_transaction() else self.db.begin():
             new_job = await self.job_crud.create_job(job_data)
             papers = await self.file_service.fetch_papers(job_data.project_uuid)
-            await self.jobtask_service.bulk_create(new_job.id, papers)
+            await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, papers)
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,

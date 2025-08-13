@@ -5,10 +5,10 @@ from src.services.jobtask_service import JobTaskService, get_jobtask_service
 
 router = APIRouter()
 
-@router.get("/paper/{uuid}", status_code=status.HTTP_200_OK)
-async def get_papers(uuid: UUID, jobtasks: JobTaskService = Depends(get_jobtask_service)):
+@router.get("/paper/{project_uuid}", status_code=status.HTTP_200_OK)
+async def get_papers(project_uuid: UUID, jobtasks: JobTaskService = Depends(get_jobtask_service)):
     try:
-        papers = await jobtasks.fetch_papers(uuid)
+        papers = await jobtasks.fetch_papers(project_uuid)
         if not papers:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found")
         return papers
