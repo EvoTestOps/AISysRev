@@ -4,75 +4,44 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button"
-import { addJobTaskResult, fetchPapersFromBackend } from "../services/jobTaskService.ts";
-import { JobTaskHumanResult } from "../state/types.ts"
+import { addJobTaskResult } from "../services/jobTaskService.ts";
+import { JobTaskHumanResult, Paper } from "../state/types.ts"
 
 type ManualEvaluationProps = {
-  projectUuid: string;
   currentTaskUuid: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
+  papers: Paper[];
+  paperUuid: string | null;
   onClose: () => void;
   onEvaluated: (uuid: string) => void;
 };
 
-type Papers = {
-  uuid: string
-  paper_id: number
-  project_uuid: string
-  file_uuid: string
-  doi: string
-  title: string
-  abstract: string
-  created_at: Date | null
-  updated_at: Date | null
-}
-
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
-  projectUuid,
   currentTaskUuid,
   inclusionCriteria,
   exclusionCriteria,
+  papers,
+  paperUuid,
   onClose,
   onEvaluated,
 }) => {
-  const [papers, setPapers] = useState<Papers[]>([]);
-  const [currentPaperId, setCurrentPaperId] = useState<number>(1)
 
-  useEffect(() => {
-    const fetchPapers = async () => {
-      const fetchedPapers = await fetchPapersFromBackend(projectUuid);
-      setPapers(fetchedPapers);
-      setCurrentPaperId(1);
-    };
-    fetchPapers();
-  }, [projectUuid]);
-
-  const currentPaper = papers.find(paper => paper.paper_id === currentPaperId);
-
-  const nextPaper = useCallback(() => {
-    const nextIndex = papers.findIndex(paper => paper.paper_id === currentPaperId) + 1;
-    if (nextIndex < papers.length) {
-      setCurrentPaperId(papers[nextIndex].paper_id);
-    } else {
-      onClose();
-    }
-  }, [currentPaperId, papers, onClose]);
-
+  const currentPaper = papers.find(paper => paper.uuid === paperUuid);
+  console.log("paperUuid:", paperUuid, "papers:", papers.map(p => p.uuid));
   const addHumanResult = useCallback(async (humanResult: JobTaskHumanResult) => {
     try {
       await addJobTaskResult(currentTaskUuid, humanResult);
       onEvaluated(currentTaskUuid);
-      nextPaper();
     } catch (error) {
       console.error("Error adding human result:", error);
     }
-  }, [currentTaskUuid, onEvaluated, nextPaper]);
+  }, [currentTaskUuid, onEvaluated]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
