@@ -1,6 +1,5 @@
-from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
+from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
@@ -45,7 +44,7 @@ json_instruct_prompt = """Output **ONLY JSON**. You should include **EVERY FIELD
 
 # Task prompt
 
-prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
+task_prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
 
 Task: Evaluate a primary study using **three types of assessments**, applied to both:
 
@@ -101,65 +100,7 @@ b) Each individual inclusion or exclusion criterion
 {1}
 \"\"\""""
 
-
-class LikertDecision(Enum):
-    stronglyDisagree = "1"
-    disagree = "2"
-    somewhatDisagree = "3"
-    neitherAgreeOrDisagree = "4"
-    somewhatAgree = "5"
-    agree = "6"
-    stronglyAgree = "7"
-
-
-class BinaryDecision(Enum):
-    include = "Include"
-    exclude = "Exclude"
-
-
-class Decision(BaseModel, extra="forbid"):
-    binary_decision: bool = Field(
-        description="Whether the criterion or relevance is clearly met (true) or not (false)."
-    )
-    probability_decision: float = Field(
-        description="The likelihood, that the criterion applies or the primary study is relevant. A value closer to `1.0` means that it is extremely likely (very strong match). A value closer to `0.0` means it is extremely unlikely (very weak or no match). You are encouraged to use intermediate values (e.g. `0.1`, `0.2`, `0.35`, `0.7`, etc..), not just `0.0` or `1.0`"
-    )
-    likert_decision: LikertDecision = Field(
-        description="Likert scale decision. The degree of agreement with the criterion being met, or the relevance of the study. Possible values: 1: Strongly disagree, 2: Disagree, 3: Somewhat disagree, 4: Neither agree or disagree, 5: Somewhat agree, 6: Agree, 7: Strongly agree"
-    )
-    reason: str = Field(description="Reason for the decision.")
-
-
-class Criterion(BaseModel, extra="forbid"):
-    name: str = Field(
-        description="Criterion ID. E.g. IC1, IC2, IC3 etc.. for inclusion criteria or EC1, EC2, EC3 etc.. for exclusion criteria"
-    )
-    decision: Decision = Field(description="Decision for the criterion.")
-
-
-class StructuredResponse(BaseModel, extra="forbid"):
-    overall_decision: Decision
-    inclusion_criteria: list[Criterion]
-    exclusion_criteria: list[Criterion]
-
-
-openrouter_base_url = "https://openrouter.ai/api/v1/chat/completions"
-
 from abc import ABC, abstractmethod
-
-
-class LLMConfiguration(BaseModel):
-    base_url: str
-    model: str
-    api_key: str
-    # Defaults to "You are an expert research assistant."
-    system_prompt: Optional[str] = "You are an expert research assistant."
-    # Default seed 128
-    seed: Optional[int] = 128
-    # Default temperature 0
-    temperature: Optional[float] = 0
-    # Default top_p 0.1
-    top_p: Optional[float] = 0.1
 
 
 class LLM(ABC):
@@ -226,7 +167,7 @@ class MockLLM(LLM):
         raise NotImplementedError
 
 
-class OpenrouterLLM(LLM):
+class OpenRouterLLM(LLM):
 
     def __init__(self, config):
         self._config = config
@@ -254,7 +195,7 @@ class OpenrouterLLM(LLM):
                     ),
                     {"role": "user", "content": prompt},
                 ],
-                "provider": {"require_parameters": True},
+                "provider": {"require_parameters": True, "data_collection": "deny"},
                 "max_tokens": 8193,
                 "response_format": {
                     "type": "json_schema",
@@ -264,6 +205,9 @@ class OpenrouterLLM(LLM):
                         "schema": to_strict_json_schema(StructuredResponse),
                     },
                 },
+                "temperature": self.config.temperature,
+                "seed": self.config.seed,
+                "top_p": self.config.top_p,
             }
 
             async with session.post(
@@ -313,5 +257,5 @@ class OpenrouterLLM(LLM):
         return content, data
 
     @property
-    def config(self) -> str:
+    def config(self) -> LLMConfiguration:
         return self._config

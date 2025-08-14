@@ -1,6 +1,6 @@
 from src.schemas.job import JobRead
 from src.models.jobtask import JobTask
-from src.core.llm import prompt, LikertDecision, BinaryDecision, Decision, Criterion, StructuredResponse
+from src.core.llm import task_prompt, LikertDecision, BinaryDecision, Decision, Criterion, StructuredResponse
 
 def _create_criteria(inclusion_criteria: list[str], exclusion_criteria: list[str]) -> str:
     criteria = "\nInclusion criteria:\n\n"
@@ -35,7 +35,7 @@ async def create_decision(jobtask: JobTask, job_data: JobRead, criteria: dict) -
     llm_model = job_data.llm_config.model_name
 
     criteria = _create_criteria(criteria['inclusion_criteria'], criteria['exclusion_criteria'])
-    prompt_text = prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
+    prompt_text = task_prompt.format(jobtask.title, jobtask.abstract, criteria, additional_instructions)
     print(prompt_text)
     res = await _llm_response()
 
