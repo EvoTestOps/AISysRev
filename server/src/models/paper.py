@@ -18,5 +18,4 @@ class Paper(Base, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint('project_uuid', 'paper_id', name='uq_project_paper_id'),
-        UniqueConstraint('file_uuid', name='uq_file_uuid'),
     )
