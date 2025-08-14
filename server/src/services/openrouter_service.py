@@ -9,6 +9,9 @@ class OpenRouterService:
             parsed = json.load(f)
             return parsed
 
+    def call_llm(self):
+        return None
+
 
 def get_openrouter_service() -> OpenRouterService:
     return OpenRouterService()
