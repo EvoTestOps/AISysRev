@@ -1,6 +1,4 @@
-from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import ValidationError
 from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
@@ -46,7 +44,7 @@ json_instruct_prompt = """Output **ONLY JSON**. You should include **EVERY FIELD
 
 # Task prompt
 
-prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
+task_prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
 
 Task: Evaluate a primary study using **three types of assessments**, applied to both:
 
@@ -169,7 +167,7 @@ class MockLLM(LLM):
         raise NotImplementedError
 
 
-class OpenrouterLLM(LLM):
+class OpenRouterLLM(LLM):
 
     def __init__(self, config):
         self._config = config
