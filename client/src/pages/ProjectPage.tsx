@@ -1,5 +1,5 @@
-import { useParams, useRoute, useLocation } from "wouter";
-import { useEffect, useState, useCallback } from "react";
+import { useParams, useRoute, useLocation, useSearch } from "wouter";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
@@ -9,12 +9,12 @@ import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { fetch_project_by_uuid } from "../services/projectService"
-import { fetchJobTasksFromBackend } from "../services/jobTaskService";
+import { fetchJobTasksFromBackend, fetchPapersFromBackend } from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
-import { Project, FetchedFile, ScreeningTask, JobTaskStatus } from "../state/types";
+import { Project, FetchedFile, ScreeningTask, JobTaskStatus, Paper } from "../state/types";
 
 type LlmConfig = {
   model_name: string;
@@ -37,10 +37,14 @@ export const ProjectPage = () => {
   const uuid = params.uuid;
   const [, navigate] = useLocation();
   const [match] = useRoute("/project/:uuid/evaluate");
+  const search = useSearch(); // returns e.g. "paperUuid=..."
+  const paperUuid = useMemo(() => {
+    if (!search) return null;
+    return new URLSearchParams(search).get("paperUuid");
+  }, [search]);
   const [selectedTaskUuid, setSelectedTaskUuid] = useState<string | undefined>();
   const jobTaskRefetchIntervalMs = 5000;
   const [name, setName] = useState("");
-  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
@@ -52,9 +56,11 @@ export const ProjectPage = () => {
   const [temperature, setTemperature] = useState(0.5);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.5);
-  const [isLlmSelected, setIsLlmSelected] = useState(true);
+  const [isLlmSelected, setIsLlmSelected] = useState(true)
+  const [papers, setPapers] = useState<Paper[]>([]);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
-  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
+  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
+  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -210,18 +216,44 @@ export const ProjectPage = () => {
     return () => clearInterval(interval);
   }, [createdJobs]);
 
-  const openManualEvaluation = (taskUuid: string | undefined) => {
-    const taskUuidToOpen = taskUuid ?? screeningTasks[0]?.uuid;
-    if (!taskUuidToOpen) return;
-    setSelectedTaskUuid(taskUuidToOpen);
-    navigate(`/project/${uuid}/evaluate`);
-  };
+  useEffect(() => {
+    const fetchPapers = async () => {
+      const fetchedPapers = await fetchPapersFromBackend(uuid);
+      setPapers(fetchedPapers);
+    };
+    fetchPapers();
+  }, [uuid]);
 
   useEffect(() => {
     if (!selectedTaskUuid && screeningTasks.length > 0) {
       setSelectedTaskUuid(screeningTasks[0].uuid);
     }
   }, [screeningTasks, selectedTaskUuid]);
+
+  const goToPaper = useCallback((paperUuid: string) => {
+    navigate(`/project/${uuid}/evaluate?paperUuid=${paperUuid}`);
+  }, [navigate, uuid]);
+
+  const openManualEvaluation = useCallback((taskUuid?: string) => {
+    const taskUuidToOpen = taskUuid ?? screeningTasks[0]?.uuid;
+    if (!taskUuidToOpen) return;
+    setSelectedTaskUuid(taskUuidToOpen);
+    if (papers.length === 0) {
+      toast.warn("No papers available for manual evaluation.");
+      return;
+    }
+    goToPaper(papers[0].uuid);
+  }, [screeningTasks, papers, goToPaper]);
+
+  const nextPaper = useCallback(() => {
+    if (!paperUuid) return;
+    const idx = papers.findIndex(p => p.uuid === paperUuid);
+    if (idx !== -1 && idx + 1 < papers.length) {
+      goToPaper(papers[idx + 1].uuid);
+    } else {
+      navigate(`/project/${uuid}`); // done
+    }
+  }, [paperUuid, papers, goToPaper, navigate, uuid]);
 
   if (error) {
     return (
@@ -240,8 +272,7 @@ export const ProjectPage = () => {
   }
 
   if (!inclusionCriteria || !exclusionCriteria) return <div>Loading...</div>;
-
-
+  console.log("match:", match, "selectedTaskUuid:", selectedTaskUuid, "paperUuid:", paperUuid);
   return (
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -395,21 +426,15 @@ export const ProjectPage = () => {
           Start manual evaluation
         </button>
       </div>
-      {match && selectedTaskUuid && (
+      {match && selectedTaskUuid && paperUuid && (
         <ManualEvaluationModal
-          projectUuid={uuid}
+          key={paperUuid}
           currentTaskUuid={selectedTaskUuid}
           inclusionCriteria={inclusionCriteria}
           exclusionCriteria={exclusionCriteria}
-          onEvaluated={(doneUuid) => {
-            setScreeningTasks(prev => {
-              const next = prev.filter(task => task.uuid !== doneUuid);
-              if (!next.find(task => task.uuid === selectedTaskUuid)) {
-                setSelectedTaskUuid(next[0]?.uuid);
-              }
-              return next;
-            });
-          }}
+          papers={papers}
+          paperUuid={paperUuid}
+          onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${uuid}`)}
         />
       )}

@@ -46,3 +46,16 @@ export type ScreeningTask = {
   human_result: JobTaskHumanResult | null;
   status_metadata: Record<string, unknown> | null;
 };
+
+
+export type Paper = {
+  uuid: string
+  paper_id: number
+  project_uuid: string
+  file_uuid: string
+  doi: string
+  title: string
+  abstract: string
+  created_at: Date | null
+  updated_at: Date | null
+};
