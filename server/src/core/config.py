@@ -31,6 +31,9 @@ class Settings:
         self.MINIO_ROOT_USER: str = get_env("MINIO_ROOT_USER")
         self.MINIO_ROOT_PASSWORD: str = get_env("MINIO_ROOT_PASSWORD")
         self.MINIO_BUCKET: str = get_env("MINIO_BUCKET", "default-bucket")
+        self.LLM_PROVIDER_BASE_URL: str = (
+            "https://openrouter.ai/api/v1/chat/completions"
+        )
 
 
 settings = Settings()
