@@ -11,10 +11,12 @@ type EllipsisProps = {
   items: EllipsisItem[];
 };
 
+export type DropdownOption = { name: string; value: string };
+
 export type TextProps = {
-  options: Array<{ name: string; value: string }>;
-  selected: { name: string; value: string } | undefined;
-  onSelect: (value?: { name: string; value: string }) => void;
+  options: Array<DropdownOption>;
+  selected: DropdownOption | undefined;
+  onSelect: (value?: DropdownOption) => void;
   isLlmSelected: boolean;
   setIsLlmSelected: (isLlmSelected: boolean) => void;
 };

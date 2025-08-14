@@ -5,7 +5,7 @@ import { fetch_project_by_uuid } from "../services/projectService";
 import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
-import { DropdownMenuText } from "../components/DropDownMenus";
+import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
@@ -69,9 +69,9 @@ export const ProjectPage = () => {
   const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
     []
   );
-  const [selectedLlm, setSelectedLlm] = useState<
-    { name: string; value: string } | undefined
-  >(undefined);
+  const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
+    undefined
+  );
   const [temperature, setTemperature] = useState(0.5);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.5);
