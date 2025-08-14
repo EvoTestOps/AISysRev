@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from pydantic import BaseModel, Field
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
@@ -43,3 +44,17 @@ class StructuredResponse(BaseModel, extra="forbid"):
     overall_decision: Decision
     inclusion_criteria: list[Criterion]
     exclusion_criteria: list[Criterion]
+
+
+class LLMConfiguration(BaseModel):
+    base_url: str
+    model: str
+    api_key: str
+    # Defaults to "You are an expert research assistant."
+    system_prompt: str = "You are an expert research assistant."
+    # Default seed: 128
+    seed: Optional[int] = 128
+    # Default temperature: 0
+    temperature: Optional[float] = 0
+    # Default top_p: 0.1
+    top_p: Optional[float] = 0.1

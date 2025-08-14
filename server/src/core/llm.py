@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field, ValidationError
-from src.schemas.llm import Criterion, Decision, StructuredResponse
+from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
@@ -102,24 +102,7 @@ b) Each individual inclusion or exclusion criterion
 {1}
 \"\"\""""
 
-
-openrouter_base_url = "https://openrouter.ai/api/v1/chat/completions"
-
 from abc import ABC, abstractmethod
-
-
-class LLMConfiguration(BaseModel):
-    base_url: str
-    model: str
-    api_key: str
-    # Defaults to "You are an expert research assistant."
-    system_prompt: Optional[str] = "You are an expert research assistant."
-    # Default seed 128
-    seed: Optional[int] = 128
-    # Default temperature 0
-    temperature: Optional[float] = 0
-    # Default top_p 0.1
-    top_p: Optional[float] = 0.1
 
 
 class LLM(ABC):
@@ -214,7 +197,7 @@ class OpenrouterLLM(LLM):
                     ),
                     {"role": "user", "content": prompt},
                 ],
-                "provider": {"require_parameters": True},
+                "provider": {"require_parameters": True, "data_collection": "deny"},
                 "max_tokens": 8193,
                 "response_format": {
                     "type": "json_schema",
@@ -224,6 +207,9 @@ class OpenrouterLLM(LLM):
                         "schema": to_strict_json_schema(StructuredResponse),
                     },
                 },
+                "temperature": self.config.temperature,
+                "seed": self.config.seed,
+                "top_p": self.config.top_p,
             }
 
             async with session.post(
@@ -273,5 +259,5 @@ class OpenrouterLLM(LLM):
         return content, data
 
     @property
-    def config(self) -> str:
+    def config(self) -> LLMConfiguration:
         return self._config
