@@ -10,12 +10,10 @@ import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button"
 import { addJobTaskResult, fetchPapersFromBackend } from "../services/jobTaskService.ts";
-import { ScreeningTask, JobTaskHumanResult } from "../state/types.ts"
-import { UUID } from "crypto";
+import { JobTaskHumanResult } from "../state/types.ts"
 
 type ManualEvaluationProps = {
   projectUuid: string;
-  screeningTasks: ScreeningTask[];
   currentTaskUuid: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
@@ -24,10 +22,10 @@ type ManualEvaluationProps = {
 };
 
 type Papers = {
-  uuid: UUID
+  uuid: string
   paper_id: number
-  project_uuid: UUID
-  file_uuid: UUID
+  project_uuid: string
+  file_uuid: string
   doi: string
   title: string
   abstract: string
@@ -37,7 +35,6 @@ type Papers = {
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   projectUuid,
-  screeningTasks,
   currentTaskUuid,
   inclusionCriteria,
   exclusionCriteria,
@@ -79,11 +76,11 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "y" || e.key === "Y") {
+      if (e.key === "y" || e.key === "Y" || e.key === "i" || e.key === "I") {
         addHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
         addHumanResult(JobTaskHumanResult.UNSURE);
-      } else if (e.key === "n" || e.key === "N") {
+      } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
         addHumanResult(JobTaskHumanResult.EXCLUDE);
       }
     };
@@ -153,7 +150,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             variant="green"
             onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
           >
-            Include (Y)
+            Include (Y / I)
           </Button>
           <Button
             variant="yellow"
@@ -165,7 +162,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             variant="red"
             onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
           >
-            Exclude (N)
+            Exclude (N / E)
           </Button>
         </div>
       </DialogPanel>
