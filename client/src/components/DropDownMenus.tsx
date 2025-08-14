@@ -1,6 +1,6 @@
-import classNames from 'classnames';
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Ellipsis } from 'lucide-react'
+import classNames from "classnames";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Ellipsis } from "lucide-react";
 
 type EllipsisItem = {
   label: string;
@@ -12,9 +12,9 @@ type EllipsisProps = {
 };
 
 export type TextProps = {
-  options: string[];
-  selected: string;
-  onSelect: (value: string) => void;
+  options: Array<{ name: string; value: string }>;
+  selected: { name: string; value: string } | undefined;
+  onSelect: (value?: { name: string; value: string }) => void;
   isLlmSelected: boolean;
   setIsLlmSelected: (isLlmSelected: boolean) => void;
 };
@@ -51,7 +51,13 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
   );
 };
 
-export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSelect, isLlmSelected, setIsLlmSelected }) => {
+export const DropdownMenuText: React.FC<TextProps> = ({
+  options,
+  selected,
+  onSelect,
+  isLlmSelected,
+  setIsLlmSelected,
+}) => {
   return (
     <Menu as="div" className="relative inline-block text-center">
       <MenuButton
@@ -63,26 +69,29 @@ export const DropdownMenuText: React.FC<TextProps> = ({ options, selected, onSel
           }
         )}
       >
-        {selected || "Select model"}
+        {selected?.name || "Select model"}
       </MenuButton>
 
       <MenuItems
         anchor="bottom end"
         className="block border-spacing-0.5 border-gray-300 w-48 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
       >
-        {options.map((option) =>
+        {options.map((option) => (
           <MenuItem
-            className={"block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"}
-            key={option}
+            className={
+              "block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"
+            }
+            key={option.value}
+            value={option.value}
             as="button"
             onClick={() => {
               onSelect(option);
               setIsLlmSelected(true);
             }}
           >
-            {option}
+            {option.name}
           </MenuItem>
-        )}
+        ))}
       </MenuItems>
     </Menu>
   );

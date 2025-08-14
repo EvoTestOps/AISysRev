@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
-import { fetch_project_by_uuid } from "../services/projectService"
+import { fetch_project_by_uuid } from "../services/projectService";
 import { Layout } from "../components/Layout";
 import { H4, H5, H6 } from "../components/Typography";
 import { CriteriaList } from "../components/CriteriaList";
@@ -11,9 +11,17 @@ import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { Project } from "../state/types";
 import { FetchedFile } from "../state/types";
-import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
-import { createJob, fetchJobTasksFromBackend, fetchJobsForProject } from "../services/jobService";
+import {
+  fileUploadToBackend,
+  fileFetchFromBackend,
+} from "../services/fileService";
+import {
+  createJob,
+  fetchJobTasksFromBackend,
+  fetchJobsForProject,
+} from "../services/jobService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
+import { ModelResponse, retrieve_models } from "../services/openRouterService";
 
 type LlmConfig = {
   model_name: string;
@@ -35,7 +43,7 @@ enum ScreeningTaskStatus {
   PENDING = "PENDING",
   RUNNING = "RUNNING",
   DONE = "DONE",
-  ERROR = "ERROR"
+  ERROR = "ERROR",
 }
 
 type ScreeningTask = {
@@ -54,17 +62,22 @@ export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const jobTaskRefetchIntervalMs = 5000;
-  const [name, setName] = useState('');
-  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
+  const [name, setName] = useState("");
+  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [selectedLlm, setSelectedLlm] = useState('');
+  const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
+    []
+  );
+  const [selectedLlm, setSelectedLlm] = useState<
+    { name: string; value: string } | undefined
+  >(undefined);
   const [temperature, setTemperature] = useState(0.5);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.5);
-  const [isLlmSelected, setIsLlmSelected] = useState(true)
+  const [isLlmSelected, setIsLlmSelected] = useState(true);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
-  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
+  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
@@ -91,12 +104,12 @@ export const ProjectPage = () => {
           toast.error("Project not found");
         } else {
           setError("Failed to fetch Project");
-          toast.error("Failed to fetch Project")
+          toast.error("Failed to fetch Project");
         }
-        console.log("Failed to fetch Project", error)
+        console.log("Failed to fetch Project", error);
       }
     };
-    fetchProject()
+    fetchProject();
   }, [uuid]);
 
   useEffect(() => {
@@ -111,18 +124,30 @@ export const ProjectPage = () => {
     fetchJobs();
   }, [uuid]);
 
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const models = await retrieve_models();
+        setAvailableModels(models);
+      } catch (error) {
+        console.error("Failed to fetch models", error);
+      }
+    };
+    fetchModels();
+  }, []);
+
   const createTask = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
-      setIsLlmSelected(false)
+      setIsLlmSelected(false);
       return;
     }
     const llmConfig: LlmConfig = {
-      model_name: selectedLlm,
+      model_name: selectedLlm.value,
       temperature: temperature,
       seed: seed,
-      top_p: top_p
-    }
+      top_p: top_p,
+    };
 
     try {
       const res = await createJob(uuid, llmConfig);
@@ -132,32 +157,35 @@ export const ProjectPage = () => {
         project_uuid: res.project_uuid,
         llm_config: res.llm_config,
         created_at: res.created_at,
-        updated_at: res.updated_at
+        updated_at: res.updated_at,
       };
-      setCreatedJobs((prev) => ([...prev, createdJob]));
+      setCreatedJobs((prev) => [...prev, createdJob]);
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Error creating job");
     }
   }, [uuid, selectedLlm, temperature, seed, top_p]);
 
-  const uploadFilesToBackend = useCallback(async (files: File[]) => {
-    try {
-      const res = await fileUploadToBackend(files, uuid);
-      if (res.valid_filenames && res.valid_filenames.length > 0) {
-        toast.success(`${res.valid_filenames.length} file(s) uploaded`);
+  const uploadFilesToBackend = useCallback(
+    async (files: File[]) => {
+      try {
+        const res = await fileUploadToBackend(files, uuid);
+        if (res.valid_filenames && res.valid_filenames.length > 0) {
+          toast.success(`${res.valid_filenames.length} file(s) uploaded`);
+        }
+        if (res.errors && res.errors.length > 0) {
+          ExpandableToast(res.errors);
+          console.log("File upload errors:", res.errors);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        toast.warn("File upload failed.");
+        console.log("File upload error:", error);
+        throw error;
       }
-      if (res.errors && res.errors.length > 0) {
-        ExpandableToast(res.errors);
-        console.log("File upload errors:", res.errors);
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast.warn("File upload failed.");
-      console.log("File upload error:", error);
-      throw error;
-    };
-  }, [uuid]);
+    },
+    [uuid]
+  );
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -170,14 +198,17 @@ export const ProjectPage = () => {
     }
   }, [uuid]);
 
-  const handleFilesSelected = useCallback(async (files: File[]) => {
-    try {
-      await uploadFilesToBackend(files);
-      await fetchFiles();
-    } catch (error) {
-      console.error("Problem uploading the files", error);
-    }
-  }, [uploadFilesToBackend, fetchFiles]);
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      try {
+        await uploadFilesToBackend(files);
+        await fetchFiles();
+      } catch (error) {
+        console.error("Problem uploading the files", error);
+      }
+    },
+    [uploadFilesToBackend, fetchFiles]
+  );
 
   useEffect(() => {
     (async () => {
@@ -192,11 +223,11 @@ export const ProjectPage = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (createdJobs.length === 0) return;
-      Promise.all(createdJobs.map(job => fetchJobTasksFromBackend(job.uuid)))
-        .then(results => {
+      Promise.all(createdJobs.map((job) => fetchJobTasksFromBackend(job.uuid)))
+        .then((results) => {
           setScreeningTasks(results.flat());
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error fetching job tasks:", error);
         });
     }, jobTaskRefetchIntervalMs);
@@ -212,22 +243,21 @@ export const ProjectPage = () => {
       <Layout title="Error">
         <div className="font-semibold">{error}</div>
       </Layout>
-    )
-  };
+    );
+  }
 
   if (!name) {
     return (
       <Layout title="">
         <div>Loading...</div>
       </Layout>
-    )
-  };
+    );
+  }
 
   return (
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-
           <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
             <div className="flex flex-col text-sm text-gray-700 max-w-md">
               <p className="font-bold pb-2">Inclusion criteria:</p>
@@ -238,16 +268,25 @@ export const ProjectPage = () => {
           </div>
 
           <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 && (<p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>)}
+          {screeningTasks.length === 0 && (
+            <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
+          )}
           {createdJobs.map((job, jobIdx) => {
-            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
-            const doneCount = jobTasks.filter(task => task.status === ScreeningTaskStatus.DONE).length;
+            const jobTasks = screeningTasks.filter(
+              (task) => task.job_uuid === job.uuid
+            );
+            const doneCount = jobTasks.filter(
+              (task) => task.status === ScreeningTaskStatus.DONE
+            ).length;
             const totalCount = jobTasks.length;
-            const progress = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+            const progress =
+              totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
             return (
               <div key={job.uuid} className="mb-6">
                 <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-                  <p className="flex pl-4 items-center font-semibold">Task #{jobIdx + 1}</p>
+                  <p className="flex pl-4 items-center font-semibold">
+                    Task #{jobIdx + 1}
+                  </p>
                   <div className="flex">
                     <div className="relative w-48 h-8 px-4">
                       <progress
@@ -285,13 +324,10 @@ export const ProjectPage = () => {
             <div className="flex pb-4">
               <H5 className="pr-16">LLM</H5>
               <DropdownMenuText
-                options={[
-                  "gpt-3.5-turbo",
-                  "gpt-4o-mini",
-                  "chatgpt-4o",
-                  "claude-3.5-sonnet",
-                  "mistral",
-                ]}
+                options={availableModels.map((m) => ({
+                  name: m.name,
+                  value: m.id,
+                }))}
                 selected={selectedLlm}
                 onSelect={setSelectedLlm}
                 isLlmSelected={isLlmSelected}
@@ -302,7 +338,9 @@ export const ProjectPage = () => {
             <p className="text-md font-bold pt-4 pb-4">LLM configuration</p>
 
             <div className="flex pt-4 pb-4 justify-between">
-              <p className="text-md font-semibold">Temperature ({temperature})</p>
+              <p className="text-md font-semibold">
+                Temperature ({temperature})
+              </p>
               <input
                 type="range"
                 className="pl-2 cursor-pointer bg-gray-200"
@@ -360,7 +398,6 @@ export const ProjectPage = () => {
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
