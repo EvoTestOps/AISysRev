@@ -1,6 +1,4 @@
 import asyncio
-from fastapi import APIRouter
-from src.services.openrouter_service import get_openrouter_service
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
 from src.schemas.job import JobRead
@@ -8,23 +6,38 @@ from src.schemas.jobtask import JobTaskStatus
 from src.crud.project_crud import ProjectCrud
 from src.crud.jobtask_crud import JobTaskCrud
 from src.tools.llm_decision_creator import get_structured_response
+import logging
 
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: asyncio.Task, job_id: int, job_data: dict):
-    job = JobRead(**job_data)
-    asyncio.run(async_process_job(self, job_id, job_data))
+    job_data_unpacked = JobRead(**job_data)
+    logger.info("Running job task using asyncio", job_id, job_data_unpacked)
+    asyncio.run(async_process_job(self, job_id, job_data_unpacked))
+
+
+@celery_app.task(name="tasks.test_task")
+def test_task(name: str):
+    import time
+
+    print(f"Task started for {name}")
+    time.sleep(3)
+    print(f"Task done for {name}")
+    return f"Hello, {name}!"
 
 
 async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: JobRead):
+    logger.info("async_process_job: Starting to process job", job_id, job_data)
     async with AsyncSessionLocal() as db:
         project_crud = ProjectCrud(db)
         jobtask_crud = JobTaskCrud(db)
 
+        logger.info("Fetching project by UUID", job_data.project_uuid)
         project = await project_crud.fetch_project_by_uuid(job_data.project_uuid)
 
+        logger.info("Updating job task status", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
 
@@ -44,10 +57,13 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: Jo
                     job_task.id, llm_result.model_json_schema()
                 )
                 print(job_task.result)
+
+                logger.info("Updating job task status", JobTaskStatus.DONE)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
             except Exception as e:
+                logger.info("Updating job task status", JobTaskStatus.ERROR)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.ERROR
                 )
@@ -55,6 +71,7 @@ async def async_process_job(celery_task: asyncio.Task, job_id: int, job_data: Jo
                     state="FAILURE",
                     meta={"error": str(e)},
                 )
+                logger.error(e)
                 raise
 
         return {"result": "all job tasks processed"}
