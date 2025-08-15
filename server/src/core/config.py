@@ -34,6 +34,12 @@ class Settings:
         self.LLM_PROVIDER_BASE_URL: str = (
             "https://openrouter.ai/api/v1/chat/completions"
         )
+        self.OPENROUTER_MOCK: bool = get_env("OPENROUTER_MOCK", "N").lower() in [
+            "y",
+            "1",
+            "true",
+            "yes",
+        ]
 
 
 settings = Settings()

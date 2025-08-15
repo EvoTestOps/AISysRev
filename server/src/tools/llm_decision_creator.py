@@ -1,9 +1,10 @@
+from src.schemas.llm import LikertDecision
 from src.services.openrouter_service import get_openrouter_service
 from src.schemas.job import JobRead
 from src.models.jobtask import JobTask
+from src.core.config import settings
 from src.core.llm import (
     task_prompt,
-    LikertDecision,
     Decision,
     Criterion,
     StructuredResponse,
@@ -40,7 +41,8 @@ async def _llm_response() -> StructuredResponse:
     )
 
 
-openrouter_service = get_openrouter_service(mock=False)
+# TODO: FastAPI dependency pattern
+openrouter_service = get_openrouter_service()
 
 
 async def get_structured_response(
