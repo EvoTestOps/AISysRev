@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:10962e8568729b0cfd506170c5a2d1918a2c10ac08c0e6900180b4bac061adc9 AS client
+FROM node:22-alpine@sha256:1b2479dd35a99687d6638f5976fd235e26c5b37e8122f786fcd5fe231d63de5b AS client
 
 WORKDIR /app
 ENV PYTHONPATH=/app
@@ -22,31 +22,33 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.13-alpine@sha256:9b4929a72599b6c6389ece4ecbf415fd1355129f22bb92bb137eea098f05e975 AS server
+FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS server
 
 WORKDIR /app
 
 COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir debugpy
 
 COPY server/ .
 
-EXPOSE 8080
+EXPOSE 8080 5678
 
-CMD ["fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
 
-FROM python:3.13-alpine@sha256:9b4929a72599b6c6389ece4ecbf415fd1355129f22bb92bb137eea098f05e975 AS celery
+FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS celery
 
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
 WORKDIR /app
 
 COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir debugpy
 
 COPY server/ .
 
 RUN chown -R celeryuser:celerygroup /app
 USER celeryuser
 
-CMD ["celery", "-A", "src.worker", "worker", "--loglevel=info"]
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "--wait-for-client", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
