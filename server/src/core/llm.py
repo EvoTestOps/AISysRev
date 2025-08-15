@@ -1,4 +1,4 @@
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
@@ -172,7 +172,9 @@ class OpenRouterLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(
+        self, schema: BaseModel, prompt
+    ) -> tuple[StructuredResponse, str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json
@@ -202,7 +204,7 @@ class OpenRouterLLM(LLM):
                     "json_schema": {
                         "name": "structured_response",
                         "strict": True,
-                        "schema": to_strict_json_schema(StructuredResponse),
+                        "schema": to_strict_json_schema(schema),
                     },
                 },
                 "temperature": self.config.temperature,
@@ -250,7 +252,7 @@ class OpenRouterLLM(LLM):
                     else completion["choices"][0]["message"]["content"].strip()
                 )
                 try:
-                    content = StructuredResponse.model_validate_json(json_str)
+                    content = schema.model_validate_json(json_str)
                 except ValidationError as e:
                     logger.error(e)
                     raise e
