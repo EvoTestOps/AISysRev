@@ -127,8 +127,8 @@ class MockLLM(LLM):
         self._config = config
 
     async def generate_answer_async(
-        self, schema: T = StructuredResponse, prompt=""
-    ) -> tuple[T, str]:
+        self, schema: type[T], prompt
+    ) -> tuple[type[T], str]:
         import json
 
         return (
@@ -175,7 +175,9 @@ class OpenRouterLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(self, schema: T, prompt) -> tuple[T, str]:
+    async def generate_answer_async(
+        self, schema: type[T], prompt
+    ) -> tuple[type[T], str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json
