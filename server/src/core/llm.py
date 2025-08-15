@@ -1,6 +1,12 @@
 from typing import TypeVar
 from pydantic import BaseModel, ValidationError
-from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
+from src.schemas.llm import (
+    Criterion,
+    Decision,
+    LLMConfiguration,
+    LikertDecision,
+    StructuredResponse,
+)
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
@@ -136,7 +142,7 @@ class MockLLM(LLM):
                 overall_decision=Decision(
                     binary_decision=False,
                     probability_decision=0.0,
-                    likert_decision=1,
+                    likert_decision=LikertDecision.stronglyDisagree,
                     reason="Excluded",
                 ),
                 inclusion_criteria=[
@@ -145,7 +151,7 @@ class MockLLM(LLM):
                         decision=Decision(
                             binary_decision=False,
                             probability_decision=0.0,
-                            likert_decision=1,
+                            likert_decision=LikertDecision.stronglyDisagree,
                             reason="Does not match",
                         ),
                     )
@@ -156,7 +162,7 @@ class MockLLM(LLM):
                         decision=Decision(
                             binary_decision=True,
                             probability_decision=0.8,
-                            likert_decision=6,
+                            likert_decision=LikertDecision.stronglyAgree,
                             reason="Matches",
                         ),
                     )
@@ -223,17 +229,16 @@ class OpenRouterLLM(LLM):
                 },
                 json=data,
             ) as response:
-                logger.info("Status:", response.status)
-                logger.info("Content-type:", response.headers["content-type"])
+                logger.info("Status: %s", response.status)
+                logger.info("Content-type: %s", response.headers["content-type"])
 
                 if response.status != 200:
                     text = await response.text()
-                    raise Exception(
-                        response.request_info,
-                        response.history,
-                        status=response.status,
-                        message=text,
+                    logger.error(
+                        "LLM request failed with response status %s", response.status
                     )
+                    logger.error("Response: %s", text)
+                    raise RuntimeError(text)
 
                 completion = await response.json()
                 data = json.dumps(completion)

@@ -56,7 +56,7 @@ async def async_process_job(
                     job_task, job_data, project.criteria
                 )
                 await jobtask_crud.update_job_task_result(
-                    job_task.id, llm_result.model_json_schema()
+                    job_task.id, llm_result.model_dump_json()
                 )
                 print(job_task.result)
 

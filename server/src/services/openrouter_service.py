@@ -9,7 +9,8 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class OpenRouterService:
-    def __init__(self, mock: bool = settings.OPENROUTER_MOCK):
+    # TODO: Remove hardcoded mock
+    def __init__(self, mock: bool = True):
         self._mock = mock
 
     def get_available_models(self) -> OpenrouterModelResponse:
