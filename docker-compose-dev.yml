@@ -28,6 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
+    ports: ["5678:5678"]
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
@@ -107,6 +108,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: celery
+    ports: ["5679:5679"]
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
