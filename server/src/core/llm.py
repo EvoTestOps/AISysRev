@@ -1,3 +1,4 @@
+from typing import TypeVar
 from pydantic import BaseModel, ValidationError
 from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
 
@@ -102,6 +103,8 @@ b) Each individual inclusion or exclusion criterion
 
 from abc import ABC, abstractmethod
 
+T = TypeVar("T", bound=BaseModel)
+
 
 class LLM(ABC):
 
@@ -110,9 +113,7 @@ class LLM(ABC):
         pass
 
     @abstractmethod
-    async def generate_answer_async(
-        self, prompt: str
-    ) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(self, schema: T, prompt: str) -> tuple[T, str]:
         pass
 
     @property
@@ -125,7 +126,9 @@ class MockLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(
+        self, schema: T = StructuredResponse, prompt=""
+    ) -> tuple[T, str]:
         import json
 
         return (
@@ -172,9 +175,7 @@ class OpenRouterLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(
-        self, schema: BaseModel, prompt
-    ) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(self, schema: T, prompt) -> tuple[T, str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json
