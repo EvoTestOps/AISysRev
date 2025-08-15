@@ -34,7 +34,7 @@ COPY server/ .
 
 EXPOSE 8080 5678
 
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
 
 FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS celery
 
@@ -51,4 +51,4 @@ COPY server/ .
 RUN chown -R celeryuser:celerygroup /app
 USER celeryuser
 
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "--wait-for-client", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
