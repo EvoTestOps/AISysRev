@@ -39,6 +39,7 @@ services:
       MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+      OPENROUTER_MOCK: y
     volumes:
       - ./server:/app
     develop:
