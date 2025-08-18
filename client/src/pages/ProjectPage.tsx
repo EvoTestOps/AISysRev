@@ -292,7 +292,7 @@ export const ProjectPage = () => {
           </div>
 
             <H4>Screening tasks</H4>
-            {screeningTasks.length === 0 && (
+            {screeningTasks.length === 0 && papers.length === 0 && !papersLoading && (
               <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
             )}
             {createdJobs.map((job, jobIdx) => {
