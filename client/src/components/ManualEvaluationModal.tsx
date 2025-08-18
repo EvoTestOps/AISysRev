@@ -121,18 +121,21 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         <div className="flex justify-center m-4 pt-2 gap-4">
           <Button
             variant="green"
+            className="ml-4 mr-4"
             onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
           >
             Include (Y / I)
           </Button>
           <Button
             variant="yellow"
+            className="ml-4 mr-4"
             onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
           >
             Unsure (U)
           </Button>
           <Button
             variant="red"
+            className="ml-4 mr-4"
             onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
           >
             Exclude (N / E)

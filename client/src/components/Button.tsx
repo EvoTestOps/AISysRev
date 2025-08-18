@@ -2,7 +2,7 @@ import { twMerge } from "tailwind-merge";
 import React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "green" | "yellow" | "red" | "primary" | "secondary";
+  variant?: "green" | "yellow" | "red" | "purple";
 };
 
 const variantClasses: Record<string, string> = {
@@ -19,7 +19,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => (
   <button
     className={twMerge(
-      "ml-4 mr-4 px-4 py-2 text-white text-sm font-semibold rounded-3xl shadow-md cursor-pointer",
+      "px-4 py-2 text-white text-sm font-semibold rounded-3xl shadow-md transition duration-200 ease-in-out cursor-pointer",
       variantClasses[variant],
       className
     )}

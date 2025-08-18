@@ -14,6 +14,7 @@ import { createJob, fetchJobsForProject } from "../services/jobService";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
+import { Button } from "../components/Button";
 import { Project, FetchedFile, ScreeningTask, JobTaskStatus, Paper } from "../state/types";
 
 type LlmConfig = {
@@ -62,6 +63,14 @@ export const ProjectPage = () => {
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );
+
+  const pendingTasks = useMemo(
+    () => screeningTasks.filter(task => task.human_result == null),
+    [screeningTasks]
+  );
+
+  const evaluationFinished = screeningTasks.length > 0 && pendingTasks.length === 0;
+
   useEffect(() => {
     const fetchProject = async () => {
       try {
@@ -114,10 +123,9 @@ export const ProjectPage = () => {
   }, []);
   
   const paperToTaskMap = useMemo(() => {
-    if (papers.length === 0 || screeningTasks.length === 0) return {};
-    const pendingTasks = screeningTasks.filter(task => task.human_result == null);
-
-    if (pendingTasks.length === 0) return {};
+    if (papers.length === 0 ||screeningTasks.length === 0 || pendingTasks.length === 0) {
+      return {};
+    }
 
     const byDoi: Record<string, string> = {};
     pendingTasks.forEach(task => {
@@ -135,7 +143,7 @@ export const ProjectPage = () => {
       }
     });
     return map;
-  }, [papers, screeningTasks]);
+  }, [papers, screeningTasks, pendingTasks]);
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
@@ -250,6 +258,7 @@ export const ProjectPage = () => {
   }, [createdJobs]);
 
   const openManualEvaluation = useCallback(() => {
+    if (evaluationFinished) return;
     if (papers.length === 0 || screeningTasks.length === 0) {
       toast.warn("No papers available.");
       return;
@@ -257,7 +266,7 @@ export const ProjectPage = () => {
     const first = papers.find(paper => paperToTaskMap[paper.uuid]);
     if (!first) return;
     navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`);
-  }, [papers, screeningTasks, paperToTaskMap, navigate, uuid]);
+  }, [papers, screeningTasks, paperToTaskMap, navigate, uuid, evaluationFinished]);
 
   const nextPaper = useCallback(() => {
     if (!paperUuid) return;
@@ -289,6 +298,11 @@ export const ProjectPage = () => {
       Object.keys(paperToTaskMap).length > 0,
     [papers, screeningTasks, paperToTaskMap]
   );
+
+  const showEvaluationResults = useCallback(() => {
+    if (!evaluationFinished) return;
+    console.log("Showing evaluation results");
+  }, [evaluationFinished]);
 
   if (error) {
     return (
@@ -443,15 +457,24 @@ export const ProjectPage = () => {
       </div>
 
       <div className="fixed z-40 bottom-0 left-1/2 transform -translate-x-1/2 m-4">
-        <button
-          onClick={openManualEvaluation}
-          disabled={papersLoading || !canStartManualEvaluation}
-          className="bg-purple-700 text-white w-fit py-2 px-6 text-md font-bold rounded-xl shadow-md
-            hover:bg-purple-600 transition duration-200 ease-in-out cursor-pointer
-            disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Start manual evaluation
-        </button>
+        {evaluationFinished ? (
+          <Button
+            variant="green"
+            className="px-6 text-md font-bold rounded-xl transition duration-200 ease-in-out"
+            onClick={showEvaluationResults}
+          >
+            Show evaluation results
+          </Button>
+        ) : (
+          <Button
+            variant="purple"
+            className="px-6 text-md font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+            onClick={openManualEvaluation}
+            disabled={papersLoading || !canStartManualEvaluation}
+          >
+            Start manual evaluation
+          </Button>
+        )}
       </div>
 
       {match && paperUuid && currentTaskUuid && (
