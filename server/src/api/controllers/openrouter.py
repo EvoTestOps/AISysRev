@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
 from fastapi.params import Depends
+from src.core.config import settings
 from src.models.openrouter import OpenrouterModelResponse
 from src.services.openrouter_service import OpenRouterService, get_openrouter_service
 
@@ -15,19 +16,25 @@ router = APIRouter()
 async def get_available_models(
     openrouter: OpenRouterService = Depends(get_openrouter_service),
 ):
-    required_parameters = ["structured_outputs","response_format","temperature","top_p","seed"]
+    required_parameters = [
+        "structured_outputs",
+        "response_format",
+        "temperature",
+        "top_p",
+        "seed",
+    ]
     try:
         models = openrouter.get_available_models()
         data = models["data"]
         models["data"] = list(
-    filter(
-        lambda model: all(
-            item in (model.get("supported_parameters") or [])
-            for item in required_parameters
-        ),
-        data,
-    )
-)
+            filter(
+                lambda model: all(
+                    item in (model.get("supported_parameters") or [])
+                    for item in required_parameters
+                ),
+                data,
+            )
+        )
 
         return models
     except HTTPException:

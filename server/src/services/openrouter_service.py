@@ -1,24 +1,36 @@
+from typing import TypeVar
+from pydantic import BaseModel
 from src.schemas.llm import LLMConfiguration
-from src.core.llm import OpenRouterLLM
+from src.core.llm import MockLLM, OpenRouterLLM
 from src.core.config import settings
 from src.models.openrouter import OpenrouterModelResponse
 
+T = TypeVar("T", bound=BaseModel)
+
 
 class OpenRouterService:
+    # TODO: Remove hardcoded mock
+    def __init__(self, mock: bool = True):
+        self._mock = mock
+
     def get_available_models(self) -> OpenrouterModelResponse:
         import json
 
-        with open("/app/src/data/openrouter_models_1755156279.json") as f:
+        with open("/app/src/data/openrouter_models_1755156279.json", mode="r", encoding="utf8") as f:
             parsed = json.load(f)
             return parsed
 
-    async def call_llm(self):
+    async def call_llm(self, schema: type[T], model: str, prompt: str):
         llm_configuration = LLMConfiguration(
-            base_url=settings.LLM_PROVIDER_BASE_URL, api_key=""
+            base_url=settings.LLM_PROVIDER_BASE_URL, model=model, api_key="Foo Bar Baz"
         )
-        llm = OpenRouterLLM(config=llm_configuration)
+        llm = (
+            OpenRouterLLM(config=llm_configuration)
+            if not self._mock
+            else MockLLM(config=llm_configuration)
+        )
         response_formatted, response_raw = await llm.generate_answer_async(
-            "PROMPT GOES HERE"
+            schema, prompt
         )
         return response_formatted
 

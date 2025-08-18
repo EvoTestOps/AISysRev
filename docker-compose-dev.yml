@@ -28,6 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
+    ports: ["5678:5678"]
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
@@ -38,6 +39,7 @@ services:
       MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+      OPENROUTER_MOCK: y
     volumes:
       - ./server:/app
     develop:
@@ -107,6 +109,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: celery
+    ports: ["5679:5679"]
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}

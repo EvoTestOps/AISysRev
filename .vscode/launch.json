@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach: FastAPI (Docker)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5678 },
+      "pathMappings": [
+        { "localRoot": "${workspaceFolder}/server", "remoteRoot": "/app" }
+      ],
+      "justMyCode": true
+    },
+    {
+      "name": "Attach: Celery (Docker)",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": { "host": "localhost", "port": 5679 },
+      "pathMappings": [
+        { "localRoot": "${workspaceFolder}/server", "remoteRoot": "/app" }
+      ],
+      "justMyCode": true
+    }
+  ]
+}

@@ -1,5 +1,12 @@
-from pydantic import ValidationError
-from src.schemas.llm import Criterion, Decision, LLMConfiguration, StructuredResponse
+from typing import TypeVar
+from pydantic import BaseModel, ValidationError
+from src.schemas.llm import (
+    Criterion,
+    Decision,
+    LLMConfiguration,
+    LikertDecision,
+    StructuredResponse,
+)
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
@@ -102,6 +109,8 @@ b) Each individual inclusion or exclusion criterion
 
 from abc import ABC, abstractmethod
 
+T = TypeVar("T", bound=BaseModel)
+
 
 class LLM(ABC):
 
@@ -110,9 +119,7 @@ class LLM(ABC):
         pass
 
     @abstractmethod
-    async def generate_answer_async(
-        self, prompt: str
-    ) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(self, schema: T, prompt: str) -> tuple[T, str]:
         pass
 
     @property
@@ -125,7 +132,9 @@ class MockLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(
+        self, schema: type[T], prompt
+    ) -> tuple[type[T], str]:
         import json
 
         return (
@@ -133,7 +142,7 @@ class MockLLM(LLM):
                 overall_decision=Decision(
                     binary_decision=False,
                     probability_decision=0.0,
-                    likert_decision=1,
+                    likert_decision=LikertDecision.stronglyDisagree,
                     reason="Excluded",
                 ),
                 inclusion_criteria=[
@@ -142,7 +151,7 @@ class MockLLM(LLM):
                         decision=Decision(
                             binary_decision=False,
                             probability_decision=0.0,
-                            likert_decision=1,
+                            likert_decision=LikertDecision.stronglyDisagree,
                             reason="Does not match",
                         ),
                     )
@@ -153,7 +162,7 @@ class MockLLM(LLM):
                         decision=Decision(
                             binary_decision=True,
                             probability_decision=0.8,
-                            likert_decision=6,
+                            likert_decision=LikertDecision.stronglyAgree,
                             reason="Matches",
                         ),
                     )
@@ -172,7 +181,9 @@ class OpenRouterLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(self, prompt) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(
+        self, schema: type[T], prompt
+    ) -> tuple[type[T], str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json
@@ -202,7 +213,7 @@ class OpenRouterLLM(LLM):
                     "json_schema": {
                         "name": "structured_response",
                         "strict": True,
-                        "schema": to_strict_json_schema(StructuredResponse),
+                        "schema": to_strict_json_schema(schema),
                     },
                 },
                 "temperature": self.config.temperature,
@@ -218,17 +229,16 @@ class OpenRouterLLM(LLM):
                 },
                 json=data,
             ) as response:
-                logger.info("Status:", response.status)
-                logger.info("Content-type:", response.headers["content-type"])
+                logger.info("Status: %s", response.status)
+                logger.info("Content-type: %s", response.headers["content-type"])
 
                 if response.status != 200:
                     text = await response.text()
-                    raise Exception(
-                        response.request_info,
-                        response.history,
-                        status=response.status,
-                        message=text,
+                    logger.error(
+                        "LLM request failed with response status %s", response.status
                     )
+                    logger.error("Response: %s", text)
+                    raise RuntimeError(text)
 
                 completion = await response.json()
                 data = json.dumps(completion)
@@ -250,7 +260,7 @@ class OpenRouterLLM(LLM):
                     else completion["choices"][0]["message"]["content"].strip()
                 )
                 try:
-                    content = StructuredResponse.model_validate_json(json_str)
+                    content = schema.model_validate_json(json_str)
                 except ValidationError as e:
                     logger.error(e)
                     raise e
