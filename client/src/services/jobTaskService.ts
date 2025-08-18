@@ -6,7 +6,9 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
     const res = await api.get(`/paper/${projectUuid}`);
     return res.data;
   } catch (error) {
-    console.error("Error fetching papers:", error);
+    if (error.response?.status === 404) {
+      return [];
+    }
     throw error;
   }
 };

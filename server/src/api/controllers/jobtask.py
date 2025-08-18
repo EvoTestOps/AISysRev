@@ -9,8 +9,6 @@ router = APIRouter()
 async def get_papers(project_uuid: UUID, jobtasks: JobTaskService = Depends(get_jobtask_service)):
     try:
         papers = await jobtasks.fetch_papers(project_uuid)
-        if not papers:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found")
         return papers
     except HTTPException:
         raise
