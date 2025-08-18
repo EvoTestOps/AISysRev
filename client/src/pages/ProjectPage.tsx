@@ -98,16 +98,23 @@ export const ProjectPage = () => {
 
   const paperToTaskMap = useMemo(() => {
     if (papers.length === 0 || screeningTasks.length === 0) return {};
+    const pendingTasks = screeningTasks.filter(task => task.human_result == null);
+
+    if (pendingTasks.length === 0) return {};
+
     const byDoi: Record<string, string> = {};
-    screeningTasks.forEach(task => {
-      if (task.doi && !byDoi[task.doi]) byDoi[task.doi] = task.uuid;
+    pendingTasks.forEach(task => {
+      if (task.doi && !byDoi[task.doi]) {
+        byDoi[task.doi] = task.uuid;
+      };
     });
+
     const map: Record<string, string> = {};
     papers.forEach((paper, idx) => {
       if (paper.doi && byDoi[paper.doi]) {
         map[paper.uuid] = byDoi[paper.doi];
-      } else if (screeningTasks[idx]) {
-        map[paper.uuid] = screeningTasks[idx].uuid;
+      } else if (pendingTasks[idx]) {
+        map[paper.uuid] = pendingTasks[idx].uuid;
       }
     });
     return map;
@@ -291,49 +298,49 @@ export const ProjectPage = () => {
             </div>
           </div>
 
-            <H4>Screening tasks</H4>
-            {screeningTasks.length === 0 && papers.length === 0 && !papersLoading && (
-              <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
-            )}
-            {createdJobs.map((job, jobIdx) => {
-              const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
-              const doneCount = jobTasks.filter(
-                task =>
-                  task.status === JobTaskStatus.DONE || task.human_result !== null
-              ).length;
-              const totalCount = jobTasks.length;
-              const progress =
-                totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-              return (
-                <div key={job.uuid} className="mb-6">
-                  <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-                    <p className="flex pl-4 items-center font-semibold">
-                      Task #{jobIdx + 1}
-                    </p>
-                    <div className="flex">
-                      <div className="relative w-48 h-8 px-4">
-                        <progress
-                          value={progress}
-                          max={100}
-                          className="h-full w-full
+          <H4>Screening tasks</H4>
+          {screeningTasks.length === 0 && papers.length === 0 && !papersLoading && (
+            <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
+          )}
+          {createdJobs.map((job, jobIdx) => {
+            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
+            const doneCount = jobTasks.filter(
+              task =>
+                task.status === JobTaskStatus.DONE || task.human_result !== null
+            ).length;
+            const totalCount = jobTasks.length;
+            const progress =
+              totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+            return (
+              <div key={job.uuid} className="mb-6">
+                <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+                  <p className="flex pl-4 items-center font-semibold">
+                    Task #{jobIdx + 1}
+                  </p>
+                  <div className="flex">
+                    <div className="relative w-48 h-8 px-4">
+                      <progress
+                        value={progress}
+                        max={100}
+                        className="h-full w-full
                             [&::-webkit-progress-bar]:rounded-xl
                             [&::-webkit-progress-bar]:bg-gray-400
                             [&::-webkit-progress-value]:bg-blue-200
                             [&::-webkit-progress-value]:rounded-xl
                           "
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                          {doneCount}/{totalCount}
-                        </div>
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                        {doneCount}/{totalCount}
                       </div>
-                      <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
-                        Cancel
-                      </div>
+                    </div>
+                    <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
+                      Cancel
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex flex-col space-y-4">
@@ -433,7 +440,7 @@ export const ProjectPage = () => {
           key={paperUuid}
           currentTaskUuid={currentTaskUuid}
           inclusionCriteria={inclusionCriteria}
-            exclusionCriteria={exclusionCriteria}
+          exclusionCriteria={exclusionCriteria}
           papers={papers}
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
