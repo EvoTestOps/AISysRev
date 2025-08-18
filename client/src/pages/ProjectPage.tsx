@@ -8,7 +8,7 @@ import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { fetch_project_by_uuid } from "../services/projectService"
+import { fetch_project_by_uuid } from "../services/projectService";
 import { fetchJobTasksFromBackend, fetchPapersFromBackend } from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
 import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
@@ -31,64 +31,59 @@ type CreatedJob = {
   updated_at: string;
 };
 
-
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [, navigate] = useLocation();
   const [match] = useRoute("/project/:uuid/evaluate");
-  const search = useSearch(); // returns e.g. "paperUuid=..."
-  const paperUuid = useMemo(() => {
-    if (!search) return null;
-    return new URLSearchParams(search).get("paperUuid");
-  }, [search]);
-  const [selectedTaskUuid, setSelectedTaskUuid] = useState<string | undefined>();
+  const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
   const [name, setName] = useState("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
+  const [temperature, setTemperature] = useState(0.5);
+  const [seed, setSeed] = useState(128);
+  const [top_p, setTop_p] = useState(0.5);
+  const [isLlmSelected, setIsLlmSelected] = useState(true);
+  const [papersLoading, setPapersLoading] = useState(false);
+  const [papers, setPapers] = useState<Paper[]>([]);
+  const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
+  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
+  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const paperUuid = useMemo(() => {
+    if (!search) return null;
+    return new URLSearchParams(search).get("paperUuid");
+  }, [search]);
   const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
     []
   );
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );
-  const [temperature, setTemperature] = useState(0.5);
-  const [seed, setSeed] = useState(128);
-  const [top_p, setTop_p] = useState(0.5);
-  const [isLlmSelected, setIsLlmSelected] = useState(true)
-  const [papers, setPapers] = useState<Paper[]>([]);
-  const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
-  const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([])
-  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([])
-  const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     const fetchProject = async () => {
       try {
         const project: Project = await fetch_project_by_uuid(uuid);
         setName(project.name);
         setInclusionCriteria(
-          project.criteria.inclusion_criteria
-            .map((criterion: string) => criterion.trim())
-            .filter(Boolean)
+          project.criteria.inclusion_criteria.map(criteria => criteria.trim()).filter(Boolean)
         );
         setExclusionCriteria(
-          project.criteria.exclusion_criteria
-            .map((criterion: string) => criterion.trim())
-            .filter(Boolean)
+          project.criteria.exclusion_criteria.map(criteria => criteria.trim()).filter(Boolean)
         );
         setError(null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        if (error.response?.status === 404) {
+      } catch (e: any) {
+        if (e.response?.status === 404) {
           setError("Project not found");
           toast.error("Project not found");
         } else {
           setError("Failed to fetch Project");
           toast.error("Failed to fetch Project");
         }
-        console.log("Failed to fetch Project", error);
+        console.error("Failed to fetch Project", e);
       }
     };
     fetchProject();
@@ -99,8 +94,8 @@ export const ProjectPage = () => {
       try {
         const jobs = await fetchJobsForProject(uuid);
         setCreatedJobs(jobs);
-      } catch (error) {
-        console.error("Failed to fetch jobs for project", error);
+      } catch (e) {
+        console.error("Failed to fetch jobs for project", e);
       }
     };
     fetchJobs();
@@ -117,6 +112,41 @@ export const ProjectPage = () => {
     };
     fetchModels();
   }, []);
+  
+  const paperToTaskMap = useMemo(() => {
+    if (papers.length === 0 || screeningTasks.length === 0) return {};
+    const byDoi: Record<string, string> = {};
+    screeningTasks.forEach(task => {
+      if (task.doi && !byDoi[task.doi]) byDoi[task.doi] = task.uuid;
+    });
+    const map: Record<string, string> = {};
+    papers.forEach((paper, idx) => {
+      if (paper.doi && byDoi[paper.doi]) {
+        map[paper.uuid] = byDoi[paper.doi];
+      } else if (screeningTasks[idx]) {
+        map[paper.uuid] = screeningTasks[idx].uuid;
+      }
+    });
+    return map;
+  }, [papers, screeningTasks]);
+
+  const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
+
+  const loadPapers = useCallback(async () => {
+    setPapersLoading(true);
+    try {
+      const fetched = await fetchPapersFromBackend(uuid);
+      setPapers(fetched);
+    } catch (e) {
+      console.error("Failed to fetch papers", e);
+    } finally {
+      setPapersLoading(false);
+    }
+  }, [uuid]);
+
+  useEffect(() => {
+    loadPapers();
+  }, [loadPapers]);
 
   const createTask = useCallback(async () => {
     if (!selectedLlm) {
@@ -133,7 +163,6 @@ export const ProjectPage = () => {
 
     try {
       const res = await createJob(uuid, llmConfig);
-      toast.success("Job created successfully!");
       const createdJob: CreatedJob = {
         uuid: res.uuid,
         project_uuid: res.project_uuid,
@@ -141,42 +170,39 @@ export const ProjectPage = () => {
         created_at: res.created_at,
         updated_at: res.updated_at,
       };
-      setCreatedJobs((prev) => [...prev, createdJob]);
-    } catch (error) {
-      console.error("Error creating job:", error);
+      setCreatedJobs(prev => [...prev, createdJob]);
+      await loadPapers();
+    } catch (e) {
+      console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [uuid, selectedLlm, temperature, seed, top_p]);
+  }, [uuid, selectedLlm, temperature, seed, top_p, loadPapers]);
 
-  const uploadFilesToBackend = useCallback(
-    async (files: File[]) => {
-      try {
-        const res = await fileUploadToBackend(files, uuid);
-        if (res.valid_filenames && res.valid_filenames.length > 0) {
-          toast.success(`${res.valid_filenames.length} file(s) uploaded`);
-        }
-        if (res.errors && res.errors.length > 0) {
-          ExpandableToast(res.errors);
-          console.log("File upload errors:", res.errors);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        toast.warn("File upload failed.");
-        console.log("File upload error:", error);
-        throw error;
+  const uploadFilesToBackend = useCallback(async (files: File[]) => {
+    try {
+      const res = await fileUploadToBackend(files, uuid);
+      if (res.valid_filenames?.length) {
+        toast.success(`${res.valid_filenames.length} file(s) uploaded`);
       }
-    },
-    [uuid]
-  );
+      if (res.errors?.length) {
+        ExpandableToast(res.errors);
+        console.log("File upload errors:", res.errors);
+      }
+    } catch (e) {
+      toast.warn("File upload failed.");
+      console.error("File upload error:", e);
+      throw e;
+    }
+  }, [uuid]);
 
   const fetchFiles = useCallback(async () => {
     try {
       const files = await fileFetchFromBackend(uuid);
       setFetchedFiles(files);
-    } catch (error) {
+    } catch (e) {
       toast.warn("Fetching file(s) failed.");
-      console.log("File fetch error:", error);
-      throw error;
+      console.error("File fetch error:", e);
+      throw e;
     }
   }, [uuid]);
 
@@ -196,8 +222,8 @@ export const ProjectPage = () => {
     (async () => {
       try {
         await fetchFiles();
-      } catch (error) {
-        console.error("Problem fetching the files", error);
+      } catch (e) {
+        console.error("Problem fetching the files", e);
       }
     })();
   }, [fetchFiles]);
@@ -216,44 +242,46 @@ export const ProjectPage = () => {
     return () => clearInterval(interval);
   }, [createdJobs]);
 
-  useEffect(() => {
-    const fetchPapers = async () => {
-      const fetchedPapers = await fetchPapersFromBackend(uuid);
-      setPapers(fetchedPapers);
-    };
-    fetchPapers();
-  }, [uuid]);
-
-  useEffect(() => {
-    if (!selectedTaskUuid && screeningTasks.length > 0) {
-      setSelectedTaskUuid(screeningTasks[0].uuid);
-    }
-  }, [screeningTasks, selectedTaskUuid]);
-
-  const goToPaper = useCallback((paperUuid: string) => {
-    navigate(`/project/${uuid}/evaluate?paperUuid=${paperUuid}`);
-  }, [navigate, uuid]);
-
-  const openManualEvaluation = useCallback((taskUuid?: string) => {
-    const taskUuidToOpen = taskUuid ?? screeningTasks[0]?.uuid;
-    if (!taskUuidToOpen) return;
-    setSelectedTaskUuid(taskUuidToOpen);
-    if (papers.length === 0) {
-      toast.warn("No papers available for manual evaluation.");
+  const openManualEvaluation = useCallback(() => {
+    if (papers.length === 0 || screeningTasks.length === 0) {
+      toast.warn("No papers available.");
       return;
     }
-    goToPaper(papers[0].uuid);
-  }, [screeningTasks, papers, goToPaper]);
+    const first = papers.find(paper => paperToTaskMap[paper.uuid]);
+    if (!first) return;
+    navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`);
+  }, [papers, screeningTasks, paperToTaskMap, navigate, uuid]);
 
   const nextPaper = useCallback(() => {
     if (!paperUuid) return;
-    const idx = papers.findIndex(p => p.uuid === paperUuid);
-    if (idx !== -1 && idx + 1 < papers.length) {
-      goToPaper(papers[idx + 1].uuid);
-    } else {
-      navigate(`/project/${uuid}`); // done
+    const idx = papers.findIndex(paper => paper.uuid === paperUuid);
+    if (idx !== -1) {
+      for (let i = idx + 1; i < papers.length; i++) {
+        const candidate = papers[i];
+        if (paperToTaskMap[candidate.uuid]) {
+          navigate(`/project/${uuid}/evaluate?paperUuid=${candidate.uuid}`);
+          return;
+        }
+      }
     }
-  }, [paperUuid, papers, goToPaper, navigate, uuid]);
+    navigate(`/project/${uuid}`);
+    toast.success("Manual evaluation finished.");
+  }, [paperUuid, papers, paperToTaskMap, navigate, uuid]);
+
+  useEffect(() => {
+    if (match && !paperUuid && papers.length > 0) {
+      const first = papers.find(paper => paperToTaskMap[paper.uuid]) || papers[0];
+      navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`, { replace: true });
+    }
+  }, [match, paperUuid, papers, paperToTaskMap, navigate, uuid]);
+
+  const canStartManualEvaluation = useMemo(
+    () =>
+      papers.length > 0 &&
+      screeningTasks.length > 0 &&
+      Object.keys(paperToTaskMap).length > 0,
+    [papers, screeningTasks, paperToTaskMap]
+  );
 
   if (error) {
     return (
@@ -262,8 +290,7 @@ export const ProjectPage = () => {
       </Layout>
     );
   }
-
-  if (!name) {
+  if (!name || !inclusionCriteria || !exclusionCriteria) {
     return (
       <Layout title="">
         <div>Loading...</div>
@@ -271,8 +298,6 @@ export const ProjectPage = () => {
     );
   }
 
-  if (!inclusionCriteria || !exclusionCriteria) return <div>Loading...</div>;
-  console.log("match:", match, "selectedTaskUuid:", selectedTaskUuid, "paperUuid:", paperUuid);
   return (
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -286,46 +311,49 @@ export const ProjectPage = () => {
             </div>
           </div>
 
-          <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 && (
-            <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
-          )}
-          {createdJobs.map((job, jobIdx) => {
-            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
-            const doneCount = jobTasks.filter(task => task.status === JobTaskStatus.DONE || task.human_result !== null).length;
-            const totalCount = jobTasks.length;
-            const progress =
-              totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-            return (
-              <div key={job.uuid} className="mb-6">
-                <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-                  <p className="flex pl-4 items-center font-semibold">
-                    Task #{jobIdx + 1}
-                  </p>
-                  <div className="flex">
-                    <div className="relative w-48 h-8 px-4">
-                      <progress
-                        value={progress}
-                        max={100}
-                        className="h-full w-full
+            <H4>Screening tasks</H4>
+            {screeningTasks.length === 0 && (
+              <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
+            )}
+            {createdJobs.map((job, jobIdx) => {
+              const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
+              const doneCount = jobTasks.filter(
+                task =>
+                  task.status === JobTaskStatus.DONE || task.human_result !== null
+              ).length;
+              const totalCount = jobTasks.length;
+              const progress =
+                totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+              return (
+                <div key={job.uuid} className="mb-6">
+                  <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
+                    <p className="flex pl-4 items-center font-semibold">
+                      Task #{jobIdx + 1}
+                    </p>
+                    <div className="flex">
+                      <div className="relative w-48 h-8 px-4">
+                        <progress
+                          value={progress}
+                          max={100}
+                          className="h-full w-full
                             [&::-webkit-progress-bar]:rounded-xl
                             [&::-webkit-progress-bar]:bg-gray-400
                             [&::-webkit-progress-value]:bg-blue-200
                             [&::-webkit-progress-value]:rounded-xl
                           "
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                        {doneCount}/{totalCount}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                          {doneCount}/{totalCount}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
-                      Cancel
+                      <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
+                        Cancel
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         <div className="flex flex-col space-y-4">
@@ -364,10 +392,7 @@ export const ProjectPage = () => {
                 max={1}
                 step={0.1}
                 value={temperature}
-                onChange={(e) => {
-                  e.preventDefault();
-                  setTemperature(e.target.valueAsNumber);
-                }}
+                onChange={e => setTemperature(e.target.valueAsNumber)}
               />
             </div>
 
@@ -378,10 +403,7 @@ export const ProjectPage = () => {
                 className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
                 data-testid="seed-input"
                 value={seed}
-                onChange={(e) => {
-                  e.preventDefault();
-                  setSeed(e.target.valueAsNumber);
-                }}
+                onChange={e => setSeed(e.target.valueAsNumber)}
               />
             </div>
 
@@ -390,15 +412,12 @@ export const ProjectPage = () => {
               <input
                 type="range"
                 className="pl-2 cursor-pointer bg-gray-200"
-                data-testid="temperature-input"
+                data-testid="top_p-input"
                 min={0}
                 max={1}
                 step={0.1}
                 value={top_p}
-                onChange={(e) => {
-                  e.preventDefault();
-                  setTop_p(e.target.valueAsNumber);
-                }}
+                onChange={e => setTop_p(e.target.valueAsNumber)}
               />
             </div>
 
@@ -418,20 +437,22 @@ export const ProjectPage = () => {
 
       <div className="fixed z-40 bottom-0 left-1/2 transform -translate-x-1/2 m-4">
         <button
-          onClick={() => openManualEvaluation(selectedTaskUuid)}
-          disabled={screeningTasks.length === 0}
+          onClick={openManualEvaluation}
+          disabled={papersLoading || !canStartManualEvaluation}
           className="bg-purple-700 text-white w-fit py-2 px-6 text-md font-bold rounded-xl shadow-md
-            hover:bg-purple-600 transition duration-200 ease-in-out cursor-pointer"
+            hover:bg-purple-600 transition duration-200 ease-in-out cursor-pointer
+            disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Start manual evaluation
         </button>
       </div>
-      {match && selectedTaskUuid && paperUuid && (
+
+      {match && paperUuid && currentTaskUuid && (
         <ManualEvaluationModal
           key={paperUuid}
-          currentTaskUuid={selectedTaskUuid}
+          currentTaskUuid={currentTaskUuid}
           inclusionCriteria={inclusionCriteria}
-          exclusionCriteria={exclusionCriteria}
+            exclusionCriteria={exclusionCriteria}
           papers={papers}
           paperUuid={paperUuid}
           onEvaluated={nextPaper}

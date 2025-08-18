@@ -8,9 +8,9 @@ import { useEffect, useCallback } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
-import { Button } from "./Button"
-import { addJobTaskResult } from "../services/jobTaskService.ts";
-import { JobTaskHumanResult, Paper } from "../state/types.ts"
+import { Button } from "./Button";
+import { addJobTaskResult } from "../services/jobTaskService";
+import { JobTaskHumanResult, Paper } from "../state/types";
 
 type ManualEvaluationProps = {
   currentTaskUuid: string;
@@ -19,7 +19,7 @@ type ManualEvaluationProps = {
   papers: Paper[];
   paperUuid: string | null;
   onClose: () => void;
-  onEvaluated: (uuid: string) => void;
+  onEvaluated: () => void;
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
@@ -31,17 +31,19 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   onClose,
   onEvaluated,
 }) => {
+  const currentPaper = papers.find(p => p.uuid === paperUuid);
 
-  const currentPaper = papers.find(paper => paper.uuid === paperUuid);
-  console.log("paperUuid:", paperUuid, "papers:", papers.map(p => p.uuid));
-  const addHumanResult = useCallback(async (humanResult: JobTaskHumanResult) => {
-    try {
-      await addJobTaskResult(currentTaskUuid, humanResult);
-      onEvaluated(currentTaskUuid);
-    } catch (error) {
-      console.error("Error adding human result:", error);
-    }
-  }, [currentTaskUuid, onEvaluated]);
+  const addHumanResult = useCallback(
+    async (humanResult: JobTaskHumanResult) => {
+      try {
+        await addJobTaskResult(currentTaskUuid, humanResult);
+        onEvaluated();
+      } catch (error) {
+        console.error("Error adding human result:", error);
+      }
+    },
+    [currentTaskUuid, onEvaluated]
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -51,13 +53,15 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         addHumanResult(JobTaskHumanResult.UNSURE);
       } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
         addHumanResult(JobTaskHumanResult.EXCLUDE);
+      } else if (e.key === "Escape") {
+        onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [addHumanResult]);
+  }, [addHumanResult, onClose]);
 
-  if (!currentPaper) return <div>Loading...</div>;
+  if (!currentPaper) return null;
 
   return (
     <Dialog
@@ -66,15 +70,15 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
       className="fixed z-50 inset-0 flex items-center justify-center m-8 md:m-0"
     >
       <div className="fixed inset-0 bg-black/30 overflow-hidden" aria-hidden="true" />
-      <DialogPanel className="relative bg-white shadow-2xl pt-8 pb-4 pl-8 pr-8 w-[800px] max-w-full max-h-[90vh] overflow-y-auto">
+      <DialogPanel className="relative bg-white shadow-2xl pt-8 pb-4 px-8 w-[800px] max-w-full max-h-[90vh] overflow-y-auto rounded">
         <CircleX
           onClick={onClose}
-          className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
+            className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <DialogTitle className="text-lg font-bold mb-2">
           Paper #{currentPaper.paper_id}: {currentPaper.title}
         </DialogTitle>
-        <Description className="text-sm mb-4">
+        <Description className="text-sm mb-4 whitespace-pre-line">
           {currentPaper.abstract}
         </Description>
 
@@ -114,7 +118,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           />
         </div>
 
-        <div className="flex justify-center m-4 pt-2 ">
+        <div className="flex justify-center m-4 pt-2 gap-4">
           <Button
             variant="green"
             onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
