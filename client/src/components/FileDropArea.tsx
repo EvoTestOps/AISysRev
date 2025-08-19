@@ -74,7 +74,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
         }}
         onDrop={handleDrop}
         className={classNames(
-          "flex flex-col justify-center items-center py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg",
+          "flex flex-col justify-center items-center py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg hover:cursor-pointer",
           {
           "bg-slate-100": isDragging,
           "bg-white": !isDragging,

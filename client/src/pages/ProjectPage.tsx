@@ -428,8 +428,12 @@ export const ProjectPage = () => {
 
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
-            <FileDropArea onFilesSelected={handleFilesSelected} />
-            <H6 className="pt-4 pb-4">List of papers</H6>
+            {fetchedFiles.length == 0 && (
+              <div className="pb-4">
+                <FileDropArea onFilesSelected={handleFilesSelected} />
+              </div>
+            )}
+            <H6 className="pb-4">List of papers</H6>
             <TruncatedFileNames files={fetchedFiles} maxLength={25} />
           </div>
 
