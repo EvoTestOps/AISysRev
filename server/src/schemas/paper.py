@@ -1,8 +1,8 @@
-import json
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
+
 
 class PaperCreate(BaseModel):
     paper_id: int
@@ -11,6 +11,7 @@ class PaperCreate(BaseModel):
     doi: str
     title: str
     abstract: str
+
 
 class PaperRead(BaseModel):
     uuid: UUID

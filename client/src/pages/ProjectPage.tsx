@@ -9,13 +9,27 @@ import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { fetch_project_by_uuid } from "../services/projectService";
-import { fetchJobTasksFromBackend, fetchPapersFromBackend } from "../services/jobTaskService";
+import {
+  fetchJobTasksFromBackend,
+  fetchPapersFromBackend,
+} from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
-import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
+import {
+  fileUploadToBackend,
+  fileFetchFromBackend,
+} from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
 import { Button } from "../components/Button";
-import { Project, FetchedFile, ScreeningTask, JobTaskStatus, Paper } from "../state/types";
+import {
+  Project,
+  FetchedFile,
+  ScreeningTask,
+  JobTaskStatus,
+  Paper,
+} from "../state/types";
+import axios from "axios";
+import Tooltip from "@mui/material/Tooltip";
 
 type LlmConfig = {
   model_name: string;
@@ -65,11 +79,12 @@ export const ProjectPage = () => {
   );
 
   const pendingTasks = useMemo(
-    () => screeningTasks.filter(task => task.human_result == null),
+    () => screeningTasks.filter((task) => task.human_result == null),
     [screeningTasks]
   );
 
-  const evaluationFinished = screeningTasks.length > 0 && pendingTasks.length === 0;
+  const evaluationFinished =
+    screeningTasks.length > 0 && pendingTasks.length === 0;
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -77,10 +92,14 @@ export const ProjectPage = () => {
         const project: Project = await fetch_project_by_uuid(uuid);
         setName(project.name);
         setInclusionCriteria(
-          project.criteria.inclusion_criteria.map(criteria => criteria.trim()).filter(Boolean)
+          project.criteria.inclusion_criteria
+            .map((criteria) => criteria.trim())
+            .filter(Boolean)
         );
         setExclusionCriteria(
-          project.criteria.exclusion_criteria.map(criteria => criteria.trim()).filter(Boolean)
+          project.criteria.exclusion_criteria
+            .map((criteria) => criteria.trim())
+            .filter(Boolean)
         );
         setError(null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,17 +140,21 @@ export const ProjectPage = () => {
     };
     fetchModels();
   }, []);
-  
+
   const paperToTaskMap = useMemo(() => {
-    if (papers.length === 0 ||screeningTasks.length === 0 || pendingTasks.length === 0) {
+    if (
+      papers.length === 0 ||
+      screeningTasks.length === 0 ||
+      pendingTasks.length === 0
+    ) {
       return {};
     }
 
     const byDoi: Record<string, string> = {};
-    pendingTasks.forEach(task => {
+    pendingTasks.forEach((task) => {
       if (task.doi && !byDoi[task.doi]) {
         byDoi[task.doi] = task.uuid;
-      };
+      }
     });
 
     const map: Record<string, string> = {};
@@ -151,6 +174,7 @@ export const ProjectPage = () => {
     setPapersLoading(true);
     try {
       const fetched = await fetchPapersFromBackend(uuid);
+      console.log("Fetched papers", fetched);
       setPapers(fetched);
     } catch (e) {
       console.error("Failed to fetch papers", e);
@@ -185,7 +209,7 @@ export const ProjectPage = () => {
         created_at: res.created_at,
         updated_at: res.updated_at,
       };
-      setCreatedJobs(prev => [...prev, createdJob]);
+      setCreatedJobs((prev) => [...prev, createdJob]);
       await loadPapers();
     } catch (e) {
       console.error("Error creating job:", e);
@@ -193,22 +217,29 @@ export const ProjectPage = () => {
     }
   }, [uuid, selectedLlm, temperature, seed, top_p, loadPapers]);
 
-  const uploadFilesToBackend = useCallback(async (files: File[]) => {
-    try {
-      const res = await fileUploadToBackend(files, uuid);
-      if (res.valid_filenames?.length) {
-        toast.success(`${res.valid_filenames.length} file(s) uploaded`);
+  const uploadFilesToBackend = useCallback(
+    async (files: File[]) => {
+      try {
+        const res = await fileUploadToBackend(files, uuid);
+        if (res.valid_filenames?.length) {
+          toast.success(`${res.valid_filenames.length} file(s) uploaded`);
+        }
+        if (res.errors?.length) {
+          ExpandableToast(res.errors);
+          console.log("File upload errors:", res.errors);
+        }
+      } catch (e) {
+        if (axios.isAxiosError(e)) {
+          toast.error("File upload failed: " + e.response?.data.detail);
+        } else {
+          toast.error("File upload failed due to unknown error");
+        }
+        console.error("File upload error:", e);
+        throw e;
       }
-      if (res.errors?.length) {
-        ExpandableToast(res.errors);
-        console.log("File upload errors:", res.errors);
-      }
-    } catch (e) {
-      toast.warn("File upload failed.");
-      console.error("File upload error:", e);
-      throw e;
-    }
-  }, [uuid]);
+    },
+    [uuid]
+  );
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -226,11 +257,12 @@ export const ProjectPage = () => {
       try {
         await uploadFilesToBackend(files);
         await fetchFiles();
+        await loadPapers();
       } catch (error) {
         console.error("Problem uploading the files", error);
       }
     },
-    [uploadFilesToBackend, fetchFiles]
+    [uploadFilesToBackend, fetchFiles, loadPapers]
   );
 
   useEffect(() => {
@@ -263,14 +295,21 @@ export const ProjectPage = () => {
       toast.warn("No papers available.");
       return;
     }
-    const first = papers.find(paper => paperToTaskMap[paper.uuid]);
+    const first = papers.find((paper) => paperToTaskMap[paper.uuid]);
     if (!first) return;
     navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`);
-  }, [papers, screeningTasks, paperToTaskMap, navigate, uuid, evaluationFinished]);
+  }, [
+    papers,
+    screeningTasks,
+    paperToTaskMap,
+    navigate,
+    uuid,
+    evaluationFinished,
+  ]);
 
   const nextPaper = useCallback(() => {
     if (!paperUuid) return;
-    const idx = papers.findIndex(paper => paper.uuid === paperUuid);
+    const idx = papers.findIndex((paper) => paper.uuid === paperUuid);
     if (idx !== -1) {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
@@ -286,18 +325,15 @@ export const ProjectPage = () => {
 
   useEffect(() => {
     if (match && !paperUuid && papers.length > 0) {
-      const first = papers.find(paper => paperToTaskMap[paper.uuid]) || papers[0];
-      navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`, { replace: true });
+      const first =
+        papers.find((paper) => paperToTaskMap[paper.uuid]) || papers[0];
+      navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`, {
+        replace: true,
+      });
     }
   }, [match, paperUuid, papers, paperToTaskMap, navigate, uuid]);
 
-  const canStartManualEvaluation = useMemo(
-    () =>
-      papers.length > 0 &&
-      screeningTasks.length > 0 &&
-      Object.keys(paperToTaskMap).length > 0,
-    [papers, screeningTasks, paperToTaskMap]
-  );
+  const canStartManualEvaluation = papers.length > 0;
 
   const showEvaluationResults = useCallback(() => {
     if (!evaluationFinished) return;
@@ -333,13 +369,19 @@ export const ProjectPage = () => {
           </div>
 
           <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 && papers.length === 0 && !papersLoading && (
-            <p className="text-gray-400 ml-1 pb-4 italic">No screening tasks</p>
-          )}
-          {createdJobs.map((job, jobIdx) => {
-            const jobTasks = screeningTasks.filter(task => task.job_uuid === job.uuid);
+          {screeningTasks.length === 0 &&
+            papers.length === 0 &&
+            !papersLoading && (
+              <p className="text-gray-400 ml-1 pb-4 italic">
+                No screening tasks
+              </p>
+            )}
+          {createdJobs.map((job) => {
+            const jobTasks = screeningTasks.filter(
+              (task) => task.job_uuid === job.uuid
+            );
             const doneCount = jobTasks.filter(
-              task =>
+              (task) =>
                 task.status === JobTaskStatus.DONE || task.human_result !== null
             ).length;
             const totalCount = jobTasks.length;
@@ -347,29 +389,36 @@ export const ProjectPage = () => {
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
             return (
               <div key={job.uuid} className="mb-6">
-                <div className="flex justify-between bg-neutral-50 py-4 rounded-2xl">
-                  <p className="flex pl-4 items-center font-semibold">
-                    Task #{jobIdx + 1}
-                  </p>
-                  <div className="flex">
-                    <div className="relative w-48 h-8 px-4">
-                      <progress
-                        value={progress}
-                        max={100}
-                        className="h-full w-full
+                <div className="flex flex-row justify-between bg-neutral-50 p-4 gap-4 rounded-2xl">
+                  <div className="flex items-center font-semibold">
+                    <Tooltip title={job.llm_config.model_name} enterDelay={50}>
+                      <span className="text-sm text-nowrap">
+                        {job.llm_config.model_name.length > 20
+                          ? job.llm_config.model_name.substring(0, 17) + "..."
+                          : job.llm_config.model_name}
+                      </span>
+                    </Tooltip>
+                  </div>
+                  <div className="relative w-48 h-8">
+                    <progress
+                      value={progress}
+                      max={100}
+                      className="h-full w-full
                             [&::-webkit-progress-bar]:rounded-xl
                             [&::-webkit-progress-bar]:bg-gray-400
                             [&::-webkit-progress-value]:bg-blue-200
                             [&::-webkit-progress-value]:rounded-xl
                           "
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                        {doneCount}/{totalCount}
-                      </div>
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                      {doneCount}/{totalCount}
                     </div>
-                    <div className="flex px-8 text-sm text-red-500 items-center cursor-pointer">
-                      Cancel
-                    </div>
+                  </div>
+                  <div className="flex text-sm text-red-500 items-center cursor-pointer">
+                    Cancel
+                  </div>
+                  <div className="flex text-sm text-blue-500 items-center cursor-pointer">
+                    View
                   </div>
                 </div>
               </div>
@@ -413,7 +462,7 @@ export const ProjectPage = () => {
                 max={1}
                 step={0.1}
                 value={temperature}
-                onChange={e => setTemperature(e.target.valueAsNumber)}
+                onChange={(e) => setTemperature(e.target.valueAsNumber)}
               />
             </div>
 
@@ -424,7 +473,7 @@ export const ProjectPage = () => {
                 className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
                 data-testid="seed-input"
                 value={seed}
-                onChange={e => setSeed(e.target.valueAsNumber)}
+                onChange={(e) => setSeed(e.target.valueAsNumber)}
               />
             </div>
 
@@ -438,7 +487,7 @@ export const ProjectPage = () => {
                 max={1}
                 step={0.1}
                 value={top_p}
-                onChange={e => setTop_p(e.target.valueAsNumber)}
+                onChange={(e) => setTop_p(e.target.valueAsNumber)}
               />
             </div>
 

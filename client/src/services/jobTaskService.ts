@@ -5,8 +5,10 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
     const res = await api.get(`/paper/${projectUuid}`);
     return res.data;
-  } catch (error) {
-    if (error.response?.status === 404) {
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const e = error as any
+    if (e.response?.status === 404) {
       return [];
     }
     throw error;

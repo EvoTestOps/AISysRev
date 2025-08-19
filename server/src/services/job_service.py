@@ -1,5 +1,6 @@
 from uuid import UUID
 from fastapi import Depends
+from src.services.paper_service import PaperCrud, get_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
 from src.schemas.job import JobCreate, JobRead
@@ -66,10 +67,12 @@ class JobService:
             self.db.begin_nested() if self.db.in_transaction() else self.db.begin()
         ):
             logger.info("Creating new job", job_data)
+            # Here we assume the papers have already been created.
             new_job = await self.job_crud.create_job(job_data)
-            logger.info("Retrieving papers for project", job_data.project_uuid)
-            papers = await self.file_service.fetch_papers(job_data.project_uuid)
-            await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, papers)
+            #logger.info("Retrieving papers for project", job_data.project_uuid)
+            #papers = await self.file_service.retrieve_papers_from_uploaded_files(job_data.project_uuid)
+            #await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, papers)
+            await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid)
         
         job_read = JobRead(
             uuid=new_job.uuid,
@@ -87,8 +90,10 @@ def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
     job_crud = JobCrud(db)
     file_crud = FileCrud(db)
     jobtask_crud = JobTaskCrud(db)
+    paper_crud = PaperCrud(db)
+    paper_service = get_paper_service(db)
 
-    file_service = FileService(db, file_crud)
-    jobtask_service = JobTaskService(db, jobtask_crud)
+    file_service = FileService(db, file_crud, paper_crud)
+    jobtask_service = JobTaskService(db, jobtask_crud, paper_service)
 
     return JobService(db, file_service, jobtask_service, job_crud)

@@ -35,7 +35,7 @@ async def test_file_service(db_session, test_project_uuid, test_files_working):
     assert files[0].filename in result["valid_filenames"]
     assert files[1].filename in result["valid_filenames"]
 
-    papers = await service.fetch_papers(test_project_uuid)
+    papers = await service.retrieve_papers_from_uploaded_files(test_project_uuid)
     assert len(papers) == 2
     assert all("title" in paper and "abstract" in paper and "doi" in paper for paper in papers)
 
