@@ -67,79 +67,104 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     <Dialog
       open={true}
       onClose={onClose}
-      className="fixed z-50 inset-0 flex items-center justify-center m-8 md:m-0"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-      <div className="fixed inset-0 bg-black/30 overflow-hidden" aria-hidden="true" />
-      <DialogPanel className="relative bg-white shadow-2xl pt-8 pb-4 px-8 w-[800px] max-w-full max-h-[90vh] overflow-y-auto rounded">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <DialogPanel className="relative bg-white shadow-2xl rounded-xl w-full h-full overflow-hidden">
         <CircleX
           onClick={onClose}
-            className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
+          className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
-        <DialogTitle className="text-lg font-bold mb-2">
-          Paper #{currentPaper.paper_id}: {currentPaper.title}
-        </DialogTitle>
-        <Description className="text-sm mb-4 whitespace-pre-line">
-          {currentPaper.abstract}
-        </Description>
-
-        <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl mb-4">
-          <div className="flex flex-col text-sm text-gray-700 max-w-md">
-            <p className="font-bold pb-2">Inclusion criteria:</p>
-            <CriteriaList criteria={inclusionCriteria} />
-            <p className="font-bold pb-2 mt-4">Exclusion criteria:</p>
-            <CriteriaList criteria={exclusionCriteria} />
+        <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
+          {/* Left: LLM results */}
+          <div className="flex flex-col min-h-0">
+            <DialogTitle className="text-base font-semibold mb-4">
+              Model suggestions
+            </DialogTitle>
+            <div className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60">
+              <LlmModelCard
+                modelName="GPT-4.1 Nano"
+                binary="Include"
+                likertScale={6}
+                probability={0.85}
+              />
+              <LlmModelCard
+                modelName="GPT-4.1 Mini"
+                binary="Include"
+                likertScale={5}
+                probability={0.75}
+              />
+              <LlmModelCard
+                modelName="Claude 3.7"
+                binary="Exclude"
+                likertScale={4}
+                probability={0.45}
+              />
+              <LlmModelCard
+                modelName="GPT-5"
+                binary="Include"
+                likertScale={6}
+                probability={0.85}
+              />
+              <LlmModelCard
+                modelName="GPT-5"
+                binary="Include"
+                likertScale={6}
+                probability={0.85}
+              />
+              <LlmModelCard
+                modelName="GPT-5"
+                binary="Include"
+                likertScale={6}
+                probability={0.85}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap justify-evenly gap-4">
-          <LlmModelCard
-            modelName="GPT-4.1 Nano"
-            binary="Include"
-            likertScale={6}
-            probability={0.85}
-          />
-          <LlmModelCard
-            modelName="GPT-4.1 Mini"
-            binary="Include"
-            likertScale={5}
-            probability={0.75}
-          />
-          <LlmModelCard
-            modelName="Claude 3.7"
-            binary="Exclude"
-            likertScale={4}
-            probability={0.45}
-          />
-          <LlmModelCard
-            modelName="GPT-5"
-            binary="Include"
-            likertScale={6}
-            probability={0.85}
-          />
-        </div>
+            {/* Center: Title + abstract + action buttons */}
+          <div className="flex flex-col overflow-y-auto">
+            <DialogTitle className="text-lg font-bold mb-3 pr-10">
+              Paper #{currentPaper.paper_id}: {currentPaper.title}
+            </DialogTitle>
+            <Description className="text-sm leading-relaxed whitespace-pre-line mb-6">
+              {currentPaper.abstract}
+            </Description>
 
-        <div className="flex justify-center m-4 pt-2 gap-4">
-          <Button
-            variant="green"
-            className="ml-4 mr-4"
-            onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
-          >
-            Include (Y / I)
-          </Button>
-          <Button
-            variant="yellow"
-            className="ml-4 mr-4"
-            onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
-          >
-            Unsure (U)
-          </Button>
-          <Button
-            variant="red"
-            className="ml-4 mr-4"
-            onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
-          >
-            Exclude (N / E)
-          </Button>
+            <div className="mt-auto">
+              <div className="flex flex-wrap justify-center gap-6">
+                <Button
+                  variant="green"
+                  onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
+                >
+                  Include (Y / I)
+                </Button>
+                <Button
+                  variant="yellow"
+                  onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
+                >
+                  Unsure (U)
+                </Button>
+                <Button
+                  variant="red"
+                  onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
+                >
+                  Exclude (N / E)
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Criteria */}
+          <div className="flex flex-col overflow-y-auto">
+            <p className="font-bold text-sm mb-2">Inclusion criteria</p>
+            <div className="bg-neutral-50 rounded-xl p-3 mb-4">
+              <CriteriaList criteria={inclusionCriteria} />
+            </div>
+            <p className="font-bold text-sm mb-2">Exclusion criteria</p>
+            <div className="bg-neutral-50 rounded-xl p-3">
+              <CriteriaList criteria={exclusionCriteria} />
+            </div>
+          </div>
         </div>
       </DialogPanel>
     </Dialog>
