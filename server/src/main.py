@@ -10,6 +10,8 @@ from src.api.controllers.project import router as project_router
 from src.api.controllers.file import router as file_router
 from src.api.controllers.job import router as job_router
 from src.api.controllers.openrouter import router as openrouter_router
+from src.api.controllers.jobtask import router as jobtask_router
+from src.api.controllers.paper import router as paper_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
 
 logging.basicConfig(level=logging.INFO)
@@ -26,6 +28,8 @@ v1_router.include_router(health_check_router)
 v1_router.include_router(project_router)
 v1_router.include_router(file_router)
 v1_router.include_router(job_router)
+v1_router.include_router(jobtask_router)
+v1_router.include_router(paper_router)
 v1_router.include_router(celery_test_router)
 v1_router.include_router(openrouter_router)
 

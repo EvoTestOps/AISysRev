@@ -2,13 +2,21 @@ from uuid import UUID
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from src.schemas.jobtask import JobTaskCreate
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
+from src.schemas.paper import PaperCreate
+from src.models.paper import Paper
 from src.models.job import Job
 from src.models.jobtask import JobTask
 
 class JobTaskCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def bulk_create_papers(self, papers: List[PaperCreate]):
+        db_objs = [Paper(**paper.model_dump()) for paper in papers]
+        self.db.add_all(db_objs)
+        await self.db.flush()
+        return db_objs
 
     async def bulk_create_jobtasks(self, jobtasks: List[JobTaskCreate]):
         db_objs = [JobTask(**task.model_dump()) for task in jobtasks]
@@ -20,7 +28,7 @@ class JobTaskCrud:
         stmt = select(JobTask).where(JobTask.job_id == job_id)
         result = await self.db.execute(stmt)
         return result.scalars().all()
-    
+
     async def fetch_job_tasks_by_job_uuid(self, job_uuid: UUID) -> List[JobTask]:
         stmt = (
             select(JobTask)
@@ -42,5 +50,10 @@ class JobTaskCrud:
     
     async def update_job_task_result(self, job_task_id: int, result: dict):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(result=result)
+        await self.db.execute(stmt)
+        await self.db.commit()
+
+    async def add_jobtask_human_result(self, job_task_uuid: UUID, human_result: JobTaskHumanResult):
+        stmt = update(JobTask).where(JobTask.uuid == job_task_uuid).values(human_result=human_result)
         await self.db.execute(stmt)
         await self.db.commit()

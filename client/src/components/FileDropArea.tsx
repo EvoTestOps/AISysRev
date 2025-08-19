@@ -36,6 +36,11 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
       return;
     }
 
+    if (validFiles.length > 1) {
+      toast.error("Only one CSV file is allowed.");
+      return;
+    }
+
     if (invalidCount > 0) {
       toast.error(`${invalidCount} file(s) were skipped because they are not CSV files.`);
     }
@@ -69,7 +74,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
         }}
         onDrop={handleDrop}
         className={classNames(
-          "flex flex-col justify-center items-center py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg",
+          "flex flex-col justify-center items-center py-4 border-2 border-dashed border-gray-400 transition-colors duration-200 rounded-lg hover:cursor-pointer",
           {
           "bg-slate-100": isDragging,
           "bg-white": !isDragging,
@@ -96,14 +101,14 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
             }
           )}
         >
-          Drag & drop CSV files or click to upload
+          Drag & drop CSV file or click to upload
         </span>
       </div>
 
       <input
         type="file"
         accept=".csv"
-        multiple
+        multiple={false}
         ref={fileInputRef}
         onChange={handleFileUpload}
         className="hidden"

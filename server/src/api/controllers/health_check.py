@@ -23,10 +23,11 @@ async def health_check():
     except Exception as e:
         celery_status = f"error: {str(e)}"
     return {
-        "status": "ok" if db_status == "ok"
-            and redis_status == "ok" 
-            and celery_status == "ok"
-            else "error",
+        "status": (
+            "ok"
+            if db_status == "ok" and redis_status == "ok" and celery_status == "ok"
+            else "error"
+        ),
         "db": db_status,
         "redis": redis_status,
         "celery": celery_status,

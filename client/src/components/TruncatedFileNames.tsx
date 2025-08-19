@@ -26,7 +26,7 @@ export const TruncatedFileNames: React.FC<TruncatedFileNamesProps> = ({
         return (
           <Tooltip key={idx} title={file.filename} enterDelay={200}>
             <p className="text-sm font-medium">
-              {displayName}
+              {displayName} ({file.paper_count} papers)
             </p>
           </Tooltip>
         );
