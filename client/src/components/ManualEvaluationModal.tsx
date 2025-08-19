@@ -81,7 +81,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             <DialogTitle className="text-base font-semibold mb-4">
               Model suggestions
             </DialogTitle>
-            <div className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60">
+            <div className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               <LlmModelCard
                 modelName="GPT-4.1 Nano"
                 binary="Include"
@@ -121,8 +122,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
           </div>
 
-            {/* Center: Title + abstract + action buttons */}
-          <div className="flex flex-col overflow-y-auto">
+          {/* Center: Title + abstract + action buttons */}
+          <div className="flex flex-col overflow-y-auto
+            [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <DialogTitle className="text-lg font-bold mb-3 pr-10">
               Paper #{currentPaper.paper_id}: {currentPaper.title}
             </DialogTitle>
@@ -155,7 +157,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           </div>
 
           {/* Right: Criteria */}
-          <div className="flex flex-col overflow-y-auto">
+          <div className="flex flex-col overflow-y-auto
+          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
             <div className="bg-neutral-50 rounded-xl p-3 mb-4">
               <CriteriaList criteria={inclusionCriteria} />
