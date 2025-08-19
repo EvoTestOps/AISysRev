@@ -56,6 +56,12 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
           Settings
         </Link>
         <Link
+          href="/"
+          className="text-xs sm:text-sm font-semibold text-gray-900"
+        >
+          Home
+        </Link>
+        <Link
           href="/about"
           className="text-xs sm:text-sm font-semibold text-gray-900"
         >
