@@ -19,28 +19,7 @@ def _create_criteria(
         criteria += f"- EC{i+1}: {criterion}\n"
     return criteria
 
-
-# async def _llm_response() -> StructuredResponse:
-#     decision = Decision(
-#         binary_decision=False,
-#         probability_decision=0.45,
-#         likert_decision=LikertDecision.somewhatDisagree,
-#         reason="The study meets the inclusion criteria but matches one exclusion criteria.",
-#     )
-
-#     return StructuredResponse(
-#         overall_decision=decision,
-#         inclusion_criteria=[
-#             Criterion(name="IC1", decision=decision),
-#             Criterion(name="IC2", decision=decision),
-#         ],
-#         exclusion_criteria=[Criterion(name="EC1", decision=decision)],
-#     )
-
-
-# TODO: FastAPI dependency pattern
 openrouter_service = get_openrouter_service()
-
 
 async def get_structured_response(
     job_task_data: JobTask, job_data: JobCreate, inc_exc_criteria: Criteria
