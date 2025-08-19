@@ -76,7 +76,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
-          {/* Left: LLM results */}
+
           <div className="flex flex-col min-h-0">
             <DialogTitle className="text-base font-semibold mb-4">
               Model suggestions
@@ -122,17 +122,19 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
           </div>
 
-          {/* Center: Title + abstract + action buttons */}
-          <div className="flex flex-col overflow-y-auto
-            [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <DialogTitle className="text-lg font-bold mb-3 pr-10">
-              Paper #{currentPaper.paper_id}: {currentPaper.title}
-            </DialogTitle>
-            <Description className="text-sm leading-relaxed whitespace-pre-line mb-6">
-              {currentPaper.abstract}
-            </Description>
-
-            <div className="mt-auto">
+          <div className="flex flex-col min-h-0">
+            <div className="pr-10">
+              <DialogTitle className="text-lg font-bold mb-3">
+                Paper #{currentPaper.paper_id}: {currentPaper.title}
+              </DialogTitle>
+            </div>
+            <div className="flex-1 overflow-y-auto
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <Description className="text-sm leading-relaxed whitespace-pre-line">
+                {currentPaper.abstract}
+              </Description>
+            </div>
+            <div className="pt-4">
               <div className="flex flex-wrap justify-center gap-6">
                 <Button
                   variant="green"
@@ -156,7 +158,6 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
           </div>
 
-          {/* Right: Criteria */}
           <div className="flex flex-col overflow-y-auto
           [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
