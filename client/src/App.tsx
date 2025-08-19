@@ -9,6 +9,7 @@ import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ScreeningPage } from "./pages/ScreeningPage";
+import { SettingsPage } from "./pages/SettingPage";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -21,12 +22,12 @@ function App() {
     }
     setCheckedTerms(true);
   }, [location, navigate]);
-  
+
   if (!checkedTerms) return null;
 
   return (
     <div className="flex flex-col bg-gray-200">
-      <ToastContainer autoClose={4000}/>
+      <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />
@@ -34,8 +35,12 @@ function App() {
         <Route path="/project/:uuid" component={ProjectPage} />
         <Route path="/project/:uuid/evaluate" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
-        <Route path="/terms-and-conditions" component={TermsAndConditionsPage}/>
-        <Route path="/screening" component={ScreeningPage}/>
+        <Route
+          path="/terms-and-conditions"
+          component={TermsAndConditionsPage}
+        />
+        <Route path="/screening" component={ScreeningPage} />
+        <Route path="/settings" component={SettingsPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>

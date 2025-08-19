@@ -60,20 +60,15 @@ class JobService:
             for task in job_tasks
         ]
 
-    
     async def create(self, job_data: JobCreate):
         logger.info("Begin transaction")
         async with (
             self.db.begin_nested() if self.db.in_transaction() else self.db.begin()
         ):
             logger.info("Creating new job", job_data)
-            # Here we assume the papers have already been created.
             new_job = await self.job_crud.create_job(job_data)
-            #logger.info("Retrieving papers for project", job_data.project_uuid)
-            #papers = await self.file_service.retrieve_papers_from_uploaded_files(job_data.project_uuid)
-            #await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, papers)
             await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid)
-        
+
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
