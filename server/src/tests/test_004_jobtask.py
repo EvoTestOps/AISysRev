@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, call, patch, AsyncMock
+from unittest.mock import MagicMock, call
 from src.crud.paper_crud import PaperCrud
 from src.services.paper_service import PaperService, get_paper_service
 from src.celery.tasks import async_process_job
@@ -18,7 +18,7 @@ async def test_create_jobtask(db_session, test_project_uuid, test_files_working)
     file_crud = FileCrud(db_session)
     jobtask_crud = JobTaskCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    file_service = FileService(db_session, file_crud)
+    file_service = FileService(db_session, file_crud, paper_crud)
     paper_service = PaperService(db_session, paper_crud)
     jobtask_service = JobTaskService(db_session, jobtask_crud, paper_service)
     job_crud = JobCrud(db_session)
@@ -50,7 +50,7 @@ async def test_create_job_transaction_rollback(
     file_crud = FileCrud(db_session)
     jobtask_crud = JobTaskCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    file_service = FileService(db_session, file_crud)
+    file_service = FileService(db_session, file_crud, paper_crud)
     paper_service = PaperService(db_session, paper_crud)
     jobtask_service = JobTaskService(db_session, jobtask_crud, paper_service)
     job_crud = JobCrud(db_session)

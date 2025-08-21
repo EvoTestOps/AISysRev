@@ -1,7 +1,6 @@
 import pytest
 from src.api.controllers.health_check import health_check
 
-@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_health_check_logic(monkeypatch):
     async def ok(): return None
