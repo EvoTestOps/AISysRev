@@ -52,7 +52,7 @@ async def async_process_job(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
-                llm_result = await get_structured_response(
+                llm_result = await get_structured_response(db,
                     job_task, job_data, project.criteria
                 )
                 await jobtask_crud.update_job_task_result(

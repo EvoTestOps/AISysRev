@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi.params import Depends
+from fastapi import Depends
 from src.db.session import get_db
 from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,5 +32,6 @@ class SettingService:
         return uuid
 
 
-def get_setting_service(db: AsyncSession = Depends(get_db)) -> SettingService:
+def get_setting_service() -> SettingService:
+    db = get_db()
     return SettingService(db, SettingCrud(db))

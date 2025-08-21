@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
 from src.services.openrouter_service import get_openrouter_service
 from src.schemas.job import JobCreate
@@ -19,11 +20,11 @@ def _create_criteria(
         criteria += f"- EC{i+1}: {criterion}\n"
     return criteria
 
-openrouter_service = get_openrouter_service()
 
 async def get_structured_response(
-    job_task_data: JobTask, job_data: JobCreate, inc_exc_criteria: Criteria
+    db: AsyncSession, job_task_data: JobTask, job_data: JobCreate, inc_exc_criteria: Criteria
 ) -> StructuredResponse:
+    openrouter_service = get_openrouter_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
     llm_model = job_data.llm_config.model_name
