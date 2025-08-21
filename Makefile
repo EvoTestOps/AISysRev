@@ -30,8 +30,13 @@ m-hist:
 m-current:
 	APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev exec backend alembic current
 
+# Run unit tests
+backend-unit:
+	APP_ENV=test RUN_DB_MIGRATIONS=false docker compose -f docker-compose-dev.yml -p test run --rm --no-deps backend python3 -m pytest -m unit -v -s --cov=src
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
+
 # Run all tests in the backend
-backend-test:
+backend-test-other:
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d backend postgres redis celery
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s --cov=src $(REPORT)
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
