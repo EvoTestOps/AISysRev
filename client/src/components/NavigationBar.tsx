@@ -50,16 +50,16 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
 
       <div className="flex items-start mr-8 ml-8 py-4 space-x-8">
         <Link
-          href="/settings"
-          className="text-xs sm:text-sm font-semibold text-gray-900"
-        >
-          Settings
-        </Link>
-        <Link
           href="/"
           className="text-xs sm:text-sm font-semibold text-gray-900"
         >
           Home
+        </Link>
+        <Link
+          href="/settings"
+          className="text-xs sm:text-sm font-semibold text-gray-900"
+        >
+          Settings
         </Link>
         <Link
           href="/about"
