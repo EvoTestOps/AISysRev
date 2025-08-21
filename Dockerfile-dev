@@ -1,7 +1,6 @@
 FROM node:22-alpine@sha256:1b2479dd35a99687d6638f5976fd235e26c5b37e8122f786fcd5fe231d63de5b AS client
 
 WORKDIR /app
-ENV PYTHONPATH=/app
 
 COPY client/package.json client/package-lock.json ./
 
@@ -22,7 +21,7 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS server
+FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS server
 
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 WORKDIR /app
@@ -37,7 +36,7 @@ EXPOSE 8080 5678
 
 CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
 
-FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS celery
+FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS celery
 
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
