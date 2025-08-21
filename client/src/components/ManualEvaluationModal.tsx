@@ -9,7 +9,7 @@ import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
-import { addJobTaskResult } from "../services/jobTaskService";
+import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, Paper } from "../state/types";
 
 type ManualEvaluationProps = {
@@ -35,14 +35,15 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
   const addHumanResult = useCallback(
     async (humanResult: JobTaskHumanResult) => {
+      if (!paperUuid) return;
       try {
-        await addJobTaskResult(currentTaskUuid, humanResult);
+        await addPaperHumanResult(paperUuid, humanResult);
         onEvaluated();
       } catch (error) {
         console.error("Error adding human result:", error);
       }
     },
-    [currentTaskUuid, onEvaluated]
+    [paperUuid, onEvaluated]
   );
 
   useEffect(() => {

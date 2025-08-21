@@ -56,6 +56,7 @@ export type Paper = {
   doi: string;
   title: string;
   abstract: string;
+  human_result: JobTaskHumanResult | null;
   created_at: Date | null;
   updated_at: Date | null;
 };
