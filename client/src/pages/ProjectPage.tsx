@@ -291,16 +291,16 @@ export const ProjectPage = () => {
 
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
-    if (papers.length === 0 || screeningTasks.length === 0) {
+    if (papers.length === 0) {
       toast.warn("No papers available.");
       return;
     }
-    const first = papers.find((paper) => paperToTaskMap[paper.uuid]);
-    if (!first) return;
-    navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`);
+    const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
+    const target = firstWithTask || papers[0];
+    if (!target) return;
+    navigate(`/project/${uuid}/evaluate?paperUuid=${target.uuid}`);
   }, [
     papers,
-    screeningTasks,
     paperToTaskMap,
     navigate,
     uuid,
@@ -313,7 +313,7 @@ export const ProjectPage = () => {
     if (idx !== -1) {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
-        if (paperToTaskMap[candidate.uuid]) {
+        if (screeningTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
           navigate(`/project/${uuid}/evaluate?paperUuid=${candidate.uuid}`);
           return;
         }
@@ -321,7 +321,7 @@ export const ProjectPage = () => {
     }
     navigate(`/project/${uuid}`);
     toast.success("Manual evaluation finished.");
-  }, [paperUuid, papers, paperToTaskMap, navigate, uuid]);
+  }, [paperUuid, papers, screeningTasks.length, paperToTaskMap, navigate, uuid]);
 
   useEffect(() => {
     if (match && !paperUuid && papers.length > 0) {
@@ -530,7 +530,7 @@ export const ProjectPage = () => {
         )}
       </div>
 
-      {match && paperUuid && currentTaskUuid && (
+      {match && paperUuid && (
         <ManualEvaluationModal
           key={paperUuid}
           currentTaskUuid={currentTaskUuid}

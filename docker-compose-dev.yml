@@ -40,6 +40,7 @@ services:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
       OPENROUTER_MOCK: y
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
     volumes:
       - ./server:/app
     develop:

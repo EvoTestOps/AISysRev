@@ -19,8 +19,8 @@ class Settings:
         self.DB_URL: str = get_env("DB_URL")
         if not self.DB_URL:
             raise ValueError("Database URL not set in environment")
-        print(f"Using APP_ENV: {self.APP_ENV}")
-        print(f"Using DB_URL: {self.DB_URL}")
+        # print(f"Using APP_ENV: {self.APP_ENV}")
+        # print(f"Using DB_URL: {self.DB_URL}")
 
         self.SECRET_KEY: str = get_env("SECRET_KEY", "yoursecretkey")
         self.ALGORITHM: str = "HS256"
