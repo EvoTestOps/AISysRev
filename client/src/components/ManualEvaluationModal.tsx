@@ -13,7 +13,7 @@ import { addJobTaskResult } from "../services/jobTaskService";
 import { JobTaskHumanResult, Paper } from "../state/types";
 
 type ManualEvaluationProps = {
-  currentTaskUuid: string;
+  currentTaskUuid?: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
   papers: Paper[];
