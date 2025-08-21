@@ -44,7 +44,7 @@ jobs:
         run: make backend-test
   build-client:
     runs-on: ubuntu-latest
-    needs: backend-test, unit-test
+    needs: [backend-test, unit-test]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
