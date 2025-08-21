@@ -38,7 +38,7 @@ backend-unit:
 # Run all tests in the backend
 backend-test-other:
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d backend postgres redis celery
-	APP_ENV=test docker compose -f docker-compose-dev.yml -p test exec backend pytest src/tests -v -s --cov=src $(REPORT)
+	APP_ENV=test RUN_DB_MIGRATIONS=true docker compose -f docker-compose-dev.yml -p test run --rm backend python3 -m pytest -m asyncio -v -s --cov=src $(REPORT)
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
 
 # Run all tests in the backend and create HTML coverage report

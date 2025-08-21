@@ -8,8 +8,8 @@ router = APIRouter()
 
 @router.on_event("startup")
 async def on_startup():
-    print("on_startup hook called")
-    print(f"DB_URL: {settings.DB_URL}")
+    # print("on_startup hook called")
+    # print(f"DB_URL: {settings.DB_URL}")
 
     try:
         await wait_for_db()
