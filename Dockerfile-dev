@@ -24,6 +24,7 @@ CMD ["npm", "run", "dev"]
 
 FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS server
 
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 WORKDIR /app
 
 COPY server/requirements.txt .
@@ -38,6 +39,7 @@ CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "fastapi", "de
 
 FROM python:3.13-alpine@sha256:af1fd7a973d8adc761ee6b9d362b99329b39eb096ea3c53b8838f99bd187011e AS celery
 
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
 WORKDIR /app
