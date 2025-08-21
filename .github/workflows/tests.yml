@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run backend tests
-        run: make backend-test
+        run: make backend-test-other
   build-client:
     runs-on: ubuntu-latest
     needs: [backend-test, unit-test]
