@@ -35,3 +35,6 @@ class SettingService:
 def get_setting_service() -> SettingService:
     db = get_db()
     return SettingService(db, SettingCrud(db))
+
+def get_setting_service_fastapi(db = Depends(get_db)) -> SettingService:
+    return SettingService(db, SettingCrud(db))
