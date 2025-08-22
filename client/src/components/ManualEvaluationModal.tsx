@@ -4,7 +4,7 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
@@ -22,6 +22,13 @@ type ManualEvaluationProps = {
   onEvaluated: () => void;
 };
 
+type ModelSuggestion = {
+  modelName: string;
+  binary: string;
+  likertScale: number;
+  probability: number;
+};
+
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   inclusionCriteria,
   exclusionCriteria,
@@ -31,6 +38,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   onEvaluated,
 }) => {
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
+
+  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
+    []
+  );
 
   const addHumanResult = useCallback(
     async (humanResult: JobTaskHumanResult) => {
@@ -44,6 +55,26 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     },
     [paperUuid, onEvaluated]
   );
+
+  const getModelSuggestions = useCallback(async (_paperUuid: string) => {
+    return Promise.resolve([
+      {
+        modelName: "GPT-4.1 Nano",
+        binary: "Include",
+        likertScale: 6,
+        probability: 0.85,
+      },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    if (paperUuid != null) {
+      getModelSuggestions(paperUuid).then((s) => {
+        console.log("Fetched suggestions", s);
+        setModelSuggestions(s);
+      });
+    }
+  }, [getModelSuggestions, paperUuid]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,42 +120,15 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
               className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
               [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              <LlmModelCard
-                modelName="GPT-4.1 Nano"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-4.1 Mini"
-                binary="Include"
-                likertScale={5}
-                probability={0.75}
-              />
-              <LlmModelCard
-                modelName="Claude 3.7"
-                binary="Exclude"
-                likertScale={4}
-                probability={0.45}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
+              {modelSuggestions.map((suggestion, i) => (
+                <LlmModelCard
+                  key={i}
+                  modelName={suggestion.modelName}
+                  binary={suggestion.binary}
+                  likertScale={suggestion.likertScale}
+                  probability={suggestion.probability}
+                />
+              ))}
             </div>
           </div>
 
