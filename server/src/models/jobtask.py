@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from src.db.session import Base
 from .mixins import TimestampMixin
 
+
 class JobTaskStatus(enum.Enum):
     NOT_STARTED = "NOT_STARTED"
     PENDING = "PENDING"
@@ -12,13 +13,15 @@ class JobTaskStatus(enum.Enum):
     DONE = "DONE"
     ERROR = "ERROR"
 
+
 class HumanResult(enum.Enum):
     INCLUDE = "INCLUDE"
     EXCLUDE = "EXCLUDE"
     UNSURE = "UNSURE"
 
+
 class JobTask(Base, TimestampMixin):
-    __tablename__ = 'jobtask'
+    __tablename__ = "jobtask"
 
     id = Column(Integer, primary_key=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
@@ -26,7 +29,12 @@ class JobTask(Base, TimestampMixin):
     doi = Column(Text, nullable=False)
     title = Column(Text, nullable=False)
     abstract = Column(Text, nullable=False)
+    paper_uuid = Column(
+        UUID, ForeignKey("paper.uuid", ondelete="CASCADE"), nullable=False
+    )
     result = Column(JSON, nullable=True)
     human_result = Column(Enum(HumanResult), nullable=True)
-    status = Column(Enum(JobTaskStatus), default=JobTaskStatus.NOT_STARTED, nullable=False)
+    status = Column(
+        Enum(JobTaskStatus), default=JobTaskStatus.NOT_STARTED, nullable=False
+    )
     status_metadata = Column(JSON, nullable=True)

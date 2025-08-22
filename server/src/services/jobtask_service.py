@@ -1,11 +1,15 @@
 from uuid import UUID
 from src.services.paper_service import PaperService, get_paper_service
-from src.crud.paper_crud import PaperCrud
 from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
-from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskRead
+from src.schemas.jobtask import (
+    JobTaskCreate,
+    JobTaskHumanResult,
+    JobTaskRead,
+    JobTaskReadWithLLMConfig,
+)
 from src.crud.jobtask_crud import JobTaskCrud
 
 
@@ -23,16 +27,39 @@ class JobTaskService:
         return [
             JobTaskRead(
                 uuid=task.uuid,
-                job_uuid=job_uuid,
+                job_id=task.job_id,
                 doi=task.doi,
                 title=task.title,
                 abstract=task.abstract,
                 status=task.status,
+                paper_uuid=task.paper_uuid,
                 result=task.result,
                 human_result=task.human_result,
                 status_metadata=task.status_metadata,
             )
             for task in job_tasks
+        ]
+
+    async def fetch_job_tasks_for_paper(self, paper_uuid: UUID):
+        job_tasks_with_jobs = await self.jobtask_crud.fetch_job_tasks_by_paper_uuid(
+            paper_uuid
+        )
+
+        return [
+            JobTaskReadWithLLMConfig(
+                uuid=task.uuid,
+                job_id=task.job_id,
+                doi=task.doi,
+                title=task.title,
+                abstract=task.abstract,
+                paper_uuid=task.paper_uuid,
+                status=task.status,
+                result=task.result,
+                human_result=task.human_result,
+                status_metadata=task.status_metadata,
+                llm_config=job.llm_config,
+            )
+            for task, job in job_tasks_with_jobs
         ]
 
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
@@ -48,6 +75,7 @@ class JobTaskService:
                 doi=paper.doi,
                 title=paper.title,
                 abstract=paper.abstract,
+                paper_uuid=paper.uuid,
             )
             for paper in papers
         ]

@@ -11,6 +11,7 @@ import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
 import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, Paper } from "../state/types";
+import axios from "axios";
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
@@ -56,15 +57,17 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     [paperUuid, onEvaluated]
   );
 
-  const getModelSuggestions = useCallback(async (_paperUuid: string) => {
-    return Promise.resolve([
-      {
-        modelName: "GPT-4.1 Nano",
-        binary: "Include",
-        likertScale: 6,
-        probability: 0.85,
-      },
-    ]);
+  const getModelSuggestions = useCallback(async (paperUuid: string) => {
+    const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return response.data.map((entry: any) => ({
+      modelName: entry.llm_config.model_name,
+      binary: entry.result.overall_decision.binary_decision
+        ? "Include"
+        : "Exclude",
+      likertScale: entry.result.overall_decision.likert_decision,
+      probability: entry.result.overall_decision.probability_decision,
+    }));
   }, []);
 
   useEffect(() => {

@@ -90,6 +90,7 @@ async def test_async_process_job(db_session, test_job_data):
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
+            paper_uuid="TODO"
         )
         for i in range(1, 3)
     ]
@@ -122,6 +123,7 @@ async def test_async_process_job_failure(db_session, test_job_data, monkeypatch)
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
+            paper_uuid="TODO"
         )
         for i in range(1, 3)
     ]
