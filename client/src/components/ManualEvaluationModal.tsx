@@ -23,7 +23,6 @@ type ManualEvaluationProps = {
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
-  currentTaskUuid,
   inclusionCriteria,
   exclusionCriteria,
   papers,
@@ -31,7 +30,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   onClose,
   onEvaluated,
 }) => {
-  const currentPaper = papers.find(p => p.uuid === paperUuid);
+  const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
   const addHumanResult = useCallback(
     async (humanResult: JobTaskHumanResult) => {
@@ -52,7 +51,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         addHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
         addHumanResult(JobTaskHumanResult.UNSURE);
-      } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
+      } else if (
+        e.key === "n" ||
+        e.key === "N" ||
+        e.key === "e" ||
+        e.key === "E"
+      ) {
         addHumanResult(JobTaskHumanResult.EXCLUDE);
       } else if (e.key === "Escape") {
         onClose();
@@ -77,13 +81,14 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
-
           <div className="flex flex-col min-h-0">
             <DialogTitle className="text-base font-semibold mb-4">
               Model suggestions
             </DialogTitle>
-            <div className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
               <LlmModelCard
                 modelName="GPT-4.1 Nano"
                 binary="Include"
@@ -129,8 +134,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 Paper #{currentPaper.paper_id}: {currentPaper.title}
               </DialogTitle>
             </div>
-            <div className="flex-1 overflow-y-auto
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className="flex-1 overflow-y-auto
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
               <Description className="text-sm leading-relaxed whitespace-pre-line">
                 {currentPaper.abstract}
               </Description>
@@ -159,8 +166,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col overflow-y-auto
-          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            className="flex flex-col overflow-y-auto
+          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
             <div className="bg-neutral-50 rounded-xl p-3 mb-4">
               <CriteriaList criteria={inclusionCriteria} />
