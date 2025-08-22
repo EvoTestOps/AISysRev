@@ -37,6 +37,7 @@ export function useConfig(name: string) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message || "Request failed");
+      setSetting(null)
       return null;
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import { useParams, useRoute, useLocation, useSearch } from "wouter";
+import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
@@ -30,6 +30,7 @@ import {
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
+import { useConfig } from "../config/config";
 
 type LlmConfig = {
   model_name: string;
@@ -66,6 +67,9 @@ export const ProjectPage = () => {
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const { loading: openrouterKeyLoading, setting: openrouterKey } =
+    useConfig("openrouter_api_key");
 
   const paperUuid = useMemo(() => {
     if (!search) return null;
@@ -299,13 +303,7 @@ export const ProjectPage = () => {
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${uuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [
-    papers,
-    paperToTaskMap,
-    navigate,
-    uuid,
-    evaluationFinished,
-  ]);
+  }, [papers, paperToTaskMap, navigate, uuid, evaluationFinished]);
 
   const nextPaper = useCallback(() => {
     if (!paperUuid) return;
@@ -321,7 +319,14 @@ export const ProjectPage = () => {
     }
     navigate(`/project/${uuid}`);
     toast.success("Manual evaluation finished.");
-  }, [paperUuid, papers, screeningTasks.length, paperToTaskMap, navigate, uuid]);
+  }, [
+    paperUuid,
+    papers,
+    screeningTasks.length,
+    paperToTaskMap,
+    navigate,
+    uuid,
+  ]);
 
   useEffect(() => {
     if (match && !paperUuid && papers.length > 0) {
@@ -441,6 +446,7 @@ export const ProjectPage = () => {
             <div className="flex pb-4">
               <H5 className="pr-16">LLM</H5>
               <DropdownMenuText
+                disabled={openrouterKey == null}
                 options={availableModels.map((m) => ({
                   name: m.name,
                   value: m.id,
@@ -460,12 +466,13 @@ export const ProjectPage = () => {
               </p>
               <input
                 type="range"
-                className="pl-2 cursor-pointer bg-gray-200"
+                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
                 data-testid="temperature-input"
                 min={0}
                 max={1}
                 step={0.1}
                 value={temperature}
+                disabled={openrouterKey == null}
                 onChange={(e) => setTemperature(e.target.valueAsNumber)}
               />
             </div>
@@ -474,9 +481,10 @@ export const ProjectPage = () => {
               <p className="text-md font-semibold">Seed</p>
               <input
                 type="number"
-                className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
+                className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
                 data-testid="seed-input"
                 value={seed}
+                disabled={openrouterKey == null}
                 onChange={(e) => setSeed(e.target.valueAsNumber)}
               />
             </div>
@@ -485,22 +493,36 @@ export const ProjectPage = () => {
               <p className="text-md font-semibold">top_p ({top_p})</p>
               <input
                 type="range"
-                className="pl-2 cursor-pointer bg-gray-200"
+                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
                 data-testid="top_p-input"
                 min={0}
                 max={1}
                 step={0.1}
                 value={top_p}
+                disabled={openrouterKey == null}
                 onChange={(e) => setTop_p(e.target.valueAsNumber)}
               />
             </div>
-
+            <div>
+              {!openrouterKeyLoading && openrouterKey == null && (
+                <div className="flex bg-red-300 rounded-md p-2 items-center justify-center">
+                  <span className="font-bold text-red-900 select-none">
+                    OpenRouter API key is not set
+                    <br />
+                    <Link className="text-blue-800" to="/settings">
+                      Go to settings
+                    </Link>
+                  </span>
+                </div>
+              )}
+            </div>
             <div className="flex justify-end p-4 pb-2">
               <button
                 onClick={createTask}
+                disabled={openrouterKey == null}
                 title="New Task"
                 className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
+                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500 disabled:hover:bg-gray-500 disabled:opacity-30"
               >
                 New Task
               </button>
