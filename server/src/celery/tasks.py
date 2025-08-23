@@ -1,14 +1,19 @@
 import asyncio
 import logging
+import json
+from src.event_queue import EventName, QueueItem
+from src.redis.client import get_redis_client
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import JobCreate
 from src.schemas.jobtask import JobTaskStatus
 from src.crud.project_crud import ProjectCrud
 from src.crud.jobtask_crud import JobTaskCrud
 from src.tools.llm_decision_creator import get_structured_response
 
 logger = logging.getLogger(__name__)
+
+redis = get_redis_client()
 
 
 @celery_app.task(name="tasks.process_job", bind=True)
@@ -48,12 +53,44 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
+                redis.publish(
+                    "job_task",
+                    json.dumps(
+                        QueueItem(
+                            event_name=EventName.JOB_TASK_RUNNING,
+                            value={
+                                "job_task_id": job_task.id,
+                                "status": JobTaskStatus.RUNNING,
+                            },
+                        )
+                    ),
+                )
+
                 celery_task.update_state(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
+
+                redis.publish(
+                    "job_task",
+                    json.dumps(
+                        QueueItem(
+                            event_name=EventName.JOB_TASK_RUNNING,
+                            value={
+                                "job_task_id": job_task.id,
+                                "status": JobTaskStatus.RUNNING,
+                                "current": i + 1,
+                                "total": len(job_tasks),
+                            },
+                        )
+                    ),
+                )
+
                 llm_result = await get_structured_response(
                     db, job_task, job_data, project.criteria
+                )
+                await jobtask_crud.update_job_task_result(
+                    job_task.id, llm_result.model_dump_json()
                 )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 print(job_task.result)
@@ -62,10 +99,36 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
+                redis.publish(
+                    "job_task",
+                    json.dumps(
+                        QueueItem(
+                            event_name=EventName.JOB_TASK_DONE,
+                            value={
+                                "job_task_id": job_task.id,
+                                "status": JobTaskStatus.DONE,
+                            },
+                        )
+                    ),
+                )
+
             except Exception as e:
                 logger.info("Updating job task status to %s", JobTaskStatus.ERROR)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.ERROR
+                )
+                redis.publish(
+                    "job_task",
+                    json.dumps(
+                        QueueItem(
+                            event_name=EventName.JOB_TASK_ERROR,
+                            value={
+                                "job_task_id": job_task.id,
+                                "status": JobTaskStatus.ERROR,
+                                "message": str(e),
+                            },
+                        )
+                    ),
                 )
                 celery_task.update_state(
                     state="FAILURE",
