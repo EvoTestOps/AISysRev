@@ -11,6 +11,7 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
+import { EventStream } from "./components/EventStream";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -28,6 +29,7 @@ function App() {
 
   return (
     <div className="flex flex-col bg-gray-200">
+      <EventStream />
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />

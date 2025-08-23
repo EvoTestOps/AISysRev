@@ -1,6 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
+from src.event_queue import EventName, QueueItem, push_event
 from src.services.setting_service import SettingService, get_setting_service
 from src.schemas.job import JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
@@ -56,6 +57,7 @@ async def create_job(
                 detail="OpenRouter API key is not set, cannot continue",
             )
         create_job = await jobs.create(job_data)
+        await push_event(QueueItem(EventName.JOB_CREATED, {"uuid": create_job.uuid}))
         return create_job
     except HTTPException:
         raise
