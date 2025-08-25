@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 from src.event_queue import EventName, QueueItem, push_event
-from src.services.setting_service import SettingService, get_setting_service
+from src.services.setting_service import SettingService, get_setting_service_fastapi
 from src.schemas.job import JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
@@ -47,17 +47,19 @@ async def get_single_job(uuid: UUID, jobs: JobService = Depends(get_job_service)
 async def create_job(
     job_data: JobCreate,
     jobs: JobService = Depends(get_job_service),
-    settings: SettingService = Depends(get_setting_service),
+    settings: SettingService = Depends(get_setting_service_fastapi),
 ):
     try:
-        openrouter_secret = settings.get_setting("openrouter_api_key")
+        openrouter_secret = await settings.get_setting("openrouter_api_key")
         if openrouter_secret is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="OpenRouter API key is not set, cannot continue",
             )
         create_job = await jobs.create(job_data)
-        await push_event(QueueItem(EventName.JOB_CREATED, {"uuid": create_job.uuid}))
+        await push_event(
+            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid})
+        )
         return create_job
     except HTTPException:
         raise

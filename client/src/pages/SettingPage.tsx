@@ -18,9 +18,7 @@ export const SettingsPage = () => {
   if (loading) {
     return (
       <Layout title="Settings">
-        <div className="bg-white p-4 mb-4 rounded-2xl">
-          Loading...
-        </div>
+        <div className="bg-white p-4 mb-4 rounded-2xl">Loading...</div>
       </Layout>
     );
   }
@@ -82,12 +80,14 @@ export const SettingsPage = () => {
                   disabled={value === setting?.value || loading}
                   onClick={(e) => {
                     e.preventDefault();
-                    update({
-                      value,
-                    });
-                    setEditMode(false);
-                    setValue("");
-                    refresh();
+                    if (value !== "") {
+                      update({
+                        value,
+                      });
+                      setEditMode(false);
+                      setValue("");
+                      refresh();
+                    }
                   }}
                 >
                   Save
