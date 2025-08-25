@@ -27,25 +27,13 @@ import {
   ScreeningTask,
   JobTaskStatus,
   Paper,
+  CreatedJob,
+  LlmConfig,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 
-type LlmConfig = {
-  model_name: string;
-  temperature: number;
-  seed: number;
-  top_p: number;
-};
-
-type CreatedJob = {
-  uuid: string;
-  project_uuid: string;
-  llm_config: LlmConfig;
-  created_at: string;
-  updated_at: string;
-};
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -354,8 +342,8 @@ export const ProjectPage = () => {
 
   const showEvaluationResults = useCallback(() => {
     if (!evaluationFinished) return;
-    console.log("Showing evaluation results");
-  }, [evaluationFinished]);
+    navigate(`/result/${uuid}`);
+  }, [evaluationFinished, navigate, uuid]);
 
   if (error) {
     return (

@@ -22,6 +22,21 @@ export type FetchedFile = {
   paper_count: number;
 };
 
+export type LlmConfig = {
+  model_name: string;
+  temperature: number;
+  seed: number;
+  top_p: number;
+};
+
+export type CreatedJob = {
+  uuid: string;
+  project_uuid: string;
+  llm_config: LlmConfig;
+  created_at: string;
+  updated_at: string;
+};
+
 export enum JobTaskHumanResult {
   INCLUDE = "INCLUDE",
   EXCLUDE = "EXCLUDE",
@@ -40,6 +55,7 @@ export type ScreeningTask = {
   uuid: string;
   job_uuid: string;
   job_id: number;
+  paper_uuid: string;
   doi: string;
   title: string;
   abstract: string;
