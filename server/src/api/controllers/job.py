@@ -57,7 +57,7 @@ async def create_job(
     projects: ProjectService = Depends(get_project_service),
 ):
     try:
-        openrouter_secret = settings.get_setting("openrouter_api_key")
+        openrouter_secret = await settings.get_setting("openrouter_api_key")
         if openrouter_secret is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,7 +85,9 @@ async def create_job(
                     ProjectPreferences(few_shot=None),
                 )
         create_job = await jobs.create(job_data)
-        await push_event(QueueItem(EventName.JOB_CREATED, {"uuid": create_job.uuid}))
+        await push_event(
+            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid})
+        )
         return create_job
     except HTTPException:
         raise
