@@ -83,8 +83,8 @@ export const ProjectPage = () => {
   );
 
   const pendingTasks = useMemo(
-    () => screeningTasks.filter((task) => task.human_result == null),
-    [screeningTasks]
+    () => papers.filter((paper) => paper.human_result == null),
+    [papers]
   );
 
   const evaluationFinished =
@@ -315,7 +315,7 @@ export const ProjectPage = () => {
     navigate(`/project/${uuid}/evaluate?paperUuid=${target.uuid}`);
   }, [papers, paperToTaskMap, navigate, uuid, evaluationFinished]);
 
-  const nextPaper = useCallback(() => {
+  const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
     const idx = papers.findIndex((paper) => paper.uuid === paperUuid);
     if (idx !== -1) {
@@ -327,6 +327,7 @@ export const ProjectPage = () => {
         }
       }
     }
+    await loadPapers();
     navigate(`/project/${uuid}`);
     toast.success("Manual evaluation finished.");
   }, [
@@ -336,6 +337,7 @@ export const ProjectPage = () => {
     paperToTaskMap,
     navigate,
     uuid,
+    loadPapers
   ]);
 
   useEffect(() => {
