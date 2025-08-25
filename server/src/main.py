@@ -14,7 +14,7 @@ from src.api.controllers.jobtask import router as jobtask_router
 from src.api.controllers.paper import router as paper_router
 from src.api.controllers.setting import router as setting_router
 from src.api.controllers.result import router as result_router
-from src.api.controllers.event_bus import router as event_bus_router
+from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
 
 
@@ -38,7 +38,7 @@ v1_router.include_router(setting_router)
 v1_router.include_router(celery_test_router)
 v1_router.include_router(openrouter_router)
 v1_router.include_router(result_router)
-v1_router.include_router(event_bus_router)
+v1_router.include_router(event_queue_router)
 
 app.include_router(v1_router)
 
