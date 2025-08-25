@@ -6,7 +6,7 @@ import asyncio
 router = APIRouter()
 
 
-@router.get("/event-bus")
+@router.get("/event-queue")
 async def event_bus(request: Request):
     async def stream():
         yield ": connected\n\n"
@@ -24,9 +24,3 @@ async def event_bus(request: Request):
         media_type="text/event-stream",
         headers={"Cache-control": "no-cache", "Connection": "keep-alive"},
     )
-
-
-# @router.post("/event-bus")
-# async def put_event(request: Request):
-#     await push_event(QueueItem(event_name="PING", value="PONG"))
-#     return PlainTextResponse("OK")
