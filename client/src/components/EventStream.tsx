@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 
 export const EventStream = () => {
-  const event_url = "http://localhost:3001/api/v1/event-bus";
+  const event_url = "http://localhost:3001/api/v1/event-queue";
   const startLogStream = useCallback(() => {
     const eventSource = new EventSource(event_url);
 
