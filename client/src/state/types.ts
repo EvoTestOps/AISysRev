@@ -39,6 +39,7 @@ export enum JobTaskStatus {
 export type ScreeningTask = {
   uuid: string;
   job_uuid: string;
+  job_id: number;
   doi: string;
   title: string;
   abstract: string;

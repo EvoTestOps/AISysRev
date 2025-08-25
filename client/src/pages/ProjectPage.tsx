@@ -280,18 +280,28 @@ export const ProjectPage = () => {
   }, [fetchFiles]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (createdJobs.length === 0) return;
-      Promise.all(createdJobs.map((job) => fetchJobTasksFromBackend(job.uuid)))
+    if (createdJobs.length === 0) return;
+
+    const fetchAll = () => {
+      Promise.all(
+        createdJobs.map((job) => {
+          console.log("job.uuid", job.uuid);
+          return fetchJobTasksFromBackend(job.uuid, job.id);
+        })
+      )
         .then((results) => {
           setScreeningTasks(results.flat());
+          console.log("results: ", results.flat())
         })
         .catch((error) => {
           console.error("Error fetching job tasks:", error);
         });
-    }, jobTaskRefetchIntervalMs);
+    };
+
+    fetchAll();
+    const interval = setInterval(fetchAll, jobTaskRefetchIntervalMs);
     return () => clearInterval(interval);
-  }, [createdJobs]);
+  }, [createdJobs, jobTaskRefetchIntervalMs]);
 
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
@@ -380,18 +390,25 @@ export const ProjectPage = () => {
               <p className="text-gray-400 ml-1 pb-4 italic">
                 No screening tasks
               </p>
-            )}
+            )
+          }
           {createdJobs.map((job) => {
             const jobTasks = screeningTasks.filter(
-              (task) => task.job_uuid === job.uuid
+              (task) => {
+                console.log("task.job_uuid:", task.job_uuid, "job.uuid:", job.uuid);
+                return task.job_uuid === job.uuid;
+              }
             );
             const doneCount = jobTasks.filter(
               (task) =>
-                task.status === JobTaskStatus.DONE || task.human_result !== null
+                task.status === JobTaskStatus.DONE
             ).length;
             const totalCount = jobTasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+            console.log("totalCount: ", totalCount);
+            console.log("doneCount: ", doneCount);
+            console.log("progress: ", progress);
             return (
               <div key={job.uuid} className="mb-6">
                 <div className="flex flex-row justify-between bg-neutral-50 p-4 gap-4 rounded-2xl">
