@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
-import { fetchPapersFromBackend } from "../services/jobTaskService";
-import { Paper as P } from "../state/types";
+import { fetchJobTasksFromBackend, fetchPapersFromBackend } from "../services/jobTaskService";
+import { fetchJobsForProject } from "../services/jobService";
+import { ScreeningTask, Paper as P, CreatedJob } from "../state/types";
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -19,7 +20,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 // Row component for each paper
-function Row({ paper }: { paper: P }) {
+function Row({ paper, screeningTask }: { paper: P; screeningTask?: ScreeningTask }) {
 	const [open, setOpen] = React.useState(false);
 	return (
 		<React.Fragment>
@@ -52,9 +53,6 @@ function Row({ paper }: { paper: P }) {
 							<Typography variant="body2" gutterBottom>
 								{paper.abstract}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{}
-							</Typography>
 						</Box>
 					</Collapse>
 				</TableCell>
@@ -64,18 +62,25 @@ function Row({ paper }: { paper: P }) {
 }
 
 export const ResultPage = () => {
-	const params = useParams<{ uuid: string }>();
-	const projectUuid = params.uuid;
+  const params = useParams<{ uuid: string }>();
+  const projectUuid = params.uuid;
 
-	const [papers, setPapers] = useState<P[]>([]);
+  const [papers, setPapers] = useState<P[]>([]);
+  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
 
-	useEffect(() => {
-		const fetchData = async () => {
-			const allPapers: P[] = await fetchPapersFromBackend(projectUuid);
-			setPapers(allPapers);
-		};
-		fetchData();
-	}, [projectUuid]);
+  useEffect(() => {
+    const fetchData = async () => {
+      const jobs: CreatedJob[] = await fetchJobsForProject(projectUuid);
+      const allTasks: ScreeningTask[] = (
+        await Promise.all(jobs.map((job) => fetchJobTasksFromBackend(job.uuid)))
+      ).flat();
+      setScreeningTasks(allTasks);
+
+      const allPapers: P[] = await fetchPapersFromBackend(projectUuid);
+      setPapers(allPapers);
+    };
+    fetchData();
+  }, [projectUuid]);
 
 	return (
 		<Layout title="Results">
@@ -101,11 +106,16 @@ export const ResultPage = () => {
 							</TableCell>
 						</TableRow>
 					</TableHead>
-					<TableBody>
-						{papers.map((paper) => (
-							<Row key={paper.uuid} paper={paper} />
-						))}
-					</TableBody>
+          <TableBody>
+            {papers.map((paper) => {
+              const screeningTask = screeningTasks.find(
+                (task) => task.paper_uuid === paper.uuid
+              );
+              return (
+                <Row key={paper.uuid} paper={paper} screeningTask={screeningTask} />
+              );
+            })}
+          </TableBody>
 				</Table>
 			</TableContainer>
 		</Layout>
