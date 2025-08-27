@@ -4,6 +4,7 @@
 - OpenAI: gpt-oss-20b (ERROR2)
 - Z.AI: GLM 4.5 Air (ERROR2)
 - Qwen: Qwen3 Coder (ERROR1)
+- MoonshotAI: Kimi K2 (CHECK ERROR)
 - Mistral: Devstral Medium (ERROR3)
 - Mistral: Devstral Small 1.1 (ERROR3)
 - TheDrummer: Anubis 70B V1.1 (ERROR2)

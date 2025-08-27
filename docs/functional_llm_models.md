@@ -2,14 +2,13 @@
 Mistral: Mistral Medium 3.1
 Mistral: Codestral 2508
 Google: Gemini 2.5 Flash Lite Preview 06-17
-MoonshotAI: Kimi K2
 Qwen: Qwen3 235B A22B Instruct 2507
 xAI: Grok 4 (slow)
 Mistral: Mistral Small 3.2 24B
 Google: Gemini 2.5 Flash Lite Preview 06-17
 Google: Gemini 2.5 Flash
 Google: Gemini 2.5 Pro
-xAI: Grok 3 Mini
+xAI: Grok 3 Mini (slow)
 xAI: Grok 3
 Mistral: Magistral Small 2506
 Mistral: Magistral Medium 2506

@@ -1,7 +1,7 @@
 import uuid
 import enum
-from sqlalchemy import Column, Integer, Text, ForeignKey, JSON, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Integer, Text, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from src.db.session import Base
 from .mixins import TimestampMixin
 
@@ -32,9 +32,9 @@ class JobTask(Base, TimestampMixin):
     paper_uuid = Column(
         UUID, ForeignKey("paper.uuid", ondelete="CASCADE"), nullable=False
     )
-    result = Column(JSON, nullable=True)
+    result = Column(JSONB, nullable=True)
     human_result = Column(Enum(HumanResult), nullable=True)
     status = Column(
         Enum(JobTaskStatus), default=JobTaskStatus.NOT_STARTED, nullable=False
     )
-    status_metadata = Column(JSON, nullable=True)
+    status_metadata = Column(JSONB, nullable=True)

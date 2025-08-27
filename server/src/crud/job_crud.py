@@ -1,12 +1,14 @@
+import json
+from uuid import UUID
 from typing import List
-from src.models.jobtask import JobTask
-from src.models.paper import Paper
+import pandas as pd
+from sqlalchemy import select, func, String
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from src.models.job import Job
 from src.models.project import Project
+from src.models.jobtask import JobTask
+from src.models.paper import Paper
 from src.schemas.job import JobCreate, JobRead
-from uuid import UUID
 
 class JobCrud:
     def __init__(self, db: AsyncSession):
@@ -86,13 +88,19 @@ class JobCrud:
                 select(
                     Paper.title,
                     Paper.abstract,
+                    Paper.doi,
                     Paper.human_result,
-                    Job.llm_config['model_name'].astext.label('model_name'),
-                    JobTask.result['overall_decision']['binary_decision'].astext.label('binary_decision')
+                    func.jsonb_extract_path_text(Job.llm_config, 'model_name').label('model_name'),
+                    func.jsonb_extract_path_text(JobTask.result, 'overall_decision', 'binary_decision').label('binary_decision')
                 )
                 .join(JobTask, JobTask.paper_uuid == Paper.uuid)
-                .join(Job, Job.uuid == JobTask.job_uuid)
+                .join(Job, Job.id == JobTask.job_id)
+                .join(Project, Project.id == Job.project_id)
                 .where(Project.id == project_id)
             )
         result = await self.db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        df = pd.DataFrame(rows, columns=["title", "abstract", "doi", "human_result", "model_name", "binary_decision"])
+
+        return df
