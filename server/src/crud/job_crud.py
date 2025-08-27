@@ -1,4 +1,6 @@
 from typing import List
+from src.models.jobtask import JobTask
+from src.models.paper import Paper
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.models.job import Job
@@ -72,3 +74,25 @@ class JobCrud:
         await self.db.flush()
         await self.db.refresh(new_job)
         return new_job
+
+    async def create_result(self, project_uuid: UUID) -> str:
+        project = await self.db.execute(select(Project).where(Project.uuid == project_uuid))
+        project_obj = project.scalar_one_or_none()
+        if not project_obj:
+            raise ValueError("Project not found when creating result")
+        project_id = project_obj.id
+
+        stmt = (
+                select(
+                    Paper.title,
+                    Paper.abstract,
+                    Paper.human_result,
+                    Job.llm_config['model_name'].astext.label('model_name'),
+                    JobTask.result['overall_decision']['binary_decision'].astext.label('binary_decision')
+                )
+                .join(JobTask, JobTask.paper_uuid == Paper.uuid)
+                .join(Job, Job.uuid == JobTask.job_uuid)
+                .where(Project.id == project_id)
+            )
+        result = await self.db.execute(stmt)
+        return result.all()

@@ -12,6 +12,7 @@ from src.tools.csv_file_validation import validate_csv
 from src.tools.minio_file_uploader import upload_file_to_object_storage
 from src.tools.minio_client import minio_client
 from src.crud.file_crud import FileCrud
+from src.crud.job_crud import JobCrud
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 from src.core.config import settings
 
@@ -34,17 +35,19 @@ class UploadedFilePaper(BaseModel):
 
 
 class FileService:
-    def __init__(self, db: AsyncSession, file_crud: FileCrud, paper_crud: PaperCrud):
+    def __init__(self, db: AsyncSession, file_crud: FileCrud, paper_crud: PaperCrud, job_crud: JobCrud):
         self.db = db
         self.file_crud = file_crud
         self.paper_crud = paper_crud
+        self.job_crud = job_crud
 
     async def fetch_all(self, project_uuid: UUID):
         rows = await self.file_crud.fetch_files(project_uuid)
         return [FileReadWithPaperCount(**row) for row in rows]
     
     async def generate_result_csv(self, project_uuid: UUID) -> str:
-        pass
+        result = await self.job_crud.create_result(project_uuid)
+        return result
 
     async def process_files(
         self, project_uuid: UUID, files: List[UploadFile]
@@ -138,4 +141,4 @@ class FileService:
 
 
 def get_file_service(db: AsyncSession = Depends(get_db)) -> FileService:
-    return FileService(db, FileCrud(db), PaperCrud(db))
+    return FileService(db, FileCrud(db), PaperCrud(db), JobCrud(db))
