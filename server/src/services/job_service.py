@@ -88,7 +88,7 @@ def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
     paper_crud = PaperCrud(db)
     paper_service = get_paper_service(db)
 
-    file_service = FileService(db, file_crud, paper_crud)
+    file_service = FileService(db, file_crud, paper_crud, job_crud)
     jobtask_service = JobTaskService(db, jobtask_crud, paper_service)
 
     return JobService(db, file_service, jobtask_service, job_crud)

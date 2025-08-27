@@ -1,6 +1,7 @@
 import pytest
 from src.crud.paper_crud import PaperCrud
 from src.crud.file_crud import FileCrud
+from src.crud.job_crud import JobCrud
 from src.schemas.file import FileCreate, FileRead
 from src.services.file_service import FileService, get_file_service
 
@@ -26,7 +27,8 @@ async def test_create_and_fetch_file_record(db_session, test_project_uuid):
 async def test_file_service(db_session, test_project_uuid, test_files_working):
     file_crud = FileCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    service = FileService(db_session, file_crud, paper_crud)
+    job_crud = JobCrud(db_session)
+    service = FileService(db_session, file_crud, paper_crud, job_crud)
 
     result = await service.process_files(test_project_uuid, test_files_working)
     assert "valid_filenames" in result
@@ -50,7 +52,8 @@ async def test_files_service_invalid_data(
 ):
     file_crud = FileCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    service = FileService(db_session, file_crud, paper_crud)
+    job_crud = JobCrud(db_session)
+    service = FileService(db_session, file_crud, paper_crud, job_crud)
     errors_msgs = [
         "Missing required columns: title",
         "Missing required columns: abstract",
