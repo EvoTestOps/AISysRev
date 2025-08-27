@@ -38,7 +38,7 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
           <br />
           The paper scored{" "}
           <b>
-            {/** @ts-except-error exists*/}
+            {/**@ts-expect-error Exists */}
             {likertScale} ({likertMap[likertScale]})
           </b>{" "}
           on the Likert-scale <br />
