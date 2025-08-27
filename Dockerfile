@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:10962e8568729b0cfd506170c5a2d1918a2c10ac08c0e6900180b4bac061adc9 AS client-build
+FROM node:22-alpine@sha256:1b2479dd35a99687d6638f5976fd235e26c5b37e8122f786fcd5fe231d63de5b AS client-build
 
 WORKDIR /app
 
@@ -22,15 +22,17 @@ COPY server/migrations ./migrations
 
 RUN npm run build
 
-FROM nginx:alpine@sha256:b2e814d28359e77bd0aa5fed1939620075e4ffa0eb20423cc557b375bd5c14ad AS client
+FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8cb23a7e8ac557aa3c AS client
 
-COPY --from=client-build /app/dist /usr/share/nginx/html
+COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=client-build /app/dist /srv
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 443
 
-FROM python:3.13-alpine@sha256:9b4929a72599b6c6389ece4ecbf415fd1355129f22bb92bb137eea098f05e975 AS server
+FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS server
 
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 WORKDIR /app
 
 COPY server/ .
@@ -40,4 +42,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8080
 
 WORKDIR /app/src
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python",  "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS celery
+
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
+RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
+
+WORKDIR /app
+
+COPY server/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY server/ .
+
+RUN chown -R celeryuser:celerygroup /app
+USER celeryuser
+
+CMD ["python", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
