@@ -1,10 +1,14 @@
+import json
+from uuid import UUID
 from typing import List
-from sqlalchemy.ext.asyncio import AsyncSession
+import pandas as pd
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
 from src.models.project import Project
+from src.models.jobtask import JobTask
+from src.models.paper import Paper
 from src.schemas.job import JobCreate, JobRead
-from uuid import UUID
 
 class JobCrud:
     def __init__(self, db: AsyncSession):
@@ -72,3 +76,55 @@ class JobCrud:
         await self.db.flush()
         await self.db.refresh(new_job)
         return new_job
+
+    async def create_result(self, project_uuid: UUID) -> str:
+        project = await self.db.execute(select(Project).where(Project.uuid == project_uuid))
+        project_obj = project.scalar_one_or_none()
+        if not project_obj:
+            raise ValueError("Project not found when creating result")
+        project_id = project_obj.id
+
+        stmt = (
+                select(
+                    Paper.title,
+                    Paper.abstract,
+                    Paper.doi,
+                    Paper.human_result,
+                    Job.llm_config["model_name"].astext,
+                    JobTask.result["overall_decision"]["binary_decision"]
+                )
+                .join(JobTask, JobTask.paper_uuid == Paper.uuid)
+                .join(Job, Job.id == JobTask.job_id)
+                .join(Project, Project.id == Job.project_id)
+                .where(Project.id == project_id)
+            )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+
+        df = pd.DataFrame(
+            rows,
+            columns=[
+                "title",
+                "abstract",
+                "doi",
+                "human_result",
+                "model_name",
+                "binary_decision"
+            ]
+        )
+
+        df["human_result"] = df["human_result"].astype(str).apply(lambda s: s.rsplit(".", 1)[-1])
+        df["binary_decision"] = df["binary_decision"].map(
+            lambda v: "INCLUDE" if str(v).lower() in ("true", "1")
+            else "EXCLUDE" if str(v).lower() in ("false", "0")
+            else ""
+        )
+
+        pivot = df.pivot_table(
+            index=["title", "abstract", "doi", "human_result"],
+            columns="model_name",
+            values="binary_decision",
+            aggfunc="first"
+        ).reset_index()
+
+        return pivot

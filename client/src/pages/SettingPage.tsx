@@ -18,7 +18,7 @@ export const SettingsPage = () => {
   if (loading) {
     return (
       <Layout title="Settings">
-        <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
+        <div className="bg-white p-4 mb-4 rounded-2xl">
           Loading...
         </div>
       </Layout>
@@ -26,7 +26,7 @@ export const SettingsPage = () => {
   }
   return (
     <Layout title="Settings">
-      <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
+      <div className="bg-white p-4 mb-4 rounded-2xl">
         <div className="grid grid-cols-2 gap-8 items-center">
           <div>
             <span className="font-bold">OpenRouter API key</span>

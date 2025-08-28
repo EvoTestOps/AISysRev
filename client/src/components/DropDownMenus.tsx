@@ -15,6 +15,7 @@ export type DropdownOption = { name: string; value: string };
 
 export type TextProps = {
   options: Array<DropdownOption>;
+  disabled: boolean;
   selected: DropdownOption | undefined;
   onSelect: (value?: DropdownOption) => void;
   isLlmSelected: boolean;
@@ -43,7 +44,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
             key={item.label}
             as="button"
             onClick={item.onClick}
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer"
+            className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
           >
             {item.label}
           </MenuItem>
@@ -55,6 +56,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
 
 export const DropdownMenuText: React.FC<TextProps> = ({
   options,
+  disabled,
   selected,
   onSelect,
   isLlmSelected,
@@ -63,8 +65,9 @@ export const DropdownMenuText: React.FC<TextProps> = ({
   return (
     <Menu as="div" className="relative inline-block text-center">
       <MenuButton
+        disabled={disabled}
         className={classNames(
-          "w-48 p-1 bg-natural-100 border-2 rounded-xl hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer",
+          "w-48 p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed",
           {
             "border-gray-300": isLlmSelected,
             "border-red-500 animate-pulse": !isLlmSelected,
@@ -86,6 +89,7 @@ export const DropdownMenuText: React.FC<TextProps> = ({
             key={option.value}
             value={option.value}
             as="button"
+            disabled={disabled}
             onClick={() => {
               onSelect(option);
               setIsLlmSelected(true);

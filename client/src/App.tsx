@@ -10,6 +10,7 @@ import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
+import { ResultPage } from "./pages/ResultPage";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -41,6 +42,7 @@ function App() {
         />
         <Route path="/screening" component={ScreeningPage} />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/result/:uuid" component={ResultPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>

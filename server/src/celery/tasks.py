@@ -53,11 +53,9 @@ async def async_process_job(
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
                 llm_result = await get_structured_response(
-                    job_task, job_data, project.criteria
+                    db, job_task, job_data, project.criteria
                 )
-                await jobtask_crud.update_job_task_result(
-                    job_task.id, llm_result.model_dump_json()
-                )
+                await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 print(job_task.result)
 
                 logger.info("Updating job task status to %s", JobTaskStatus.DONE)

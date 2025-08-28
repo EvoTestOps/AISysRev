@@ -22,7 +22,7 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({ projects, hand
       {projects.map((project) => (
         <div
           key={project.uuid}
-          className="bg-white p-4 mb-4 rounded shadow-lg hover:brightness-125 transition-all duration-200"
+          className="bg-white p-4 mb-4 rounded hover:brightness-125 transition-all duration-200"
         >
           <div className="flex justify-between items-center">
             <H6>

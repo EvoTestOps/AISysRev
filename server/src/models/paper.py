@@ -1,8 +1,14 @@
+import enum
 import uuid
-from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Text, ForeignKey, UniqueConstraint, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from src.db.session import Base
 from .mixins import TimestampMixin
+
+class HumanResult(enum.Enum):
+    INCLUDE = "INCLUDE"
+    EXCLUDE = "EXCLUDE"
+    UNSURE = "UNSURE"
 
 class Paper(Base, TimestampMixin):
     __tablename__ = 'paper'
@@ -15,6 +21,7 @@ class Paper(Base, TimestampMixin):
     doi = Column(Text, nullable=False)
     title = Column(Text, nullable=False)
     abstract = Column(Text, nullable=False)
+    human_result = Column(Enum(HumanResult, name="human_result"), nullable=True)
 
     __table_args__ = (
         UniqueConstraint('project_uuid', 'paper_id', name='uq_project_paper_id'),

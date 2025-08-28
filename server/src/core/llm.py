@@ -178,7 +178,7 @@ class MockLLM(LLM):
 
 class OpenRouterLLM(LLM):
 
-    def __init__(self, config):
+    def __init__(self, config: LLMConfiguration):
         self._config = config
 
     async def generate_answer_async(

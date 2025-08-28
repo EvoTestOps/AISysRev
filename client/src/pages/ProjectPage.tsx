@@ -1,4 +1,4 @@
-import { useParams, useRoute, useLocation, useSearch } from "wouter";
+import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
@@ -27,24 +27,13 @@ import {
   ScreeningTask,
   JobTaskStatus,
   Paper,
+  CreatedJob,
+  LlmConfig,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
+import { useConfig } from "../config/config";
 
-type LlmConfig = {
-  model_name: string;
-  temperature: number;
-  seed: number;
-  top_p: number;
-};
-
-type CreatedJob = {
-  uuid: string;
-  project_uuid: string;
-  llm_config: LlmConfig;
-  created_at: string;
-  updated_at: string;
-};
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -67,6 +56,9 @@ export const ProjectPage = () => {
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const { loading: openrouterKeyLoading, setting: openrouterKey } =
+    useConfig("openrouter_api_key");
+
   const paperUuid = useMemo(() => {
     if (!search) return null;
     return new URLSearchParams(search).get("paperUuid");
@@ -79,8 +71,8 @@ export const ProjectPage = () => {
   );
 
   const pendingTasks = useMemo(
-    () => screeningTasks.filter((task) => task.human_result == null),
-    [screeningTasks]
+    () => papers.filter((paper) => paper.human_result == null),
+    [papers]
   );
 
   const evaluationFinished =
@@ -276,18 +268,28 @@ export const ProjectPage = () => {
   }, [fetchFiles]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (createdJobs.length === 0) return;
-      Promise.all(createdJobs.map((job) => fetchJobTasksFromBackend(job.uuid)))
+    if (createdJobs.length === 0) return;
+
+    const fetchAll = () => {
+      Promise.all(
+        createdJobs.map((job) => {
+          console.log("job.uuid", job.uuid);
+          return fetchJobTasksFromBackend(job.uuid, job.id);
+        })
+      )
         .then((results) => {
           setScreeningTasks(results.flat());
+          console.log("results: ", results.flat())
         })
         .catch((error) => {
           console.error("Error fetching job tasks:", error);
         });
-    }, jobTaskRefetchIntervalMs);
+    };
+
+    fetchAll();
+    const interval = setInterval(fetchAll, jobTaskRefetchIntervalMs);
     return () => clearInterval(interval);
-  }, [createdJobs]);
+  }, [createdJobs, jobTaskRefetchIntervalMs]);
 
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
@@ -299,15 +301,9 @@ export const ProjectPage = () => {
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${uuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [
-    papers,
-    paperToTaskMap,
-    navigate,
-    uuid,
-    evaluationFinished,
-  ]);
+  }, [papers, paperToTaskMap, navigate, uuid, evaluationFinished]);
 
-  const nextPaper = useCallback(() => {
+  const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
     const idx = papers.findIndex((paper) => paper.uuid === paperUuid);
     if (idx !== -1) {
@@ -319,9 +315,18 @@ export const ProjectPage = () => {
         }
       }
     }
+    await loadPapers();
     navigate(`/project/${uuid}`);
     toast.success("Manual evaluation finished.");
-  }, [paperUuid, papers, screeningTasks.length, paperToTaskMap, navigate, uuid]);
+  }, [
+    paperUuid,
+    papers,
+    screeningTasks.length,
+    paperToTaskMap,
+    navigate,
+    uuid,
+    loadPapers
+  ]);
 
   useEffect(() => {
     if (match && !paperUuid && papers.length > 0) {
@@ -337,8 +342,8 @@ export const ProjectPage = () => {
 
   const showEvaluationResults = useCallback(() => {
     if (!evaluationFinished) return;
-    console.log("Showing evaluation results");
-  }, [evaluationFinished]);
+    navigate(`/result/${uuid}`);
+  }, [evaluationFinished, navigate, uuid]);
 
   if (error) {
     return (
@@ -375,18 +380,25 @@ export const ProjectPage = () => {
               <p className="text-gray-400 ml-1 pb-4 italic">
                 No screening tasks
               </p>
-            )}
+            )
+          }
           {createdJobs.map((job) => {
             const jobTasks = screeningTasks.filter(
-              (task) => task.job_uuid === job.uuid
+              (task) => {
+                console.log("task.job_uuid:", task.job_uuid, "job.uuid:", job.uuid);
+                return task.job_uuid === job.uuid;
+              }
             );
             const doneCount = jobTasks.filter(
               (task) =>
-                task.status === JobTaskStatus.DONE || task.human_result !== null
+                task.status === JobTaskStatus.DONE
             ).length;
             const totalCount = jobTasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+            console.log("totalCount: ", totalCount);
+            console.log("doneCount: ", doneCount);
+            console.log("progress: ", progress);
             return (
               <div key={job.uuid} className="mb-6">
                 <div className="flex flex-row justify-between bg-neutral-50 p-4 gap-4 rounded-2xl">
@@ -441,6 +453,7 @@ export const ProjectPage = () => {
             <div className="flex pb-4">
               <H5 className="pr-16">LLM</H5>
               <DropdownMenuText
+                disabled={openrouterKey == null}
                 options={availableModels.map((m) => ({
                   name: m.name,
                   value: m.id,
@@ -460,12 +473,13 @@ export const ProjectPage = () => {
               </p>
               <input
                 type="range"
-                className="pl-2 cursor-pointer bg-gray-200"
+                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
                 data-testid="temperature-input"
                 min={0}
                 max={1}
                 step={0.1}
                 value={temperature}
+                disabled={openrouterKey == null}
                 onChange={(e) => setTemperature(e.target.valueAsNumber)}
               />
             </div>
@@ -474,9 +488,10 @@ export const ProjectPage = () => {
               <p className="text-md font-semibold">Seed</p>
               <input
                 type="number"
-                className="p-1 rounded-xl text-center border-gray-300 border-2 hover:bg-gray-100 cursor-pointer"
+                className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
                 data-testid="seed-input"
                 value={seed}
+                disabled={openrouterKey == null}
                 onChange={(e) => setSeed(e.target.valueAsNumber)}
               />
             </div>
@@ -485,22 +500,36 @@ export const ProjectPage = () => {
               <p className="text-md font-semibold">top_p ({top_p})</p>
               <input
                 type="range"
-                className="pl-2 cursor-pointer bg-gray-200"
+                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
                 data-testid="top_p-input"
                 min={0}
                 max={1}
                 step={0.1}
                 value={top_p}
+                disabled={openrouterKey == null}
                 onChange={(e) => setTop_p(e.target.valueAsNumber)}
               />
             </div>
-
+            <div>
+              {!openrouterKeyLoading && openrouterKey == null && (
+                <div className="flex bg-red-300 rounded-md p-2 items-center justify-center">
+                  <span className="font-bold text-red-900 select-none">
+                    OpenRouter API key is not set
+                    <br />
+                    <Link className="text-blue-800" to="/settings">
+                      Go to settings
+                    </Link>
+                  </span>
+                </div>
+              )}
+            </div>
             <div className="flex justify-end p-4 pb-2">
               <button
                 onClick={createTask}
+                disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="New Task"
                 className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer"
+                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-green-600 disabled:opacity-50"
               >
                 New Task
               </button>
@@ -513,7 +542,7 @@ export const ProjectPage = () => {
         {evaluationFinished ? (
           <Button
             variant="green"
-            className="px-6 text-md font-bold rounded-xl transition duration-200 ease-in-out"
+            className="px-6 text-md font-bold rounded-xl"
             onClick={showEvaluationResults}
           >
             Show evaluation results
@@ -521,7 +550,7 @@ export const ProjectPage = () => {
         ) : (
           <Button
             variant="purple"
-            className="px-6 text-md font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+            className="px-6 text-md font-bold rounded-xl disabled:bg-purple-600"
             onClick={openManualEvaluation}
             disabled={papersLoading || !canStartManualEvaluation}
           >

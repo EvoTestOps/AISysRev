@@ -4,7 +4,7 @@ from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
-from src.schemas.paper import PaperCreate, PaperRead
+from src.schemas.paper import PaperCreate, PaperHumanResult, PaperRead
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,9 @@ class PaperService:
         # job_data is of type JobCreate
         logger.info("start_job_tasks: Processing job %s", job_id)
         return process_job_task.delay(job_id, job_data)
+
+    async def add_human_result(self, uuid: UUID, human_result: PaperHumanResult):
+        await self.paper_crud.add_paper_human_result(uuid, human_result)
 
 def get_paper_service(db: AsyncSession = Depends(get_db)) -> PaperService:
     paper_crud = PaperCrud(db)

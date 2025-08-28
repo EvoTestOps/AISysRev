@@ -1,8 +1,17 @@
+from enum import Enum
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
+
+class PaperHumanResult(str, Enum):
+    INCLUDE = "INCLUDE"
+    EXCLUDE = "EXCLUDE"
+    UNSURE = "UNSURE"
+
+class PaperHumanResultUpdate(BaseModel):
+    human_result: PaperHumanResult
 
 class PaperCreate(BaseModel):
     paper_id: int
@@ -12,7 +21,6 @@ class PaperCreate(BaseModel):
     title: str
     abstract: str
 
-
 class PaperRead(BaseModel):
     uuid: UUID
     paper_id: int
@@ -21,6 +29,7 @@ class PaperRead(BaseModel):
     doi: str
     title: str
     abstract: str
+    human_result: Optional[PaperHumanResult] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

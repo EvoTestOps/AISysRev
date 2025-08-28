@@ -4,13 +4,14 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { CircleX } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
-import { addJobTaskResult } from "../services/jobTaskService";
+import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, Paper } from "../state/types";
+import axios from "axios";
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
@@ -22,8 +23,14 @@ type ManualEvaluationProps = {
   onEvaluated: () => void;
 };
 
+type ModelSuggestion = {
+  modelName: string;
+  binary: string;
+  likertScale: number;
+  probability: number;
+};
+
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
-  currentTaskUuid,
   inclusionCriteria,
   exclusionCriteria,
   papers,
@@ -31,19 +38,46 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   onClose,
   onEvaluated,
 }) => {
-  const currentPaper = papers.find(p => p.uuid === paperUuid);
+  const currentPaper = papers.find((p) => p.uuid === paperUuid);
+
+  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
+    []
+  );
 
   const addHumanResult = useCallback(
     async (humanResult: JobTaskHumanResult) => {
+      if (!paperUuid) return;
       try {
-        await addJobTaskResult(currentTaskUuid, humanResult);
+        await addPaperHumanResult(paperUuid, humanResult);
         onEvaluated();
       } catch (error) {
         console.error("Error adding human result:", error);
       }
     },
-    [currentTaskUuid, onEvaluated]
+    [paperUuid, onEvaluated]
   );
+
+  const getModelSuggestions = useCallback(async (paperUuid: string) => {
+    const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return response.data.map((entry: any) => ({
+      modelName: entry.llm_config.model_name,
+      binary: entry.result.overall_decision.binary_decision
+        ? "Include"
+        : "Exclude",
+      likertScale: entry.result.overall_decision.likert_decision,
+      probability: entry.result.overall_decision.probability_decision,
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (paperUuid != null) {
+      getModelSuggestions(paperUuid).then((s) => {
+        console.log("Fetched suggestions", s);
+        setModelSuggestions(s);
+      });
+    }
+  }, [getModelSuggestions, paperUuid]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -51,7 +85,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         addHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
         addHumanResult(JobTaskHumanResult.UNSURE);
-      } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
+      } else if (
+        e.key === "n" ||
+        e.key === "N" ||
+        e.key === "e" ||
+        e.key === "E"
+      ) {
         addHumanResult(JobTaskHumanResult.EXCLUDE);
       } else if (e.key === "Escape") {
         onClose();
@@ -76,49 +115,23 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
-
           <div className="flex flex-col min-h-0">
             <DialogTitle className="text-base font-semibold mb-4">
               Model suggestions
             </DialogTitle>
-            <div className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              <LlmModelCard
-                modelName="GPT-4.1 Nano"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-4.1 Mini"
-                binary="Include"
-                likertScale={5}
-                probability={0.75}
-              />
-              <LlmModelCard
-                modelName="Claude 3.7"
-                binary="Exclude"
-                likertScale={4}
-                probability={0.45}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
-              <LlmModelCard
-                modelName="GPT-5"
-                binary="Include"
-                likertScale={6}
-                probability={0.85}
-              />
+            <div
+              className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {modelSuggestions.map((suggestion, i) => (
+                <LlmModelCard
+                  key={i}
+                  modelName={suggestion.modelName}
+                  binary={suggestion.binary}
+                  likertScale={suggestion.likertScale}
+                  probability={suggestion.probability}
+                />
+              ))}
             </div>
           </div>
 
@@ -128,8 +141,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 Paper #{currentPaper.paper_id}: {currentPaper.title}
               </DialogTitle>
             </div>
-            <div className="flex-1 overflow-y-auto
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className="flex-1 overflow-y-auto
+              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            >
               <Description className="text-sm leading-relaxed whitespace-pre-line">
                 {currentPaper.abstract}
               </Description>
@@ -158,8 +173,10 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-col overflow-y-auto
-          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div
+            className="flex flex-col overflow-y-auto
+          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
             <div className="bg-neutral-50 rounded-xl p-3 mb-4">
               <CriteriaList criteria={inclusionCriteria} />

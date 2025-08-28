@@ -18,10 +18,10 @@ async def test_create_jobtask(db_session, test_project_uuid, test_files_working)
     file_crud = FileCrud(db_session)
     jobtask_crud = JobTaskCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    file_service = FileService(db_session, file_crud, paper_crud)
     paper_service = PaperService(db_session, paper_crud)
     jobtask_service = JobTaskService(db_session, jobtask_crud, paper_service)
     job_crud = JobCrud(db_session)
+    file_service = FileService(db_session, file_crud, paper_crud, job_crud)
     job_service = JobService(db_session, file_service, jobtask_service, job_crud)
 
     await file_service.process_files(test_project_uuid, test_files_working)
@@ -50,10 +50,10 @@ async def test_create_job_transaction_rollback(
     file_crud = FileCrud(db_session)
     jobtask_crud = JobTaskCrud(db_session)
     paper_crud = PaperCrud(db_session)
-    file_service = FileService(db_session, file_crud, paper_crud)
     paper_service = PaperService(db_session, paper_crud)
     jobtask_service = JobTaskService(db_session, jobtask_crud, paper_service)
     job_crud = JobCrud(db_session)
+    file_service = FileService(db_session, file_crud, paper_crud, job_crud)
     service = JobService(db_session, file_service, jobtask_service, job_crud)
 
     await file_service.process_files(test_project_uuid, test_files_working)
@@ -90,6 +90,7 @@ async def test_async_process_job(db_session, test_job_data):
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
+            paper_uuid="TODO"
         )
         for i in range(1, 3)
     ]
@@ -122,6 +123,7 @@ async def test_async_process_job_failure(db_session, test_job_data, monkeypatch)
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
+            paper_uuid="TODO"
         )
         for i in range(1, 3)
     ]

@@ -1,5 +1,5 @@
 import { api } from '../services/api';
-import { JobTaskHumanResult } from '../state/types';
+import { JobTaskHumanResult, ScreeningTask } from '../state/types';
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
@@ -15,10 +15,17 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
   }
 };
 
-export const fetchJobTasksFromBackend = async (jobUuid: string) => {
+export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) => {
   try {
     const res = await api.get(`/jobtask/${jobUuid}`);
-    return res.data;
+    let id = jobId;
+    if (!id && res.data.length > 0) {
+      id = res.data[0].job_id;
+    }
+    return res.data.map((task: ScreeningTask) => ({
+      ...task,
+      job_uuid: jobUuid,
+    }));
   } catch (error) {
     console.error("Error fetching job tasks:", error);
     throw error;

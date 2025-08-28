@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
-import { toast } from 'react-toastify';
+import { toast } from "react-toastify";
 import { H6 } from "../components/Typography";
 import { Layout } from "../components/Layout";
 import { CreateProject } from "../components/CreateProject";
@@ -9,10 +9,10 @@ import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
 
 export const NewProject = () => {
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState('');
-  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState('');
+  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
+  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
 
@@ -23,13 +23,17 @@ export const NewProject = () => {
   }, []);
 
   const handleInclusionSetup = useCallback(() => {
-    setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
-    setInclusionCriteriaInput("");
+    if (inclusionCriteriaInput.trim() !== "") {
+      setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
+      setInclusionCriteriaInput("");
+    }
   }, [inclusionCriteria, inclusionCriteriaInput]);
 
   const handleExclusionSetup = useCallback(() => {
-    setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
-    setExclusionCriteriaInput("");
+    if (exclusionCriteriaInput.trim() !== "") {
+      setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
+      setExclusionCriteriaInput("");
+    }
   }, [exclusionCriteria, exclusionCriteriaInput]);
 
   const deleteInclusionCriteria = useCallback((index: number) => {
@@ -56,11 +60,11 @@ export const NewProject = () => {
       });
 
       uuid = res.uuid;
-      toast.success('Project created successfully!');
+      toast.success("Project created successfully!");
 
       if (uuid) {
         navigate(`/project/${uuid}`);
-      };
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       try {
@@ -71,22 +75,22 @@ export const NewProject = () => {
           ExpandableToast(parsed);
         } else {
           toast.error("Project creation failed (non-array error).");
-        };
+        }
       } catch (parseError) {
         console.error("JSON parsing failed:", parseError);
-        toast.error(`Project creation failed: ${error.message || "Unknown error"}`);
-      };
+        toast.error(
+          `Project creation failed: ${error.message || "Unknown error"}`
+        );
+      }
 
       return;
-    };
-
+    }
   }, [title, inclusionCriteria, exclusionCriteria, navigate]);
 
   return (
     <Layout title="New Project">
       <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
         <div className="flex flex-col gap-8">
-
           <div className="grid grid-cols-[200px_1fr] items-start gap-4">
             <H6>
               Title<span className="text-red-500 font-semibold">*</span>
@@ -158,7 +162,7 @@ export const NewProject = () => {
 
           <div className="flex justify-end items-end gap-4">
             <button
-              className="bg-red-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-red-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-red-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-red-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
                 setTitle("");
                 setInclusionCriteria([]);
@@ -171,7 +175,7 @@ export const NewProject = () => {
               Cancel
             </button>
             <button
-              className="bg-blue-600 text-white font-bold h-12 w-24 rounded-full brightness-110 shadow-md hover:bg-blue-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-blue-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-blue-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={handleCreate}
             >
               Create

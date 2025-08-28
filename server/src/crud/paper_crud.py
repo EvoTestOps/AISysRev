@@ -1,8 +1,8 @@
 from uuid import UUID
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from src.schemas.paper import PaperCreate
+from sqlalchemy import select, update
+from src.schemas.paper import PaperCreate, PaperHumanResult
 from src.models.paper import Paper
 
 class PaperCrud:
@@ -23,3 +23,8 @@ class PaperCrud:
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def add_paper_human_result(self, paper_uuid: UUID, human_result: PaperHumanResult):
+        stmt = update(Paper).where(Paper.uuid == paper_uuid).values(human_result=human_result)
+        await self.db.execute(stmt)
+        await self.db.commit()
