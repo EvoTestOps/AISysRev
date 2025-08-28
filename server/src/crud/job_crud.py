@@ -101,6 +101,30 @@ class JobCrud:
         result = await self.db.execute(stmt)
         rows = result.all()
 
-        df = pd.DataFrame(rows, columns=["title", "abstract", "doi", "human_result", "model_name", "binary_decision"])
+        df = pd.DataFrame(
+            rows,
+            columns=[
+                "title",
+                "abstract",
+                "doi",
+                "human_result",
+                "model_name",
+                "binary_decision"
+            ]
+        )
 
-        return df
+        df["human_result"] = df["human_result"].astype(str).apply(lambda s: s.rsplit(".", 1)[-1])
+        df["binary_decision"] = df["binary_decision"].map(
+            lambda v: "INCLUDE" if str(v).lower() in ("true", "1")
+            else "EXCLUDE" if str(v).lower() in ("false", "0")
+            else ""
+        )
+
+        pivot = df.pivot_table(
+            index=["title", "abstract", "doi", "human_result"],
+            columns="model_name",
+            values="binary_decision",
+            aggfunc="first"
+        ).reset_index()
+
+        return pivot

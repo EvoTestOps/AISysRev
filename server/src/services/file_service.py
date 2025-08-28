@@ -1,5 +1,5 @@
-import pandas as pd
 import io
+import pandas as pd
 from uuid import UUID
 from fastapi import Depends, UploadFile
 from typing import List
@@ -47,7 +47,7 @@ class FileService:
     
     async def generate_result_csv(self, project_uuid: UUID) -> str:
         result = await self.job_crud.create_result(project_uuid)
-        return result
+        return result.to_csv(index=False)
 
     async def process_files(
         self, project_uuid: UUID, files: List[UploadFile]
