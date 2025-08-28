@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
 
-class LikertDecision(Enum):
+class LikertDecision(str, Enum):
     stronglyDisagree = "1"
     disagree = "2"
     somewhatDisagree = "3"
@@ -15,7 +15,7 @@ class LikertDecision(Enum):
     stronglyAgree = "7"
 
 
-class BinaryDecision(Enum):
+class BinaryDecision(str, Enum):
     include = "Include"
     exclude = "Exclude"
 

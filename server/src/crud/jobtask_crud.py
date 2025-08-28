@@ -1,5 +1,6 @@
 from uuid import UUID
 from typing import List, Tuple
+from src.schemas.llm import StructuredResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
@@ -59,8 +60,14 @@ class JobTaskCrud:
         await self.db.execute(stmt)
         await self.db.commit()
 
-    async def update_job_task_result(self, job_task_id: int, result: dict):
-        stmt = update(JobTask).where(JobTask.id == job_task_id).values(result=result)
+    async def update_job_task_result(
+        self, job_task_id: int, result: StructuredResponse
+    ):
+        stmt = (
+            update(JobTask)
+            .where(JobTask.id == job_task_id)
+            .values(result=result.model_dump(mode="json"))
+        )
         await self.db.execute(stmt)
         await self.db.commit()
 
