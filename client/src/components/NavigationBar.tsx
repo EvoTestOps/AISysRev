@@ -72,7 +72,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
           )}
           {name === "Results" && projectUuid && (
             <a
-              href={`/api/v1/download_result_csv?project_uuid=${projectUuid}`}
+              href={`/api/v1/result/download_result_csv?project_uuid=${projectUuid}`}
               className="pr-2"
               title="Download CSV"
             >

@@ -13,7 +13,9 @@ from src.api.controllers.openrouter import router as openrouter_router
 from src.api.controllers.jobtask import router as jobtask_router
 from src.api.controllers.paper import router as paper_router
 from src.api.controllers.setting import router as setting_router
+from src.api.controllers.result import router as result_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,6 +36,7 @@ v1_router.include_router(paper_router)
 v1_router.include_router(setting_router)
 v1_router.include_router(celery_test_router)
 v1_router.include_router(openrouter_router)
+v1_router.include_router(result_router)
 
 app.include_router(v1_router)
 

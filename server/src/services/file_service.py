@@ -44,10 +44,6 @@ class FileService:
     async def fetch_all(self, project_uuid: UUID):
         rows = await self.file_crud.fetch_files(project_uuid)
         return [FileReadWithPaperCount(**row) for row in rows]
-    
-    async def generate_result_csv(self, project_uuid: UUID) -> str:
-        result = await self.job_crud.create_result(project_uuid)
-        return result.to_csv(index=False)
 
     async def process_files(
         self, project_uuid: UUID, files: List[UploadFile]

@@ -77,3 +77,11 @@ export type Paper = {
   created_at: Date | null;
   updated_at: Date | null;
 };
+
+export type Result = {
+  title: string;
+  abstract: string;
+  doi: string;
+  human_result: string;
+  [modelName: string]: string;
+};
