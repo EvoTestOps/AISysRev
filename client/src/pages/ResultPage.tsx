@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
-import { fetchPapersFromBackend } from "../services/jobTaskService";
+import { fetchResultFromBackend } from "../services/resultService";
 import { Paper as Ppr } from "../state/types";
 import * as React from 'react';
 import Box from '@mui/material/Box';
@@ -64,13 +64,13 @@ export const ResultPage = () => {
   const params = useParams<{ uuid: string }>();
   const projectUuid = params.uuid;
 
-  const [papers, setPapers] = useState<Ppr[]>([]);
+  const [result, setResult] = useState<Result[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
 
-      const allPapers: Ppr[] = await fetchPapersFromBackend(projectUuid);
-      setPapers(allPapers);
+      const res: Result[] = await fetchResultFromBackend(projectUuid);
+      setResult(res);
     };
     fetchData();
   }, [projectUuid]);
@@ -100,9 +100,9 @@ export const ResultPage = () => {
 						</TableRow>
 					</TableHead>
           <TableBody>
-            {papers.map((paper) => {
+            {result.map((result) => {
               return (
-                <Row key={paper.uuid} paper={paper} />
+                <Row key={result.title} paper={result} />
               );
             })}
           </TableBody>
