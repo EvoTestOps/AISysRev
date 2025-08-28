@@ -526,10 +526,10 @@ export const ProjectPage = () => {
             <div className="flex justify-end p-4 pb-2">
               <button
                 onClick={createTask}
-                disabled={openrouterKey == null}
+                disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="New Task"
                 className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-gray-500 disabled:hover:bg-gray-500 disabled:opacity-30"
+                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-green-600 disabled:opacity-50"
               >
                 New Task
               </button>
@@ -542,7 +542,7 @@ export const ProjectPage = () => {
         {evaluationFinished ? (
           <Button
             variant="green"
-            className="px-6 text-md font-bold rounded-xl transition duration-200 ease-in-out"
+            className="px-6 text-md font-bold rounded-xl"
             onClick={showEvaluationResults}
           >
             Show evaluation results
@@ -550,7 +550,7 @@ export const ProjectPage = () => {
         ) : (
           <Button
             variant="purple"
-            className="px-6 text-md font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 ease-in-out"
+            className="px-6 text-md font-bold rounded-xl disabled:bg-purple-600"
             onClick={openManualEvaluation}
             disabled={papersLoading || !canStartManualEvaluation}
           >
