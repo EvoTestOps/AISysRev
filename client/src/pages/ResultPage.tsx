@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
-import { fetchJobTasksFromBackend, fetchPapersFromBackend } from "../services/jobTaskService";
-import { fetchJobsForProject } from "../services/jobService";
-import { ScreeningTask, Paper as P, CreatedJob } from "../state/types";
+import { fetchPapersFromBackend } from "../services/jobTaskService";
+import { Paper as Ppr } from "../state/types";
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Collapse from '@mui/material/Collapse';
@@ -20,7 +19,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 // Row component for each paper
-function Row({ paper, screeningTask }: { paper: P; screeningTask?: ScreeningTask }) {
+function Row({ paper }: { paper: Ppr; }) {
 	const [open, setOpen] = React.useState(false);
 	return (
 		<React.Fragment>
@@ -65,18 +64,12 @@ export const ResultPage = () => {
   const params = useParams<{ uuid: string }>();
   const projectUuid = params.uuid;
 
-  const [papers, setPapers] = useState<P[]>([]);
-  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
+  const [papers, setPapers] = useState<Ppr[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const jobs: CreatedJob[] = await fetchJobsForProject(projectUuid);
-      const allTasks: ScreeningTask[] = (
-        await Promise.all(jobs.map((job) => fetchJobTasksFromBackend(job.uuid)))
-      ).flat();
-      setScreeningTasks(allTasks);
 
-      const allPapers: P[] = await fetchPapersFromBackend(projectUuid);
+      const allPapers: Ppr[] = await fetchPapersFromBackend(projectUuid);
       setPapers(allPapers);
     };
     fetchData();
@@ -108,11 +101,8 @@ export const ResultPage = () => {
 					</TableHead>
           <TableBody>
             {papers.map((paper) => {
-              const screeningTask = screeningTasks.find(
-                (task) => task.paper_uuid === paper.uuid
-              );
               return (
-                <Row key={paper.uuid} paper={paper} screeningTask={screeningTask} />
+                <Row key={paper.uuid} paper={paper} />
               );
             })}
           </TableBody>
