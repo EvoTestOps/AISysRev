@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 from typing import List
 import pandas as pd
-from sqlalchemy import select, func, String
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
 from src.models.project import Project
@@ -90,8 +90,8 @@ class JobCrud:
                     Paper.abstract,
                     Paper.doi,
                     Paper.human_result,
-                    func.jsonb_extract_path_text(Job.llm_config, 'model_name').label('model_name'),
-                    func.jsonb_extract_path_text(JobTask.result, 'overall_decision', 'binary_decision').label('binary_decision')
+                    Job.llm_config["model_name"].astext,
+                    JobTask.result["overall_decision"]["binary_decision"]
                 )
                 .join(JobTask, JobTask.paper_uuid == Paper.uuid)
                 .join(Job, Job.id == JobTask.job_id)
