@@ -26,6 +26,7 @@ async def get_available_models(
     try:
         models = openrouter.get_available_models()
         data = models["data"]
+        print(data)
         models["data"] = list(
             filter(
                 lambda model: all(
@@ -35,7 +36,7 @@ async def get_available_models(
                 data,
             )
         )
-
+        models["data"] = sorted(models["data"], key=lambda model: model.get("name", "").lower())
         return models
     except HTTPException:
         raise
