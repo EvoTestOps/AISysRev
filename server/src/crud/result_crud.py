@@ -25,7 +25,12 @@ class ResultCrud:
                 Paper.doi,
                 Paper.human_result,
                 Job.llm_config["model_name"].astext.label("model_name"),
-                JobTask.result["overall_decision"]["binary_decision"].astext.label("binary_decision")
+                JobTask.result["overall_decision"]["reason"].astext.label("reason"),
+                JobTask.result["overall_decision"]["binary_decision"].astext.label("binary_decision"),
+                JobTask.result["overall_decision"]["likert_decision"].astext.label("likert_decision"),
+                JobTask.result["overall_decision"]["probability_decision"].astext.label("probability_decision"),
+                JobTask.result["inclusion_criteria"].astext.label("inclusion_criteria"),
+                JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria")
             )
             .join(JobTask, JobTask.paper_uuid == Paper.uuid)
             .join(Job, Job.id == JobTask.job_id)
@@ -34,3 +39,4 @@ class ResultCrud:
         )
         result = await self.db.execute(stmt)
         return result.all()
+    

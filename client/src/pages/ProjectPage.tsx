@@ -345,6 +345,23 @@ export const ProjectPage = () => {
     navigate(`/result/${uuid}`);
   }, [evaluationFinished, navigate, uuid]);
 
+  const downloadCsv = async () => {
+    if (!uuid) return;
+    const response = await fetch(`/api/v1/result/download_result_csv?project_uuid=${uuid}`);
+    if (!response.ok) {
+      return;
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `project_${uuid}_results.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   if (error) {
     return (
       <Layout title="Error">
@@ -523,16 +540,25 @@ export const ProjectPage = () => {
                 </div>
               )}
             </div>
-            <div className="flex justify-end p-4 pb-2">
-              <button
+            <div className="flex justify-between p-4 pb-2">
+              <Button
+                variant="purple"
+                onClick={downloadCsv}
+                disabled={openrouterKey == null || createdJobs.length === 0 }
+                title="Export data"
+                className="w-fit rounded-2xl font-bold text-md disabled:bg-purple-600"
+              >
+                Export data
+              </Button>
+              <Button
+                variant="green"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="New Task"
-                className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-green-600 disabled:opacity-50"
+                className="w-fit rounded-2xl font-bold text-md disabled:bg-green-600"
               >
                 New Task
-              </button>
+              </Button>
             </div>
           </div>
         </div>
