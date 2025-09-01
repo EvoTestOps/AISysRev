@@ -1,5 +1,6 @@
 ## List of non-functional LLM models:
 
+- Qwen: Qwen3 235B A22B Instruct 2507 (CHECK THE ERROR. Can run first task)
 - OpenAI: gpt-oss-120b (ERROR1)
 - OpenAI: gpt-oss-20b (ERROR2)
 - Z.AI: GLM 4.5 Air (ERROR2)
