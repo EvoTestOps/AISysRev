@@ -4,6 +4,38 @@
 
 This proof-of-concept (PoC) application demonstrates the current capabilities of AI-automated title-abstract screening of systematic reviews (SRs). This PoC is based on a conference paper "The Promise and Challenges of Using LLMs to Accelerate the Screening Process of Systematic Reviews" by Huotala et al.
 
+## Getting started
+
+First, clone the repository to your local computer.
+
+### System and software requirements
+
+Verify your computer meets the following requirements:
+
+- Docker, with Compose plugin installed
+- Enough RAM to run multiple containers
+- Network connection
+- Access to OpenRouter API
+
+See https://docs.docker.com/desktop/ for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Engine and the Docker CLI.**
+
+1. Run `docker info` to verify you have Docker installed
+   - Docker `26.0.0` has been tested as working. For MacOS computers, Colima has been rigorously tested to work.
+3. Run `docker compose version` to verify you have Compose installed.
+   - Version `2.33.1` has been tested as working, newer versions should also work.
+   - **Note:** Older versions of Compose use `docker-compose` as the compose command. We don't provide support for legacy Compose versions.
+ 
+
+### Running the application
+
+#### MacOS, Linux and Windows (WSL)
+
+`make start-prod` should start the stack, assuming you have the requirements met.
+
+#### Windows (non-WSL)
+
+`./start-prod.bat` should start the stack for non-WSL Windows operating systems.
+
 ## Technology
 
 ### Front-end
@@ -14,13 +46,22 @@ TypeScript, React, Tailwind CSS, Vite, Wouter, Zod, Redux
 
 Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
-## Requirements
-
-Node.js v22 LTS and Python 3.9 are required.
+## Development requirements
+- Node.js v22 LTS
+- Python 3.9
+- Docker, with Compose plugin installed
 
 ## Running in development mode
 
-Run `make start-dev`
+### MacOS, Linux and Windows (WSL)
+
+`make start-dev`
+
+### Windows (non-WSL)
+
+`./start-dev.bat`
+
+### Getting started with development
 
 Open up the client: [http://localhost:3000](http://localhost:3000)
 
@@ -32,10 +73,6 @@ Server: [http://localhost:8080](http://localhost:3000)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=][http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=] password: **your_password**
 
-## Running in production mode
-
-Run `make start-prod`
-
 ## Mock data
 
 Mock data is located in `data/mock` -folder.
@@ -44,9 +81,9 @@ Mock data is located in `data/mock` -folder.
 
 Run in [client/](./client/) `npm test` for e2e tests
 
-Run in root `make backend-test` for backend tests
+Run in root `make backend-test` (`./backend-test.bat` for Windows non-WSL) for backend tests
 
-Run in root `make backend-test-html` for backend tests and HTML coverage report
+Run in root `make backend-test-html` (`./backend-test-html.bat` for Windows non-WSL) for backend tests and HTML coverage report
 
 ## Makefile Commands
 
