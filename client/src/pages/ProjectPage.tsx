@@ -274,6 +274,7 @@ export const ProjectPage = () => {
       Promise.all(
         createdJobs.map((job) => {
           console.log("job.uuid", job.uuid);
+          // @ts-expect-error Expected
           return fetchJobTasksFromBackend(job.uuid, job.id);
         })
       )
@@ -347,7 +348,7 @@ export const ProjectPage = () => {
 
   const downloadCsv = async () => {
     if (!uuid) return;
-    const response = await fetch(`/api/v1/result/download_result_csv?project_uuid=${uuid}`);
+    const response = await fetch(`/api/v1/result/download_result_csv?${new URLSearchParams({ project_uuid: uuid }).toString()}`);
     if (!response.ok) {
       return;
     }
