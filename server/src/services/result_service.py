@@ -2,6 +2,7 @@ import pandas as pd
 import json, re
 from uuid import UUID
 from fastapi import Depends
+from src.models.paper import HumanResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud.result_crud import ResultCrud
 from src.db.session import get_db
@@ -28,7 +29,9 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
     )
     df["notes"] = ""
 
-    df["human_result"] = df["human_result"].apply(lambda r: r.value)
+    df["human_result"] = df["human_result"].apply(
+        lambda r: r.value if isinstance(r, HumanResult) else ""
+    )
     df["binary_decision"] = df["binary_decision"].map(
         lambda v: (
             "INCLUDE"
@@ -62,7 +65,7 @@ class ResultService:
         rows = await self.result_crud.create_result(project_uuid)
         df = create_dataframe(rows)
         return df.to_csv(index=False)
-    
+
     async def generate_html(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
         df = create_dataframe(rows)
