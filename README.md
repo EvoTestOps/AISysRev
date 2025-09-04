@@ -1,5 +1,8 @@
 # AISysRev
-This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Please cite our research papers on this topic if you use the tool [1–2].
+This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the tool runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data can be imported from Scopus. Please cite our research papers on this topic if you use the tool [1–2].
+
+<img width="60%" height="60%" alt="{5145C448-8011-4733-B03C-8ED432E3D7F8}" src="https://github.com/user-attachments/assets/d1e78ac6-a364-4b4f-8953-7188fd350ef1" />
+
 
 ## Getting started
 
@@ -13,11 +16,11 @@ The minimum required fields are: Document title, DOI, Abstract, Authors (?), and
 
 Note: Exporting additional fields, such as Year, may result in an error.
 
-<img width="50%" height="50%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
+<img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
 
 ### LLMs Access and LLM screening speed
-The tool is integrated with OpenRouter, which supports multiple LLMs ranging from very affordable to top-tier models. To use the tool, you need to provide an OpenRouter key. You can set spending limits for each key directly on the OpenRouter website. New users also receive $5 in free credits when creating an account.
+The tool is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
 Note: Paper screening speed is about 4,5s per paper. 
