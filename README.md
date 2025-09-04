@@ -1,6 +1,5 @@
 # AISysRev
-This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening.
-Please cite our research papers on this topic if you use the tool [1–2].
+This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Please cite our research papers on this topic if you use the tool [1–2].
 
 ## Getting started
 
@@ -8,30 +7,41 @@ First, clone the repository to your local computer.
 ```bash
 git clone https://github.com/EvoTestOps/TitleAbstractScreening.git
 ```
+### Data
+The tool has been tested with CSV data exported from [Scopus](https://www.scopus.com/).
+The minimum required fields are: Document title, DOI, Abstract, Authors (?), and Source title(?). 
+
+Note: Exporting additional fields, such as Year, may result in an error.
+
+<img width="50%" height="50%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
+
+
+### LLMs Access and LLM screening speed
+The tool is integrated with OpenRouter, which supports multiple LLMs ranging from very affordable to top-tier models. To use the tool, you need to provide an OpenRouter key. You can set spending limits for each key directly on the OpenRouter website. New users also receive $5 in free credits when creating an account.
+<img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
+
+Note: Paper screening speed is about 4,5s per paper. 
+
 
 ### System and software requirements
-
-Verify your computer meets the following requirements:
-
 - Docker, with Compose plugin installed
 - Enough RAM (8GB) to run multiple containers
 - Network connection
-- Access to OpenRouter API
 
-See https://docs.docker.com/desktop/ for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Engine and the Docker CLI.**
+See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Engine and the Docker CLI.**
 
 1. Run `docker info` to verify you have Docker installed
    - Docker `26.0.0` has been tested as working. For MacOS computers, Colima has been rigorously tested to work.
 3. Run `docker compose version` to verify you have Compose installed.
    - Version `2.33.1` has been tested as working, newer versions should also work.
    - **Note:** Older versions of Compose use `docker-compose` as the compose command. We don't provide support for legacy Compose versions.
- 
+
 
 ### Running the application
 
 #### MacOS, Linux and Windows (WSL)
 
-`make start-prod` should start the stack, assuming you have the requirements met.
+`make start-prod` should start the stack, assuming you have the requirements met. The start up may take up to 3 minutes to start due to installation and downloading of necessary components. 
 
 #### Windows (non-WSL)
 
