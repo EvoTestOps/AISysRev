@@ -1,4 +1,5 @@
 import pytest
+import uuid
 from unittest.mock import MagicMock, call
 from src.crud.paper_crud import PaperCrud
 from src.services.paper_service import PaperService, get_paper_service
@@ -90,7 +91,7 @@ async def test_async_process_job(db_session, test_job_data):
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
-            paper_uuid="TODO"
+            paper_uuid=uuid.uuidv4(),
         )
         for i in range(1, 3)
     ]
@@ -123,7 +124,7 @@ async def test_async_process_job_failure(db_session, test_job_data, monkeypatch)
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
-            paper_uuid="TODO"
+            paper_uuid=uuid.uuidv4(),
         )
         for i in range(1, 3)
     ]
