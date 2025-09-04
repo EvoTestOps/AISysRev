@@ -98,8 +98,8 @@ export const ResultPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {result.map((paper) => (
-              <Row key={paper.title} paper={paper} modelColumns={modelColumns} />
+            {result.map((paper, i) => (
+              <Row key={`${paper.title}_${i}`} paper={paper} modelColumns={modelColumns} />
             ))}
           </TableBody>
         </Table>
