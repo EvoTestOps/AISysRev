@@ -21,7 +21,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] }) {
   const [open, setOpen] = React.useState(false);
   return (
-    <React.Fragment>
+    <>
       <TableRow>
         <TableCell>
           <IconButton size="small" onClick={() => setOpen(!open)}>
@@ -63,7 +63,7 @@ function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] })
           </Collapse>
         </TableCell>
       </TableRow>
-    </React.Fragment>
+    </>
   );
 }
 
