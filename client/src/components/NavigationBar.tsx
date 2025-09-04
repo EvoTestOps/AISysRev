@@ -70,7 +70,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
               />
             </Link>
           )}
-          {name === "Results" && projectUuid && (
+          {/* {name === "Results" && projectUuid && (
             <a
               href={`/api/v1/result/download_result_csv?${new URLSearchParams({ project_uuid: projectUuid }).toString()}`}
               className="pr-2"
@@ -88,7 +88,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
                 "
               />
             </a>
-          )}
+          )} */}
         </div>
       </div>
     </nav>
