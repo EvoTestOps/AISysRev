@@ -85,7 +85,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
           src={DragAndDropIcon}
           alt="Drag and Drop Icon"
           className={classNames(
-            "pb-2 max-h-20 max-w-20 transition-opacity duration-500",
+            "pb-2 max-h-20 max-w-20 transition-opacity duration-500 select-none",
             {
             "opacity-100 brightness-90": isDragging,
             "opacity-80": !isDragging,
@@ -94,7 +94,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
         />
         <span
           className={classNames(
-            "text-sm text-pretty font-medium text-gray-600 transition-colors duration-200",
+            "text-sm text-pretty font-medium text-gray-600 transition-colors duration-200 select-none",
             {
               "opacity-70": isDragging,
               "opacity-40": !isDragging,
