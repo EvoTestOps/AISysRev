@@ -1,19 +1,20 @@
-# AI-automated screening PoC
-
-## Introduction
-
-This proof-of-concept (PoC) application demonstrates the current capabilities of AI-automated title-abstract screening of systematic reviews (SRs). This PoC is based on a conference paper "The Promise and Challenges of Using LLMs to Accelerate the Screening Process of Systematic Reviews" by Huotala et al.
+# AISysRev
+This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening.
+Please cite our research papers on this topic if you use the tool [1–2].
 
 ## Getting started
 
 First, clone the repository to your local computer.
+```bash
+git clone https://github.com/EvoTestOps/TitleAbstractScreening.git
+```
 
 ### System and software requirements
 
 Verify your computer meets the following requirements:
 
 - Docker, with Compose plugin installed
-- Enough RAM to run multiple containers
+- Enough RAM (8GB) to run multiple containers
 - Network connection
 - Access to OpenRouter API
 
@@ -117,6 +118,9 @@ Currently, we support models provided via Openrouter.
 
 CC-BY-ND 4.0
 
+
 ## References
 
-Huotala, A., Kuutila, M., Ralph, P., & Mäntylä, M. (2024). The promise and challenges of using llms to accelerate the screening process of systematic reviews. Proceedings of the 28th International Conference on Evaluation and Assessment in Software Engineering, 262–271. [https://doi.org/10.1145/3661167.3661172](https://doi.org/10.1145/3661167.3661172)
+[1]  Huotala, A., Kuutila, M., Ralph, P., & Mäntylä, M. (2024). The promise and challenges of using llms to accelerate the screening process of systematic reviews. Proceedings of the 28th International Conference on Evaluation and Assessment in Software Engineering, 262–271. [https://doi.org/10.1145/3661167.3661172](https://doi.org/10.1145/3661167.3661172)
+
+[2] Huotala A, Kuutila M, Mäntylä M. SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews. InProceedings of the The 19th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement 2025 Oct 218 (pp. 1-12) [https://arxiv.org/abs/2507.19027](https://arxiv.org/abs/2507.19027)
