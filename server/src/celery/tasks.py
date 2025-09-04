@@ -66,16 +66,16 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
-                await redis.publish(
-                    REDIS_CHANNEL,
-                    QueueItem(
-                        event_name=EventName.JOB_TASK_RUNNING,
-                        value={
-                            "job_task_id": job_task.id,
-                            "status": JobTaskStatus.RUNNING,
-                        },
-                    ).model_dump_json(),
-                )
+                # await redis.publish(
+                #     REDIS_CHANNEL,
+                #     QueueItem(
+                #         event_name=EventName.JOB_TASK_RUNNING,
+                #         value={
+                #             "job_task_id": job_task.id,
+                #             "status": JobTaskStatus.RUNNING,
+                #         },
+                #     ).model_dump_json(),
+                # )
 
                 celery_task.update_state(
                     state="PROGRESS",
@@ -140,6 +140,7 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                         },
                     ).model_dump_json(),
                 )
+
                 celery_task.update_state(
                     state="FAILURE",
                     meta={"error": str(e)},

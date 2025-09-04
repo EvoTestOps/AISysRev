@@ -11,7 +11,7 @@ from src.tools.diagnostics.db_check import (
 
 router = APIRouter()
 
-redis_task: asyncio.Task | None = None
+#redis_task: asyncio.Task | None = None
 
 
 @router.on_event("startup")
@@ -37,9 +37,9 @@ async def on_startup():
 
         print("Subscribing to Redis topics..")
 
-        global redis_task
-        redis_task = asyncio.create_task(redis_subscribe(), name="redis_subscription")
-        print(f"Redis subscriber task created: {redis_task!r}")
+        # global redis_task
+        # redis_task = asyncio.create_task(redis_subscribe(), name="redis_subscription")
+        #print(f"Redis subscriber task created: {redis_task!r}")
 
         print("Application startup complete!")
 
@@ -48,9 +48,9 @@ async def on_startup():
         raise
 
 
-@router.on_event("shutdown")
-async def shutdown():
-    global redis_task
-    if redis_task:
-        redis_task.cancel()
-        redis_task = None
+# @router.on_event("shutdown")
+# async def shutdown():
+#     global redis_task
+#     if redis_task:
+#         redis_task.cancel()
+#         redis_task = None
