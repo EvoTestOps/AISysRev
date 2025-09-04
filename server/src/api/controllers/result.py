@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi.responses import HTMLResponse
 from fastapi import APIRouter, Depends, HTTPException, status, Response
+from src.services.project_service import ProjectService, get_project_service
 from src.services.result_service import ResultService, get_result_service
 
 
@@ -11,8 +12,15 @@ router = APIRouter()
 @router.get("/result/download_result_csv", status_code=200)
 async def download_result_csv(
     project_uuid: UUID,
+    project_service: ProjectService = Depends(get_project_service),
     result_service: ResultService = Depends(get_result_service),
 ):
+    project = await project_service.fetch_by_uuid(project_uuid)
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project not found",
+        )
     try:
         csv_content = await result_service.generate_result_csv(project_uuid)
         filename = f"project_{project_uuid}_results.csv"
@@ -31,8 +39,15 @@ async def download_result_csv(
 @router.get("/result/html", status_code=200)
 async def download_result_csv(
     project_uuid: UUID,
+    project_service: ProjectService = Depends(get_project_service),
     result_service: ResultService = Depends(get_result_service),
 ):
+    project = await project_service.fetch_by_uuid(project_uuid)
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project not found",
+        )
     try:
         content = await result_service.generate_html(project_uuid)
         return HTMLResponse(
@@ -61,8 +76,15 @@ async def download_result_csv(
 @router.get("/result/", status_code=200)
 async def get_result(
     project_uuid: UUID,
+    project_service: ProjectService = Depends(get_project_service),
     result_service: ResultService = Depends(get_result_service),
 ):
+    project = await project_service.fetch_by_uuid(project_uuid)
+    if project is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project not found",
+        )
     try:
         return await result_service.fetch_result(project_uuid)
 
