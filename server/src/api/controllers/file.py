@@ -23,27 +23,6 @@ async def list_files(
             detail=f"Failed to fetch files: {str(e)}",
         )
 
-@router.get("/download_result_csv", status_code=200)
-async def download_result_csv(
-    project_uuid: UUID,
-    file_service: FileService = Depends(get_file_service),
-):
-    try:
-        csv_content = await file_service.generate_result_csv(project_uuid)
-        filename = f"project_{project_uuid}_results.csv"
-        return Response(
-            content=csv_content,
-            media_type="text/csv; charset=utf-8",
-            headers={
-                "Content-Disposition": f'attachment; filename="{filename}"'
-            }
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate CSV: {str(e)}",
-        )
-
 @router.post("/files/upload", status_code=200, response_model=dict)
 async def process_csv(
     project_uuid: UUID = Form(...),

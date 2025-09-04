@@ -5,7 +5,7 @@ type LlmModelCardProps = {
   probability: number;
 };
 
-const likertMap = {
+const likertMap: Record<number, string> = {
   1: "Strongly disagree",
   2: "Disagree",
   3: "Somewhat disagree",
@@ -28,41 +28,22 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
       aria-label="Model Card"
     >
       <span className="font-bold text-lg">{modelName}</span>
-      <div className="flex flex-col text-sm">
         <div>
-          The paper should be{" "}
-          <span className="font-bold">
-            {binary === "Include" ? "included" : "excluded"}
-          </span>
-          .<br />
-          <br />
-          The paper scored{" "}
-          <b>
-            {/**@ts-expect-error Exists */}
-            {likertScale} ({likertMap[likertScale]})
-          </b>{" "}
-          on the Likert-scale <br />
-          (1-7) for inclusion.
-          <br />
-          <br />
-          There is a <b>{probability * 100}%</b> probability that the paper is
-          relevant for inclusion.
-        </div>
-        <div className="hidden">
           <div className="whitespace-nowrap">
             <span className="text-sm font-semibold">Binary: </span>
             <span className="text-sm">{binary}</span>
           </div>
-          <div className="whitespace-nowrap">
-            <span className="text-sm font-semibold">Likert-scale (1-7): </span>
-            <span className="text-sm">{likertScale}</span>
+          <div className="break-words">
+            <span className="text-sm font-semibold">Likert (include): </span>
+            <span className="text-sm break-words">
+              {likertScale} ({likertMap[likertScale]})
+            </span>
           </div>
           <div className="whitespace-nowrap">
-            <span className="text-sm font-semibold">Probability: </span>
-            <span className="text-sm">{probability}</span>
+            <span className="text-sm font-semibold">Probability (include): </span>
+            <span className="text-sm">{probability * 100}%</span>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 };

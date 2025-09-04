@@ -33,7 +33,7 @@ import {
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
-
+import { twMerge } from "tailwind-merge";
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -274,12 +274,13 @@ export const ProjectPage = () => {
       Promise.all(
         createdJobs.map((job) => {
           console.log("job.uuid", job.uuid);
+          // @ts-expect-error Expected
           return fetchJobTasksFromBackend(job.uuid, job.id);
         })
       )
         .then((results) => {
           setScreeningTasks(results.flat());
-          console.log("results: ", results.flat())
+          console.log("results: ", results.flat());
         })
         .catch((error) => {
           console.error("Error fetching job tasks:", error);
@@ -325,7 +326,7 @@ export const ProjectPage = () => {
     paperToTaskMap,
     navigate,
     uuid,
-    loadPapers
+    loadPapers,
   ]);
 
   useEffect(() => {
@@ -344,6 +345,27 @@ export const ProjectPage = () => {
     if (!evaluationFinished) return;
     navigate(`/result/${uuid}`);
   }, [evaluationFinished, navigate, uuid]);
+
+  const downloadCsv = async () => {
+    if (!uuid) return;
+    const response = await fetch(
+      `/api/v1/result/download_result_csv?${new URLSearchParams({
+        project_uuid: uuid,
+      }).toString()}`
+    );
+    if (!response.ok) {
+      return;
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `project_${uuid}_results.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
 
   if (error) {
     return (
@@ -364,6 +386,28 @@ export const ProjectPage = () => {
     <Layout title={name}>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
+          <div className="flex flex-row gap-2">
+            <Button
+              variant="gray"
+              onClick={downloadCsv}
+              title="Export CSV"
+            >
+              Export CSV
+            </Button>
+            <a
+              className={twMerge(
+                "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
+              )}
+              href={`/api/v1/result/html?${new URLSearchParams({
+                project_uuid: uuid,
+              }).toString()}`}
+              target="__blank"
+              rel="noopener noreferrer"
+              title="Show HTML"
+            >
+              Show HTML
+            </a>
+          </div>
           <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
             <div className="flex flex-col text-sm text-gray-700 max-w-md">
               <p className="font-bold pb-2">Inclusion criteria:</p>
@@ -380,18 +424,19 @@ export const ProjectPage = () => {
               <p className="text-gray-400 ml-1 pb-4 italic">
                 No screening tasks
               </p>
-            )
-          }
+            )}
           {createdJobs.map((job) => {
-            const jobTasks = screeningTasks.filter(
-              (task) => {
-                console.log("task.job_uuid:", task.job_uuid, "job.uuid:", job.uuid);
-                return task.job_uuid === job.uuid;
-              }
-            );
+            const jobTasks = screeningTasks.filter((task) => {
+              console.log(
+                "task.job_uuid:",
+                task.job_uuid,
+                "job.uuid:",
+                job.uuid
+              );
+              return task.job_uuid === job.uuid;
+            });
             const doneCount = jobTasks.filter(
-              (task) =>
-                task.status === JobTaskStatus.DONE
+              (task) => task.status === JobTaskStatus.DONE
             ).length;
             const totalCount = jobTasks.length;
             const progress =
@@ -405,7 +450,7 @@ export const ProjectPage = () => {
                   <div className="flex items-center font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
                       <span className="text-sm text-nowrap">
-                        {job.llm_config.model_name.length > 20
+                        {job.llm_config.model_name.length > 30
                           ? job.llm_config.model_name.substring(0, 17) + "..."
                           : job.llm_config.model_name}
                       </span>
@@ -426,12 +471,12 @@ export const ProjectPage = () => {
                       {doneCount}/{totalCount}
                     </div>
                   </div>
-                  <div className="flex text-sm text-red-500 items-center cursor-pointer">
+                  {/* <div className="flex text-sm text-red-500 items-center cursor-pointer">
                     Cancel
                   </div>
                   <div className="flex text-sm text-blue-500 items-center cursor-pointer">
                     View
-                  </div>
+                  </div> */}
                 </div>
               </div>
             );
@@ -523,16 +568,16 @@ export const ProjectPage = () => {
                 </div>
               )}
             </div>
-            <div className="flex justify-end p-4 pb-2">
-              <button
+            <div className="flex justify-between p-4 pb-2">
+              <Button
+                variant="green"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="New Task"
-                className="bg-green-600 text-white w-fit py-2 px-4 text-md font-bold rounded-2xl shadow-md
-                  hover:bg-green-500 transition duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed disabled:bg-green-600 disabled:opacity-50"
+                className="w-fit rounded-lg font-bold text-md disabled:bg-green-600"
               >
                 New Task
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -550,11 +595,13 @@ export const ProjectPage = () => {
         ) : (
           <Button
             variant="purple"
-            className="px-6 text-md font-bold rounded-xl disabled:bg-purple-600"
+            className="px-6 text-md font-bold rounded-lg disabled:bg-purple-600"
             onClick={openManualEvaluation}
             disabled={papersLoading || !canStartManualEvaluation}
           >
-            Start manual evaluation
+            {canStartManualEvaluation
+              ? "Start manual evaluation"
+              : "Please upload list of papers"}
           </Button>
         )}
       </div>

@@ -1,6 +1,6 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { H3 } from "./Typography";
-import { Plus, FolderDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import universityLogo from "../assets/images/HY__LD01_LogoFP_EN_B3____BW.png";
 
 type NavigationBarProps = {
@@ -9,12 +9,7 @@ type NavigationBarProps = {
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
-  const [location] = useLocation();
-  let projectUuid: string | undefined = undefined;
-  const match = location.match(/^\/result\/([^/]+)/);
-  if (match) {
-    projectUuid = match[1];
-  }
+
   return (
     <nav className="bg-neutral-50 flex flex-col">
       <div className="flex justify-between p-8">
@@ -69,25 +64,6 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
             "
               />
             </Link>
-          )}
-          {name === "Results" && projectUuid && (
-            <a
-              href={`/api/v1/download_result_csv?project_uuid=${projectUuid}`}
-              className="pr-2"
-              title="Download CSV"
-            >
-              <FolderDown
-                className="bg-gray-400 text-white 
-                  h-8 w-8
-                  rounded-sm
-                  brightness-110
-                  shadow-sm
-                  hover:bg-gray-300
-                  hover:drop-down-brightness-125
-                  transition duration-200 ease-in-out
-                "
-              />
-            </a>
           )}
         </div>
       </div>
