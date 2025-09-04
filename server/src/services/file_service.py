@@ -100,7 +100,7 @@ class FileService:
 
                     for idx, row in df.iterrows():
                         normalized = {
-                            (k or "").strip().lower(): (v or "").strip()
+                            (k or "").strip().lower() if isinstance(k, str) else str(k).strip().lower(): v
                             for k, v in row.items()
                         }
 
