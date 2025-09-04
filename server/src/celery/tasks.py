@@ -1,8 +1,11 @@
 import asyncio
 import logging
+from celery import Task
+from src.event_queue import EventName, QueueItem
+from src.redis.client import get_redis_client, REDIS_CHANNEL
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import JobCreate
 from src.schemas.jobtask import JobTaskStatus
 from src.crud.project_crud import ProjectCrud
 from src.crud.jobtask_crud import JobTaskCrud
@@ -12,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="tasks.process_job", bind=True)
-def process_job_task(self: asyncio.Task, job_id: int, job_data: dict):
+def process_job_task(self: Task, job_id: int, job_data: dict):
     job_data_unpacked = JobCreate.model_validate(job_data, strict=True)
     logger.info("Running job task using asyncio, ID: %s", job_id)
     asyncio.run(async_process_job(self, job_id, job_data_unpacked))
@@ -28,11 +31,11 @@ def test_task(name: str):
     return f"Hello, {name}!"
 
 
-async def async_process_job(
-    celery_task: asyncio.Task, job_id: int, job_data: JobCreate
-):
+async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate):
     logger.info("async_process_job: Starting to process job %s", job_id)
+    redis = get_redis_client()
     async with AsyncSessionLocal() as db:
+
         project_crud = ProjectCrud(db)
         jobtask_crud = JobTaskCrud(db)
 
@@ -48,12 +51,40 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
+                # await redis.publish(
+                #     REDIS_CHANNEL,
+                #     QueueItem(
+                #         event_name=EventName.JOB_TASK_RUNNING,
+                #         value={
+                #             "job_task_id": job_task.id,
+                #             "status": JobTaskStatus.RUNNING,
+                #         },
+                #     ).model_dump_json(),
+                # )
+
                 celery_task.update_state(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
+
+                # await redis.publish(
+                #     REDIS_CHANNEL,
+                #     QueueItem(
+                #         event_name=EventName.JOB_TASK_RUNNING,
+                #         value={
+                #             "job_task_id": job_task.id,
+                #             "status": JobTaskStatus.RUNNING,
+                #             "current": i + 1,
+                #             "total": len(job_tasks),
+                #         },
+                #     ).model_dump_json(),
+                # )
+
                 llm_result = await get_structured_response(
                     db, job_task, job_data, project.criteria
+                )
+                await jobtask_crud.update_job_task_result(
+                    job_task.id, llm_result.model_dump_json()
                 )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 print(job_task.result)
@@ -62,11 +93,33 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
+                # await redis.publish(
+                #     REDIS_CHANNEL,
+                #     QueueItem(
+                #         event_name=EventName.JOB_TASK_DONE,
+                #         value={
+                #             "job_task_id": job_task.id,
+                #             "status": JobTaskStatus.DONE,
+                #         },
+                #     ).model_dump_json(),
+                # )
+
             except Exception as e:
                 logger.info("Updating job task status to %s", JobTaskStatus.ERROR)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.ERROR
                 )
+                # await redis.publish(
+                #     REDIS_CHANNEL,
+                #     QueueItem(
+                #         event_name=EventName.JOB_TASK_ERROR,
+                #         value={
+                #             "job_task_id": job_task.id,
+                #             "status": JobTaskStatus.ERROR,
+                #             "message": str(e),
+                #         },
+                #     ).model_dump_json(),
+                # )
                 celery_task.update_state(
                     state="FAILURE",
                     meta={"error": str(e)},

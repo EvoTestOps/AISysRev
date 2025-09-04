@@ -28,7 +28,12 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
       aria-label="Model Card"
     >
       <span className="font-bold text-lg">{modelName}</span>
-        <div>
+      <div>
+        <div className="whitespace-nowrap">
+          <span className="text-sm font-semibold">Binary: </span>
+          <span className="text-sm">{binary}</span>
+        </div>
+        <div className="hidden">
           <div className="whitespace-nowrap">
             <span className="text-sm font-semibold">Binary: </span>
             <span className="text-sm">{binary}</span>
@@ -40,10 +45,13 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
             </span>
           </div>
           <div className="whitespace-nowrap">
-            <span className="text-sm font-semibold">Probability (include): </span>
+            <span className="text-sm font-semibold">
+              Probability (include):{" "}
+            </span>
             <span className="text-sm">{probability * 100}%</span>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
 };
