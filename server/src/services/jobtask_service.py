@@ -83,7 +83,7 @@ class JobTaskService:
 
     async def start_job_tasks(self, job_id: int, job_data: dict):
         # job_data is of type JobCreate
-        print("start_job_tasks: Processing job %s", job_id)
+        print(f"start_job_tasks: Processing job {job_id}")
         return process_job_task.delay(job_id, job_data)
 
 
