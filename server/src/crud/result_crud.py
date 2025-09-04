@@ -7,17 +7,12 @@ from src.models.paper import Paper
 from src.models.project import Project
 from src.models.jobtask import JobTask
 
+
 class ResultCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def create_result(self, project_uuid: UUID) -> pd.DataFrame:
-        project = await self.db.execute(select(Project).where(Project.uuid == project_uuid))
-        project_obj = project.scalar_one_or_none()
-        if not project_obj:
-            raise ValueError("Project not found when creating result")
-        project_id = project_obj.id
-
         stmt = (
             select(
                 Paper.title,
@@ -26,17 +21,23 @@ class ResultCrud:
                 Paper.human_result,
                 Job.llm_config["model_name"].astext.label("model_name"),
                 JobTask.result["overall_decision"]["reason"].astext.label("reason"),
-                JobTask.result["overall_decision"]["binary_decision"].astext.label("binary_decision"),
-                JobTask.result["overall_decision"]["likert_decision"].astext.label("likert_decision"),
-                JobTask.result["overall_decision"]["probability_decision"].astext.label("probability_decision"),
+                JobTask.result["overall_decision"]["binary_decision"].astext.label(
+                    "binary_decision"
+                ),
+                JobTask.result["overall_decision"]["likert_decision"].astext.label(
+                    "likert_decision"
+                ),
+                JobTask.result["overall_decision"]["probability_decision"].astext.label(
+                    "probability_decision"
+                ),
                 JobTask.result["inclusion_criteria"].astext.label("inclusion_criteria"),
-                JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria")
+                JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria"),
             )
-            .join(JobTask, JobTask.paper_uuid == Paper.uuid)
-            .join(Job, Job.id == JobTask.job_id)
-            .join(Project, Project.id == Job.project_id)
-            .where(Project.id == project_id)
+            .select_from(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
+            .outerjoin(Job, Job.id == JobTask.job_id)
+            .where(Project.uuid == project_uuid)
         )
         result = await self.db.execute(stmt)
         return result.all()
-    

@@ -35,7 +35,7 @@ export const TermsAndConditionsPage = () => {
           </p>
           <div className="p-2 flex justify-center">
             <button
-              className="bg-slate-300 p-2 rounded-md shadow-md"
+              className="bg-slate-300 p-2 rounded-md shadow-md hover:cursor-pointer"
               data-testid="accept-terms-and-conditions"
               onClick={() => {
                 Cookies.set("disclaimer_read", "true", { expires: 14 });
