@@ -1,5 +1,5 @@
 # AISysRev
-This tool offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the tool runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data can be imported from Scopus. Please cite our research papers on this topic if you use the tool [1–2].
+This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data for screening can be imported from Scopus. Please cite our research papers on this topic if you use the application [1–2].
 
 <img width="60%" height="60%" alt="{5145C448-8011-4733-B03C-8ED432E3D7F8}" src="https://github.com/user-attachments/assets/d1e78ac6-a364-4b4f-8953-7188fd350ef1" />
 
@@ -20,7 +20,7 @@ Note: Exporting additional fields, such as Year, may result in an error.
 
 
 ### LLMs Access and LLM screening speed
-The tool is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
+The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
 Note: Paper screening speed is about 4,5s per paper. 
@@ -44,7 +44,7 @@ See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Doc
 
 #### MacOS, Linux and Windows (WSL)
 
-`make start-prod` should start the stack, assuming you have the requirements met. The start up may take up to 3 minutes to start due to installation and downloading of necessary components. 
+`make start-prod` should start the stack, assuming you have the requirements met. The start up may take up to 3 minutes to start due to installation and downloading of necessary components. After starup open the application: [http://localhost:3001](http://localhost:3001)
 
 #### Windows (non-WSL)
 
