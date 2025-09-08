@@ -1,15 +1,18 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
-import { Plus } from "lucide-react";
 import evoTestOpsLogo from "../assets/images/evotestops.png";
 
 type NavigationBarProps = {
   name: string;
+  navbarActionComponent?: () => React.ReactNode;
 };
 
-export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
+export const NavigationBar: React.FC<NavigationBarProps> = ({
+  name,
+  navbarActionComponent: navbarExtraComponent,
+}) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
-
+  const NavbarExtraComponent = navbarExtraComponent;
   return (
     <nav className="bg-neutral-50 flex flex-col">
       <div className="flex justify-between p-8">
@@ -54,21 +57,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({ name }) => {
           <H3>{name}</H3>
         </div>
         <div className="flex items-center">
-          {name === "Projects" && (
-            <Link href="/create" className="pr-2">
-              <Plus
-                className="bg-green-600 text-white 
-              h-8 w-8
-              rounded-sm
-              brightness-110
-              shadow-sm
-              hover:bg-green-500
-              hover:drop-down-brightness-125
-              transition duration-200 ease-in-out
-            "
-              />
-            </Link>
-          )}
+          {NavbarExtraComponent && <NavbarExtraComponent />}
         </div>
       </div>
     </nav>
