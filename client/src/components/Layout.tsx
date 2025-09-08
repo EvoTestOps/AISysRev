@@ -29,7 +29,7 @@ export const Layout = ({
       {!hideNavBar && (
         <NavigationBar
           name={title}
-          navbarActionComponent={navbarActionComponent}
+          navbarExtraComponent={navbarActionComponent}
         />
       )}
 

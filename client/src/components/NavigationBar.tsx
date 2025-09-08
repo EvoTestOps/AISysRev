@@ -4,12 +4,12 @@ import evoTestOpsLogo from "../assets/images/evotestops.png";
 
 type NavigationBarProps = {
   name: string;
-  navbarActionComponent?: () => React.ReactNode;
+  navbarExtraComponent?: () => React.ReactNode;
 };
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({
   name,
-  navbarActionComponent: navbarExtraComponent,
+  navbarExtraComponent,
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
   const NavbarExtraComponent = navbarExtraComponent;
