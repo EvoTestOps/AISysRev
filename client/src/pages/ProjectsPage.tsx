@@ -14,8 +14,8 @@ const ProjectsPageActions = () => {
         href="/create"
         className="flex flex-row gap-2 p-2 bg-green-600 text-white font-bold rounded-sm shadow-sm hover:bg-green-500 transition duration-200 ease-in-out"
       >
-        <span>New</span>
         <Plus />
+        <span>New</span>
       </Link>
     </>
   );
