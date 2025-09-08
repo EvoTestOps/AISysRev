@@ -3,6 +3,7 @@ import { DropdownMenuEllipsis } from "./DropDownMenus";
 import { Project } from "../state/types";
 import { Link } from "wouter";
 import Skeleton from "react-loading-skeleton";
+import { Trash2 } from "lucide-react";
 
 type DisplayProjectsProps = {
   projects: Project[];
@@ -52,7 +53,12 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
             <DropdownMenuEllipsis
               items={[
                 {
-                  label: "Delete",
+                  label: () => (
+                    <div className="text-red-700 flex flex-row gap-3 items-center">
+                      <Trash2 />
+                      <span>Delete</span>
+                    </div>
+                  ),
                   onClick: () => handleProjectDelete(project.uuid),
                 },
               ]}

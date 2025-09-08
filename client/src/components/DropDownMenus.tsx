@@ -3,7 +3,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { Ellipsis } from "lucide-react";
 
 type EllipsisItem = {
-  label: string;
+  label: React.ElementType;
   onClick: () => void;
 };
 
@@ -39,16 +39,19 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
         anchor="bottom end"
         className="z-10 mt-2 w-40 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
       >
-        {items.map((item: EllipsisItem) => (
-          <MenuItem
-            key={item.label}
-            as="button"
-            onClick={item.onClick}
-            className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
-          >
-            {item.label}
-          </MenuItem>
-        ))}
+        {items.map((item: EllipsisItem, i) => {
+          const Label = item.label;
+          return (
+            <MenuItem
+              key={i}
+              as="button"
+              onClick={item.onClick}
+              className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
+            >
+              <Label />
+            </MenuItem>
+          );
+        })}
       </MenuItems>
     </Menu>
   );
