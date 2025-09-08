@@ -24,10 +24,10 @@ services:
       PYTHONPATH: /app
       APP_ENV: prod
       SECRET_KEY: yoursecretkey
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: minioprod:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
       OPENROUTER_MOCK: y
@@ -60,7 +60,7 @@ services:
   
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-    container_name: minio_prod
+    container_name: minioprod
     environment:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
@@ -94,10 +94,10 @@ services:
       PYTHONPATH: /app
       APP_ENV: prod
       SECRET_KEY: yoursecretkey
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio_prod:9000
+      MINIO_ENDPOINT: minioprod:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
@@ -115,10 +115,10 @@ services:
       PYTHONPATH: /app
       APP_ENV: prod
       SECRET_KEY: yoursecretkey
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio:9000
+      MINIO_ENDPOINT: minioprod:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
