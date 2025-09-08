@@ -29,11 +29,14 @@ const ProjectsPageActions = () => {
 
 export const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-
+  const [loadingProjects, setLoadingProjects] = useState(true);
   const loadProjects = useCallback(async () => {
     try {
+      setLoadingProjects(true);
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const projectsData: Project[] = await fetch_projects();
       setProjects(projectsData);
+      setLoadingProjects(false);
       console.log("Projects loaded successfully");
     } catch (error) {
       console.error("Error loading projects:", error);
@@ -60,6 +63,7 @@ export const ProjectsPage = () => {
   return (
     <Layout title="Projects" navbarActionComponent={ProjectsPageActions}>
       <DisplayProjects
+        loadingProjects={loadingProjects}
         projects={projects}
         handleProjectDelete={handleProjectDelete}
       />

@@ -29,6 +29,7 @@ export function useConfig(name: string) {
     setLoading(true);
     try {
       const params = new URLSearchParams({ name });
+      await new Promise((resolve) => setTimeout(() => resolve(0), 500));
       const { data } = await axios.get<SettingRead>(
         `/api/v1/setting?${params.toString()}`
       );
@@ -37,7 +38,7 @@ export function useConfig(name: string) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message || "Request failed");
-      setSetting(null)
+      setSetting(null);
       return null;
     } finally {
       setLoading(false);

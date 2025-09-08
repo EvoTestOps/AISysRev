@@ -11,6 +11,7 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
+import "react-loading-skeleton/dist/skeleton.css";
 
 function App() {
   const [location, navigate] = useLocation();
