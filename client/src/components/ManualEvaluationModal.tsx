@@ -178,11 +178,11 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
-            <div className="bg-neutral-50 rounded-xl p-3 mb-4">
+            <div className="bg-blue-50 rounded-xl p-3 mb-4">
               <CriteriaList criteria={inclusionCriteria} />
             </div>
             <p className="font-bold text-sm mb-2">Exclusion criteria</p>
-            <div className="bg-neutral-50 rounded-xl p-3">
+            <div className="bg-blue-50 rounded-xl p-3">
               <CriteriaList criteria={exclusionCriteria} />
             </div>
           </div>

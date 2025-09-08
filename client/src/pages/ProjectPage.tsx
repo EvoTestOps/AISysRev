@@ -391,22 +391,25 @@ export const ProjectPage = () => {
               variant="gray"
               onClick={downloadCsv}
               title="Export CSV"
+              disabled={papers.length === 0}
             >
               Export CSV
             </Button>
-            <a
-              className={twMerge(
-                "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
-              )}
-              href={`/api/v1/result/html?${new URLSearchParams({
-                project_uuid: uuid,
-              }).toString()}`}
-              target="__blank"
-              rel="noopener noreferrer"
-              title="Show HTML"
-            >
-              Show HTML
-            </a>
+            {papers && papers.length > 0 && (
+              <a
+                className={twMerge(
+                  "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
+                )}
+                href={`/api/v1/result/html?${new URLSearchParams({
+                  project_uuid: uuid,
+                }).toString()}`}
+                target="__blank"
+                rel="noopener noreferrer"
+                title="Show HTML"
+              >
+                Show HTML
+              </a>
+            )}
           </div>
           <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
             <div className="flex flex-col text-sm text-gray-700 max-w-md">
