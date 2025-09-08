@@ -1,20 +1,12 @@
 # AISysRev
-This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data for screening can be imported from Scopus. Please cite our research papers on this topic if you use the application [1–2].
+This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data for screening can be imported from Scopus. Please cite our research papers on this topic if you use the application [1–2](#references).
 
 <img width="60%" height="60%" alt="{5145C448-8011-4733-B03C-8ED432E3D7F8}" src="https://github.com/user-attachments/assets/d1e78ac6-a364-4b4f-8953-7188fd350ef1" />
 
-
 ## Getting started
 
-First, clone the repository to your local computer.
-```bash
-git clone https://github.com/EvoTestOps/TitleAbstractScreening.git
-```
 ### Data
-The tool has been tested with CSV data exported from [Scopus](https://www.scopus.com/).
-The minimum required fields are: Document title, DOI, Abstract, Authors (?), and Source title(?). 
-
-Note: Exporting additional fields, such as Year, may result in an error.
+The tool has been tested with CSV data exported from [Scopus](https://www.scopus.com/). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: Document title, DOI, Abstract, Authors, and Source title. 
 
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
@@ -23,12 +15,12 @@ Note: Exporting additional fields, such as Year, may result in an error.
 The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
-Note: Paper screening speed is about 4,5s per paper. 
+Note: Paper screening speed is about 4,5s per paper. We are working on parallelizing this after which it should go down to about 0.2s/paper. 
 
 
 ### System and software requirements
 - Docker, with Compose plugin installed
-- Enough RAM (8GB) to run multiple containers
+- Enough RAM (16GB recommended) to run multiple containers
 - Network connection
 
 See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Engine and the Docker CLI.**
@@ -41,14 +33,31 @@ See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Doc
 
 
 ### Running the application
+First, clone the repository to your local computer.
+```bash
+git clone https://github.com/EvoTestOps/AISysRev.git
+```
+move to correct directory
+```bash
+cd AISysRev
+```
 
 #### MacOS, Linux and Windows (WSL)
-
-`make start-prod` should start the stack, assuming you have the requirements met. The start up may take up to 3 minutes to start due to installation and downloading of necessary components. After starup open the application: [http://localhost:3001](http://localhost:3001)
+Start the application
+```bash
+make start-prod
+``` 
+If it does not work try
+```bash
+make start-dev
+``` 
+The start up may take up to 3 minutes to start due to installation and downloading of necessary components. After starup open the application. If `start-prod` worked [http://localhost:80](http://localhost:80) if you used `make start-dev` then [http://localhost:3001](http://localhost:3001)
 
 #### Windows (non-WSL)
-
-`./start-prod.bat` should start the stack for non-WSL Windows operating systems.
+If you do not have Windows Subsystem for Linux (WSL). Start with 
+```bash
+./start-prod.bat
+```
 
 ## Technology
 
