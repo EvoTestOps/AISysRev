@@ -44,10 +44,9 @@ services:
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database_dev
+      POSTGRES_DB: your_database_prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
 
   adminer:
