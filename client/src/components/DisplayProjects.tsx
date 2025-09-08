@@ -16,12 +16,12 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
   loadingProjects,
 }) => {
   const skeletons = [1, 2, 3, 4, 5];
-  if (!loadingProjects && !projects.length) {
-    return <div className="text-center text-gray-500 mt-8">No Projects</div>;
-  }
 
   return (
     <div>
+      {!loadingProjects && !projects.length && (
+        <div className="text-center text-gray-600 mt-8">No projects.</div>
+      )}
       {loadingProjects &&
         skeletons.map((skeleton) => (
           <div
@@ -34,10 +34,12 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
           </div>
         ))}
       {!loadingProjects &&
+        projects &&
+        projects.length > 0 &&
         projects.map((project) => (
           <div
             key={project.uuid}
-            className="bg-white p-4 mb-4 rounded hover:brightness-125 transition-all duration-200 h-20 flex justify-between items-center"
+            className="bg-white p-4 mb-4 rounded h-20 flex justify-between items-center"
           >
             <H6>
               <Link

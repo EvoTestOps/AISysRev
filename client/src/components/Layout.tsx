@@ -7,7 +7,7 @@ import { NavigationBar } from "./NavigationBar";
 type LayoutProps = {
   title: string;
   className?: string;
-  navbarActionComponent?: () => React.ReactNode;
+  navbarActionComponent?: React.ElementType;
 };
 
 export const Layout = ({
@@ -29,7 +29,7 @@ export const Layout = ({
       {!hideNavBar && (
         <NavigationBar
           name={title}
-          navbarExtraComponent={navbarActionComponent}
+          navbarActionComponent={navbarActionComponent}
         />
       )}
 

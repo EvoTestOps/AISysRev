@@ -10,18 +10,12 @@ import { Plus } from "lucide-react";
 const ProjectsPageActions = () => {
   return (
     <>
-      <Link href="/create" className="pr-2">
-        <Plus
-          className="bg-green-600 text-white 
-              h-8 w-8
-              rounded-sm
-              brightness-110
-              shadow-sm
-              hover:bg-green-500
-              hover:drop-down-brightness-125
-              transition duration-200 ease-in-out
-            "
-        />
+      <Link
+        href="/create"
+        className="flex flex-row gap-2 p-2 bg-green-600 text-white font-bold rounded-sm shadow-sm hover:bg-green-500 transition duration-200 ease-in-out"
+      >
+        <span>New</span>
+        <Plus />
       </Link>
     </>
   );

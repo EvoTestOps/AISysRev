@@ -26,8 +26,8 @@ export const CriteriaInput: React.FC<CriteriaInputProps> = (props) => {
           }}
         />
         <button
-          className="bg-green-600 text-white hover:cursor-pointer h-8 p-2 rounded-md shadow-md flex items-center content-center
-          hover:bg-green-500 hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+          className="bg-green-600 font-semibold text-white hover:cursor-pointer h-8 p-2 rounded-md shadow-md flex items-center content-center
+          hover:bg-green-500 transition duration-200 ease-in-out"
           onClick={() => props.handleSetup()}
         >
           Add

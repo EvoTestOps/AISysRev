@@ -4,15 +4,15 @@ import evoTestOpsLogo from "../assets/images/evotestops.png";
 
 type NavigationBarProps = {
   name: string;
-  navbarExtraComponent?: () => React.ReactNode;
+  navbarActionComponent?: React.ElementType;
 };
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({
   name,
-  navbarExtraComponent,
+  navbarActionComponent,
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
-  const NavbarExtraComponent = navbarExtraComponent;
+  const NavbarActionComponent = navbarActionComponent;
   return (
     <nav className="bg-neutral-50 flex flex-col">
       <div className="flex justify-between p-8">
@@ -57,7 +57,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           <H3>{name}</H3>
         </div>
         <div className="flex items-center">
-          {NavbarExtraComponent && <NavbarExtraComponent />}
+          {NavbarActionComponent && <NavbarActionComponent />}
         </div>
       </div>
     </nav>
