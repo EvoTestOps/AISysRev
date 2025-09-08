@@ -25,7 +25,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
               alt="EvoTestOps"
             />
           </a>
-          {appEnv !== "prod" && (
+          {appEnv === "dev" && (
             <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm fixed top-4 left-4 opacity-40 select-none">
               {appEnv}
             </div>

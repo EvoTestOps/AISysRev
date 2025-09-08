@@ -56,6 +56,8 @@ services:
     restart: always
     ports:
       - ${ADMINER_PORT:-8080}:8080
+    depends_on:
+      - postgres
   
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
@@ -101,6 +103,7 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
       - redis
+      - postgres
 
   flower:
     container_name: flower_prod
