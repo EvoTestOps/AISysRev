@@ -5,7 +5,7 @@ import {
   Description,
 } from "@headlessui/react";
 import { useEffect, useCallback, useState } from "react";
-import { CircleX } from "lucide-react";
+import { Check, CircleQuestionMark, CircleX, X } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
@@ -155,19 +155,28 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   variant="green"
                   onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
                 >
-                  Include (Y / I)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <Check />
+                    <span>Include (Y / I)</span>
+                  </div>
                 </Button>
                 <Button
                   variant="yellow"
                   onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
                 >
-                  Unsure (U)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <CircleQuestionMark />
+                    <span>Unsure (U)</span>
+                  </div>
                 </Button>
                 <Button
                   variant="red"
                   onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
                 >
-                  Exclude (N / E)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <X />
+                    <span>Exclude (N / E)</span>
+                  </div>
                 </Button>
               </div>
             </div>
@@ -178,11 +187,11 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
-            <div className="bg-neutral-50 rounded-xl p-3 mb-4">
+            <div className="bg-blue-50 rounded-xl p-3 mb-4">
               <CriteriaList criteria={inclusionCriteria} />
             </div>
             <p className="font-bold text-sm mb-2">Exclusion criteria</p>
-            <div className="bg-neutral-50 rounded-xl p-3">
+            <div className="bg-blue-50 rounded-xl p-3">
               <CriteriaList criteria={exclusionCriteria} />
             </div>
           </div>

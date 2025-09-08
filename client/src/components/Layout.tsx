@@ -7,9 +7,15 @@ import { NavigationBar } from "./NavigationBar";
 type LayoutProps = {
   title: string;
   className?: string;
+  navbarActionComponent?: React.ElementType;
 };
 
-export const Layout = ({ title, children, className }: PropsWithChildren<LayoutProps>) => {
+export const Layout = ({
+  title,
+  children,
+  className,
+  navbarActionComponent,
+}: PropsWithChildren<LayoutProps>) => {
   const [location] = useLocation();
 
   const hideNavBar = location === "/terms";
@@ -20,10 +26,21 @@ export const Layout = ({ title, children, className }: PropsWithChildren<LayoutP
         <title>{title}</title>
       </Helmet>
 
-      {!hideNavBar && <NavigationBar name={title} />}
+      {!hideNavBar && (
+        <NavigationBar
+          name={title}
+          navbarActionComponent={navbarActionComponent}
+        />
+      )}
 
-      <div className={twMerge("mt-8 lg:w-4xl md:w-full mr-auto ml-auto", className)}>{children}</div>
-
+      <div
+        className={twMerge(
+          "mt-8 lg:w-4xl md:w-full mr-auto ml-auto",
+          className
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 };

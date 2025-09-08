@@ -34,6 +34,53 @@ import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
+import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
+
+type ActionComponentProps = {
+  hasPapers: boolean;
+  projectUuid: string;
+  downloadCsv: () => unknown;
+};
+
+const ActionComponent: React.FC<ActionComponentProps> = ({
+  hasPapers,
+  projectUuid,
+  downloadCsv,
+}) => {
+  return (
+    <div className="flex flex-row gap-2">
+      <Button
+        variant="gray"
+        onClick={downloadCsv}
+        title="Download CSV"
+        disabled={!hasPapers}
+      >
+        <div className="flex flex-row gap-2 items-center">
+          <Download />
+          <span>Download CSV</span>
+        </div>
+      </Button>
+      {hasPapers && (
+        <a
+          className={twMerge(
+            "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
+          )}
+          href={`/api/v1/result/html?${new URLSearchParams({
+            project_uuid: projectUuid,
+          }).toString()}`}
+          target="__blank"
+          rel="noopener noreferrer"
+          title="Show HTML"
+        >
+          <div className="flex flex-row gap-2 items-center">
+            <FileText />
+            <span>Show HTML</span>
+          </div>
+        </a>
+      )}
+    </div>
+  );
+};
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -45,9 +92,9 @@ export const ProjectPage = () => {
   const [name, setName] = useState("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
-  const [temperature, setTemperature] = useState(0.5);
+  const [temperature, setTemperature] = useState(0);
   const [seed, setSeed] = useState(128);
-  const [top_p, setTop_p] = useState(0.5);
+  const [top_p, setTop_p] = useState(0.1);
   const [isLlmSelected, setIsLlmSelected] = useState(true);
   const [papersLoading, setPapersLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
@@ -346,26 +393,31 @@ export const ProjectPage = () => {
     navigate(`/result/${uuid}`);
   }, [evaluationFinished, navigate, uuid]);
 
-  const downloadCsv = async () => {
-    if (!uuid) return;
-    const response = await fetch(
-      `/api/v1/result/download_result_csv?${new URLSearchParams({
-        project_uuid: uuid,
-      }).toString()}`
-    );
-    if (!response.ok) {
-      return;
+  const downloadCsv = useCallback(() => {
+    async function dl() {
+      if (!uuid) return;
+      const response = await fetch(
+        `/api/v1/result/download_result_csv?${new URLSearchParams({
+          project_uuid: uuid,
+        }).toString()}`
+      );
+      if (!response.ok) {
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${uuid}_results.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     }
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `project_${uuid}_results.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  };
+    dl().catch(console.error);
+  }, [uuid]);
+
+  const hasPapers = papers && papers.length > 0;
 
   if (error) {
     return (
@@ -383,38 +435,23 @@ export const ProjectPage = () => {
   }
 
   return (
-    <Layout title={name}>
+    <Layout
+      title={name}
+      navbarActionComponent={() => (
+        <ActionComponent
+          hasPapers={hasPapers}
+          downloadCsv={downloadCsv}
+          projectUuid={uuid}
+        />
+      )}
+    >
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          <div className="flex flex-row gap-2">
-            <Button
-              variant="gray"
-              onClick={downloadCsv}
-              title="Export CSV"
-            >
-              Export CSV
-            </Button>
-            <a
-              className={twMerge(
-                "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
-              )}
-              href={`/api/v1/result/html?${new URLSearchParams({
-                project_uuid: uuid,
-              }).toString()}`}
-              target="__blank"
-              rel="noopener noreferrer"
-              title="Show HTML"
-            >
-              Show HTML
-            </a>
-          </div>
-          <div className="flex gap-4 p-4 w-full bg-neutral-50 rounded-2xl">
-            <div className="flex flex-col text-sm text-gray-700 max-w-md">
-              <p className="font-bold pb-2">Inclusion criteria:</p>
-              <CriteriaList criteria={inclusionCriteria} />
-              <p className="font-bold pb-2 mt-4">Exclusion criteria:</p>
-              <CriteriaList criteria={exclusionCriteria} />
-            </div>
+          <div className="flex flex-col gap-2 p-4 w-full bg-neutral-50 rounded-lg">
+            <H6>Inclusion criteria</H6>
+            <CriteriaList criteria={inclusionCriteria} />
+            <H6>Exclusion criteria</H6>
+            <CriteriaList criteria={exclusionCriteria} />
           </div>
 
           <H4>Screening tasks</H4>
@@ -484,18 +521,19 @@ export const ProjectPage = () => {
         </div>
 
         <div className="flex flex-col space-y-4">
-          <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
+          <div className="flex flex-col gap-4 bg-neutral-50 p-4 rounded-lg">
             {fetchedFiles.length == 0 && (
               <div className="pb-4">
                 <FileDropArea onFilesSelected={handleFilesSelected} />
               </div>
             )}
-            <H6 className="pb-4">List of papers</H6>
+            <H5>List of papers</H5>
             <TruncatedFileNames files={fetchedFiles} maxLength={25} />
           </div>
 
-          <div className="flex flex-col bg-neutral-50 p-4 rounded-2xl">
-            <div className="flex pb-4">
+          <div className="flex flex-col gap-6 bg-neutral-50 p-4 rounded-lg">
+            <H4>Create task</H4>
+            <div className="flex">
               <H5 className="pr-16">LLM</H5>
               <DropdownMenuText
                 disabled={openrouterKey == null}
@@ -509,10 +547,8 @@ export const ProjectPage = () => {
                 setIsLlmSelected={setIsLlmSelected}
               />
             </div>
-
-            <p className="text-md font-bold pt-4 pb-4">LLM configuration</p>
-
-            <div className="flex pt-4 pb-4 justify-between">
+            <p className="text-md font-bold">LLM configuration</p>
+            <div className="flex justify-between">
               <p className="text-md font-semibold">
                 Temperature ({temperature})
               </p>
@@ -529,7 +565,7 @@ export const ProjectPage = () => {
               />
             </div>
 
-            <div className="flex pt-4 pb-4 justify-between items-center">
+            <div className="flex justify-between items-center">
               <p className="text-md font-semibold">Seed</p>
               <input
                 type="number"
@@ -540,8 +576,7 @@ export const ProjectPage = () => {
                 onChange={(e) => setSeed(e.target.valueAsNumber)}
               />
             </div>
-
-            <div className="flex pt-4 pb-4 justify-between items-center">
+            <div className="flex justify-between items-center">
               <p className="text-md font-semibold">top_p ({top_p})</p>
               <input
                 type="range"
@@ -568,15 +603,18 @@ export const ProjectPage = () => {
                 </div>
               )}
             </div>
-            <div className="flex justify-between p-4 pb-2">
+            <div className="flex justify-start">
               <Button
                 variant="green"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
-                title="New Task"
+                title="Create"
                 className="w-fit rounded-lg font-bold text-md disabled:bg-green-600"
               >
-                New Task
+                <div className="flex flex-row gap-2">
+                  <Sparkles />
+                  <span>Create</span>
+                </div>
               </Button>
             </div>
           </div>
@@ -599,9 +637,14 @@ export const ProjectPage = () => {
             onClick={openManualEvaluation}
             disabled={papersLoading || !canStartManualEvaluation}
           >
-            {canStartManualEvaluation
-              ? "Start manual evaluation"
-              : "Please upload list of papers"}
+            {canStartManualEvaluation ? (
+              <div className="flex flex-row gap-2">
+                <ChartCandlestick />
+                <span>Start manual evaluation</span>
+              </div>
+            ) : (
+              "Please upload list of papers"
+            )}
           </Button>
         )}
       </div>

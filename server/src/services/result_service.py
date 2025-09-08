@@ -1,11 +1,20 @@
+from typing import List
 import pandas as pd
-import json, re
 from uuid import UUID
 from fastapi import Depends
+from pydantic import TypeAdapter
+from src.schemas.llm import Criterion
 from src.models.paper import HumanResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud.result_crud import ResultCrud
 from src.db.session import get_db
+
+criteria_adapter = TypeAdapter(List[Criterion])
+
+
+def _ie(x) -> str:
+    s = str(x).lower()
+    return True if s in ("true", "1") else False if s in ("false", "0") else ""
 
 
 def create_dataframe(data: list[dict]) -> pd.DataFrame:
@@ -28,10 +37,59 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         ],
     )
     df["notes"] = ""
-
     df["human_result"] = df["human_result"].apply(
-        lambda r: r.value if isinstance(r, HumanResult) else ""
+        lambda r: str(r.value) if isinstance(r, HumanResult) else ""
     )
+
+    # If there are no LLM evals, return the df
+    if df["model_name"].isna().all():
+        df2 = df[["title", "abstract", "doi", "human_result", "notes"]].copy()
+        df2["notes"] = "Please run screening tasks to see LLM results."
+        return df2
+
+    df["inclusion_criteria"] = df["inclusion_criteria"].apply(
+        criteria_adapter.validate_json
+    )
+    df["exclusion_criteria"] = df["exclusion_criteria"].apply(
+        criteria_adapter.validate_json
+    )
+
+    # make per-criterion columns (one-liners)
+    df["inclusion_cols"] = df["inclusion_criteria"].apply(
+        lambda crits: {
+            f"{c.name.split(':', 1)[0].strip()}.binary": _ie(c.decision.binary_decision)
+            for c in crits
+        }
+        | {
+            f"{c.name.split(':', 1)[0].strip()}.likert": c.decision.likert_decision.value
+            for c in crits
+        }
+        | {
+            f"{c.name.split(':', 1)[0].strip()}.probability": c.decision.probability_decision
+            for c in crits
+        }
+    )
+
+    df["exclusion_cols"] = df["exclusion_criteria"].apply(
+        lambda crits: {
+            f"{c.name.split(':', 1)[0].strip()}.binary": _ie(c.decision.binary_decision)
+            for c in crits
+        }
+        | {
+            f"{c.name.split(':', 1)[0].strip()}.likert": c.decision.likert_decision.value
+            for c in crits
+        }
+        | {
+            f"{c.name.split(':', 1)[0].strip()}.probability": c.decision.probability_decision
+            for c in crits
+        }
+    )
+
+    inc = df.pop("inclusion_cols").apply(pd.Series)
+    exc = df.pop("exclusion_cols").apply(pd.Series)
+    df = pd.concat([df, inc, exc], axis=1)
+    df = df.drop(columns=["inclusion_criteria", "exclusion_criteria"])
+
     df["binary_decision"] = df["binary_decision"].map(
         lambda v: (
             "INCLUDE"
@@ -40,20 +98,56 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         )
     )
 
-    # If there are no manual evals, return the df
-    if df["model_name"].isna().all():
-        df2 = df[["title", "abstract", "doi", "human_result", "notes"]]
-        df2["notes"] = "Please run screening tasks to see LLM results."
-        return df2
+    crit_cols = [c for c in df.columns if c.startswith(("IC", "EC"))]
+    values = [
+        "binary_decision",
+        "reason",
+        "likert_decision",
+        "probability_decision",
+        *crit_cols,
+    ]
+
+    base_cols = ["title", "abstract", "doi", "human_result", "notes"]
 
     pivot = df.pivot_table(
-        index=["title", "abstract", "doi", "human_result", "notes"],
+        index=base_cols,
         columns="model_name",
-        values=["binary_decision", "reason", "likert_decision", "probability_decision"],
+        values=values,
         aggfunc="first",
     )
     pivot.columns = [f"{model}.{field}" for field, model in pivot.columns]
-    return pivot.reset_index()
+    pivot = pivot.reset_index()
+
+    overall_binary = [c for c in pivot.columns if c.endswith(".binary_decision")]
+    overall_likert = [c for c in pivot.columns if c.endswith(".likert_decision")]
+    overall_prob = [c for c in pivot.columns if c.endswith(".probability_decision")]
+
+    inc_binary = [c for c in pivot.columns if ".IC" in c and c.endswith(".binary")]
+    exc_binary = [c for c in pivot.columns if ".EC" in c and c.endswith(".binary")]
+    inc_likert = [c for c in pivot.columns if ".IC" in c and c.endswith(".likert")]
+    exc_likert = [c for c in pivot.columns if ".EC" in c and c.endswith(".likert")]
+    inc_prob = [c for c in pivot.columns if ".IC" in c and c.endswith(".probability")]
+    exc_prob = [c for c in pivot.columns if ".EC" in c and c.endswith(".probability")]
+
+    reasons = [c for c in pivot.columns if c.endswith(".reason")]
+
+    new_order = (
+        base_cols
+        + overall_binary
+        + overall_likert
+        + overall_prob
+        + inc_binary
+        + exc_binary
+        + inc_likert
+        + exc_likert
+        + inc_prob
+        + exc_prob
+        + reasons
+    )
+
+    pivot = pivot[[c for c in new_order if c in pivot.columns]]
+
+    return pivot
 
 
 class ResultService:
