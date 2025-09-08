@@ -59,7 +59,7 @@ services:
       - postgres
   
   minio:
-    image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+    image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     container_name: minio
     environment:
       MINIO_ROOT_USER: your_username
