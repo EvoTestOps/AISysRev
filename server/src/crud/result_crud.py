@@ -12,7 +12,7 @@ class ResultCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_result(self, project_uuid: UUID) -> pd.DataFrame:
+    async def create_result(self, project_uuid: UUID):
         stmt = (
             select(
                 Paper.title,
