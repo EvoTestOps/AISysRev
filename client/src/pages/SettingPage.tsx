@@ -3,6 +3,7 @@ import Skeleton from "react-loading-skeleton";
 import { Button } from "../components/Button";
 import { Layout } from "../components/Layout";
 import { useConfig } from "../config/config";
+import { CircleX, Pencil, Save } from "lucide-react";
 
 export const SettingsPage = () => {
   const {
@@ -60,7 +61,10 @@ export const SettingsPage = () => {
                     }}
                     variant="green"
                   >
-                    Edit
+                    <div className="flex flex-row gap-2 items-center font-semibold">
+                      <Pencil />
+                      <span>Edit</span>
+                    </div>
                   </Button>
                 </>
               )}
@@ -91,7 +95,10 @@ export const SettingsPage = () => {
                       refresh();
                     }}
                   >
-                    Save
+                    <div className="flex flex-row gap-2 items-center font-semibold">
+                      <Save />
+                      <span>Save</span>
+                    </div>
                   </Button>
                   <Button
                     variant="red"
@@ -103,7 +110,10 @@ export const SettingsPage = () => {
                       setValue("");
                     }}
                   >
-                    Cancel
+                    <div className="flex flex-row gap-2 items-center font-semibold">
+                      <CircleX />
+                      <span>Cancel</span>
+                    </div>
                   </Button>
                 </>
               )}

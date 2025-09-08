@@ -5,7 +5,7 @@ import {
   Description,
 } from "@headlessui/react";
 import { useEffect, useCallback, useState } from "react";
-import { CircleX } from "lucide-react";
+import { Check, CircleQuestionMark, CircleX, X } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
@@ -155,19 +155,28 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   variant="green"
                   onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
                 >
-                  Include (Y / I)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <Check />
+                    <span>Include (Y / I)</span>
+                  </div>
                 </Button>
                 <Button
                   variant="yellow"
                   onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
                 >
-                  Unsure (U)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <CircleQuestionMark />
+                    <span>Unsure (U)</span>
+                  </div>
                 </Button>
                 <Button
                   variant="red"
                   onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
                 >
-                  Exclude (N / E)
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <X />
+                    <span>Exclude (N / E)</span>
+                  </div>
                 </Button>
               </div>
             </div>
