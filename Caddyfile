@@ -1,0 +1,16 @@
+localhost {
+	handle /api* {
+		reverse_proxy backend_prod:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

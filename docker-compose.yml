@@ -1,56 +1,134 @@
 services:
   frontend:
+    container_name: frontend_prod
+    environment:
+      VITE_APP_ENV: prod
     build:
       context: .
       dockerfile: Dockerfile
       target: client
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
 
   backend:
+    container_name: backend_prod
     build:
       context: .
       dockerfile: Dockerfile
       target: server
-    ports:
-      - "8080:8080"
+    ports: ["5678:5678"]
     environment:
-      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database"
+      PYTHONPATH: /app
+      APP_ENV: prod
+      SECRET_KEY: yoursecretkey
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_prod:6379/0
+      REDIS_URL: redis://redis_prod:6379/0
+      MINIO_ENDPOINT: minio:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+      OPENROUTER_MOCK: y
+      RUN_MIGRATIONS: true
     depends_on:
       - postgres
       - minio
+      - redis
+      - celery
 
   postgres:
-    image: postgres:alpine
-    container_name: llm_screening_poc_db
+    image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
+    container_name: postgres_prod
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
-      POSTGRES_DB: your_database
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: your_database_dev
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init-scripts:/docker-entrypoint-initdb.d
+
+
+  adminer:
+    container_name: adminer_prod
+    image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
+    restart: always
+    ports:
+      - ${ADMINER_PORT:-8080}:8080
+    depends_on:
+      - postgres
   
   minio:
-    image: minio/minio:latest
-    container_name: llm_screening_poc_minio
+    image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
+    container_name: minio_prod
     environment:
-      MINIO_ROOT_USER: minio-admin
+      MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-    command: server --console-address ":9001" /csv_data /data
+    command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio_csv_data:/csv_data
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 10s
+      retries: 2
+
+  redis:
+    image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
+    container_name: redis_prod
+    privileged: true
+    volumes: 
+      - redis_data:/data
+
+  celery:
+    container_name: celery_prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: celery
+    ports: ["5679:5679"]
+    environment:
+      PYTHONPATH: /app
+      APP_ENV: prod
+      SECRET_KEY: yoursecretkey
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_prod:6379/0
+      REDIS_URL: redis://redis_prod:6379/0
+      MINIO_ENDPOINT: minio_prod:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
+    depends_on:
+      - redis
+      - postgres
+
+  flower:
+    container_name: flower_prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    command: celery -A src.worker flower --port=5555
+    environment:
+      PYTHONPATH: /app
+      APP_ENV: prod
+      SECRET_KEY: yoursecretkey
+      DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_${APP_ENV:-dev}"
+      CELERY_BROKER_URL: redis://redis_prod:6379/0
+      REDIS_URL: redis://redis_prod:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: your_username
+      MINIO_ROOT_PASSWORD: minio-secret-key
+    ports:
+      - ${FLOWER_PORT:-5555}:5555
+    depends_on:
+      - redis
+      - celery
 
 volumes:
   postgres_data:
-  minio_csv_data:
   minio_data:
+  redis_data:

@@ -7,6 +7,7 @@ import { CreateProject } from "../components/CreateProject";
 import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
+import { Plus, RotateCcw } from "lucide-react";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -172,13 +173,19 @@ export const NewProject = () => {
                 setSelectedFiles([]);
               }}
             >
-              Cancel
+              <div className="flex flex-row gap-2">
+                <RotateCcw />
+                <span>Reset</span>
+              </div>
             </button>
             <button
-              className="bg-blue-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-blue-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-green-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-green-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={handleCreate}
             >
-              Create
+              <div className="flex flex-row gap-2">
+                <Plus />
+                <span>Create</span>
+              </div>
             </button>
           </div>
         </div>
