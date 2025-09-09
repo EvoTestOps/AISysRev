@@ -122,7 +122,7 @@ API docs: [http://localhost:3000/documentation](http://localhost:3000/docs)
 
 Server: [http://localhost:8080](http://localhost:3000)
 
-Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=][http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=] password: **your_password**
+Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 
 ## Mock data
 
