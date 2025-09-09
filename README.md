@@ -1,7 +1,28 @@
 # AISysRev
-This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through OpenRouter, and data for screening can be imported from Scopus. Please cite our research papers on this topic if you use the application [1–2](#references).
+Project Status: This is a minimum viable product with core functionality working, but many features are missing and bugs remain.
 
-<img width="60%" height="60%" alt="{5145C448-8011-4733-B03C-8ED432E3D7F8}" src="https://github.com/user-attachments/assets/d1e78ac6-a364-4b4f-8953-7188fd350ef1" />
+This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), and data for screening can be imported from [Scopus](https://www.scopus.com/). 
+The application allows you to:
+- Import a CSV file with paper titles and abstracts
+- Specify include/exclude criteria for paper screening
+- Evaluate papers against the criteria using multiple LLMs
+- Receive LLM evaluations as binary decisions (include/exclude), ordinal ratings (1-7), or inclusion probabilities (0–1)
+- Perform manual evaluation of titles and abstracts alongside LLM evaluations
+- Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc.
+
+The application is based on our research papers on this topic. Please consider citing if you use the application [1–2](#references).
+
+<p align="left">
+  <img src="https://github.com/user-attachments/assets/e0d5aaf2-8c67-4991-bfa4-460fa9e06bfc" width="700"><br>
+  <em>This view shows LLM screening tasks.</em>
+</p>
+
+<p align="left">
+  <img src="https://github.com/user-attachments/assets/03a9ea35-e1f6-4489-9e85-2e0efce829f9" width="700"><br>
+  <em>This view shows LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
+</p>
+
+
 
 ## Getting started
 
