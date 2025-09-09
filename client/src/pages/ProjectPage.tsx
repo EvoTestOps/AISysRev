@@ -592,8 +592,8 @@ export const ProjectPage = () => {
             </div>
             <div>
               {!openrouterKeyLoading && openrouterKey == null && (
-                <div className="flex bg-red-300 rounded-md p-2 items-center justify-center">
-                  <span className="font-bold text-red-900 select-none">
+                <div className="flex bg-red-300 rounded-md p-4 items-center">
+                  <span className="font-bold text-sm text-red-900 select-none">
                     OpenRouter API key is not set
                     <br />
                     <Link className="text-blue-800" to="/settings">
@@ -609,9 +609,9 @@ export const ProjectPage = () => {
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="Create"
-                className="w-fit rounded-lg font-bold text-md disabled:bg-green-600"
+                className="w-full rounded-lg font-bold text-sm disabled:bg-green-600"
               >
-                <div className="flex flex-row gap-2">
+                <div className="flex flex-row items-center justify-center gap-2">
                   <Sparkles />
                   <span>Create</span>
                 </div>
@@ -631,21 +631,19 @@ export const ProjectPage = () => {
             Show evaluation results
           </Button>
         ) : (
-          <Button
-            variant="purple"
-            className="px-6 text-md font-bold rounded-lg disabled:bg-purple-600"
-            onClick={openManualEvaluation}
-            disabled={papersLoading || !canStartManualEvaluation}
-          >
-            {canStartManualEvaluation ? (
+          canStartManualEvaluation && (
+            <Button
+              variant="purple"
+              className="px-6 text-md font-bold rounded-lg disabled:bg-purple-600"
+              onClick={openManualEvaluation}
+              disabled={papersLoading || !canStartManualEvaluation}
+            >
               <div className="flex flex-row gap-2">
                 <ChartCandlestick />
                 <span>Start manual evaluation</span>
               </div>
-            ) : (
-              "Please upload list of papers"
-            )}
-          </Button>
+            </Button>
+          )
         )}
       </div>
 

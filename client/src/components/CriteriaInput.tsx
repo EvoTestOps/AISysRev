@@ -10,12 +10,12 @@ type CriteriaInputProps = {
 
 export const CriteriaInput: React.FC<CriteriaInputProps> = (props) => {
   return (
-    <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+    <div className="grid grid-cols-[200px_1fr] items-center gap-4">
       <H6>{props.label}</H6>
       <div className="flex justify-between items-center gap-4">
         <input
           type="text"
-          className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
+          className="border border-gray-300 rounded-lg shadow-md p-3 w-full focus:outline-none"
           placeholder={props.placeholder}
           value={props.value}
           onChange={(e) => props.setCriteriaInput(e.target.value)}
@@ -26,7 +26,7 @@ export const CriteriaInput: React.FC<CriteriaInputProps> = (props) => {
           }}
         />
         <button
-          className="bg-green-600 font-semibold text-white hover:cursor-pointer h-8 p-2 rounded-md shadow-md flex items-center content-center
+          className="bg-green-600 font-semibold text-white text-sm hover:cursor-pointer p-2 rounded-lg shadow-md flex items-center content-center
           hover:bg-green-500 transition duration-200 ease-in-out"
           onClick={() => props.handleSetup()}
         >

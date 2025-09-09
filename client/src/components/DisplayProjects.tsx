@@ -19,7 +19,7 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
   const skeletons = [1, 2, 3, 4, 5];
 
   return (
-    <div>
+    <>
       {!loadingProjects && !projects.length && (
         <div className="text-center text-gray-600 mt-8">No projects.</div>
       )}
@@ -27,7 +27,7 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
         skeletons.map((skeleton) => (
           <div
             key={skeleton}
-            className="bg-white p-4 mb-4 rounded h-20 flex items-center"
+            className="bg-white w-full p-4 mb-4 rounded-lg h-20 flex items-center"
           >
             <div className="w-full">
               <Skeleton />
@@ -40,7 +40,7 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
         projects.map((project) => (
           <div
             key={project.uuid}
-            className="bg-white p-4 mb-4 rounded h-20 flex justify-between items-center"
+            className="bg-white p-4 mb-4 rounded-lg h-20 flex justify-between items-center"
           >
             <H6>
               <Link
@@ -65,6 +65,6 @@ export const DisplayProjects: React.FC<DisplayProjectsProps> = ({
             />
           </div>
         ))}
-    </div>
+    </>
   );
 };

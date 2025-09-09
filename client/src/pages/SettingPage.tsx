@@ -19,8 +19,8 @@ export const SettingsPage = () => {
 
   return (
     <Layout title="Settings">
-      <div className="bg-white p-4 mb-4 rounded-2xl">
-        <div className="grid grid-cols-2 gap-8 items-center">
+      <div className="bg-white p-4 mb-4 rounded-lg">
+        <div className="grid grid-cols-2 gap-8 h-14 items-center">
           <div>
             <span className="font-bold">
               {loading ? <Skeleton /> : "OpenRouter API key"}
@@ -50,7 +50,7 @@ export const SettingsPage = () => {
                   <input
                     type="password"
                     disabled
-                    className="rounded-2xl py-2 px-4 w-full focus:outline-none"
+                    className="rounded-lg py-2 px-4 w-full focus:outline-none"
                     value={setting.value}
                     data-1p-ignore
                   />
@@ -72,7 +72,7 @@ export const SettingsPage = () => {
                 <>
                   <input
                     type="password"
-                    className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
+                    className="border border-gray-300 rounded-lg py-2 px-4 w-full shadow-sm focus:outline-none"
                     placeholder="Value"
                     disabled={loading}
                     value={value}

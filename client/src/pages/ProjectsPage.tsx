@@ -12,7 +12,7 @@ const ProjectsPageActions = () => {
     <>
       <Link
         href="/create"
-        className="flex flex-row gap-2 p-2 bg-green-600 text-white font-bold rounded-sm shadow-sm hover:bg-green-500 transition duration-200 ease-in-out"
+        className="flex flex-row items-center gap-2 p-2 bg-green-600 text-white text-xm font-bold rounded-sm shadow-sm hover:bg-green-500 transition duration-200 ease-in-out"
       >
         <Plus />
         <span>New</span>
@@ -27,7 +27,7 @@ export const ProjectsPage = () => {
   const loadProjects = useCallback(async () => {
     try {
       setLoadingProjects(true);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 400));
       const projectsData: Project[] = await fetch_projects();
       setProjects(projectsData);
       setLoadingProjects(false);

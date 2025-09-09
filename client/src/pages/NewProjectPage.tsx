@@ -90,15 +90,15 @@ export const NewProject = () => {
 
   return (
     <Layout title="New Project">
-      <div className="bg-white p-4 mb-4 rounded-2xl shadow-lg">
+      <div className="bg-white p-4 mb-4 rounded-lg shadow-lg">
         <div className="flex flex-col gap-8">
-          <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
             <H6>
               Title<span className="text-red-500 font-semibold">*</span>
             </H6>
             <input
               type="text"
-              className="border border-gray-300 rounded-2xl py-2 px-4 w-full shadow-sm focus:outline-none"
+              className="border border-gray-300 rounded-lg p-3 w-full shadow-sm focus:outline-none"
               placeholder="Enter project title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -163,7 +163,7 @@ export const NewProject = () => {
 
           <div className="flex justify-end items-end gap-4">
             <button
-              className="bg-red-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-red-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-red-600 text-white text-sm font-bold h-12 p-2 rounded-md shadow-md hover:bg-red-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={() => {
                 setTitle("");
                 setInclusionCriteria([]);
@@ -173,16 +173,16 @@ export const NewProject = () => {
                 setSelectedFiles([]);
               }}
             >
-              <div className="flex flex-row gap-2">
+              <div className="flex flex-row items-center gap-2">
                 <RotateCcw />
                 <span>Reset</span>
               </div>
             </button>
             <button
-              className="bg-green-600 text-white font-bold h-12 p-2 rounded-md shadow-md hover:bg-green-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+              className="bg-green-600 text-white text-sm font-bold h-12 p-2 rounded-md shadow-md hover:bg-green-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
               onClick={handleCreate}
             >
-              <div className="flex flex-row gap-2">
+              <div className="flex flex-row items-center gap-2">
                 <Plus />
                 <span>Create</span>
               </div>

@@ -1,16 +1,15 @@
 import { Layout } from "../components/Layout";
-import { H3 } from "../components/Typography";
+import { H1, H3 } from "../components/Typography";
 
 export const AboutPage = () => (
-  <Layout title="About">
-    {/* <div className="flex flex-col gap-4 px-4 py-8 sm:px-8 md:px-16 lg:px-24 lg:py-12 xl:px-28 xl:py-12"> */}
-    <div className="flex flex-col gap-4 py-8 sm:px-8">
-      <H3>Introduction</H3>
+  <Layout title="About AISysRev">
+    <div className="flex flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
+      <H1>AISysRev</H1>
       <p>
-        This PoC demonstrates the capabilities of AI-automated title-abstract
-        screening of systematic reviews (SRs), which is subject to further
-        research and improvements. This PoC is based on the following scientific
-        contributions:
+        <strong>AISysRev</strong> demonstrates the capabilities of AI-automated
+        title-abstract screening of systematic reviews (SRs), which is subject
+        to further research and improvements. This PoC is based on the following
+        scientific contributions:
         <ul className="list-disc ml-4">
           <li>
             <strong>
@@ -55,7 +54,13 @@ export const AboutPage = () => (
         </ul>
       </p>
       <H3>Supported LLMs</H3>
-      <p>We support all LLMs hosted by Openrouter.</p>
+      <p>
+        We support all LLMs hosted by Openrouter,{" "}
+        <strong>
+          that support structured JSON response, along with configuring
+          temperature, seed and top_p parameters.
+        </strong>
+      </p>
       <H3>License</H3>
       <p>CC-BY-ND 4.0</p>
       <H3>Source code</H3>
@@ -74,7 +79,8 @@ export const AboutPage = () => (
       </p>
       <H3>Funding</H3>
       <p>
-        This research has been funded by the Strategic Research Council of Research Council of Finland (Grant ID 358471)
+        This research has been funded by the Strategic Research Council of
+        Research Council of Finland (Grant ID 358471)
       </p>
     </div>
   </Layout>
