@@ -44,3 +44,7 @@ backend-test-other:
 # Run all tests in the backend and create HTML coverage report
 backend-test-html:
 	make backend-test REPORT="--cov-report=html"
+
+# Extract Caddy root CA from production app to trust it locally
+extract-caddy-ca:
+	docker compose -f docker-compose.yml -p prod cp frontend:/data/caddy/pki/authorities/local/root.crt ./caddy-local-root.crt 

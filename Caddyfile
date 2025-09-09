@@ -1,5 +1,15 @@
 localhost {
+	tls internal
+
 	handle /api* {
+		reverse_proxy backend_prod:8080
+	}
+
+	handle /openapi.json {
+		reverse_proxy backend_prod:8080
+	}
+
+	handle /documentation {
 		reverse_proxy backend_prod:8080
 	}
 

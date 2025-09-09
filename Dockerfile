@@ -18,8 +18,6 @@ COPY client/vite.config.ts .
 COPY client/public ./public
 COPY client/src ./src
 
-COPY server/migrations ./migrations
-
 RUN npm run build
 
 FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8cb23a7e8ac557aa3c AS client
@@ -27,7 +25,6 @@ FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8c
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
 
-EXPOSE 80
 EXPOSE 443
 
 FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS server
