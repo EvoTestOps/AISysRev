@@ -17,14 +17,14 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
     <nav className="bg-neutral-50 flex flex-col">
       <div className="flex justify-between p-8">
         <div>
-          <a href="https://github.com/EvoTestOps" className="m-0">
+          <Link to="/" className="m-0">
             <span className="sr-only">EvoTestOps</span>
             <img
               className="h-auto w-45"
               src={evoTestOpsLogo}
               alt="EvoTestOps"
             />
-          </a>
+          </Link>
           {appEnv === "dev" && (
             <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm fixed top-4 left-4 opacity-40 select-none">
               {appEnv}
