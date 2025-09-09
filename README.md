@@ -72,7 +72,14 @@ If it does not work try
 ```bash
 make start-dev
 ``` 
-The start up may take up to 3 minutes to start due to installation and downloading of necessary components. After starup open the application. If `start-prod` worked [http://localhost:80](http://localhost:80) if you used `make start-dev` then [http://localhost:3001](http://localhost:3001)
+The start up may take up to 3 minutes to start due to installation and downloading of necessary components.
+
+After startup, open the application: 
+
+If `start-prod` worked, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
+
+If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
+
 
 #### Windows (non-WSL)
 If you do not have Windows Subsystem for Linux (WSL). Start with 
