@@ -582,7 +582,7 @@ export const ProjectPage = () => {
                 type="range"
                 className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
                 data-testid="top_p-input"
-                min={0}
+                min={0.1}
                 max={1}
                 step={0.1}
                 value={top_p}
