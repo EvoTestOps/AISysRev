@@ -166,8 +166,7 @@ Currently, we support models provided via Openrouter.
 
 ## License
 
-CC-BY-ND 4.0
-
+MIT
 
 ## References
 
