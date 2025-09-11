@@ -35,6 +35,8 @@ import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
 import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
+import { Card } from "../components/Card";
+import { TabButton } from "../components/TabButton";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -445,14 +447,18 @@ export const ProjectPage = () => {
         />
       )}
     >
+      <div className="flex flex-row mb-4">
+        <TabButton active>Tasks</TabButton>
+        <TabButton>List of papers</TabButton>
+      </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          <div className="flex flex-col gap-2 p-4 w-full bg-neutral-50 rounded-lg">
+          <Card>
             <H6>Inclusion criteria</H6>
             <CriteriaList criteria={inclusionCriteria} />
             <H6>Exclusion criteria</H6>
             <CriteriaList criteria={exclusionCriteria} />
-          </div>
+          </Card>
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 &&
@@ -508,20 +514,13 @@ export const ProjectPage = () => {
                       {doneCount}/{totalCount}
                     </div>
                   </div>
-                  {/* <div className="flex text-sm text-red-500 items-center cursor-pointer">
-                    Cancel
-                  </div>
-                  <div className="flex text-sm text-blue-500 items-center cursor-pointer">
-                    View
-                  </div> */}
                 </div>
               </div>
             );
           })}
         </div>
-
         <div className="flex flex-col space-y-4">
-          <div className="flex flex-col gap-4 bg-neutral-50 p-4 rounded-lg">
+          <Card>
             {fetchedFiles.length == 0 && (
               <div className="pb-4">
                 <FileDropArea onFilesSelected={handleFilesSelected} />
@@ -529,9 +528,9 @@ export const ProjectPage = () => {
             )}
             <H5>List of papers</H5>
             <TruncatedFileNames files={fetchedFiles} maxLength={25} />
-          </div>
+          </Card>
 
-          <div className="flex flex-col gap-6 bg-neutral-50 p-4 rounded-lg">
+          <Card>
             <H4>Create task</H4>
             <div className="flex">
               <H5 className="pr-16">LLM</H5>
@@ -617,7 +616,7 @@ export const ProjectPage = () => {
                 </div>
               </Button>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 

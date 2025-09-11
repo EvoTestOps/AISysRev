@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { DisplayProjects } from "../components/DisplayProjects";
 import { fetch_projects, delete_project } from "../services/projectService";
 import { Project } from "../state/types";
 import { Link } from "wouter";
 import { Plus } from "lucide-react";
+import { ProjectsList } from "../components/ProjectsList";
 
 const ProjectsPageActions = () => {
   return (
@@ -56,7 +56,7 @@ export const ProjectsPage = () => {
 
   return (
     <Layout title="Projects" navbarActionComponent={ProjectsPageActions}>
-      <DisplayProjects
+      <ProjectsList
         loadingProjects={loadingProjects}
         projects={projects}
         handleProjectDelete={handleProjectDelete}
