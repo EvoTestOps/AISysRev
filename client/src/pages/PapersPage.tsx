@@ -2,13 +2,16 @@ import { useLocation, useParams } from "wouter";
 import ReactPaginate from "react-paginate";
 import classNames from "classnames";
 import { twMerge } from "tailwind-merge";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { useTypedStoreState } from "../state/store";
 import { TabButton } from "../components/TabButton";
 import { NotFoundPage } from "./NotFound";
-import { Paper } from "../state/types";
-import { fetchPapersForProject } from "../services/paperService";
+import { JobTaskHumanResult, Paper, PaperWithModelEval } from "../state/types";
+import {
+  addPaperHumanResult,
+  fetchPapersWithModelEvalsForProject,
+} from "../services/paperService";
 import { Card, CardProps } from "../components/Card";
 import {
   Check,
@@ -23,18 +26,41 @@ import { H6 } from "../components/Typography";
 
 type SortOption = "INCLUDE_ASC" | "INCLUDE_DESC" | "NAME_ASC" | "NAME_DESC";
 
-function sort_name_asc(paperA: Paper, paperB: Paper) {
+function sort_name_asc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
   return paperA.title.localeCompare(paperB.title);
 }
-function sort_name_desc(paperA: Paper, paperB: Paper) {
+function sort_name_desc(
+  paperA: PaperWithModelEval,
+  paperB: PaperWithModelEval
+) {
   return paperB.title.localeCompare(paperA.title);
 }
 
-function sort_include_asc(paperA: Paper, paperB: Paper) {
-  return paperA.title.localeCompare(paperB.title);
+function sort_include_asc(
+  paperA: PaperWithModelEval,
+  paperB: PaperWithModelEval
+) {
+  const a = paperA.avg_probability_decision;
+  const b = paperB.avg_probability_decision;
+
+  if (a === undefined && b === undefined) return 0;
+  if (a === undefined) return 1;
+  if (b === undefined) return -1;
+
+  return a - b;
 }
-function sort_include_desc(paperA: Paper, paperB: Paper) {
-  return paperB.title.localeCompare(paperA.title);
+function sort_include_desc(
+  paperA: PaperWithModelEval,
+  paperB: PaperWithModelEval
+) {
+  const a = paperA.avg_probability_decision;
+  const b = paperB.avg_probability_decision;
+
+  if (a === undefined && b === undefined) return 0;
+  if (a === undefined) return 1;
+  if (b === undefined) return -1;
+
+  return b - a;
 }
 
 function get_sorter_fn(opt: SortOption) {
@@ -53,13 +79,24 @@ function get_sorter_fn(opt: SortOption) {
 }
 
 type PaperCardProps = {
-  paper: Paper;
+  paper: PaperWithModelEval;
 };
 
 const PaperCard: React.FC<
   React.PropsWithChildren<CardProps> & PaperCardProps
 > = ({ paper, ...rest }) => {
   const [open, setOpen] = useState(false);
+
+  const addHumanResult = useCallback(
+    async (paperUuid: string, humanResult: JobTaskHumanResult) => {
+      try {
+        await addPaperHumanResult(paperUuid, humanResult);
+      } catch (error) {
+        console.error("Error adding human result:", error);
+      }
+    },
+    []
+  );
 
   return (
     <Card {...rest} padding="p-0">
@@ -78,7 +115,11 @@ const PaperCard: React.FC<
             ? paper.title.substring(0, 77) + "..."
             : paper.title}
         </div>
-        <div className="text-center text-sm select-none">0.0 %</div>
+        <div className="text-center text-sm select-none">
+          {paper.avg_probability_decision
+            ? paper.avg_probability_decision.toFixed(3)
+            : "Not available"}
+        </div>
         <div>
           {!open && (
             <ChevronDown
@@ -103,26 +144,51 @@ const PaperCard: React.FC<
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
             {paper.abstract}
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="red" size="xs">
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <X size={15} />
-                <span className="select-none">Exclude</span>
-              </div>
-            </Button>
-            <Button variant="yellow" size="xs">
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <CircleQuestionMark size={15} />
-                <span className="select-none">Unsure</span>
-              </div>
-            </Button>
-            <Button variant="green" size="xs">
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <Check size={15} />
-                <span className="select-none">Include</span>
-              </div>
-            </Button>
-          </div>
+          {paper.human_result === null && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                variant="red"
+                size="xs"
+                onClick={() => {
+                  addHumanResult(paper.uuid, JobTaskHumanResult.EXCLUDE);
+                }}
+              >
+                <div className="flex flex-row gap-2 items-center font-semibold">
+                  <X size={15} />
+                  <span className="select-none">Exclude</span>
+                </div>
+              </Button>
+              <Button
+                variant="yellow"
+                size="xs"
+                onClick={() => {
+                  addHumanResult(paper.uuid, JobTaskHumanResult.UNSURE);
+                }}
+              >
+                <div className="flex flex-row gap-2 items-center font-semibold">
+                  <CircleQuestionMark size={15} />
+                  <span className="select-none">Unsure</span>
+                </div>
+              </Button>
+              <Button
+                variant="green"
+                size="xs"
+                onClick={() => {
+                  addHumanResult(paper.uuid, JobTaskHumanResult.INCLUDE);
+                }}
+              >
+                <div className="flex flex-row gap-2 items-center font-semibold">
+                  <Check size={15} />
+                  <span className="select-none">Include</span>
+                </div>
+              </Button>
+            </div>
+          )}
+          {paper.human_result !== null && (
+            <div className="flex flex-wrap justify-center gap-2">
+              Your evaluation: <strong>{paper.human_result}</strong>
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -161,7 +227,7 @@ export const PapersPage = () => {
 
   useEffect(() => {
     async function fetchPapers() {
-      const papers: Paper[] = await fetchPapersForProject(uuid);
+      const papers: Paper[] = await fetchPapersWithModelEvalsForProject(uuid);
       return papers;
     }
     if (project !== undefined) {
@@ -229,7 +295,9 @@ export const PapersPage = () => {
               <Card className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6">
                 <ReactPaginate
                   onPageChange={(item) =>
-                    setLocation(`/project/${uuid}/papers/page/${item.selected + 1}`)
+                    setLocation(
+                      `/project/${uuid}/papers/page/${item.selected + 1}`
+                    )
                   }
                   breakLabel="..."
                   nextLabel=">"
@@ -251,7 +319,7 @@ export const PapersPage = () => {
           <div>
             <div className="h-16" />
             {/* Spacer */}
-            <Card className="sticky h-48 top-2">
+            <Card className="sticky top-2">
               <H6>Inclusion criteria</H6>
               <CriteriaList
                 criteria={project.criteria.inclusion_criteria || []}

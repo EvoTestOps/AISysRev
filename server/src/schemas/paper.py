@@ -10,8 +10,10 @@ class PaperHumanResult(str, Enum):
     EXCLUDE = "EXCLUDE"
     UNSURE = "UNSURE"
 
+
 class PaperHumanResultUpdate(BaseModel):
     human_result: PaperHumanResult
+
 
 class PaperCreate(BaseModel):
     paper_id: int
@@ -20,6 +22,7 @@ class PaperCreate(BaseModel):
     doi: str
     title: str
     abstract: str
+
 
 class PaperRead(BaseModel):
     uuid: UUID
@@ -32,5 +35,21 @@ class PaperRead(BaseModel):
     human_result: Optional[PaperHumanResult] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaperReadWithAvgProbability(BaseModel):
+    uuid: UUID
+    paper_id: int
+    project_uuid: UUID
+    file_uuid: UUID
+    doi: str
+    title: str
+    abstract: str
+    human_result: Optional[PaperHumanResult] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    avg_probability_decision: Optional[float]
 
     model_config = ConfigDict(from_attributes=True)

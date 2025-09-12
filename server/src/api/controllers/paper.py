@@ -12,8 +12,23 @@ async def get_papers(
     project_uuid: UUID, papers: PaperService = Depends(get_paper_service)
 ):
     try:
-        papers = await papers.fetch_papers(project_uuid)
-        return papers
+        p = await papers.fetch_papers(project_uuid)
+        return p
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch papers: {str(e)}",
+        ) from e
+    
+@router.get("/paper/{project_uuid}/with_model_evaluations", status_code=status.HTTP_200_OK)
+async def get_papers(
+    project_uuid: UUID, papers: PaperService = Depends(get_paper_service)
+):
+    try:
+        p = await papers.fetch_papers_with_model_evals(project_uuid)
+        return p
     except HTTPException:
         raise
     except Exception as e:
