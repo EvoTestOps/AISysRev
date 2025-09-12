@@ -5,85 +5,14 @@ import { Layout } from "../components/Layout";
 import { useTypedStoreState } from "../state/store";
 import { TabButton } from "../components/TabButton";
 import { NotFoundPage } from "./NotFound";
-import { Paper, PaperWithModelEval } from "../state/types";
+import { Paper } from "../state/types";
 import { fetchPapersWithModelEvalsForProject } from "../services/paperService";
 import { Card } from "../components/Card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { CriteriaList } from "../components/CriteriaList";
 import { H6 } from "../components/Typography";
 import { PaperCard } from "../components/PaperCard";
-
-type SortOption =
-  | "ID_ASC"
-  | "ID_DESC"
-  | "INCLUDE_ASC"
-  | "INCLUDE_DESC"
-  | "NAME_ASC"
-  | "NAME_DESC";
-
-function sort_name_asc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
-  return paperA.title.localeCompare(paperB.title);
-}
-function sort_name_desc(
-  paperA: PaperWithModelEval,
-  paperB: PaperWithModelEval
-) {
-  return paperB.title.localeCompare(paperA.title);
-}
-
-function sort_id_asc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
-  return paperA.paper_id - paperB.paper_id;
-}
-
-function sort_id_desc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
-  return paperB.paper_id - paperA.paper_id;
-}
-
-function sort_include_asc(
-  paperA: PaperWithModelEval,
-  paperB: PaperWithModelEval
-) {
-  const a = paperA.avg_probability_decision;
-  const b = paperB.avg_probability_decision;
-
-  if (a === undefined && b === undefined) return 0;
-  if (a === undefined) return 1;
-  if (b === undefined) return -1;
-
-  return a - b;
-}
-function sort_include_desc(
-  paperA: PaperWithModelEval,
-  paperB: PaperWithModelEval
-) {
-  const a = paperA.avg_probability_decision;
-  const b = paperB.avg_probability_decision;
-
-  if (a === undefined && b === undefined) return 0;
-  if (a === undefined) return 1;
-  if (b === undefined) return -1;
-
-  return b - a;
-}
-
-function get_sorter_fn(opt: SortOption) {
-  switch (opt) {
-    case "ID_ASC":
-      return sort_id_asc;
-    case "ID_DESC":
-      return sort_id_desc;
-    case "INCLUDE_ASC":
-      return sort_include_asc;
-    case "INCLUDE_DESC":
-      return sort_include_desc;
-    case "NAME_ASC":
-      return sort_name_asc;
-    case "NAME_DESC":
-      return sort_name_desc;
-    default:
-      throw new Error("Should not happen");
-  }
-}
+import { getPaperSortFunction, SortOption } from "../helpers/sort";
 
 export const PapersPage = () => {
   const params = useParams<{ uuid: string; page?: string }>();
@@ -111,7 +40,7 @@ export const PapersPage = () => {
   const pageCount = Math.ceil(papers.length / papersPerPage);
 
   const sortedPapers = useMemo(
-    () => [...papers].sort(get_sorter_fn(sortOption)),
+    () => [...papers].sort(getPaperSortFunction(sortOption)),
     [papers, sortOption]
   );
   const alreadyEvaluatedPapers = useMemo(
