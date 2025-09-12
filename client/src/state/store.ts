@@ -9,14 +9,14 @@ import {
   computed,
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
-import { Project } from "./types";
+import { Paper, Project } from "./types";
 
 const injections = {
   projectsService,
 };
 
 type LoadingModel = {
-  loading: { projects: boolean };
+  loading: { projects: boolean; papers: Record<string, boolean> };
 };
 
 // Defines state, actions and thunks for project-related things.
@@ -34,7 +34,12 @@ interface ProjectModel {
   refreshProjects: Thunk<StoreModel, undefined, Injections>;
 }
 
-type StoreModel = {} & LoadingModel & ProjectModel;
+interface PaperModel {
+  // Papers are study-specific
+  papers: Record<string, Array<Paper>>;
+}
+
+type StoreModel = {} & LoadingModel & ProjectModel & PaperModel;
 
 export type Injections = typeof injections;
 
@@ -77,7 +82,9 @@ export const store = createStore<StoreModel>(
     // Loading state
     loading: {
       projects: false,
+      papers: {},
     },
+    papers: {},
   },
   {
     injections,
