@@ -1,20 +1,34 @@
+import classNames from "classnames";
 import { twMerge } from "tailwind-merge";
 
-type CardProps = React.DetailedHTMLProps<
+export type CardProps = React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
   HTMLDivElement
-> & { direction?: "col" | "row" };
+> & { variant?: "success" | "danger" | "warning"; padding?: string };
 
 export const Card: React.FC<React.PropsWithChildren<CardProps>> = ({
   children,
   className,
-  direction = "col",
+  variant,
+  padding = "p-4",
   ...rest
 }) => (
   <div
-    className={twMerge("bg-white p-4 rounded-lg shadow-sm", className)}
+    className={twMerge(
+      classNames(
+        "rounded-lg shadow-sm",
+        {
+          "bg-white": !variant,
+          "bg-green-200": variant == "success",
+          "bg-red-200": variant == "danger",
+          "bg-yellow-200": variant == "warning",
+        },
+        padding,
+        className
+      )
+    )}
     {...rest}
   >
-    <div className={`flex flex-${direction} gap-5`}>{children}</div>
+    <div className={`flex flex-col gap-5`}>{children}</div>
   </div>
 );

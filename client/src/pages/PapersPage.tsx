@@ -6,7 +6,7 @@ import { NotFoundPage } from "./NotFound";
 import { Paper } from "../state/types";
 import { useEffect, useState } from "react";
 import { fetchPapersForProject } from "../services/paperService";
-import { Card } from "../components/Card";
+import { Card, CardProps } from "../components/Card";
 import {
   Check,
   ChevronDown,
@@ -15,6 +15,8 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "../components/Button";
+import classNames from "classnames";
+import { twMerge } from "tailwind-merge";
 
 type SortOption = "INCLUDE_ASC" | "INCLUDE_DESC" | "NAME_ASC" | "NAME_DESC";
 
@@ -46,6 +48,77 @@ function get_sorter_fn(opt: SortOption) {
       throw new Error("Should not happen");
   }
 }
+
+type PaperCardProps = {
+  paper: Paper;
+};
+
+const PaperCard: React.FC<
+  React.PropsWithChildren<CardProps> & PaperCardProps
+> = ({ paper, ...rest }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card {...rest} padding="p-0">
+      <div
+        className={twMerge(
+          classNames(
+            "rounded-lg p-4 grid grid-cols-[1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
+          )
+        )}
+        onClick={() => {
+          setOpen(!open);
+        }}
+      >
+        <div className="font-semibold text-sm">{paper.title}</div>
+        <div className="text-center text-sm">0.0 %</div>
+        <div>
+          {!open && (
+            <ChevronDown
+              className="hover:cursor-pointer"
+              onClick={() => {
+                setOpen(true);
+              }}
+            />
+          )}
+          {open && (
+            <ChevronUp
+              className="hover:cursor-pointer"
+              onClick={() => {
+                setOpen(false);
+              }}
+            />
+          )}
+        </div>
+      </div>
+      {open && (
+        <div className="pl-4 pr-4 pb-4">
+          <div className="text-sm">{paper.abstract}</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="red" size="xs">
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <X size={15} />
+                <span>Exclude</span>
+              </div>
+            </Button>
+            <Button variant="yellow" size="xs">
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <CircleQuestionMark size={15} />
+                <span>Unsure</span>
+              </div>
+            </Button>
+            <Button variant="green" size="xs">
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <Check size={15} />
+                <span>Include</span>
+              </div>
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
 
 export const PapersPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -150,38 +223,9 @@ export const PapersPage = () => {
           </div>
           <div></div>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {sortedPapers.map((paper) => (
-            <Card key={paper.uuid}>
-              <div className="grid grid-cols-[1fr_240px_30px] items-center content-center">
-                <div className="font-semibold text-sm">{paper.title}</div>
-                <div className="text-center text-sm">0.0 %</div>
-                <div>
-                  <ChevronDown className="hover:cursor-pointer" />
-                </div>
-              </div>
-              <div className="text-sm">{paper.abstract}</div>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button variant="red" size="xs">
-                  <div className="flex flex-row gap-2 items-center font-semibold">
-                    <X size={15} />
-                    <span>Exclude</span>
-                  </div>
-                </Button>
-                <Button variant="yellow" size="xs">
-                  <div className="flex flex-row gap-2 items-center font-semibold">
-                    <CircleQuestionMark size={15} />
-                    <span>Unsure</span>
-                  </div>
-                </Button>
-                <Button variant="green" size="xs">
-                  <div className="flex flex-row gap-2 items-center font-semibold">
-                    <Check size={15} />
-                    <span>Include</span>
-                  </div>
-                </Button>
-              </div>
-            </Card>
+            <PaperCard key={paper.uuid} paper={paper} />
           ))}
         </div>
       </div>
