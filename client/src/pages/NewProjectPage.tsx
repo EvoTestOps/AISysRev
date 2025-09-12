@@ -10,6 +10,7 @@ import { RotateCcw } from "lucide-react";
 import { Criteria } from "../state/types";
 import { create_project } from "../services/projectService";
 import { Card } from "../components/Card";
+import { useTypedStoreActions } from "../state/store";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -41,6 +42,10 @@ export const NewProject = () => {
   const deleteExclusionCriteria = useCallback((index: number) => {
     setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  const refreshProjects = useTypedStoreActions(
+    (actions) => actions.refreshProjects
+  );
 
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
@@ -78,6 +83,7 @@ export const NewProject = () => {
         toast.success("Project created successfully!");
 
         if (uuid) {
+          refreshProjects();
           navigate(`/project/${uuid}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,7 +105,7 @@ export const NewProject = () => {
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, refreshProjects, navigate]);
 
   return (
     <Layout title="New Project">

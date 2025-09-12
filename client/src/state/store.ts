@@ -31,6 +31,7 @@ interface ProjectModel {
     (uuid: string) => Project | undefined,
     StoreModel
   >;
+  refreshProjects: Thunk<StoreModel, undefined, Injections>;
 }
 
 type StoreModel = {} & LoadingModel & ProjectModel;
@@ -50,7 +51,18 @@ export const store = createStore<StoreModel>(
     fetchProjects: thunk(async (actions, _, { injections }) => {
       actions.setLoadingProjects(true);
       const { projectsService } = injections;
-      console.log("fetchProjects thunk called");
+      return projectsService
+        .fetch_projects()
+        .then((p) => {
+          actions.setProjects(p);
+          actions.setLoadingProjects(false);
+        })
+        .catch(console.error);
+    }),
+    refreshProjects: thunk(async (actions, _, { injections }) => {
+      actions.setLoadingProjects(true);
+      actions.setProjects([]);
+      const { projectsService } = injections;
       return projectsService
         .fetch_projects()
         .then((p) => {

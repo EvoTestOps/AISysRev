@@ -402,7 +402,6 @@ export const ProjectPage = () => {
 
   return (
     <Layout
-      skeleton={loadingProjects}
       title={project?.name || ""}
       navbarActionComponent={() => (
         <ActionComponent

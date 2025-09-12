@@ -19,7 +19,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
 
   return (
     <>
-      {!loadingProjects && !projects.length && (
+      {!loadingProjects && projects.length === 0 && (
         <div className="text-center text-gray-600 mt-8">No projects.</div>
       )}
       {loadingProjects && (

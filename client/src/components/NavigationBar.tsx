@@ -1,18 +1,15 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
 import evoTestOpsLogo from "../assets/images/evotestops.png";
-import Skeleton from "react-loading-skeleton";
 
 type NavigationBarProps = {
-  name: string;
-  skeleton?: boolean;
+  pageTitle: string;
   navbarActionComponent?: React.ElementType;
 };
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({
-  name,
+  pageTitle,
   navbarActionComponent,
-  skeleton = false,
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
   const NavbarActionComponent = navbarActionComponent;
@@ -57,7 +54,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
       </div>
       <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">
         <div>
-          <H3>{skeleton ? <Skeleton /> : name}</H3>
+          <H3>{pageTitle}</H3>
         </div>
         <div className="flex items-center">
           {NavbarActionComponent && <NavbarActionComponent />}
