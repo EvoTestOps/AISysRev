@@ -211,6 +211,8 @@ export const PapersPage = () => {
   const project = getProjectByUuid(uuid);
 
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [hideAlreadyEvaluatedPapers, sethideAlreadyEvaluatedPapers] =
+    useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("NAME_ASC");
 
   const itemOffset = ((p - 1) * papersPerPage) % papers.length;
@@ -222,8 +224,18 @@ export const PapersPage = () => {
     () => [...papers].sort(get_sorter_fn(sortOption)),
     [papers, sortOption]
   );
+  const sortedAndFilteredPapers = useMemo(
+    () =>
+      [...sortedPapers].filter((paper) => {
+        if (!hideAlreadyEvaluatedPapers) {
+          return true;
+        }
+        return paper.human_result === null;
+      }),
+    [hideAlreadyEvaluatedPapers, sortedPapers]
+  );
 
-  const currentItems = sortedPapers.slice(itemOffset, endOffset);
+  const currentItems = sortedAndFilteredPapers.slice(itemOffset, endOffset);
 
   useEffect(() => {
     async function fetchPapers() {
@@ -250,6 +262,19 @@ export const PapersPage = () => {
           <TabButton href={`/project/${params.uuid}/papers/page/1`} active>
             List of papers
           </TabButton>
+        </div>
+        <div className="p-4 flex flex-row gap-2">
+          <input
+            type="checkbox"
+            id="filter_out_evaluated"
+            checked={hideAlreadyEvaluatedPapers}
+            onChange={() => {
+              sethideAlreadyEvaluatedPapers(!hideAlreadyEvaluatedPapers);
+            }}
+          />
+          <label htmlFor="filter_out_evaluated" className="font-semibold">
+            Hide already evaluated papers
+          </label>
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
           <div className="flex flex-col">
