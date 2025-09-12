@@ -9,15 +9,19 @@ import {
   computed,
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
+import * as paperService from "../services/paperService";
 import { Paper, Project } from "./types";
 
 const injections = {
   projectsService,
+  paperService,
 };
 
 type LoadingModel = {
   loading: { projects: boolean; papers: Record<string, boolean> };
 };
+
+type ProjectUUID = string;
 
 // Defines state, actions and thunks for project-related things.
 interface ProjectModel {
@@ -28,7 +32,7 @@ interface ProjectModel {
   fetchProjects: Thunk<StoreModel, undefined, Injections>;
   getProjectByUuid: Computed<
     StoreModel,
-    (uuid: string) => Project | undefined,
+    (uuid: ProjectUUID) => Project | undefined,
     StoreModel
   >;
   refreshProjects: Thunk<StoreModel, undefined, Injections>;
@@ -37,6 +41,9 @@ interface ProjectModel {
 interface PaperModel {
   // Papers are study-specific
   papers: Record<string, Array<Paper>>;
+  setPapers: Action<StoreModel, { projectUuid: string; papers: Array<Paper> }>;
+  fetchPapers: Thunk<StoreModel, ProjectUUID, Injections>;
+  setLoadingPapers: Action<StoreModel, { projectUuid: string; state: boolean }>;
 }
 
 type StoreModel = {} & LoadingModel & ProjectModel & PaperModel;
@@ -50,8 +57,26 @@ export const store = createStore<StoreModel>(
     setProjects: action((state, payload) => {
       state.projects = payload;
     }),
+    setPapers: action((state, payload) => {
+      state.papers[payload.projectUuid] = payload.papers;
+    }),
     setLoadingProjects: action((state, payload) => {
       state.loading.projects = payload;
+    }),
+    setLoadingPapers: action((state, payload) => {
+      state.loading.papers[payload.projectUuid] = payload.state;
+    }),
+    fetchPapers: thunk(async (actions, projectUuid, { injections }) => {
+      actions.setLoadingPapers({ projectUuid, state: true });
+      const { paperService } = injections;
+      return paperService
+        .fetchPapersWithModelEvalsForProject(projectUuid)
+        .then((papers) => {
+          actions.setPapers({ projectUuid, papers });
+          actions.setLoadingPapers({ projectUuid, state: false });
+        })
+        .catch(console.error)
+        .finally(() => actions.setLoadingPapers({ projectUuid, state: false }));
     }),
     fetchProjects: thunk(async (actions, _, { injections }) => {
       actions.setLoadingProjects(true);
@@ -62,19 +87,12 @@ export const store = createStore<StoreModel>(
           actions.setProjects(p);
           actions.setLoadingProjects(false);
         })
-        .catch(console.error);
+        .catch(console.error)
+        .finally(() => actions.setLoadingProjects(false));
     }),
-    refreshProjects: thunk(async (actions, _, { injections }) => {
-      actions.setLoadingProjects(true);
+    refreshProjects: thunk(async (actions) => {
       actions.setProjects([]);
-      const { projectsService } = injections;
-      return projectsService
-        .fetch_projects()
-        .then((p) => {
-          actions.setProjects(p);
-          actions.setLoadingProjects(false);
-        })
-        .catch(console.error);
+      return actions.fetchProjects();
     }),
     getProjectByUuid: computed((state) => {
       return (uuid: string) => state.projects.find((p) => p.uuid === uuid);
@@ -88,6 +106,7 @@ export const store = createStore<StoreModel>(
   },
   {
     injections,
+    devTools: process.env.NODE_ENV !== "production",
   }
 );
 
