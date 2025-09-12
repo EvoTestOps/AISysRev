@@ -44,6 +44,11 @@ interface PaperModel {
   setPapers: Action<StoreModel, { projectUuid: string; papers: Array<Paper> }>;
   fetchPapers: Thunk<StoreModel, ProjectUUID, Injections>;
   setLoadingPapers: Action<StoreModel, { projectUuid: string; state: boolean }>;
+  getPapersForProject: Computed<
+    StoreModel,
+    (uuid: ProjectUUID) => Paper[],
+    StoreModel
+  >;
 }
 
 type StoreModel = {} & LoadingModel & ProjectModel & PaperModel;
@@ -66,6 +71,7 @@ export const store = createStore<StoreModel>(
     setLoadingPapers: action((state, payload) => {
       state.loading.papers[payload.projectUuid] = payload.state;
     }),
+    // This should be only called on-demand, as one project might contain tens of thousands of papers
     fetchPapers: thunk(async (actions, projectUuid, { injections }) => {
       actions.setLoadingPapers({ projectUuid, state: true });
       const { paperService } = injections;
@@ -103,6 +109,10 @@ export const store = createStore<StoreModel>(
       papers: {},
     },
     papers: {},
+    getPapersForProject: computed((state) => {
+      return (uuid: string) =>
+        state.papers[uuid] === undefined ? [] : state.papers[uuid];
+    }),
   },
   {
     injections,

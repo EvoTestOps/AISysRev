@@ -2,11 +2,9 @@ import { useLocation, useParams } from "wouter";
 import ReactPaginate from "react-paginate";
 import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
-import { useTypedStoreState } from "../state/store";
+import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { TabButton } from "../components/TabButton";
 import { NotFoundPage } from "./NotFound";
-import { Paper } from "../state/types";
-import { fetchPapersWithModelEvalsForProject } from "../services/paperService";
 import { Card } from "../components/Card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { CriteriaList } from "../components/CriteriaList";
@@ -16,25 +14,39 @@ import { getPaperSortFunction, SortOption } from "../helpers/sort";
 
 export const PapersPage = () => {
   const params = useParams<{ uuid: string; page?: string }>();
-  const uuid = params.uuid;
-  const p = Number(params.page ?? 1);
+  const projectUuid = params.uuid;
+  const currentPage = Number(params.page ?? 1);
 
   const [, setLocation] = useLocation();
 
   const papersPerPage = 25;
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
+
+  // TODO: Use computed value
+  const loadingPapers = useTypedStoreState((state) =>
+    state.loading.papers[projectUuid] === undefined
+      ? true
+      : state.loading.papers[projectUuid]
+  );
+
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
-  const project = getProjectByUuid(uuid);
+  const project = getProjectByUuid(projectUuid);
 
-  const [papers, setPapers] = useState<Paper[]>([]);
+  const getPapersForProject = useTypedStoreState(
+    (state) => state.getPapersForProject
+  );
+  const papers = getPapersForProject(projectUuid);
+
+  const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
+
   const [hideAlreadyEvaluatedPapers, sethideAlreadyEvaluatedPapers] =
     useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("ID_ASC");
 
-  const itemOffset = ((p - 1) * papersPerPage) % papers.length;
+  const itemOffset = ((currentPage - 1) * papersPerPage) % papers.length;
 
   const endOffset = itemOffset + papersPerPage;
   const pageCount = Math.ceil(papers.length / papersPerPage);
@@ -58,17 +70,14 @@ export const PapersPage = () => {
     [hideAlreadyEvaluatedPapers, sortedPapers]
   );
 
-  const currentItems = sortedAndFilteredPapers.slice(itemOffset, endOffset);
+  // TODO: Memoize & Redux
+  const currentPapers = sortedAndFilteredPapers.slice(itemOffset, endOffset);
 
   useEffect(() => {
-    async function fetchPapers() {
-      const papers: Paper[] = await fetchPapersWithModelEvalsForProject(uuid);
-      return papers;
-    }
     if (project !== undefined) {
-      fetchPapers().then((papers) => setPapers(papers));
+      fetchPapers(projectUuid);
     }
-  }, [project, uuid]);
+  }, [fetchPapers, project, projectUuid]);
 
   if (loadingProjects) {
     return null;
@@ -154,21 +163,26 @@ export const PapersPage = () => {
               <div></div>
             </div>
             <div className="flex flex-col gap-1">
-              {currentItems.map((paper) => (
-                <PaperCard key={paper.uuid} paper={paper} />
-              ))}
+              {!loadingPapers &&
+                currentPapers.map((paper) => (
+                  <PaperCard key={paper.uuid} paper={paper} />
+                ))}
             </div>
-            {sortedAndFilteredPapers &&
+            {!loadingPapers &&
+              sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length === 0 && (
                 <div className="p-4 text-md text-gray-600">No papers.</div>
               )}
-            {sortedAndFilteredPapers &&
+            {!loadingPapers &&
+              sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length > papersPerPage && (
                 <Card className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6">
                   <ReactPaginate
                     onPageChange={(item) =>
                       setLocation(
-                        `/project/${uuid}/papers/page/${item.selected + 1}`
+                        `/project/${projectUuid}/papers/page/${
+                          item.selected + 1
+                        }`
                       )
                     }
                     breakLabel="..."
@@ -183,7 +197,7 @@ export const PapersPage = () => {
                     previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
                     nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
                     breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
-                    forcePage={p - 1}
+                    forcePage={currentPage - 1}
                   />
                 </Card>
               )}
