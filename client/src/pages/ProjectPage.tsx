@@ -416,7 +416,7 @@ export const ProjectPage = () => {
         <TabButton href={`/project/${params.uuid}`} active>
           Tasks
         </TabButton>
-        <TabButton href={`/project/${params.uuid}/papers`}>
+        <TabButton href={`/project/${params.uuid}/papers/page/1`}>
           List of papers
         </TabButton>
       </div>

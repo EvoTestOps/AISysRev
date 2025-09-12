@@ -47,7 +47,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:uuid" component={ProjectPage} />
-        <Route path="/project/:uuid/papers" component={PapersPage} />
+        <Route path="/project/:uuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:uuid/evaluate" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route

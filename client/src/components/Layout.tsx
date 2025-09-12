@@ -38,7 +38,7 @@ export const Layout = ({
 
       <div
         className={twMerge(
-          "mt-8 p-6 w-full lg:p-0 lg:w-4xl mr-auto ml-auto",
+          "mt-8 p-6 w-full lg:p-0 lg:w-4xl xl:w-6xl 2xl:w-7xl mr-auto ml-auto",
           className
         )}
       >
