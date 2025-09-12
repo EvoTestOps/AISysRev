@@ -24,7 +24,13 @@ import { Button } from "../components/Button";
 import { CriteriaList } from "../components/CriteriaList";
 import { H6 } from "../components/Typography";
 
-type SortOption = "INCLUDE_ASC" | "INCLUDE_DESC" | "NAME_ASC" | "NAME_DESC";
+type SortOption =
+  | "ID_ASC"
+  | "ID_DESC"
+  | "INCLUDE_ASC"
+  | "INCLUDE_DESC"
+  | "NAME_ASC"
+  | "NAME_DESC";
 
 function sort_name_asc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
   return paperA.title.localeCompare(paperB.title);
@@ -34,6 +40,14 @@ function sort_name_desc(
   paperB: PaperWithModelEval
 ) {
   return paperB.title.localeCompare(paperA.title);
+}
+
+function sort_id_asc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
+  return paperA.paper_id - paperB.paper_id;
+}
+
+function sort_id_desc(paperA: PaperWithModelEval, paperB: PaperWithModelEval) {
+  return paperB.paper_id - paperA.paper_id;
 }
 
 function sort_include_asc(
@@ -65,6 +79,10 @@ function sort_include_desc(
 
 function get_sorter_fn(opt: SortOption) {
   switch (opt) {
+    case "ID_ASC":
+      return sort_id_asc;
+    case "ID_DESC":
+      return sort_id_desc;
     case "INCLUDE_ASC":
       return sort_include_asc;
     case "INCLUDE_DESC":
@@ -103,13 +121,14 @@ const PaperCard: React.FC<
       <div
         className={twMerge(
           classNames(
-            "rounded-lg p-4 grid grid-cols-[1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
+            "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
           )
         )}
         onClick={() => {
           setOpen(!open);
         }}
       >
+        <div>{paper.paper_id}</div>
         <div className="text-sm font-semibold select-none" title={paper.title}>
           {paper.title.length > 80
             ? paper.title.substring(0, 77) + "..."
@@ -213,7 +232,7 @@ export const PapersPage = () => {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [hideAlreadyEvaluatedPapers, sethideAlreadyEvaluatedPapers] =
     useState(true);
-  const [sortOption, setSortOption] = useState<SortOption>("NAME_ASC");
+  const [sortOption, setSortOption] = useState<SortOption>("ID_ASC");
 
   const itemOffset = ((p - 1) * papersPerPage) % papers.length;
 
@@ -223,6 +242,10 @@ export const PapersPage = () => {
   const sortedPapers = useMemo(
     () => [...papers].sort(get_sorter_fn(sortOption)),
     [papers, sortOption]
+  );
+  const alreadyEvaluatedPapers = useMemo(
+    () => [...papers].filter((p) => p.human_result !== null).length,
+    [papers]
   );
   const sortedAndFilteredPapers = useMemo(
     () =>
@@ -258,7 +281,9 @@ export const PapersPage = () => {
     <Layout title={project.name}>
       <div>
         <div className="flex flex-row mb-4">
-          <TabButton href={`/project/${params.uuid}`}>Tasks</TabButton>
+          <TabButton href={`/project/${params.uuid}`}>
+            Screening tasks
+          </TabButton>
           <TabButton href={`/project/${params.uuid}/papers/page/1`} active>
             List of papers
           </TabButton>
@@ -273,12 +298,26 @@ export const PapersPage = () => {
             }}
           />
           <label htmlFor="filter_out_evaluated" className="font-semibold">
-            Hide already evaluated papers
+            Hide already evaluated papers ({alreadyEvaluatedPapers})
           </label>
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
           <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_240px_30px] p-4 h-16">
+            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16">
+              <div
+                className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
+                onClick={() => {
+                  if (sortOption === "ID_ASC") {
+                    setSortOption("ID_DESC");
+                  } else {
+                    setSortOption("ID_ASC");
+                  }
+                }}
+              >
+                <span className="font-bold select-none">ID</span>
+                {sortOption === "ID_ASC" && <ChevronDown />}
+                {sortOption === "ID_DESC" && <ChevronUp />}
+              </div>
               <div
                 className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
                 onClick={() => {
@@ -316,30 +355,35 @@ export const PapersPage = () => {
                 <PaperCard key={paper.uuid} paper={paper} />
               ))}
             </div>
-            {papers && papers.length > 0 && (
-              <Card className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6">
-                <ReactPaginate
-                  onPageChange={(item) =>
-                    setLocation(
-                      `/project/${uuid}/papers/page/${item.selected + 1}`
-                    )
-                  }
-                  breakLabel="..."
-                  nextLabel=">"
-                  previousLabel="<"
-                  pageRangeDisplayed={5}
-                  pageCount={pageCount}
-                  renderOnZeroPageCount={null}
-                  containerClassName="flex items-center gap-2"
-                  pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
-                  activeClassName="bg-slate-600 hover:cursor-normal"
-                  previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-                  nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-                  breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
-                  forcePage={p - 1}
-                />
-              </Card>
-            )}
+            {sortedAndFilteredPapers &&
+              sortedAndFilteredPapers.length === 0 && (
+                <div className="p-4 text-md text-gray-600">No papers.</div>
+              )}
+            {sortedAndFilteredPapers &&
+              sortedAndFilteredPapers.length > papersPerPage && (
+                <Card className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6">
+                  <ReactPaginate
+                    onPageChange={(item) =>
+                      setLocation(
+                        `/project/${uuid}/papers/page/${item.selected + 1}`
+                      )
+                    }
+                    breakLabel="..."
+                    nextLabel=">"
+                    previousLabel="<"
+                    pageRangeDisplayed={5}
+                    pageCount={pageCount}
+                    renderOnZeroPageCount={null}
+                    containerClassName="flex items-center gap-2"
+                    pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
+                    activeClassName="bg-slate-600 hover:cursor-normal"
+                    previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
+                    nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
+                    breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
+                    forcePage={p - 1}
+                  />
+                </Card>
+              )}
           </div>
           <div>
             <div className="h-16" />

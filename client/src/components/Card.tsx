@@ -16,6 +16,7 @@ export const Card: React.FC<React.PropsWithChildren<CardProps>> = ({
   <div
     className={twMerge(
       classNames(
+        "flex flex-col gap-5",
         "rounded-lg shadow-sm",
         {
           "bg-white": !variant,
@@ -29,6 +30,6 @@ export const Card: React.FC<React.PropsWithChildren<CardProps>> = ({
     )}
     {...rest}
   >
-    <div className={`flex flex-col gap-5`}>{children}</div>
+    {children}
   </div>
 );

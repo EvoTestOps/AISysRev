@@ -414,7 +414,7 @@ export const ProjectPage = () => {
     >
       <div className="flex flex-row mb-4">
         <TabButton href={`/project/${params.uuid}`} active>
-          Tasks
+          Screening tasks
         </TabButton>
         <TabButton href={`/project/${params.uuid}/papers/page/1`}>
           List of papers
@@ -465,34 +465,32 @@ export const ProjectPage = () => {
             console.log("doneCount: ", doneCount);
             console.log("progress: ", progress);
             return (
-              <div key={job.uuid} className="mb-6">
-                <div className="flex flex-row justify-between bg-neutral-50 p-4 gap-4 rounded-2xl">
-                  <div className="flex items-center font-semibold">
-                    <Tooltip title={job.llm_config.model_name} enterDelay={50}>
-                      <span className="text-sm text-nowrap">
-                        {job.llm_config.model_name.length > 30
-                          ? job.llm_config.model_name.substring(0, 17) + "..."
-                          : job.llm_config.model_name}
-                      </span>
-                    </Tooltip>
-                  </div>
-                  <div className="relative w-48 h-8">
-                    <progress
-                      value={progress}
-                      max={100}
-                      className="h-full w-full
+              <Card key={job.uuid} className="flex-row justify-between">
+                <div className="flex items-center font-semibold">
+                  <Tooltip title={job.llm_config.model_name} enterDelay={50}>
+                    <span className="text-sm text-nowrap">
+                      {job.llm_config.model_name.length > 30
+                        ? job.llm_config.model_name.substring(0, 17) + "..."
+                        : job.llm_config.model_name}
+                    </span>
+                  </Tooltip>
+                </div>
+                <div className="relative w-48 h-8">
+                  <progress
+                    value={progress}
+                    max={100}
+                    className="h-full w-full
                             [&::-webkit-progress-bar]:rounded-xl
                             [&::-webkit-progress-bar]:bg-gray-400
                             [&::-webkit-progress-value]:bg-blue-200
                             [&::-webkit-progress-value]:rounded-xl
                           "
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                      {doneCount}/{totalCount}
-                    </div>
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                    {doneCount}/{totalCount}
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
