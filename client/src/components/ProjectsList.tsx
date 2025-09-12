@@ -13,7 +13,7 @@ type ProjectsListProps = {
 export const ProjectsList: React.FC<ProjectsListProps> = ({
   handleProjectDelete,
 }) => {
-  const loadingProjects = useTypedStoreState((state) => state.loadingProjects);
+  const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const projects = useTypedStoreState((state) => state.projects);
   const skeletons = [1, 2, 3, 4, 5];
 

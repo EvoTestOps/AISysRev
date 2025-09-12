@@ -2,7 +2,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Cookies from "js-cookie";
-import { NotFoundPage } from "./pages/404";
+import { NotFoundPage } from "./pages/NotFound";
 import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
@@ -23,12 +23,6 @@ function App() {
     (actions) => actions.fetchProjects
   );
 
-  // Initialization hook
-  useEffect(() => {
-    fetchProjects();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
     if (!hasReadTerms && location !== "/terms-and-conditions") {
@@ -36,6 +30,12 @@ function App() {
     }
     setCheckedTerms(true);
   }, [location, navigate]);
+
+  // Initialization hook
+  useEffect(() => {
+    fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!checkedTerms) return null;
 

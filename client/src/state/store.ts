@@ -15,11 +15,14 @@ const injections = {
   projectsService,
 };
 
+type LoadingModel = {
+  loading: { projects: boolean };
+};
+
 // Defines state, actions and thunks for project-related things.
 interface ProjectModel {
   // Projects
   projects: Array<Project>;
-  loadingProjects: boolean;
   setProjects: Action<StoreModel, Array<Project>>;
   setLoadingProjects: Action<StoreModel, boolean>;
   fetchProjects: Thunk<StoreModel, undefined, Injections>;
@@ -30,7 +33,7 @@ interface ProjectModel {
   >;
 }
 
-type StoreModel = {} & ProjectModel;
+type StoreModel = {} & LoadingModel & ProjectModel;
 
 export type Injections = typeof injections;
 
@@ -38,12 +41,11 @@ export const store = createStore<StoreModel>(
   {
     // Projects
     projects: [],
-    loadingProjects: true,
     setProjects: action((state, payload) => {
       state.projects = payload;
     }),
     setLoadingProjects: action((state, payload) => {
-      state.loadingProjects = payload;
+      state.loading.projects = payload;
     }),
     fetchProjects: thunk(async (actions, _, { injections }) => {
       actions.setLoadingProjects(true);
@@ -60,7 +62,10 @@ export const store = createStore<StoreModel>(
     getProjectByUuid: computed((state) => {
       return (uuid: string) => state.projects.find((p) => p.uuid === uuid);
     }),
-    // Etc.
+    // Loading state
+    loading: {
+      projects: false,
+    },
   },
   {
     injections,

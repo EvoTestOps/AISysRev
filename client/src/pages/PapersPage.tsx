@@ -2,11 +2,12 @@ import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
 import { useTypedStoreState } from "../state/store";
 import { TabButton } from "../components/TabButton";
+import { NotFoundPage } from "./NotFound";
 
 export const PapersPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
-  const loadingProjects = useTypedStoreState((state) => state.loadingProjects);
+  const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
@@ -15,11 +16,7 @@ export const PapersPage = () => {
     return null;
   }
   if (project === undefined) {
-    return (
-      <Layout title="Error">
-        <div className="font-semibold">Project not found</div>
-      </Layout>
-    );
+    return <NotFoundPage />;
   }
 
   return (

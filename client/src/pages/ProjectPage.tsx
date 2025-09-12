@@ -37,6 +37,7 @@ import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
 import { useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
+import { NotFoundPage } from "./NotFound";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -101,7 +102,7 @@ export const ProjectPage = () => {
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
 
-  const loadingProjects = useTypedStoreState((state) => state.loadingProjects);
+  const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
@@ -392,12 +393,8 @@ export const ProjectPage = () => {
 
   const hasPapers = papers && papers.length > 0;
 
-  if (!project && !loadingProjects) {
-    return (
-      <Layout title="Error">
-        <div className="font-semibold">Project not found</div>
-      </Layout>
-    );
+  if (!project) {
+    return <NotFoundPage />;
   }
 
   const inclusionCriteria = project?.criteria.inclusion_criteria;
