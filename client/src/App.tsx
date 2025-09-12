@@ -12,6 +12,7 @@ import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
+import { PapersPage } from "./pages/PapersPage";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -35,6 +36,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:uuid" component={ProjectPage} />
+        <Route path="/project/:uuid/papers" component={PapersPage} />
         <Route path="/project/:uuid/evaluate" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route
