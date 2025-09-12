@@ -8,6 +8,7 @@ export const fetchPapersForProject = async (projectUuid: string) => {
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const e = error as any
+    // TODO: Do not return empty list for HTTP 404
     if (e.response?.status === 404) {
       return [];
     }
