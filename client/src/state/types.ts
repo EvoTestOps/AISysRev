@@ -1,8 +1,3 @@
-export interface UserModel {
-  name: string;
-  email: string;
-}
-
 export type Criteria = {
   inclusion_criteria: string[];
   exclusion_criteria: string[];

@@ -1,22 +1,20 @@
 import { H6 } from "../components/Typography";
 import { DropdownMenuEllipsis } from "./DropDownMenus";
-import { Project } from "../state/types";
 import { Link } from "wouter";
 import Skeleton from "react-loading-skeleton";
 import { Trash2 } from "lucide-react";
 import { Card } from "./Card";
+import { useTypedStoreState } from "../state/store";
 
 type ProjectsListProps = {
-  projects: Project[];
-  loadingProjects: boolean;
   handleProjectDelete: (uuid: string) => void;
 };
 
 export const ProjectsList: React.FC<ProjectsListProps> = ({
-  projects,
   handleProjectDelete,
-  loadingProjects,
 }) => {
+  const loadingProjects = useTypedStoreState((state) => state.loadingProjects);
+  const projects = useTypedStoreState((state) => state.projects);
   const skeletons = [1, 2, 3, 4, 5];
 
   return (

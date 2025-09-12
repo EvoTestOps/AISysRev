@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { fetch_projects, delete_project } from "../services/projectService";
-import { Project } from "../state/types";
+import { delete_project } from "../services/projectService";
 import { Link } from "wouter";
 import { Plus } from "lucide-react";
 import { ProjectsList } from "../components/ProjectsList";
+// import { useTypedStoreActions } from "../state/store";
 
 const ProjectsPageActions = () => {
   return (
@@ -22,32 +22,13 @@ const ProjectsPageActions = () => {
 };
 
 export const ProjectsPage = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-  const loadProjects = useCallback(async () => {
-    try {
-      setLoadingProjects(true);
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      const projectsData: Project[] = await fetch_projects();
-      setProjects(projectsData);
-      setLoadingProjects(false);
-      console.log("Projects loaded successfully");
-    } catch (error) {
-      console.error("Error loading projects:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+  // const setProjects = useTypedStoreActions((actions) => actions.setProjects);
   const handleProjectDelete = useCallback(async (uuid: string) => {
     try {
       await delete_project(uuid);
-      setProjects((prevProjects) => [
-        ...prevProjects.filter((project) => project.uuid !== uuid),
-      ]);
+      // setProjects((prevProjects) => [
+      //   ...prevProjects.filter((project) => project.uuid !== uuid),
+      // ]);
       toast.success("Project deleted successfully", { autoClose: 1500 });
     } catch (error) {
       console.error("Error deleting project:", error);
@@ -56,11 +37,7 @@ export const ProjectsPage = () => {
 
   return (
     <Layout title="Projects" navbarActionComponent={ProjectsPageActions}>
-      <ProjectsList
-        loadingProjects={loadingProjects}
-        projects={projects}
-        handleProjectDelete={handleProjectDelete}
-      />
+      <ProjectsList handleProjectDelete={handleProjectDelete} />
     </Layout>
   );
 };

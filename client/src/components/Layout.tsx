@@ -6,6 +6,7 @@ import { NavigationBar } from "./NavigationBar";
 
 type LayoutProps = {
   title: string;
+  skeleton?: boolean;
   className?: string;
   navbarActionComponent?: React.ElementType;
 };
@@ -15,6 +16,7 @@ export const Layout = ({
   children,
   className,
   navbarActionComponent,
+  skeleton = false,
 }: PropsWithChildren<LayoutProps>) => {
   const [location] = useLocation();
 
@@ -28,6 +30,7 @@ export const Layout = ({
 
       {!hideNavBar && (
         <NavigationBar
+          skeleton={skeleton}
           name={title}
           navbarActionComponent={navbarActionComponent}
         />

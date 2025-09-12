@@ -13,10 +13,21 @@ import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
+import { useTypedStoreActions } from "./state/store";
 
 function App() {
   const [location, navigate] = useLocation();
   const [checkedTerms, setCheckedTerms] = useState(false);
+
+  const fetchProjects = useTypedStoreActions(
+    (actions) => actions.fetchProjects
+  );
+
+  // Initialization hook
+  useEffect(() => {
+    fetchProjects();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
