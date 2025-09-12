@@ -23,7 +23,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           <Link to="/" className="m-0">
             <span className="sr-only">EvoTestOps</span>
             <img
-              className="h-auto w-45"
+              className="h-auto w-45 select-none"
               src={evoTestOpsLogo}
               alt="EvoTestOps"
             />
@@ -55,7 +55,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           </Link>
         </div>
       </div>
-      <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl md:w-full mr-auto ml-auto">
+      <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">
         <div>
           <H3>{skeleton ? <Skeleton /> : name}</H3>
         </div>

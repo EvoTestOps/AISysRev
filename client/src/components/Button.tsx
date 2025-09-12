@@ -16,22 +16,22 @@ const variantClasses: Record<string, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xl: "",
-  lg: "text-xs",
-  md: "text-sm",
-  sm: "",
+  xl: "text-xl",
+  lg: "text-lg",
+  md: "text-md",
+  sm: "text-sm",
   xs: "text-xs",
 };
 
 export const Button: React.FC<ButtonProps> = ({
   variant = "green",
-  size = "md",
+  size = "sm",
   className,
   ...props
 }) => (
   <button
     className={twMerge(
-      "px-4 py-2 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+      "px-4 py-2 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none",
       variantClasses[variant],
       sizeClasses[size],
       className

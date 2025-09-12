@@ -75,7 +75,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           rel="noopener noreferrer"
           title="Show HTML"
         >
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex flex-row gap-2 items-center select-none">
             <FileText />
             <span>Show HTML</span>
           </div>

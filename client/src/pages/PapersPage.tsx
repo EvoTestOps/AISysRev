@@ -128,7 +128,9 @@ const PaperCard: React.FC<
           setOpen(!open);
         }}
       >
-        <div>{paper.paper_id}</div>
+        <div className="text-sm font-semibold select-none">
+          {paper.paper_id}
+        </div>
         <div className="text-sm font-semibold select-none" title={paper.title}>
           {paper.title.length > 80
             ? paper.title.substring(0, 77) + "..."
@@ -297,7 +299,7 @@ export const PapersPage = () => {
               sethideAlreadyEvaluatedPapers(!hideAlreadyEvaluatedPapers);
             }}
           />
-          <label htmlFor="filter_out_evaluated" className="font-semibold">
+          <label htmlFor="filter_out_evaluated" className="font-semibold select-none">
             Hide already evaluated papers ({alreadyEvaluatedPapers})
           </label>
         </div>
@@ -305,7 +307,7 @@ export const PapersPage = () => {
           <div className="flex flex-col">
             <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16">
               <div
-                className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
+                className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
                 onClick={() => {
                   if (sortOption === "ID_ASC") {
                     setSortOption("ID_DESC");
@@ -342,7 +344,7 @@ export const PapersPage = () => {
                   }
                 }}
               >
-                <span className="font-bold select-none ">
+                <span className="font-bold select-none">
                   Probability of inclusion
                 </span>
                 {sortOption === "INCLUDE_ASC" && <ChevronDown />}
@@ -374,7 +376,7 @@ export const PapersPage = () => {
                     pageRangeDisplayed={5}
                     pageCount={pageCount}
                     renderOnZeroPageCount={null}
-                    containerClassName="flex items-center gap-2"
+                    containerClassName="flex items-center gap-2 items-center content-center justify-center select-none"
                     pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
                     activeClassName="bg-slate-600 hover:cursor-normal"
                     previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"

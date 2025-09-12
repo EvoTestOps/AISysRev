@@ -70,7 +70,7 @@ export const DropdownMenuText: React.FC<TextProps> = ({
       <MenuButton
         disabled={disabled}
         className={classNames(
-          "w-48 p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed",
+          "w-48 p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed select-none",
           {
             "border-gray-300": isLlmSelected,
             "border-red-500 animate-pulse": !isLlmSelected,
