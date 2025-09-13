@@ -2,7 +2,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import Cookies from "js-cookie";
-import { NotFoundPage } from "./pages/404";
+import { NotFoundPage } from "./pages/NotFound";
 import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
@@ -12,10 +12,16 @@ import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
+import { PapersPage } from "./pages/PapersPage";
+import { useTypedStoreActions } from "./state/store";
 
 function App() {
   const [location, navigate] = useLocation();
   const [checkedTerms, setCheckedTerms] = useState(false);
+
+  const fetchProjects = useTypedStoreActions(
+    (actions) => actions.fetchProjects
+  );
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
@@ -24,6 +30,12 @@ function App() {
     }
     setCheckedTerms(true);
   }, [location, navigate]);
+
+  // Initialization hook
+  useEffect(() => {
+    fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!checkedTerms) return null;
 
@@ -35,6 +47,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:uuid" component={ProjectPage} />
+        <Route path="/project/:uuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:uuid/evaluate" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route

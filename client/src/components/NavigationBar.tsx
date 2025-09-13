@@ -3,12 +3,12 @@ import { H3 } from "./Typography";
 import evoTestOpsLogo from "../assets/images/evotestops.png";
 
 type NavigationBarProps = {
-  name: string;
+  pageTitle: string;
   navbarActionComponent?: React.ElementType;
 };
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({
-  name,
+  pageTitle,
   navbarActionComponent,
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
@@ -20,7 +20,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           <Link to="/" className="m-0">
             <span className="sr-only">EvoTestOps</span>
             <img
-              className="h-auto w-45"
+              className="h-auto w-45 select-none"
               src={evoTestOpsLogo}
               alt="EvoTestOps"
             />
@@ -52,9 +52,9 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           </Link>
         </div>
       </div>
-      <div className="flex justify-between pl-8 pr-8 pb-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl md:w-full mr-auto ml-auto">
+      <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">
         <div>
-          <H3>{name}</H3>
+          <H3>{pageTitle}</H3>
         </div>
         <div className="flex items-center">
           {NavbarActionComponent && <NavbarActionComponent />}

@@ -1,8 +1,3 @@
-export interface UserModel {
-  name: string;
-  email: string;
-}
-
 export type Criteria = {
   inclusion_criteria: string[];
   exclusion_criteria: string[];
@@ -76,6 +71,20 @@ export type Paper = {
   human_result: JobTaskHumanResult | null;
   created_at: Date | null;
   updated_at: Date | null;
+};
+
+export type PaperWithModelEval = {
+  uuid: string;
+  paper_id: number;
+  project_uuid: string;
+  file_uuid: string;
+  doi: string;
+  title: string;
+  abstract: string;
+  human_result: JobTaskHumanResult | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+  avg_probability_decision?: number;
 };
 
 export type Result = {
