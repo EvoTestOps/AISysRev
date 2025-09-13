@@ -114,8 +114,8 @@ export const PapersPage = () => {
           </label>
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
-          <div className="flex flex-col">
-            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16">
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white">
               <div
                 className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
                 onClick={() => {
@@ -202,10 +202,11 @@ export const PapersPage = () => {
                 </Card>
               )}
           </div>
-          <div>
-            <div className="h-16" />
-            {/* Spacer */}
-            <Card className="sticky top-2">
+          <div className="flex flex-col gap-2">
+            <div className="sticky top-2 h-16 flex items-center content-center p-4 bg-slate-800 text-white rounded-lg">
+              <H6>Inclusion and exclusion criteria</H6>
+            </div>
+            <Card className="sticky top-20">
               <H6>Inclusion criteria</H6>
               <CriteriaList
                 criteria={project.criteria.inclusion_criteria || []}

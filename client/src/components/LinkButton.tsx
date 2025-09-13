@@ -1,11 +1,16 @@
 import { twMerge } from "tailwind-merge";
 import React from "react";
 import classNames from "classnames";
+import { Link } from "wouter";
 
-type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+type LinkButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
+
+// Issue with Wouter's LinkProps prevent us from directly using it
+type LinkButtonProps = {
   variant?: "green" | "yellow" | "red" | "purple" | "gray";
-  size?: ButtonSize;
+  size?: LinkButtonSize;
+  className?: string;
+  href: string;
 };
 
 const variantClasses: Record<string, string> = {
@@ -16,7 +21,7 @@ const variantClasses: Record<string, string> = {
   gray: "bg-gray-700 hover:bg-gray-600",
 };
 
-const sizeClasses: Record<ButtonSize, string> = {
+const sizeClasses: Record<LinkButtonSize, string> = {
   xl: "text-xl",
   lg: "text-lg",
   md: "text-md",
@@ -24,14 +29,15 @@ const sizeClasses: Record<ButtonSize, string> = {
   xs: "text-xs",
 };
 
-export const Button: React.FC<ButtonProps> = ({
+export const LinkButton: React.FC<React.PropsWithChildren<LinkButtonProps>> = ({
   variant = "green",
   size = "sm",
   className,
-  children,
+  href,
   ...rest
 }) => (
-  <button
+  <Link
+    href={href}
     className={twMerge(
       classNames(
         "px-3 py-2 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none flex flex-row items-center content-center gap-2",
@@ -41,7 +47,5 @@ export const Button: React.FC<ButtonProps> = ({
       )
     )}
     {...rest}
-  >
-    {children}
-  </button>
+  />
 );

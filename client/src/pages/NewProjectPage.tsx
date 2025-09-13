@@ -11,6 +11,7 @@ import { Criteria } from "../state/types";
 import { create_project } from "../services/projectService";
 import { Card } from "../components/Card";
 import { useTypedStoreActions } from "../state/store";
+import { Button } from "../components/Button";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -117,7 +118,7 @@ export const NewProject = () => {
             </H6>
             <input
               type="text"
-              className="border border-gray-300 rounded-lg p-3 w-full shadow-sm focus:outline-none"
+              className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none"
               placeholder="Enter project title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -125,43 +126,51 @@ export const NewProject = () => {
           </div>
         </Card>
         <Card>
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <H6>
-              Inclusion criteria
-              <span className="text-red-500 font-semibold">*</span>
-            </H6>
+          <div className="grid grid-cols-[200px_1fr] items-center gap-4 mb-8">
+            <div className="flex justify-start h-full">
+              <H6>
+                Inclusion criteria
+                <span className="text-red-500 font-semibold">*</span>
+              </H6>
+            </div>
+            <div className="flex flex-col gap-4">
+              <CriteriaList
+                criteria={inclusionCriteria}
+                onDelete={deleteInclusionCriteria}
+              />
+              <CriteriaInput
+                placeholder="Inclusion criterion + [Enter]"
+                value={inclusionCriteriaInput}
+                setCriteriaInput={setInclusionCriteriaInput}
+                handleSetup={handleInclusionSetup}
+              />
+            </div>
           </div>
-          <CriteriaList
-            criteria={inclusionCriteria}
-            onDelete={deleteInclusionCriteria}
-          />
-          <CriteriaInput
-            placeholder="Inclusion criterion + [Enter]"
-            value={inclusionCriteriaInput}
-            setCriteriaInput={setInclusionCriteriaInput}
-            handleSetup={handleInclusionSetup}
-          />
           <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <H6>
-              Exclusion criteria
-              <span className="text-red-500 font-semibold">*</span>
-            </H6>
+            <div className="flex justify-start h-full">
+              <H6>
+                Exclusion criteria
+                <span className="text-red-500 font-semibold">*</span>
+              </H6>
+            </div>
+            <div className="flex flex-col gap-4">
+              <CriteriaList
+                criteria={exclusionCriteria}
+                onDelete={deleteExclusionCriteria}
+              />
+              <CriteriaInput
+                placeholder="Exclusion criterion + [Enter]"
+                value={exclusionCriteriaInput}
+                setCriteriaInput={setExclusionCriteriaInput}
+                handleSetup={handleExclusionSetup}
+              />
+            </div>
           </div>
-          <CriteriaList
-            criteria={exclusionCriteria}
-            onDelete={deleteExclusionCriteria}
-          />
-          <CriteriaInput
-            placeholder="Exclusion criterion + [Enter]"
-            value={exclusionCriteriaInput}
-            setCriteriaInput={setExclusionCriteriaInput}
-            handleSetup={handleExclusionSetup}
-          />
         </Card>
         <Card>
           <div className="flex justify-between items-end gap-4">
-            <button
-              className="bg-red-500 text-white text-sm font-bold h-12 p-2 rounded-md shadow-md hover:bg-red-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
+            <Button
+              variant="red"
               onClick={() => {
                 setTitle("");
                 setInclusionCriteria([]);
@@ -170,19 +179,12 @@ export const NewProject = () => {
                 setExclusionCriteriaInput("");
               }}
             >
-              <div className="flex flex-row items-center gap-2">
-                <RotateCcw />
-                <span>Reset</span>
-              </div>
-            </button>
-            <button
-              className="bg-green-600 text-white text-sm font-bold h-12 p-2 rounded-md shadow-md hover:bg-green-500 hover:cursor-pointer hover:drop-down-brightness-125 transition duration-200 ease-in-out"
-              onClick={handleCreate}
-            >
-              <div className="flex flex-row items-center gap-2">
-                <span>Create</span>
-              </div>
-            </button>
+              <RotateCcw size={16} />
+              <span>Reset</span>
+            </Button>
+            <Button onClick={handleCreate}>
+              <span>Create</span>
+            </Button>
           </div>
         </Card>
       </div>
