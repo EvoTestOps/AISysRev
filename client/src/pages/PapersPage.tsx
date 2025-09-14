@@ -1,6 +1,6 @@
 import { useLocation, useParams } from "wouter";
 import ReactPaginate from "react-paginate";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { TabButton } from "../components/TabButton";
@@ -16,6 +16,8 @@ export const PapersPage = () => {
   const params = useParams<{ uuid: string; page?: string }>();
   const projectUuid = params.uuid;
   const currentPage = Number(params.page ?? 1);
+
+  const id = useId();
 
   const [, setLocation] = useLocation();
 
@@ -100,14 +102,16 @@ export const PapersPage = () => {
         <div className="p-4 flex flex-row gap-2">
           <input
             type="checkbox"
-            id="filter_out_evaluated"
+            id={`${id}-filter_out_evaluated`}
+            data-testid="input-filter_out_evaluated"
             checked={hideAlreadyEvaluatedPapers}
             onChange={() => {
               sethideAlreadyEvaluatedPapers(!hideAlreadyEvaluatedPapers);
             }}
           />
           <label
-            htmlFor="filter_out_evaluated"
+            htmlFor={`${id}-filter_out_evaluated`}
+            data-testid="label-filter_out_evaluated"
             className="font-semibold select-none"
           >
             Hide already evaluated papers ({alreadyEvaluatedPapers})

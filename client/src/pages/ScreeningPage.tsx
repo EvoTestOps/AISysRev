@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import {
   available_models,
   DecisionType,
@@ -14,7 +14,7 @@ import {
 } from "../example_data";
 import { query_llm } from "../llm/llm";
 import { generatePrompt } from "../llm/prompt";
-import { FileDropArea } from '../components/FileDropArea'
+import { FileDropArea } from "../components/FileDropArea";
 
 const AUTHORIZATION_TOKEN = "AUTHORIZATION_TOKEN";
 const TEMPERATURE = "TEMPERATURE";
@@ -26,8 +26,11 @@ const abortController = new AbortController();
 function Header() {
   return (
     <div className="w-full flex justify-center">
-      <h1 className="text-2xl font-semibold sm:text-3xl lg:text-4xl text-center" data-testid="app-title">
-          AI-automated title-abstract screening PoC
+      <h1
+        className="text-2xl font-semibold sm:text-3xl lg:text-4xl text-center"
+        data-testid="app-title"
+      >
+        AI-automated title-abstract screening PoC
       </h1>
     </div>
   );
@@ -220,6 +223,8 @@ export const ScreeningPage = () => {
     ]
   );
 
+  const id = useId();
+
   return (
     <div className="flex flex-col gap-8 w-full h-full">
       {error !== "" && <ErrorPopup error={error} setError={setError} />}
@@ -230,9 +235,9 @@ export const ScreeningPage = () => {
         </div>
         <div className="flex flex-col gap-4 w-full">
           <Subtitle title="Step 1." description="Add file" />
-            <div>
-              <FileDropArea />
-            </div>
+          <div>
+            <FileDropArea />
+          </div>
           <Subtitle title="Step 2." description="Define inclusion criteria" />
           <div>
             <form
@@ -330,7 +335,7 @@ export const ScreeningPage = () => {
           <div className="flex flex-row gap-3">
             <div className="flex flex-row gap-2">
               <input
-                id="likert-decision"
+                id={`${id}-likert-decision`}
                 type="radio"
                 name="decision-type"
                 value="Likert"
@@ -341,11 +346,13 @@ export const ScreeningPage = () => {
                 }}
                 checked={decisionType === "Likert"}
               />
-              <label htmlFor="likert-decision">Likert-scale (1-7)</label>
+              <label htmlFor={`${id}-likert-decision`}>
+                Likert-scale (1-7)
+              </label>
             </div>
             <div className="flex flex-row gap-2">
               <input
-                id="include-exclude-decision"
+                id={`${id}-include-exclude-decision`}
                 type="radio"
                 name="decision-type"
                 value="IncludeExclude"
@@ -356,7 +363,9 @@ export const ScreeningPage = () => {
                 }}
                 checked={decisionType === "IncludeExclude"}
               />
-              <label htmlFor="include-exclude-decision">Include-Exclude</label>
+              <label htmlFor={`${id}-include-exclude-decision`}>
+                Include-Exclude
+              </label>
             </div>
           </div>
           <div className="flex flex-row gap-2 items-end">
