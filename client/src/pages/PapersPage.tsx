@@ -122,6 +122,7 @@ export const PapersPage = () => {
             <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white">
               <div
                 className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
+                data-testid="sort-by-id"
                 onClick={() => {
                   if (sortOption === "ID_ASC") {
                     setSortOption("ID_DESC");
@@ -136,6 +137,7 @@ export const PapersPage = () => {
               </div>
               <div
                 className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
+                data-testid="sort-by-name"
                 onClick={() => {
                   if (sortOption === "NAME_ASC") {
                     setSortOption("NAME_DESC");
@@ -150,6 +152,7 @@ export const PapersPage = () => {
               </div>
               <div
                 className="flex flex-row gap-1 items-center content-center justify-center hover:cursor-pointer"
+                data-testid="sort-by-inclusion-probability"
                 onClick={() => {
                   if (sortOption === "INCLUDE_ASC") {
                     setSortOption("INCLUDE_DESC");
@@ -169,19 +172,32 @@ export const PapersPage = () => {
             <div className="flex flex-col gap-1">
               {!loadingPapers &&
                 currentPapers.map((paper) => (
-                  <PaperCard key={paper.uuid} paper={paper} />
+                  <PaperCard
+                    key={paper.uuid}
+                    paper={paper}
+                    data-testid={`paper-${paper.paper_id}`}
+                  />
                 ))}
             </div>
             {!loadingPapers &&
               sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length === 0 && (
-                <div className="p-4 text-md text-gray-600">No papers.</div>
+                <div
+                  className="p-4 text-md text-gray-600"
+                  data-testid="no-papers-text"
+                >
+                  No papers.
+                </div>
               )}
             {!loadingPapers &&
               sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length > papersPerPage && (
-                <Card className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6">
+                <Card
+                  className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6"
+                  data-testid="pagination-card"
+                >
                   <ReactPaginate
+                    data-testid="pagination-card-child-react-paginate"
                     onPageChange={(item) =>
                       setLocation(
                         `/project/${projectUuid}/papers/page/${
@@ -213,10 +229,12 @@ export const PapersPage = () => {
             <Card className="sticky top-20">
               <H6>Inclusion criteria</H6>
               <CriteriaList
+                data-testid="inclusion-criteria"
                 criteria={project.criteria.inclusion_criteria || []}
               />
               <H6>Exclusion criteria</H6>
               <CriteriaList
+                data-testid="exclusion-criteria"
                 criteria={project.criteria.exclusion_criteria || []}
               />
             </Card>
