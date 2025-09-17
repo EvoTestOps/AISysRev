@@ -19,9 +19,13 @@ The application is based on our research papers on this topic. Please consider c
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/03a9ea35-e1f6-4489-9e85-2e0efce829f9" width="700"><br>
-  <em>Manual Evaluation view shows LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
+  <em>Manual evaluation view, with LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
 </p>
 
+<p align="left">
+  <img src="https://github.com/user-attachments/assets/d8e3de7d-7ccd-41a4-8af0-b2c7ca3a65e7" width="700"><br>
+  <em>Manual evaluation list view, with papers sorted by inclusion probability according to all executed LLMs.</em>
+</p>
 
 
 ## Getting started
