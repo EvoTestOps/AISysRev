@@ -1,10 +1,11 @@
-import { api } from '../services/api'
-import { Criteria } from '../state/types';
+import { api } from "../services/api";
+import { Criteria, Project } from "../state/types";
 
-export const fetch_projects = async () => {
+// TODO: Zod type guard
+export const fetch_projects = async (): Promise<Project[]> => {
   try {
-    const res = await api.get('/project');
-    console.log('Fetching projects successful', res.data);
+    const res = await api.get("/project");
+    console.log("Fetching projects successful", res.data);
     return res.data;
   } catch (error) {
     console.log("Fetching projects unsuccessful", error);
@@ -25,9 +26,9 @@ export const fetch_project_by_uuid = async (uuid: string) => {
 export const create_project = async (title: string, criteria: Criteria) => {
   try {
     console.log("Creating project with title:", title);
-    const res = await api.post('/project', {
+    const res = await api.post("/project", {
       name: title,
-      criteria: criteria
+      criteria: criteria,
     });
     return res.data;
   } catch (error) {

@@ -152,12 +152,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             <div className="pt-4">
               <div className="flex flex-wrap justify-center gap-6">
                 <Button
-                  variant="green"
-                  onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
+                  variant="red"
+                  onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
-                    <Check />
-                    <span>Include (Y / I)</span>
+                    <X />
+                    <span>Exclude (N / E)</span>
                   </div>
                 </Button>
                 <Button
@@ -170,12 +170,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   </div>
                 </Button>
                 <Button
-                  variant="red"
-                  onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
+                  variant="green"
+                  onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
-                    <X />
-                    <span>Exclude (N / E)</span>
+                    <Check />
+                    <span>Include (Y / I)</span>
                   </div>
                 </Button>
               </div>

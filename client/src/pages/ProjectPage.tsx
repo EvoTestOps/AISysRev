@@ -8,7 +8,6 @@ import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { fetch_project_by_uuid } from "../services/projectService";
 import {
   fetchJobTasksFromBackend,
   fetchPapersFromBackend,
@@ -22,7 +21,6 @@ import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { ModelResponse, retrieve_models } from "../services/openRouterService";
 import { Button } from "../components/Button";
 import {
-  Project,
   FetchedFile,
   ScreeningTask,
   JobTaskStatus,
@@ -35,6 +33,12 @@ import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
 import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
+import { Card } from "../components/Card";
+import { TabButton } from "../components/TabButton";
+import { useTypedStoreState } from "../state/store";
+import Skeleton from "react-loading-skeleton";
+import { NotFoundPage } from "./NotFound";
+import { Hr } from "../components/Hr";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -72,7 +76,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           rel="noopener noreferrer"
           title="Show HTML"
         >
-          <div className="flex flex-row gap-2 items-center">
+          <div className="flex flex-row gap-2 items-center select-none">
             <FileText />
             <span>Show HTML</span>
           </div>
@@ -86,12 +90,9 @@ export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const [, navigate] = useLocation();
-  const [match] = useRoute("/project/:uuid/evaluate");
+  const [evaluateViewMatch] = useRoute("/project/:uuid/evaluate");
   const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
-  const [name, setName] = useState("");
-  const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
-  const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [temperature, setTemperature] = useState(0);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.1);
@@ -101,7 +102,12 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
-  const [error, setError] = useState<string | null>(null);
+
+  const loadingProjects = useTypedStoreState((state) => state.loading.projects);
+  const getProjectByUuid = useTypedStoreState(
+    (state) => state.getProjectByUuid
+  );
+  const project = getProjectByUuid(uuid);
 
   const { loading: openrouterKeyLoading, setting: openrouterKey } =
     useConfig("openrouter_api_key");
@@ -124,37 +130,6 @@ export const ProjectPage = () => {
 
   const evaluationFinished =
     screeningTasks.length > 0 && pendingTasks.length === 0;
-
-  useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const project: Project = await fetch_project_by_uuid(uuid);
-        setName(project.name);
-        setInclusionCriteria(
-          project.criteria.inclusion_criteria
-            .map((criteria) => criteria.trim())
-            .filter(Boolean)
-        );
-        setExclusionCriteria(
-          project.criteria.exclusion_criteria
-            .map((criteria) => criteria.trim())
-            .filter(Boolean)
-        );
-        setError(null);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        if (e.response?.status === 404) {
-          setError("Project not found");
-          toast.error("Project not found");
-        } else {
-          setError("Failed to fetch Project");
-          toast.error("Failed to fetch Project");
-        }
-        console.error("Failed to fetch Project", e);
-      }
-    };
-    fetchProject();
-  }, [uuid]);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -377,14 +352,14 @@ export const ProjectPage = () => {
   ]);
 
   useEffect(() => {
-    if (match && !paperUuid && papers.length > 0) {
+    if (evaluateViewMatch && !paperUuid && papers.length > 0) {
       const first =
         papers.find((paper) => paperToTaskMap[paper.uuid]) || papers[0];
       navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`, {
         replace: true,
       });
     }
-  }, [match, paperUuid, papers, paperToTaskMap, navigate, uuid]);
+  }, [evaluateViewMatch, paperUuid, papers, paperToTaskMap, navigate, uuid]);
 
   const canStartManualEvaluation = papers.length > 0;
 
@@ -419,24 +394,16 @@ export const ProjectPage = () => {
 
   const hasPapers = papers && papers.length > 0;
 
-  if (error) {
-    return (
-      <Layout title="Error">
-        <div className="font-semibold">{error}</div>
-      </Layout>
-    );
+  if (!project) {
+    return <NotFoundPage />;
   }
-  if (!name || !inclusionCriteria || !exclusionCriteria) {
-    return (
-      <Layout title="">
-        <div>Loading...</div>
-      </Layout>
-    );
-  }
+
+  const inclusionCriteria = project?.criteria.inclusion_criteria;
+  const exclusionCriteria = project?.criteria.exclusion_criteria;
 
   return (
     <Layout
-      title={name}
+      title={project?.name || ""}
       navbarActionComponent={() => (
         <ActionComponent
           hasPapers={hasPapers}
@@ -445,14 +412,30 @@ export const ProjectPage = () => {
         />
       )}
     >
+      <div className="flex flex-row mb-4">
+        <TabButton href={`/project/${params.uuid}`} active>
+          Screening tasks
+        </TabButton>
+        <TabButton href={`/project/${params.uuid}/papers/page/1`}>
+          List of papers
+        </TabButton>
+      </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          <div className="flex flex-col gap-2 p-4 w-full bg-neutral-50 rounded-lg">
+          <Card>
             <H6>Inclusion criteria</H6>
-            <CriteriaList criteria={inclusionCriteria} />
+            {loadingProjects ? (
+              <Skeleton />
+            ) : (
+              <CriteriaList criteria={inclusionCriteria || []} />
+            )}
             <H6>Exclusion criteria</H6>
-            <CriteriaList criteria={exclusionCriteria} />
-          </div>
+            {loadingProjects ? (
+              <Skeleton />
+            ) : (
+              <CriteriaList criteria={exclusionCriteria || []} />
+            )}
+          </Card>
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 &&
@@ -482,56 +465,51 @@ export const ProjectPage = () => {
             console.log("doneCount: ", doneCount);
             console.log("progress: ", progress);
             return (
-              <div key={job.uuid} className="mb-6">
-                <div className="flex flex-row justify-between bg-neutral-50 p-4 gap-4 rounded-2xl">
-                  <div className="flex items-center font-semibold">
-                    <Tooltip title={job.llm_config.model_name} enterDelay={50}>
-                      <span className="text-sm text-nowrap">
-                        {job.llm_config.model_name.length > 30
-                          ? job.llm_config.model_name.substring(0, 17) + "..."
-                          : job.llm_config.model_name}
-                      </span>
-                    </Tooltip>
-                  </div>
-                  <div className="relative w-48 h-8">
-                    <progress
-                      value={progress}
-                      max={100}
-                      className="h-full w-full
+              <Card key={job.uuid} className="flex-row justify-between">
+                <div className="flex items-center font-semibold">
+                  <Tooltip title={job.llm_config.model_name} enterDelay={50}>
+                    <span className="text-sm text-nowrap">
+                      {job.llm_config.model_name.length > 30
+                        ? job.llm_config.model_name.substring(0, 17) + "..."
+                        : job.llm_config.model_name}
+                    </span>
+                  </Tooltip>
+                </div>
+                <div className="relative w-48 h-8">
+                  <progress
+                    value={progress}
+                    max={100}
+                    className="h-full w-full
                             [&::-webkit-progress-bar]:rounded-xl
                             [&::-webkit-progress-bar]:bg-gray-400
                             [&::-webkit-progress-value]:bg-blue-200
                             [&::-webkit-progress-value]:rounded-xl
                           "
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                      {doneCount}/{totalCount}
-                    </div>
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
+                    {doneCount}/{totalCount}
                   </div>
-                  {/* <div className="flex text-sm text-red-500 items-center cursor-pointer">
-                    Cancel
-                  </div>
-                  <div className="flex text-sm text-blue-500 items-center cursor-pointer">
-                    View
-                  </div> */}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
-
         <div className="flex flex-col space-y-4">
-          <div className="flex flex-col gap-4 bg-neutral-50 p-4 rounded-lg">
+          <Card>
             {fetchedFiles.length == 0 && (
               <div className="pb-4">
                 <FileDropArea onFilesSelected={handleFilesSelected} />
               </div>
             )}
             <H5>List of papers</H5>
-            <TruncatedFileNames files={fetchedFiles} maxLength={25} />
-          </div>
+            {loadingProjects ? (
+              <Skeleton />
+            ) : (
+              <TruncatedFileNames files={fetchedFiles} maxLength={25} />
+            )}
+          </Card>
 
-          <div className="flex flex-col gap-6 bg-neutral-50 p-4 rounded-lg">
+          <Card>
             <H4>Create task</H4>
             <div className="flex">
               <H5 className="pr-16">LLM</H5>
@@ -547,6 +525,7 @@ export const ProjectPage = () => {
                 setIsLlmSelected={setIsLlmSelected}
               />
             </div>
+            <Hr />
             <p className="text-md font-bold">LLM configuration</p>
             <div className="flex justify-between">
               <p className="text-md font-semibold">
@@ -603,21 +582,38 @@ export const ProjectPage = () => {
                 </div>
               )}
             </div>
+            <Hr />
             <div className="flex justify-start">
               <Button
-                variant="green"
+                variant="purple"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="Create"
-                className="w-full rounded-lg font-bold text-sm disabled:bg-green-600"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <Sparkles />
-                  <span>Create</span>
+                <Sparkles />
+                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                  ZS
                 </div>
+                <span>Start Zero-shot</span>
               </Button>
             </div>
-          </div>
+            <div className="flex justify-start">
+              <Button
+                variant="purple"
+                onClick={createTask}
+                disabled={openrouterKey == null || fetchedFiles.length === 0}
+                title="Create"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                  FS
+                </div>
+                <span>Start Few-shot</span>
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
 
@@ -633,8 +629,8 @@ export const ProjectPage = () => {
         ) : (
           canStartManualEvaluation && (
             <Button
-              variant="purple"
-              className="px-6 text-md font-bold rounded-lg disabled:bg-purple-600"
+              variant="green"
+              className="px-6 text-md font-bold rounded-lg "
               onClick={openManualEvaluation}
               disabled={papersLoading || !canStartManualEvaluation}
             >
@@ -647,12 +643,12 @@ export const ProjectPage = () => {
         )}
       </div>
 
-      {match && paperUuid && (
+      {evaluateViewMatch && paperUuid && (
         <ManualEvaluationModal
           key={paperUuid}
           currentTaskUuid={currentTaskUuid}
-          inclusionCriteria={inclusionCriteria}
-          exclusionCriteria={exclusionCriteria}
+          inclusionCriteria={inclusionCriteria || []}
+          exclusionCriteria={exclusionCriteria || []}
           papers={papers}
           paperUuid={paperUuid}
           onEvaluated={nextPaper}

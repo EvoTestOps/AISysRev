@@ -4,7 +4,12 @@ from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
-from src.schemas.paper import PaperCreate, PaperHumanResult, PaperRead
+from src.schemas.paper import (
+    PaperCreate,
+    PaperHumanResult,
+    PaperRead,
+    PaperReadWithAvgProbability,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,7 +24,20 @@ class PaperService:
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid)
         return [PaperRead.model_validate(paper) for paper in papers]
 
-    async def bulk_create(self, project_uuid: UUID, papers: list[dict], start_index = 1):
+    async def fetch_papers_with_model_evals(self, project_uuid: UUID):
+        rows = await self.paper_crud.fetch_papers_with_model_evals_by_project_uuid(
+            project_uuid
+        )
+        return [
+            PaperReadWithAvgProbability(
+                **paper.__dict__,  # or unpack via your ORM->schema adapter
+                avg_probability_decision=row["avg_probability_decision"],
+            )
+            for row in rows
+            for paper in [row["Paper"]]
+        ]
+
+    async def bulk_create(self, project_uuid: UUID, papers: list[dict], start_index=1):
         created_papers = [
             PaperCreate(
                 paper_id=idx,
@@ -27,7 +45,7 @@ class PaperService:
                 file_uuid=paper["file_uuid"],
                 doi=paper["doi"],
                 title=paper["title"],
-                abstract=paper["abstract"]
+                abstract=paper["abstract"],
             )
             for idx, paper in enumerate(papers, start=start_index)
         ]
@@ -41,6 +59,7 @@ class PaperService:
 
     async def add_human_result(self, uuid: UUID, human_result: PaperHumanResult):
         await self.paper_crud.add_paper_human_result(uuid, human_result)
+
 
 def get_paper_service(db: AsyncSession = Depends(get_db)) -> PaperService:
     paper_crud = PaperCrud(db)

@@ -4,6 +4,7 @@ import { Button } from "../components/Button";
 import { Layout } from "../components/Layout";
 import { useConfig } from "../config/config";
 import { CircleX, Pencil, Save } from "lucide-react";
+import { Card } from "../components/Card";
 
 export const SettingsPage = () => {
   const {
@@ -19,108 +20,106 @@ export const SettingsPage = () => {
 
   return (
     <Layout title="Settings">
-      <div className="bg-white p-4 mb-4 rounded-lg">
-        <div className="grid grid-cols-2 gap-8 h-14 items-center">
-          <div>
-            <span className="font-bold">
-              {loading ? <Skeleton /> : "OpenRouter API key"}
-            </span>
-          </div>
-          <div>
-            {setting === null && !editMode && (
+      <Card>
+        <div>
+          <span className="font-bold">
+            {loading ? <Skeleton /> : "OpenRouter API key"}
+          </span>
+        </div>
+        <div>
+          {setting === null && !editMode && (
+            <>
+              {!loading ? (
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEditMode(true);
+                  }}
+                  variant="green"
+                >
+                  Set
+                </Button>
+              ) : (
+                <Skeleton />
+              )}
+            </>
+          )}
+          <div className="flex flex-row gap-2">
+            {setting !== null && !editMode && (
               <>
-                {!loading ? (
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setEditMode(true);
-                    }}
-                    variant="green"
-                  >
-                    Set
-                  </Button>
-                ) : (
-                  <Skeleton />
-                )}
+                <input
+                  type="password"
+                  disabled
+                  className="rounded-lg py-2 px-4 w-full focus:outline-none"
+                  value={setting.value}
+                  data-1p-ignore
+                />
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEditMode(true);
+                  }}
+                  variant="green"
+                >
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <Pencil />
+                    <span>Edit</span>
+                  </div>
+                </Button>
               </>
             )}
-            <div className="flex flex-row gap-2">
-              {setting !== null && !editMode && (
-                <>
-                  <input
-                    type="password"
-                    disabled
-                    className="rounded-lg py-2 px-4 w-full focus:outline-none"
-                    value={setting.value}
-                    data-1p-ignore
-                  />
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setEditMode(true);
-                    }}
-                    variant="green"
-                  >
-                    <div className="flex flex-row gap-2 items-center font-semibold">
-                      <Pencil />
-                      <span>Edit</span>
-                    </div>
-                  </Button>
-                </>
-              )}
-              {editMode && (
-                <>
-                  <input
-                    type="password"
-                    className="border border-gray-300 rounded-lg py-2 px-4 w-full shadow-sm focus:outline-none"
-                    placeholder="Value"
-                    disabled={loading}
-                    value={value}
-                    data-1p-ignore
-                    onChange={(e) => {
-                      setValue(e.target.value);
-                      e.preventDefault();
-                    }}
-                  />
-                  <Button
-                    variant="green"
-                    disabled={value === setting?.value || loading}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      update({
-                        value,
-                      });
-                      setEditMode(false);
-                      setValue("");
-                      refresh();
-                    }}
-                  >
-                    <div className="flex flex-row gap-2 items-center font-semibold">
-                      <Save />
-                      <span>Save</span>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="red"
-                    disabled={loading}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      refresh();
-                      setEditMode(false);
-                      setValue("");
-                    }}
-                  >
-                    <div className="flex flex-row gap-2 items-center font-semibold">
-                      <CircleX />
-                      <span>Cancel</span>
-                    </div>
-                  </Button>
-                </>
-              )}
-            </div>
+            {editMode && (
+              <>
+                <input
+                  type="password"
+                  className="border border-gray-300 rounded-lg py-2 px-4 w-full shadow-sm focus:outline-none"
+                  placeholder="Value"
+                  disabled={loading}
+                  value={value}
+                  data-1p-ignore
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    e.preventDefault();
+                  }}
+                />
+                <Button
+                  variant="green"
+                  disabled={value === setting?.value || loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    update({
+                      value,
+                    });
+                    setEditMode(false);
+                    setValue("");
+                    refresh();
+                  }}
+                >
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <Save />
+                    <span>Save</span>
+                  </div>
+                </Button>
+                <Button
+                  variant="red"
+                  disabled={loading}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    refresh();
+                    setEditMode(false);
+                    setValue("");
+                  }}
+                >
+                  <div className="flex flex-row gap-2 items-center font-semibold">
+                    <CircleX />
+                    <span>Cancel</span>
+                  </div>
+                </Button>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      </Card>
     </Layout>
   );
 };
