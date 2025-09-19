@@ -39,6 +39,8 @@ import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
 import { Hr } from "../components/Hr";
 import { AlertMessage } from "../components/AlertMessage";
+import { LinkButton } from "../components/LinkButton";
+import { FewShotModal } from "../components/FewShotModal";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -88,9 +90,10 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
-  const uuid = params.uuid;
+  const projectUuid = params.uuid;
   const [, navigate] = useLocation();
   const [evaluateViewMatch] = useRoute("/project/:uuid/evaluate");
+  const [fewShotViewMatch] = useRoute("/project/:uuid/few_shot");
   const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
   const [temperature, setTemperature] = useState(0);
@@ -107,7 +110,7 @@ export const ProjectPage = () => {
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
-  const project = getProjectByUuid(uuid);
+  const project = getProjectByUuid(projectUuid);
 
   const { loading: openrouterKeyLoading, setting: openrouterKey } =
     useConfig("openrouter_api_key");
@@ -134,14 +137,14 @@ export const ProjectPage = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const jobs = await fetchJobsForProject(uuid);
+        const jobs = await fetchJobsForProject(projectUuid);
         setCreatedJobs(jobs);
       } catch (e) {
         console.error("Failed to fetch jobs for project", e);
       }
     };
     fetchJobs();
-  }, [uuid]);
+  }, [projectUuid]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -187,7 +190,7 @@ export const ProjectPage = () => {
   const loadPapers = useCallback(async () => {
     setPapersLoading(true);
     try {
-      const fetched = await fetchPapersFromBackend(uuid);
+      const fetched = await fetchPapersFromBackend(projectUuid);
       console.log("Fetched papers", fetched);
       setPapers(fetched);
     } catch (e) {
@@ -195,7 +198,7 @@ export const ProjectPage = () => {
     } finally {
       setPapersLoading(false);
     }
-  }, [uuid]);
+  }, [projectUuid]);
 
   useEffect(() => {
     loadPapers();
@@ -215,11 +218,12 @@ export const ProjectPage = () => {
     };
 
     try {
-      const res = await createJob(uuid, llmConfig);
+      const res = await createJob(projectUuid, llmConfig);
       const createdJob: CreatedJob = {
         uuid: res.uuid,
         project_uuid: res.project_uuid,
         llm_config: res.llm_config,
+        prompting_type: res.prompting_type,
         created_at: res.created_at,
         updated_at: res.updated_at,
       };
@@ -229,12 +233,12 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [uuid, selectedLlm, temperature, seed, top_p, loadPapers]);
+  }, [projectUuid, selectedLlm, temperature, seed, top_p, loadPapers]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
       try {
-        const res = await fileUploadToBackend(files, uuid);
+        const res = await fileUploadToBackend(files, projectUuid);
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
@@ -252,19 +256,19 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [uuid]
+    [projectUuid]
   );
 
   const fetchFiles = useCallback(async () => {
     try {
-      const files = await fileFetchFromBackend(uuid);
+      const files = await fileFetchFromBackend(projectUuid);
       setFetchedFiles(files);
     } catch (e) {
       toast.warn("Fetching file(s) failed.");
       console.error("File fetch error:", e);
       throw e;
     }
-  }, [uuid]);
+  }, [projectUuid]);
 
   const handleFilesSelected = useCallback(
     async (files: File[]) => {
@@ -323,8 +327,8 @@ export const ProjectPage = () => {
     const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
     const target = firstWithTask || papers[0];
     if (!target) return;
-    navigate(`/project/${uuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [papers, paperToTaskMap, navigate, uuid, evaluationFinished]);
+    navigate(`/project/${projectUuid}/evaluate?paperUuid=${target.uuid}`);
+  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished]);
 
   const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
@@ -333,13 +337,15 @@ export const ProjectPage = () => {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
         if (screeningTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
-          navigate(`/project/${uuid}/evaluate?paperUuid=${candidate.uuid}`);
+          navigate(
+            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`
+          );
           return;
         }
       }
     }
     await loadPapers();
-    navigate(`/project/${uuid}`);
+    navigate(`/project/${projectUuid}`);
     toast.success("Manual evaluation finished.");
   }, [
     paperUuid,
@@ -347,7 +353,7 @@ export const ProjectPage = () => {
     screeningTasks.length,
     paperToTaskMap,
     navigate,
-    uuid,
+    projectUuid,
     loadPapers,
   ]);
 
@@ -355,25 +361,32 @@ export const ProjectPage = () => {
     if (evaluateViewMatch && !paperUuid && papers.length > 0) {
       const first =
         papers.find((paper) => paperToTaskMap[paper.uuid]) || papers[0];
-      navigate(`/project/${uuid}/evaluate?paperUuid=${first.uuid}`, {
+      navigate(`/project/${projectUuid}/evaluate?paperUuid=${first.uuid}`, {
         replace: true,
       });
     }
-  }, [evaluateViewMatch, paperUuid, papers, paperToTaskMap, navigate, uuid]);
+  }, [
+    evaluateViewMatch,
+    paperUuid,
+    papers,
+    paperToTaskMap,
+    navigate,
+    projectUuid,
+  ]);
 
   const canStartManualEvaluation = papers.length > 0;
 
   const showEvaluationResults = useCallback(() => {
     if (!evaluationFinished) return;
-    navigate(`/result/${uuid}`);
-  }, [evaluationFinished, navigate, uuid]);
+    navigate(`/result/${projectUuid}`);
+  }, [evaluationFinished, navigate, projectUuid]);
 
   const downloadCsv = useCallback(() => {
     async function dl() {
-      if (!uuid) return;
+      if (!projectUuid) return;
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
-          project_uuid: uuid,
+          project_uuid: projectUuid,
         }).toString()}`
       );
       if (!response.ok) {
@@ -383,14 +396,14 @@ export const ProjectPage = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `project_${uuid}_results.csv`;
+      a.download = `project_${projectUuid}_results.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     }
     dl().catch(console.error);
-  }, [uuid]);
+  }, [projectUuid]);
 
   const hasPapers = papers && papers.length > 0;
 
@@ -408,7 +421,7 @@ export const ProjectPage = () => {
         <ActionComponent
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
-          projectUuid={uuid}
+          projectUuid={projectUuid}
         />
       )}
     >
@@ -538,7 +551,6 @@ export const ProjectPage = () => {
                 onChange={(e) => setTemperature(e.target.valueAsNumber)}
               />
             </div>
-
             <div className="flex justify-between items-center">
               <p className="text-md font-semibold">Seed</p>
               <input
@@ -564,8 +576,8 @@ export const ProjectPage = () => {
                 onChange={(e) => setTop_p(e.target.valueAsNumber)}
               />
             </div>
-            <div>
-              {!openrouterKeyLoading && openrouterKey == null && (
+            {!openrouterKeyLoading && openrouterKey == null && (
+              <div>
                 <div
                   className="flex bg-red-300 rounded-md p-4 items-center"
                   data-testid="error-missing-openrouter-api-key"
@@ -578,10 +590,10 @@ export const ProjectPage = () => {
                     </Link>
                   </span>
                 </div>
-              )}
-            </div>
-            <div>
-              {fetchedFiles.length === 0 && (
+              </div>
+            )}
+            {fetchedFiles.length === 0 && (
+              <div>
                 <div
                   className="flex bg-red-300 rounded-md p-4 items-center"
                   data-testid="error-missing-list-of-papers"
@@ -590,15 +602,15 @@ export const ProjectPage = () => {
                     To create tasks, you must upload a list of papers.
                   </span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             <Hr />
             <div className="flex justify-start">
               <Button
                 variant="purple"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
-                title="Create"
+                title="Create zero-shot task"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
                 <Sparkles />
@@ -609,11 +621,11 @@ export const ProjectPage = () => {
               </Button>
             </div>
             <div className="flex justify-start">
-              <Button
+              <LinkButton
+                href={`/project/${projectUuid}/few_shot`}
                 variant="purple"
-                onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
-                title="Create"
+                title="Create few-shot task"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
                 <Sparkles />
@@ -621,7 +633,7 @@ export const ProjectPage = () => {
                   FS
                 </div>
                 <span>Start Few-shot</span>
-              </Button>
+              </LinkButton>
             </div>
           </Card>
         </div>
@@ -652,7 +664,9 @@ export const ProjectPage = () => {
           )
         )}
       </div>
-
+      {fewShotViewMatch && (
+        <FewShotModal onClose={() => navigate(`/project/${projectUuid}`)} />
+      )}
       {evaluateViewMatch && paperUuid && (
         <ManualEvaluationModal
           key={paperUuid}
@@ -662,7 +676,7 @@ export const ProjectPage = () => {
           papers={papers}
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
-          onClose={() => navigate(`/project/${uuid}`)}
+          onClose={() => navigate(`/project/${projectUuid}`)}
         />
       )}
     </Layout>

@@ -10,8 +10,10 @@ type LinkButtonProps = {
   variant?: "green" | "yellow" | "red" | "purple" | "gray";
   size?: LinkButtonSize;
   invert?: boolean;
+  disabled?: boolean;
   className?: string;
   href: string;
+  title?: string;
 };
 
 export const LinkButton: React.FC<React.PropsWithChildren<LinkButtonProps>> = ({
@@ -20,11 +22,19 @@ export const LinkButton: React.FC<React.PropsWithChildren<LinkButtonProps>> = ({
   className,
   href,
   invert = false,
+  children,
+  disabled,
   ...rest
 }) => (
   <Link
     role="button"
     href={href}
+    aria-disabled={disabled}
+    onClick={(e) => {
+      if (disabled) {
+        e.preventDefault();
+      }
+    }}
     className={twMerge(
       classNames(
         "border-2 px-3 py-2 text-white font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed select-none flex flex-row items-center content-center gap-2",
@@ -45,6 +55,7 @@ export const LinkButton: React.FC<React.PropsWithChildren<LinkButtonProps>> = ({
           "text-sm": size === "sm",
           "text-xs": size === "xs",
         },
+        { "opacity-20 cursor-not-allowed": disabled },
         {
           "bg-transparent": invert,
           "text-green-600 hover:bg-green-100": invert && variant === "green",
@@ -58,5 +69,7 @@ export const LinkButton: React.FC<React.PropsWithChildren<LinkButtonProps>> = ({
       )
     )}
     {...rest}
-  />
+  >
+    {children}
+  </Link>
 );

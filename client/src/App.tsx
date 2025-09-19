@@ -49,6 +49,7 @@ function App() {
         <Route path="/project/:uuid" component={ProjectPage} />
         <Route path="/project/:uuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:uuid/evaluate" component={ProjectPage} />
+        <Route path="/project/:uuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route
           path="/terms-and-conditions"
