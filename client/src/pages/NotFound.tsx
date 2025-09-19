@@ -1,12 +1,12 @@
 import { Helmet } from "react-helmet-async";
-import { H1 } from "../components/Typography";
-import { Layout } from "lucide-react";
+import { Layout } from "../components/Layout";
+import { AlertMessage } from "../components/AlertMessage";
 
 export const NotFoundPage: React.FC = () => (
-  <Layout>
+  <Layout title="HTTP 404">
     <Helmet>
       <title>Page not found</title>
     </Helmet>
-    <H1>Not found</H1>
+    <AlertMessage message="The page cannot be found. If you believe this is an error, please open a pull request on the AiSysRev GitHub repository." />
   </Layout>
 );
