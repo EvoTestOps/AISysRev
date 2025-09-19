@@ -6,8 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
 from src.models.project import Project
-from src.models.jobtask import JobTask
-from src.models.paper import Paper
 from src.schemas.job import JobCreate, JobRead
 
 class JobCrud:

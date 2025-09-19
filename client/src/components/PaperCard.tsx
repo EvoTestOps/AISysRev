@@ -32,7 +32,7 @@ export const PaperCard: React.FC<
 
   return (
     <Card {...rest} padding="p-0">
-      <div
+      <button
         className={twMerge(
           classNames(
             "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
@@ -42,10 +42,10 @@ export const PaperCard: React.FC<
           setOpen(!open);
         }}
       >
-        <div className="text-sm font-semibold select-none">
+        <div className="text-sm font-semibold select-none text-left">
           {paper.paper_id}
         </div>
-        <div className="text-sm font-semibold select-none" title={paper.title}>
+        <div className="text-sm font-semibold select-non text-left" title={paper.title}>
           {paper.title.length > 80
             ? paper.title.substring(0, 77) + "..."
             : paper.title}
@@ -73,7 +73,7 @@ export const PaperCard: React.FC<
             />
           )}
         </div>
-      </div>
+      </button>
       {open && (
         <div className="pl-4 pr-4 pb-4">
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">

@@ -27,10 +27,17 @@ export type LlmConfig = {
 export type CreatedJob = {
   uuid: string;
   project_uuid: string;
+  prompting_type: JobPromptingType;
   llm_config: LlmConfig;
   created_at: string;
   updated_at: string;
 };
+
+export enum JobPromptingType {
+  ZERO_SHOT = "ZERO_SHOT",
+  ONE_SHOT = "ONE_SHOT",
+  FEW_SHOT = "FEW_SHOT",
+}
 
 export enum JobTaskHumanResult {
   INCLUDE = "INCLUDE",
