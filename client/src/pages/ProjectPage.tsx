@@ -438,9 +438,9 @@ export const ProjectPage = () => {
           </Card> */}
 
           <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 &&
-            papers.length === 0 &&
-            !papersLoading && <AlertMessage message="No screening tasks." />}
+          {screeningTasks.length === 0 && (
+            <AlertMessage message="No screening tasks." />
+          )}
           {createdJobs.map((job) => {
             const jobTasks = screeningTasks.filter((task) => {
               console.log(
