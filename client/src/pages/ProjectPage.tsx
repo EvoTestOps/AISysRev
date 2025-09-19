@@ -570,7 +570,10 @@ export const ProjectPage = () => {
             </div>
             <div>
               {!openrouterKeyLoading && openrouterKey == null && (
-                <div className="flex bg-red-300 rounded-md p-4 items-center">
+                <div
+                  className="flex bg-red-300 rounded-md p-4 items-center"
+                  data-testid="error-missing-openrouter-api-key"
+                >
                   <span className="font-bold text-sm text-red-900 select-none">
                     OpenRouter API key is not set
                     <br />
@@ -583,7 +586,10 @@ export const ProjectPage = () => {
             </div>
             <div>
               {fetchedFiles.length === 0 && (
-                <div className="flex bg-red-300 rounded-md p-4 items-center">
+                <div
+                  className="flex bg-red-300 rounded-md p-4 items-center"
+                  data-testid="error-missing-list-of-papers"
+                >
                   <span className="font-bold text-sm text-red-900 select-none">
                     To create tasks, you must upload a list of papers.
                   </span>
