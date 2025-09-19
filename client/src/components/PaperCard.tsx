@@ -6,12 +6,12 @@ import {
   CircleQuestionMark,
   Check,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
 import { Card, CardProps } from "./Card";
 import { Button } from "./Button";
+import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 
 type PaperCardProps = {
   paper: PaperWithModelEval;
@@ -22,23 +22,12 @@ export const PaperCard: React.FC<
 > = ({ paper, ...rest }) => {
   const [open, setOpen] = useState(false);
 
-  const [isPending, setPending] = useState(false);
-  const manualEvaluationResult = paper.human_result;
-  const [decision, setDecision] = useState<JobTaskHumanResult | null>(
-    manualEvaluationResult
+  const getPaperPendingState = useTypedStoreState(
+    (actions) => actions.getPaperPendingState
   );
-
-  const addHumanResult = useCallback(
-    (paperUuid: string, humanResult: JobTaskHumanResult) => {
-      setPending(true);
-      addPaperHumanResult(paperUuid, humanResult)
-        .then(() => {
-          setDecision(humanResult);
-          setPending(false);
-        })
-        .catch((error) => console.error("Error adding human result:", error));
-    },
-    []
+  const isPending = getPaperPendingState(paper.uuid);
+  const addHumanResult = useTypedStoreActions(
+    (actions) => actions.addHumanResult
   );
 
   return (
@@ -95,9 +84,13 @@ export const PaperCard: React.FC<
               variant="red"
               size="xs"
               disabled={isPending}
-              invert={decision !== JobTaskHumanResult.EXCLUDE}
+              invert={paper.human_result !== JobTaskHumanResult.EXCLUDE}
               onClick={() => {
-                addHumanResult(paper.uuid, JobTaskHumanResult.EXCLUDE);
+                addHumanResult({
+                  projectUuid: paper.project_uuid,
+                  paperUuid: paper.uuid,
+                  humanResult: JobTaskHumanResult.EXCLUDE,
+                });
               }}
             >
               <div className="flex flex-row gap-2 items-center font-semibold">
@@ -109,9 +102,13 @@ export const PaperCard: React.FC<
               variant="yellow"
               size="xs"
               disabled={isPending}
-              invert={decision !== JobTaskHumanResult.UNSURE}
+              invert={paper.human_result !== JobTaskHumanResult.UNSURE}
               onClick={() => {
-                addHumanResult(paper.uuid, JobTaskHumanResult.UNSURE);
+                addHumanResult({
+                  projectUuid: paper.project_uuid,
+                  paperUuid: paper.uuid,
+                  humanResult: JobTaskHumanResult.UNSURE,
+                });
               }}
             >
               <div className="flex flex-row gap-2 items-center font-semibold">
@@ -123,9 +120,13 @@ export const PaperCard: React.FC<
               variant="green"
               size="xs"
               disabled={isPending}
-              invert={decision !== JobTaskHumanResult.INCLUDE}
+              invert={paper.human_result !== JobTaskHumanResult.INCLUDE}
               onClick={() => {
-                addHumanResult(paper.uuid, JobTaskHumanResult.INCLUDE);
+                addHumanResult({
+                  projectUuid: paper.project_uuid,
+                  paperUuid: paper.uuid,
+                  humanResult: JobTaskHumanResult.INCLUDE,
+                });
               }}
             >
               <div className="flex flex-row gap-2 items-center font-semibold">
