@@ -496,19 +496,18 @@ export const ProjectPage = () => {
         </div>
         <div className="flex flex-col space-y-4">
           <Card>
+            <H5>List of papers</H5>
             {fetchedFiles.length == 0 && (
               <div className="pb-4">
                 <FileDropArea onFilesSelected={handleFilesSelected} />
               </div>
             )}
-            <H5>List of papers</H5>
             {loadingProjects ? (
               <Skeleton />
             ) : (
               <TruncatedFileNames files={fetchedFiles} maxLength={25} />
             )}
           </Card>
-
           <Card>
             <H4>Create task</H4>
             <div className="flex">
@@ -578,6 +577,15 @@ export const ProjectPage = () => {
                     <Link className="text-blue-800" to="/settings">
                       Go to settings
                     </Link>
+                  </span>
+                </div>
+              )}
+            </div>
+            <div>
+              {fetchedFiles.length === 0 && (
+                <div className="flex bg-red-300 rounded-md p-4 items-center">
+                  <span className="font-bold text-sm text-red-900 select-none">
+                    To create tasks, you must upload a list of papers.
                   </span>
                 </div>
               )}
