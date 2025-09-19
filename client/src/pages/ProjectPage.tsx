@@ -2,8 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H4, H5, H6 } from "../components/Typography";
-import { CriteriaList } from "../components/CriteriaList";
+import { H4, H5 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -32,14 +31,7 @@ import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
-import {
-  ChartCandlestick,
-  CircleAlert,
-  Download,
-  FileText,
-  FileWarning,
-  Sparkles,
-} from "lucide-react";
+import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
 import { useTypedStoreState } from "../state/store";

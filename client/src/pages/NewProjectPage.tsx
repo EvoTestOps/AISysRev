@@ -122,6 +122,7 @@ export const NewProject = () => {
               placeholder="Enter project title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </div>
         </Card>

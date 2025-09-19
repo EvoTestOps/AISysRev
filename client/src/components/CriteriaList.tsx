@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React from "react";
+import { AlertMessage } from "./AlertMessage";
 
 export type CriteriaListProps = {
   criteria: string[];
@@ -19,9 +20,7 @@ export const CriteriaList: React.FC<CriteriaListProps> = ({
 
   return (
     <div className={classNames("flex flex-col gap-1", className)} {...rest}>
-      {criteria.length === 0 && (
-        <span className="text-gray-500">No criteria.</span>
-      )}
+      {criteria.length === 0 && <AlertMessage message="No criteria." />}
       <ol className="list-decimal pl-6 space-y-4">
         {criteria.map((criterion, index) => (
           <li key={index}>
