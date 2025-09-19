@@ -32,13 +32,21 @@ import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
-import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
+import {
+  ChartCandlestick,
+  CircleAlert,
+  Download,
+  FileText,
+  FileWarning,
+  Sparkles,
+} from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
 import { useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
 import { Hr } from "../components/Hr";
+import { AlertMessage } from "../components/AlertMessage";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -422,7 +430,7 @@ export const ProjectPage = () => {
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          <Card>
+          {/* <Card>
             <H6>Inclusion criteria</H6>
             {loadingProjects ? (
               <Skeleton />
@@ -435,16 +443,12 @@ export const ProjectPage = () => {
             ) : (
               <CriteriaList criteria={exclusionCriteria || []} />
             )}
-          </Card>
+          </Card> */}
 
           <H4>Screening tasks</H4>
           {screeningTasks.length === 0 &&
             papers.length === 0 &&
-            !papersLoading && (
-              <p className="text-gray-400 ml-1 pb-4 italic">
-                No screening tasks
-              </p>
-            )}
+            !papersLoading && <AlertMessage message="No screening tasks." />}
           {createdJobs.map((job) => {
             const jobTasks = screeningTasks.filter((task) => {
               console.log(
