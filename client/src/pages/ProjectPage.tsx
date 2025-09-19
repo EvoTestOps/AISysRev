@@ -38,6 +38,7 @@ import { TabButton } from "../components/TabButton";
 import { useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
+import { Hr } from "../components/Hr";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -524,6 +525,7 @@ export const ProjectPage = () => {
                 setIsLlmSelected={setIsLlmSelected}
               />
             </div>
+            <Hr />
             <p className="text-md font-bold">LLM configuration</p>
             <div className="flex justify-between">
               <p className="text-md font-semibold">
@@ -580,18 +582,35 @@ export const ProjectPage = () => {
                 </div>
               )}
             </div>
+            <Hr />
             <div className="flex justify-start">
               <Button
-                variant="green"
+                variant="purple"
                 onClick={createTask}
                 disabled={openrouterKey == null || fetchedFiles.length === 0}
                 title="Create"
-                className="w-full rounded-lg font-bold text-sm disabled:bg-green-600"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <Sparkles />
-                  <span>Create</span>
+                <Sparkles />
+                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                  ZS
                 </div>
+                <span>Start Zero-shot</span>
+              </Button>
+            </div>
+            <div className="flex justify-start">
+              <Button
+                variant="purple"
+                onClick={createTask}
+                disabled={openrouterKey == null || fetchedFiles.length === 0}
+                title="Create"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                  FS
+                </div>
+                <span>Start Few-shot</span>
               </Button>
             </div>
           </Card>
@@ -610,8 +629,8 @@ export const ProjectPage = () => {
         ) : (
           canStartManualEvaluation && (
             <Button
-              variant="purple"
-              className="px-6 text-md font-bold rounded-lg disabled:bg-purple-600"
+              variant="green"
+              className="px-6 text-md font-bold rounded-lg "
               onClick={openManualEvaluation}
               disabled={papersLoading || !canStartManualEvaluation}
             >

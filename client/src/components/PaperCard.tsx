@@ -6,7 +6,7 @@ import {
   CircleQuestionMark,
   Check,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
@@ -22,13 +22,21 @@ export const PaperCard: React.FC<
 > = ({ paper, ...rest }) => {
   const [open, setOpen] = useState(false);
 
+  const [isPending, setPending] = useState(false);
+  const manualEvaluationResult = paper.human_result;
+  const [decision, setDecision] = useState<JobTaskHumanResult | null>(
+    manualEvaluationResult
+  );
+
   const addHumanResult = useCallback(
-    async (paperUuid: string, humanResult: JobTaskHumanResult) => {
-      try {
-        await addPaperHumanResult(paperUuid, humanResult);
-      } catch (error) {
-        console.error("Error adding human result:", error);
-      }
+    (paperUuid: string, humanResult: JobTaskHumanResult) => {
+      setPending(true);
+      addPaperHumanResult(paperUuid, humanResult)
+        .then(() => {
+          setDecision(humanResult);
+          setPending(false);
+        })
+        .catch((error) => console.error("Error adding human result:", error));
     },
     []
   );
@@ -82,51 +90,50 @@ export const PaperCard: React.FC<
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
             {paper.abstract}
           </div>
-          {paper.human_result === null && (
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                variant="red"
-                size="xs"
-                onClick={() => {
-                  addHumanResult(paper.uuid, JobTaskHumanResult.EXCLUDE);
-                }}
-              >
-                <div className="flex flex-row gap-2 items-center font-semibold">
-                  <X size={15} />
-                  <span className="select-none">Exclude</span>
-                </div>
-              </Button>
-              <Button
-                variant="yellow"
-                size="xs"
-                onClick={() => {
-                  addHumanResult(paper.uuid, JobTaskHumanResult.UNSURE);
-                }}
-              >
-                <div className="flex flex-row gap-2 items-center font-semibold">
-                  <CircleQuestionMark size={15} />
-                  <span className="select-none">Unsure</span>
-                </div>
-              </Button>
-              <Button
-                variant="green"
-                size="xs"
-                onClick={() => {
-                  addHumanResult(paper.uuid, JobTaskHumanResult.INCLUDE);
-                }}
-              >
-                <div className="flex flex-row gap-2 items-center font-semibold">
-                  <Check size={15} />
-                  <span className="select-none">Include</span>
-                </div>
-              </Button>
-            </div>
-          )}
-          {paper.human_result !== null && (
-            <div className="flex flex-wrap justify-center gap-2">
-              Your evaluation: <strong>{paper.human_result}</strong>
-            </div>
-          )}
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button
+              variant="red"
+              size="xs"
+              disabled={isPending}
+              invert={decision !== JobTaskHumanResult.EXCLUDE}
+              onClick={() => {
+                addHumanResult(paper.uuid, JobTaskHumanResult.EXCLUDE);
+              }}
+            >
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <X size={15} />
+                <span className="select-none">Exclude</span>
+              </div>
+            </Button>
+            <Button
+              variant="yellow"
+              size="xs"
+              disabled={isPending}
+              invert={decision !== JobTaskHumanResult.UNSURE}
+              onClick={() => {
+                addHumanResult(paper.uuid, JobTaskHumanResult.UNSURE);
+              }}
+            >
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <CircleQuestionMark size={15} />
+                <span className="select-none">Unsure</span>
+              </div>
+            </Button>
+            <Button
+              variant="green"
+              size="xs"
+              disabled={isPending}
+              invert={decision !== JobTaskHumanResult.INCLUDE}
+              onClick={() => {
+                addHumanResult(paper.uuid, JobTaskHumanResult.INCLUDE);
+              }}
+            >
+              <div className="flex flex-row gap-2 items-center font-semibold">
+                <Check size={15} />
+                <span className="select-none">Include</span>
+              </div>
+            </Button>
+          </div>
         </div>
       )}
     </Card>
