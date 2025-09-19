@@ -1,11 +1,11 @@
 import { Dialog, DialogPanel, Description } from "@headlessui/react";
-import { ArrowRight, CircleX } from "lucide-react";
+import { ArrowRight, CircleX, InfoIcon } from "lucide-react";
 import { H3, H4 } from "./Typography";
 import { Button } from "./Button";
 import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
-import { useReducer } from "react";
+import Tooltip from "@mui/material/Tooltip";
 
 type FewShotModalProps = {
   onClose: () => void;
@@ -18,7 +18,12 @@ type SeedPaperProps = {
 
 const SeedPaper: React.FC<SeedPaperProps> = ({ paper, selected, ...rest }) => (
   <div className="grid grid-cols-[1fr_80px] gap-2" {...rest}>
-    <div className="p-2 rounded-md hover:cursor-pointer hover:bg-gray-200">
+    <div
+      className="p-2 rounded-md hover:cursor-pointer hover:bg-gray-200"
+      onClick={() => {
+        console.log("Foo");
+      }}
+    >
       {paper.title}
     </div>
     <div
@@ -116,8 +121,11 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
               <SeedPaper paper={s} key={s.uuid} selected={i % 2 === 0} />
             ))}
           </div>
-          <div>
+          <div className="flex flex-row gap-2 items-center content-center">
             <Button variant="purple">Auto-select</Button>
+            <Tooltip title="Automatically selects three papers that have the highest probability" arrow>
+              <InfoIcon size={20} />
+            </Tooltip>
           </div>
           {/* <H4>Exclusion seed papers</H4>
           <div>{exclusionSeeds.length}</div> */}
