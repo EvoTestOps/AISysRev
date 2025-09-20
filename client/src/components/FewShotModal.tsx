@@ -1,6 +1,8 @@
 import { Dialog, DialogPanel, Description } from "@headlessui/react";
 import {
+  ArrowLeft,
   ArrowRight,
+  Circle,
   CircleX,
   InfoIcon,
   Square,
@@ -68,6 +70,9 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
 );
 
 export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
+  const [currentStep, setCurrentStep] = useState<
+    "INCLUSION_SEED" | "EXCLUSION_SEED" | "OVERVIEW"
+  >("INCLUSION_SEED");
   const params = useParams<{ uuid: string }>();
   const projectUuid = params.uuid;
   const getPapersForProject = useTypedStoreState(
@@ -127,12 +132,12 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
       onClose={onClose}
     >
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-      <DialogPanel className="relative bg-white p-4 shadow-2xl rounded-xl w-2/3 h-2/3 overflow-hidden">
+      <DialogPanel className="relative bg-white p-4 shadow-2xl rounded-xl w-2/3">
         <CircleX
           onClick={onClose}
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2 h-full">
           <H3>Few-shot screening</H3>
           <Description className="bg-sky-200 p-3 text-sm rounded-md">
             <strong>Few-shot screening</strong> requires seed papers, which can
@@ -144,7 +149,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
             manually.
           </Description>
           <H4>Inclusion seed papers</H4>
-          <div className="flex flex-col gap-2 overflow-y-scroll h-72">
+          <div className="flex flex-col gap-2 overflow-y-scroll h-96">
             <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
               <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
                 Title
@@ -174,21 +179,56 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
               />
             ))}
           </div>
-          <div className="flex flex-row gap-2 items-center content-center">
-            <Button variant="purple">Auto-select</Button>
-            <Tooltip
-              title="Automatically selects three papers that have the highest probability"
-              arrow
-            >
-              <InfoIcon size={20} />
-            </Tooltip>
+          <div className="flex flex-row gap-2 items-center content-center justify-center h-12">
+            {currentStep === "INCLUSION_SEED" ? (
+              <Circle size={16} fill="black" />
+            ) : (
+              <Circle
+                size={16}
+                stroke="#9e9e9e"
+                className="hover:cursor-pointer"
+                onClick={() => setCurrentStep("INCLUSION_SEED")}
+              />
+            )}
+            {currentStep === "EXCLUSION_SEED" ? (
+              <Circle size={16} fill="black" />
+            ) : (
+              <Circle size={16} stroke="#9e9e9e" />
+            )}
+            {currentStep === "OVERVIEW" ? (
+              <Circle size={16} fill="black" />
+            ) : (
+              <Circle size={16} stroke="#9e9e9e" />
+            )}
           </div>
-          {/* <H4>Exclusion seed papers</H4>
-          <div>{exclusionSeeds.length}</div> */}
-          <div className="flex flex-row justify-end">
-            <Button disabled={selectedInclusionSeeds.length === 0}>
-              <ArrowRight /> Next: Exclusion seed papers
-            </Button>
+          <div className="flex justify-between items-center">
+            <div className="flex flex-row gap-2 items-center content-center">
+              <Button variant="purple">Auto-select</Button>
+              <Tooltip
+                title="Automatically selects three papers that have the highest probability"
+                arrow
+              >
+                <InfoIcon size={20} />
+              </Tooltip>
+            </div>
+
+            <div className="flex flex-row gap-2">
+              {currentStep === "EXCLUSION_SEED" && (
+                <Button
+                  disabled={selectedInclusionSeeds.length === 0}
+                  variant="gray"
+                  onClick={() => setCurrentStep("INCLUSION_SEED")}
+                >
+                  <ArrowLeft /> Back
+                </Button>
+              )}
+              <Button
+                disabled={selectedInclusionSeeds.length === 0}
+                onClick={() => setCurrentStep("EXCLUSION_SEED")}
+              >
+                <ArrowRight /> Next: Exclusion seed papers
+              </Button>
+            </div>
           </div>
         </div>
       </DialogPanel>
