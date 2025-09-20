@@ -104,6 +104,9 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
   const [selectedInclusionSeeds, setSelectedInclusionSeeds] = useState<
     Array<string>
   >([]);
+  const [selectedExclusionSeeds, setSelectedExclusionSeeds] = useState<
+    Array<string>
+  >([]);
   const exclusionSeeds = [...papers].filter(
     (paper) =>
       paper.human_result !== null &&
@@ -148,7 +151,11 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
             probability of given category. You can always choose the papers
             manually.
           </Description>
-          <H4>Inclusion seed papers</H4>
+          <H4>
+            {currentStep === "INCLUSION_SEED" && "Inclusion seed papers"}
+            {currentStep === "EXCLUSION_SEED" && "Exclusion seed papers"}
+            {currentStep === "OVERVIEW" && "Overview"}
+          </H4>
           <div className="flex flex-col gap-2 overflow-y-scroll h-96">
             <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
               <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
@@ -158,47 +165,77 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                 Score
               </div>
             </div>
-            {sortedInclusionSeeds.map((s, i) => (
-              <SeedPaper
-                paper={s}
-                key={s.uuid}
-                selected={selectedInclusionSeeds.includes(s.uuid)}
-                disabled={
-                  !selectedInclusionSeeds.includes(s.uuid) &&
-                  selectedInclusionSeeds.length === 3
-                }
-                onTitleClick={() => {
-                  if (selectedInclusionSeeds.includes(s.uuid)) {
-                    setSelectedInclusionSeeds((prev) =>
-                      [...prev].filter((p) => p !== s.uuid)
-                    );
-                  } else {
-                    setSelectedInclusionSeeds((prev) => [...prev, s.uuid]);
+            {currentStep === "INCLUSION_SEED" &&
+              sortedInclusionSeeds.map((s) => (
+                <SeedPaper
+                  paper={s}
+                  key={s.uuid}
+                  selected={selectedInclusionSeeds.includes(s.uuid)}
+                  disabled={
+                    !selectedInclusionSeeds.includes(s.uuid) &&
+                    selectedInclusionSeeds.length === 3
                   }
-                }}
-              />
-            ))}
+                  onTitleClick={() => {
+                    if (selectedInclusionSeeds.includes(s.uuid)) {
+                      setSelectedInclusionSeeds((prev) =>
+                        [...prev].filter((p) => p !== s.uuid)
+                      );
+                    } else {
+                      setSelectedInclusionSeeds((prev) => [...prev, s.uuid]);
+                    }
+                  }}
+                />
+              ))}
           </div>
           <div className="flex flex-row gap-2 items-center content-center justify-center h-12">
             {currentStep === "INCLUSION_SEED" ? (
-              <Circle size={16} fill="black" />
+              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
             ) : (
               <Circle
                 size={16}
-                stroke="#9e9e9e"
-                className="hover:cursor-pointer"
+                className="hover:cursor-pointer stroke-slate-600"
                 onClick={() => setCurrentStep("INCLUSION_SEED")}
               />
             )}
             {currentStep === "EXCLUSION_SEED" ? (
-              <Circle size={16} fill="black" />
+              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
             ) : (
-              <Circle size={16} stroke="#9e9e9e" />
+              <Circle
+                size={16}
+                className={twMerge(
+                  classNames("stroke-slate-600 hover:cursor-pointer", {
+                    "opacity-35 hover:cursor-not-allowed":
+                      selectedInclusionSeeds.length === 0,
+                  })
+                )}
+                onClick={() => {
+                  if (selectedInclusionSeeds.length > 0) {
+                    setCurrentStep("EXCLUSION_SEED");
+                  }
+                }}
+              />
             )}
             {currentStep === "OVERVIEW" ? (
-              <Circle size={16} fill="black" />
+              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
             ) : (
-              <Circle size={16} stroke="#9e9e9e" />
+              <Circle
+                size={16}
+                className={twMerge(
+                  classNames("stroke-slate-600 hover:cursor-pointer", {
+                    "opacity-35 hover:cursor-not-allowed":
+                      selectedExclusionSeeds.length === 0 ||
+                      selectedInclusionSeeds.length === 0,
+                  })
+                )}
+                onClick={() => {
+                  if (
+                    selectedExclusionSeeds.length > 0 &&
+                    selectedInclusionSeeds.length > 0
+                  ) {
+                    setCurrentStep("OVERVIEW");
+                  }
+                }}
+              />
             )}
           </div>
           <div className="flex justify-between items-center">
@@ -222,12 +259,22 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                   <ArrowLeft /> Back
                 </Button>
               )}
-              <Button
-                disabled={selectedInclusionSeeds.length === 0}
-                onClick={() => setCurrentStep("EXCLUSION_SEED")}
-              >
-                <ArrowRight /> Next: Exclusion seed papers
-              </Button>
+              {currentStep === "INCLUSION_SEED" && (
+                <Button
+                  disabled={selectedInclusionSeeds.length === 0}
+                  onClick={() => setCurrentStep("EXCLUSION_SEED")}
+                >
+                  <ArrowRight /> Next: Exclusion seed papers
+                </Button>
+              )}
+              {currentStep === "EXCLUSION_SEED" && (
+                <Button
+                  disabled={selectedExclusionSeeds.length === 0}
+                  onClick={() => setCurrentStep("OVERVIEW")}
+                >
+                  <ArrowRight /> Next: Overview
+                </Button>
+              )}
             </div>
           </div>
         </div>
