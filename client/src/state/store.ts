@@ -10,7 +10,12 @@ import {
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
-import { JobTaskHumanResult, Paper, Project } from "./types";
+import {
+  JobTaskHumanResult,
+  Paper,
+  PaperWithModelEval,
+  Project,
+} from "./types";
 
 const injections = {
   projectsService,
@@ -42,7 +47,10 @@ interface PaperModel {
   // Papers are study-specific
   papers: Record<string, Array<Paper>>;
   papersPendingState: Record<string, boolean>;
-  setPapers: Action<StoreModel, { projectUuid: string; papers: Array<Paper> }>;
+  setPapers: Action<
+    StoreModel,
+    { projectUuid: string; papers: Array<PaperWithModelEval> }
+  >;
   setPaperPendingState: Action<
     StoreModel,
     { paperUuid: string; pending: boolean }
@@ -61,7 +69,7 @@ interface PaperModel {
   >;
   getPapersForProject: Computed<
     StoreModel,
-    (uuid: ProjectUUID) => Paper[],
+    (uuid: ProjectUUID) => PaperWithModelEval[],
     StoreModel
   >;
   getPaperPendingState: Computed<

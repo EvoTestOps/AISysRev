@@ -1,11 +1,20 @@
 import { Dialog, DialogPanel, Description } from "@headlessui/react";
-import { ArrowRight, CircleX, InfoIcon } from "lucide-react";
+import {
+  ArrowRight,
+  CircleX,
+  InfoIcon,
+  Square,
+  SquareCheckBig,
+} from "lucide-react";
 import { H3, H4 } from "./Typography";
 import { Button } from "./Button";
 import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
 import Tooltip from "@mui/material/Tooltip";
+import { twMerge } from "tailwind-merge";
+import classNames from "classnames";
+import { useState } from "react";
 
 type FewShotModalProps = {
   onClose: () => void;
@@ -14,17 +23,40 @@ type FewShotModalProps = {
 type SeedPaperProps = {
   paper: PaperWithModelEval;
   selected: boolean;
+  disabled?: boolean;
+  onTitleClick?: (paperUuid: string) => void;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const SeedPaper: React.FC<SeedPaperProps> = ({ paper, selected, ...rest }) => (
+const SeedPaper: React.FC<SeedPaperProps> = ({
+  paper,
+  selected,
+  disabled = false,
+  onTitleClick,
+  ...rest
+}) => (
   <div className="grid grid-cols-[1fr_80px] gap-2" {...rest}>
     <div
-      className="p-2 rounded-md hover:cursor-pointer hover:bg-gray-200"
+      className={twMerge(
+        classNames(
+          "p-2 rounded-md hover:cursor-pointer grid grid-cols-[1fr_20px] items-center",
+          {
+            "bg-blue-700 hover:bg-blue-600 text-white": selected,
+            "hover:bg-gray-200 odd:bg-gray-100": !selected,
+            "opacity-20 hover:cursor-not-allowed": disabled,
+          }
+        )
+      )}
       onClick={() => {
-        console.log("Foo");
+        if (onTitleClick && !disabled) {
+          onTitleClick(paper.uuid);
+        }
       }}
     >
-      {paper.title}
+      <span className="select-none">{paper.title}</span>
+      <span>
+        {!selected && <Square size={18} />}
+        {selected && <SquareCheckBig size={18} />}
+      </span>
     </div>
     <div
       className="flex items-center content-center justify-center p-2"
@@ -63,6 +95,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
     }
     return a.avg_probability_decision - b.avg_probability_decision;
   });
+
+  const [selectedInclusionSeeds, setSelectedInclusionSeeds] = useState<
+    Array<string>
+  >([]);
   const exclusionSeeds = [...papers].filter(
     (paper) =>
       paper.human_result !== null &&
@@ -109,7 +145,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
           </Description>
           <H4>Inclusion seed papers</H4>
           <div className="flex flex-col gap-2 overflow-y-scroll h-72">
-            <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0">
+            <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
               <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
                 Title
               </div>
@@ -118,19 +154,39 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
               </div>
             </div>
             {sortedInclusionSeeds.map((s, i) => (
-              <SeedPaper paper={s} key={s.uuid} selected={i % 2 === 0} />
+              <SeedPaper
+                paper={s}
+                key={s.uuid}
+                selected={selectedInclusionSeeds.includes(s.uuid)}
+                disabled={
+                  !selectedInclusionSeeds.includes(s.uuid) &&
+                  selectedInclusionSeeds.length === 3
+                }
+                onTitleClick={() => {
+                  if (selectedInclusionSeeds.includes(s.uuid)) {
+                    setSelectedInclusionSeeds((prev) =>
+                      [...prev].filter((p) => p !== s.uuid)
+                    );
+                  } else {
+                    setSelectedInclusionSeeds((prev) => [...prev, s.uuid]);
+                  }
+                }}
+              />
             ))}
           </div>
           <div className="flex flex-row gap-2 items-center content-center">
             <Button variant="purple">Auto-select</Button>
-            <Tooltip title="Automatically selects three papers that have the highest probability" arrow>
+            <Tooltip
+              title="Automatically selects three papers that have the highest probability"
+              arrow
+            >
               <InfoIcon size={20} />
             </Tooltip>
           </div>
           {/* <H4>Exclusion seed papers</H4>
           <div>{exclusionSeeds.length}</div> */}
           <div className="flex flex-row justify-end">
-            <Button disabled>
+            <Button disabled={selectedInclusionSeeds.length === 0}>
               <ArrowRight /> Next: Exclusion seed papers
             </Button>
           </div>
