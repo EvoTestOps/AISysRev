@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H4, H5 } from "../components/Typography";
+import { H4, H5, H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -31,7 +31,15 @@ import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
-import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
+import {
+  ChartCandlestick,
+  CircleAlert,
+  Download,
+  FileText,
+  Sparkles,
+  Square,
+  SquareCheckBig,
+} from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
@@ -41,6 +49,7 @@ import { Hr } from "../components/Hr";
 import { AlertMessage } from "../components/AlertMessage";
 import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
+import classNames from "classnames";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -56,20 +65,18 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   return (
     <div className="flex flex-row gap-2">
       <Button
-        variant="gray"
+        variant="slate"
         onClick={downloadCsv}
         title="Download CSV"
         disabled={!hasPapers}
       >
-        <div className="flex flex-row gap-2 items-center">
-          <Download />
-          <span>Download CSV</span>
-        </div>
+        <Download />
+        <span>Download CSV</span>
       </Button>
       {hasPapers && (
         <a
           className={twMerge(
-            "px-4 py-2 text-white text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-gray-700 hover:bg-gray-600"
+            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700"
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
@@ -78,15 +85,38 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           rel="noopener noreferrer"
           title="Show HTML"
         >
-          <div className="flex flex-row gap-2 items-center select-none">
-            <FileText />
-            <span>Show HTML</span>
-          </div>
+          <FileText />
+          <span>Show HTML</span>
         </a>
       )}
     </div>
   );
 };
+
+const SectionHeader: React.FC<{
+  title: string;
+  disabled?: boolean;
+  selected?: boolean;
+}> = ({ title, selected, disabled = false }) => (
+  <div
+    className={twMerge(
+      classNames(
+        "h-16 grid grid-cols-[1fr_30px] items-center content-center p-4 bg-slate-800 text-white rounded-lg",
+        {
+          "bg-gray-700 opacity-45": disabled,
+        }
+      )
+    )}
+  >
+    <H6 className="select-none">{title}</H6>
+    <span>
+      {selected === false && <Square size={20} strokeWidth={3} />}
+      {selected === true && (
+        <SquareCheckBig size={20} strokeWidth={3} className="text-green-500" />
+      )}
+    </span>
+  </div>
+);
 
 export const ProjectPage = () => {
   const params = useParams<{ uuid: string }>();
@@ -511,11 +541,14 @@ export const ProjectPage = () => {
             );
           })}
         </div>
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-2">
+          <SectionHeader
+            title="Step 1. Upload papers"
+            selected={fetchedFiles.length !== 0}
+          />
           <Card>
-            <H5>List of papers</H5>
             {fetchedFiles.length == 0 && (
-              <div className="pb-4">
+              <div>
                 <FileDropArea onFilesSelected={handleFilesSelected} />
               </div>
             )}
@@ -525,124 +558,132 @@ export const ProjectPage = () => {
               <TruncatedFileNames files={fetchedFiles} maxLength={25} />
             )}
           </Card>
-          <Card>
-            <H4>Create task</H4>
-            <div className="flex">
-              <H5 className="pr-16">LLM</H5>
-              <DropdownMenuText
-                disabled={openrouterKey == null}
-                options={availableModels.map((m) => ({
-                  name: m.name,
-                  value: m.id,
-                }))}
-                selected={selectedLlm}
-                onSelect={setSelectedLlm}
-                isLlmSelected={isLlmSelected}
-                setIsLlmSelected={setIsLlmSelected}
-              />
-            </div>
-            <Hr />
-            <p className="text-md font-bold">LLM configuration</p>
-            <div className="flex justify-between">
-              <p className="text-md font-semibold">
-                Temperature ({temperature})
-              </p>
-              <input
-                type="range"
-                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
-                data-testid="temperature-input"
-                min={0}
-                max={1}
-                step={0.1}
-                value={temperature}
-                disabled={openrouterKey == null}
-                onChange={(e) => setTemperature(e.target.valueAsNumber)}
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-md font-semibold">Seed</p>
-              <input
-                type="number"
-                className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
-                data-testid="seed-input"
-                value={seed}
-                disabled={openrouterKey == null}
-                onChange={(e) => setSeed(e.target.valueAsNumber)}
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <p className="text-md font-semibold">top_p ({top_p})</p>
-              <input
-                type="range"
-                className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200"
-                data-testid="top_p-input"
-                min={0.1}
-                max={1}
-                step={0.1}
-                value={top_p}
-                disabled={openrouterKey == null}
-                onChange={(e) => setTop_p(e.target.valueAsNumber)}
-              />
-            </div>
-            {!openrouterKeyLoading && openrouterKey == null && (
-              <div>
-                <div
-                  className="flex bg-red-300 rounded-md p-4 items-center"
-                  data-testid="error-missing-openrouter-api-key"
-                >
-                  <span className="font-bold text-sm text-red-900 select-none">
-                    OpenRouter API key is not set
-                    <br />
-                    <Link className="text-blue-800" to="/settings">
-                      Go to settings
-                    </Link>
-                  </span>
-                </div>
-              </div>
-            )}
+          <SectionHeader title="Step 2. Create task" />
+          <Card className="relative">
             {fetchedFiles.length === 0 && (
-              <div>
-                <div
-                  className="flex bg-red-300 rounded-md p-4 items-center"
-                  data-testid="error-missing-list-of-papers"
-                >
-                  <span className="font-bold text-sm text-red-900 select-none">
-                    To create tasks, you must upload a list of papers.
-                  </span>
-                </div>
+              <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
+                <CircleAlert strokeWidth={2} />
+                <span>To create tasks, you must first upload papers.</span>
               </div>
             )}
-            <Hr />
-            <div className="flex justify-start">
-              <Button
-                variant="purple"
-                onClick={createTask}
-                disabled={openrouterKey == null || fetchedFiles.length === 0}
-                title="Create zero-shot task"
-                className="w-full rounded-lg font-bold text-sm items-center justify-center"
-              >
-                <Sparkles />
-                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
-                  ZS
+            <>
+              <div className="flex">
+                <H5 className="pr-16">LLM</H5>
+                <DropdownMenuText
+                  disabled={openrouterKey == null}
+                  options={availableModels.map((m) => ({
+                    name: m.name,
+                    value: m.id,
+                  }))}
+                  selected={selectedLlm}
+                  onSelect={setSelectedLlm}
+                  isLlmSelected={isLlmSelected}
+                  setIsLlmSelected={setIsLlmSelected}
+                />
+              </div>
+              {!openrouterKeyLoading && openrouterKey == null && (
+                <div>
+                  <div
+                    className="flex bg-red-300 rounded-md p-4 items-center"
+                    data-testid="error-missing-openrouter-api-key"
+                  >
+                    <span className="font-bold text-sm text-red-900 select-none">
+                      OpenRouter API key is not set
+                      <br />
+                      <Link className="text-blue-800" to="/settings">
+                        Go to settings
+                      </Link>
+                    </span>
+                  </div>
                 </div>
-                <span>Start Zero-shot</span>
-              </Button>
-            </div>
-            <div className="flex justify-start">
-              <LinkButton
-                href={`/project/${projectUuid}/few_shot`}
-                variant="purple"
-                disabled={openrouterKey == null || fetchedFiles.length === 0}
-                title="Create few-shot task"
-                className="w-full rounded-lg font-bold text-sm items-center justify-center"
-              >
-                <Sparkles />
-                <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
-                  FS
+              )}
+              <Hr />
+              <p className="text-md font-bold">LLM configuration</p>
+              <div className="flex justify-between">
+                <p className="text-md font-semibold">
+                  Temperature ({temperature})
+                </p>
+                <input
+                  type="range"
+                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                  data-testid="temperature-input"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={temperature}
+                  disabled={openrouterKey == null}
+                  onChange={(e) => setTemperature(e.target.valueAsNumber)}
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <p className="text-md font-semibold">Seed</p>
+                <input
+                  type="number"
+                  className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
+                  data-testid="seed-input"
+                  value={seed}
+                  disabled={openrouterKey == null}
+                  onChange={(e) => setSeed(e.target.valueAsNumber)}
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <p className="text-md font-semibold">top_p ({top_p})</p>
+                <input
+                  type="range"
+                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                  data-testid="top_p-input"
+                  min={0.1}
+                  max={1}
+                  step={0.1}
+                  value={top_p}
+                  disabled={openrouterKey == null}
+                  onChange={(e) => setTop_p(e.target.valueAsNumber)}
+                />
+              </div>
+              {fetchedFiles.length === 0 && (
+                <div>
+                  <div
+                    className="flex bg-red-300 rounded-md p-4 items-center"
+                    data-testid="error-missing-list-of-papers"
+                  >
+                    <span className="font-bold text-sm text-red-900 select-none">
+                      To create tasks, you must upload a list of papers.
+                    </span>
+                  </div>
                 </div>
-                <span>Start Few-shot</span>
-              </LinkButton>
-            </div>
+              )}
+              <Hr />
+              <div className="flex justify-start">
+                <Button
+                  variant="purple"
+                  onClick={createTask}
+                  disabled={openrouterKey == null || fetchedFiles.length === 0}
+                  title="Create zero-shot task"
+                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
+                >
+                  <Sparkles />
+                  <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                    ZS
+                  </div>
+                  <span>Create Zero-shot</span>
+                </Button>
+              </div>
+              <div className="flex justify-start">
+                <LinkButton
+                  href={`/project/${projectUuid}/few_shot`}
+                  variant="purple"
+                  disabled={openrouterKey == null || fetchedFiles.length === 0}
+                  title="Create few-shot task"
+                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
+                >
+                  <Sparkles />
+                  <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
+                    FS
+                  </div>
+                  <span>Create Few-shot</span>
+                </LinkButton>
+              </div>
+            </>
           </Card>
         </div>
       </div>

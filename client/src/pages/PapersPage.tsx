@@ -11,6 +11,7 @@ import { CriteriaList } from "../components/CriteriaList";
 import { H6 } from "../components/Typography";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
+import { AlertMessage } from "../components/AlertMessage";
 
 export const PapersPage = () => {
   const params = useParams<{ uuid: string; page?: string }>();
@@ -184,12 +185,11 @@ export const PapersPage = () => {
             {!loadingPapers &&
               sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length === 0 && (
-                <div
-                  className="p-4 text-md text-gray-600"
+                <AlertMessage
+                  className="p-4"
                   data-testid="no-papers-text"
-                >
-                  No papers.
-                </div>
+                  message="No papers."
+                />
               )}
             {!loadingPapers &&
               sortedAndFilteredPapers &&

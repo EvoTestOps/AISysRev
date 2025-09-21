@@ -4,7 +4,7 @@ import classNames from "classnames";
 
 type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "green" | "yellow" | "red" | "purple" | "gray";
+  variant?: "green" | "yellow" | "red" | "purple" | "gray" | "slate";
   size?: ButtonSize;
   invert?: boolean;
 };
@@ -30,8 +30,10 @@ export const Button: React.FC<ButtonProps> = ({
             variant === "yellow",
           "border-red-500 bg-red-500 enabled:hover:bg-red-400":
             variant === "red",
-          "border-gray-700 bg-gray-700 enabled:hover:bg-gray-600":
+          "border-gray-500 bg-gray-500 enabled:hover:bg-gray-400":
             variant === "gray",
+          "border-slate-800 bg-slate-800 enabled:hover:bg-slate-600":
+            variant === "slate",
         },
         {
           "text-xl": size === "xl",
