@@ -91,7 +91,7 @@ export type PaperWithModelEval = {
   human_result: JobTaskHumanResult | null;
   created_at: Date | null;
   updated_at: Date | null;
-  avg_probability_decision?: number;
+  avg_probability_decision: number | null;
 };
 
 export type Result = {

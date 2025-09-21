@@ -40,7 +40,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
     <div
       className={twMerge(
         classNames(
-          "p-2 rounded-md hover:cursor-pointer grid grid-cols-[1fr_20px] items-center",
+          "p-2 gap-2 rounded-md hover:cursor-pointer grid grid-cols-[20px_1fr] items-center",
           {
             "bg-blue-700 hover:bg-blue-600 text-white": selected,
             "hover:bg-gray-200 odd:bg-gray-100": !selected,
@@ -54,17 +54,23 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
         }
       }}
     >
-      <span className="select-none font-bold">{paper.title}</span>
       <span>
         {!selected && <Square size={18} />}
         {selected && <SquareCheckBig size={18} />}
       </span>
+      <span className="select-none font-bold">{paper.title}</span>
     </div>
     <div
-      className="flex items-center content-center justify-center p-2"
+      className={classNames(
+        "flex items-center content-center justify-center p-2",
+        {
+          "text-gray-500 italic text-sm":
+            paper.avg_probability_decision === null,
+        }
+      )}
       key={`${paper.uuid}_score`}
     >
-      {paper.avg_probability_decision || "N/A"}
+      {paper.avg_probability_decision || "Pending"}
     </div>
   </div>
 );
@@ -124,7 +130,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
         />
         <div className="grid grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2 h-full">
           <H3>Few-shot screening</H3>
-          <Description className="bg-sky-200 p-3 text-sm rounded-md">
+          <Description className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 px-4 py-2 text-sm">
             <strong>Few-shot screening</strong> requires seed papers, which can
             aid in LLM decision making. Below, you can automatically select up
             to three papers per category (include / exclude), based on your
@@ -233,43 +239,53 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
           </div>
           <div className="flex flex-row gap-2 items-center content-center justify-center h-12">
             {currentStep === "INCLUSION_SEED" ? (
-              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
+              <div className="p-2 bg-slate-800 text-white rounded-md text-sm">
+                Step 1: Inclusion
+              </div>
             ) : (
-              <Circle
-                size={16}
-                className="hover:cursor-pointer stroke-slate-600"
+              <div
+                className="p-2 hover:cursor-pointer hover:underline text-sm"
                 onClick={() => setCurrentStep("INCLUSION_SEED")}
-              />
+              >
+                Step 1: Inclusion
+              </div>
             )}
+            <ArrowRight />
             {currentStep === "EXCLUSION_SEED" ? (
-              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
+              <div className="p-2 bg-slate-800 text-white rounded-md text-sm">
+                Step 2: Exclusion
+              </div>
             ) : (
-              <Circle
-                size={16}
-                className={twMerge(
-                  classNames("stroke-slate-600 hover:cursor-pointer", {
-                    "opacity-35 hover:cursor-not-allowed":
-                      selectedInclusionSeeds.length === 0,
-                  })
-                )}
+              <div
+                className={classNames("p-2 text-sm", {
+                  "hover:cursor-pointer hover:underline":
+                    selectedInclusionSeeds.length > 0,
+                  "opacity-35 hover:cursor-not-allowed":
+                    selectedInclusionSeeds.length === 0,
+                })}
                 onClick={() => {
                   if (selectedInclusionSeeds.length > 0) {
                     setCurrentStep("EXCLUSION_SEED");
                   }
                 }}
-              />
+              >
+                Step 2: Exclusion
+              </div>
             )}
+            <ArrowRight />
             {currentStep === "OVERVIEW" ? (
-              <Circle size={16} className="fill-slate-600 stroke-slate-600" />
+              <div className="text-sm p-2">Overview</div>
             ) : (
-              <Circle
-                size={16}
+              <div
                 className={twMerge(
-                  classNames("stroke-slate-600 hover:cursor-pointer", {
-                    "opacity-35 hover:cursor-not-allowed":
-                      selectedExclusionSeeds.length === 0 ||
-                      selectedInclusionSeeds.length === 0,
-                  })
+                  classNames(
+                    "stroke-slate-600 hover:cursor-pointer text-sm p-2",
+                    {
+                      "opacity-35 hover:cursor-not-allowed":
+                        selectedExclusionSeeds.length === 0 ||
+                        selectedInclusionSeeds.length === 0,
+                    }
+                  )
                 )}
                 onClick={() => {
                   if (
@@ -279,7 +295,9 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                     setCurrentStep("OVERVIEW");
                   }
                 }}
-              />
+              >
+                Overview
+              </div>
             )}
           </div>
           <div className="flex justify-between items-center">
@@ -300,7 +318,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                     checked={saveSelection}
                     onChange={() => setSaveSelection(!saveSelection)}
                   />
-                  <label htmlFor="foo" className="text-sm select-none font-bold">
+                  <label
+                    htmlFor="foo"
+                    className="text-sm select-none font-bold"
+                  >
                     Save selection for future few-shot screening tasks
                   </label>
                 </div>

@@ -10,12 +10,7 @@ import {
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
-import {
-  JobTaskHumanResult,
-  Paper,
-  PaperWithModelEval,
-  Project,
-} from "./types";
+import { JobTaskHumanResult, PaperWithModelEval, Project } from "./types";
 
 const injections = {
   projectsService,
@@ -45,7 +40,7 @@ interface ProjectModel {
 
 interface PaperModel {
   // Papers are study-specific
-  papers: Record<string, Array<Paper>>;
+  papers: Record<string, Array<PaperWithModelEval>>;
   papersPendingState: Record<string, boolean>;
   setPapers: Action<
     StoreModel,
