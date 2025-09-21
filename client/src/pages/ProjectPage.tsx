@@ -34,7 +34,7 @@ import { twMerge } from "tailwind-merge";
 import { ChartCandlestick, Download, FileText, Sparkles } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
-import { useTypedStoreState } from "../state/store";
+import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
 import { Hr } from "../components/Hr";
@@ -110,7 +110,15 @@ export const ProjectPage = () => {
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
+  const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
+
   const project = getProjectByUuid(projectUuid);
+
+  useEffect(() => {
+    if (project !== undefined) {
+      fetchPapers(projectUuid);
+    }
+  }, [fetchPapers, project, projectUuid]);
 
   const { loading: openrouterKeyLoading, setting: openrouterKey } =
     useConfig("openrouter_api_key");
