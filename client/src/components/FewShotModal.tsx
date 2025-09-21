@@ -8,14 +8,14 @@ import {
   Square,
   SquareCheckBig,
 } from "lucide-react";
-import { H3, H4 } from "./Typography";
+import { H3, H4, H6 } from "./Typography";
 import { Button } from "./Button";
 import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
 import { twMerge } from "tailwind-merge";
 import classNames from "classnames";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
 
 type FewShotModalProps = {
@@ -79,6 +79,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
     (state) => state.getPapersForProject
   );
   const papers = getPapersForProject(projectUuid);
+  const [saveSelection, setSaveSelection] = useState(false);
+  const startFewShotScreening = useCallback(() => {
+    console.log("TODO");
+  }, []);
 
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
@@ -113,7 +117,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
       onClose={onClose}
     >
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-      <DialogPanel className="relative bg-white p-4 shadow-2xl rounded-xl w-full md:w-5/6  h-2/3">
+      <DialogPanel className="relative bg-white p-4 shadow-2xl rounded-xl w-full md:w-5/6">
         <CircleX
           onClick={onClose}
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
@@ -136,19 +140,38 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
               "Exclusion seed papers" + " (" + exclusionSeeds.length + ")"}
             {currentStep === "OVERVIEW" && "Overview"}
           </H4>
-          <div className="flex flex-col gap-2 overflow-y-scroll h-96">
-            {currentStep === "INCLUSION_SEED" ||
-              (currentStep === "EXCLUSION_SEED" && (
-                <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
-                  <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
-                    Title
-                  </div>
-                  <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
-                    Score
-                  </div>
+          <div
+            className={classNames("flex flex-col gap-2", {
+              "h-96 overflow-y-scroll": currentStep !== "OVERVIEW",
+            })}
+          >
+            {(currentStep === "INCLUSION_SEED" ||
+              currentStep === "EXCLUSION_SEED") && (
+              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
+                <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
+                  Title
                 </div>
-              ))}
-            {currentStep === "OVERVIEW" && <div>Hello!</div>}
+                <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
+                  Score
+                </div>
+              </div>
+            )}
+            {currentStep === "OVERVIEW" && (
+              <div className="flex flex-col gap-2">
+                <H6>Inclusion seeds</H6>
+                <div className="flex flex-col gap-2">
+                  {selectedInclusionSeeds.map((s) => (
+                    <div key={s}>{s}</div>
+                  ))}
+                </div>
+                <H6>Exclusion seeds</H6>
+                <div className="flex flex-col gap-2">
+                  {selectedExclusionSeeds.map((s) => (
+                    <div key={s}>{s}</div>
+                  ))}
+                </div>
+              </div>
+            )}
             {currentStep === "INCLUSION_SEED" &&
               sortedInclusionSeeds.length === 0 && (
                 <div className="grid grid-cols-[1fr_80px] gap-2 p-2">
@@ -268,6 +291,20 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
               >
                 <InfoIcon size={20} />
               </Tooltip> */}
+              {currentStep === "OVERVIEW" && (
+                <div className="flex flex-row gap-2 items-center content-center">
+                  <input
+                    type="checkbox"
+                    name="foo"
+                    id="foo"
+                    checked={saveSelection}
+                    onChange={() => setSaveSelection(!saveSelection)}
+                  />
+                  <label htmlFor="foo" className="text-sm select-none font-bold">
+                    Save selection for future few-shot screening tasks
+                  </label>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-row gap-2">
@@ -293,7 +330,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                 <Button
                   disabled={selectedInclusionSeeds.length === 0}
                   variant="purple"
-                  onClick={() => setCurrentStep("EXCLUSION_SEED")}
+                  onClick={() => startFewShotScreening()}
                 >
                   <Sparkles />
                   <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
