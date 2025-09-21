@@ -14,7 +14,7 @@ export const AlertMessage: React.FC<AlertMessageProps> = ({
   <div
     className={twMerge(
       classNames(
-        "text-gray-500 pb-4 flex flex-row gap-2 items-center",
+        "text-gray-500 pb-4 flex flex-row gap-2 items-center select-none",
         className
       )
     )}

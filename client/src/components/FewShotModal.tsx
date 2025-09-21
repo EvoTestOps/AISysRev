@@ -2,7 +2,6 @@ import { Dialog, DialogPanel, Description } from "@headlessui/react";
 import {
   ArrowLeft,
   ArrowRight,
-  Circle,
   CircleX,
   Sparkles,
   Square,
@@ -62,7 +61,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
     </div>
     <div
       className={classNames(
-        "rounded-md bg-gray-100 text-xs px-2 py-1 flex items-center content-center justify-center p-2",
+        "rounded-md bg-gray-100 text-xs px-2 py-1 flex items-center content-center justify-center p-2 select-none",
         {
           "text-gray-600": paper.avg_probability_decision === null,
         }
@@ -129,7 +128,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
         />
         <div className="grid grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2 h-full">
           <H3>Few-shot screening</H3>
-          <Description className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 px-4 py-2 text-sm">
+          <Description className="px-4 py-2 border-l-4 bg-blue-50 border-blue-400 text-blue-700 text-sm ">
             <strong>Few-shot screening</strong> requires seed papers, which can
             aid in LLM decision making. Below, you can automatically select up
             to three papers per category (include / exclude), based on your
@@ -238,12 +237,12 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
           </div>
           <div className="flex flex-row gap-2 items-center content-center justify-center h-12">
             {currentStep === "INCLUSION_SEED" ? (
-              <div className="p-2 bg-slate-800 text-white rounded-md text-sm">
+              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
                 Step 1: Inclusion
               </div>
             ) : (
               <div
-                className="p-2 hover:cursor-pointer hover:underline text-sm"
+                className="p-2 hover:cursor-pointer hover:underline text-sm select-none"
                 onClick={() => setCurrentStep("INCLUSION_SEED")}
               >
                 Step 1: Inclusion
@@ -251,12 +250,12 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
             )}
             <ArrowRight />
             {currentStep === "EXCLUSION_SEED" ? (
-              <div className="p-2 bg-slate-800 text-white rounded-md text-sm">
+              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
                 Step 2: Exclusion
               </div>
             ) : (
               <div
-                className={classNames("p-2 text-sm", {
+                className={classNames("p-2 text-sm select-none", {
                   "hover:cursor-pointer hover:underline":
                     selectedInclusionSeeds.length > 0,
                   "opacity-35 hover:cursor-not-allowed":
@@ -273,12 +272,14 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
             )}
             <ArrowRight />
             {currentStep === "OVERVIEW" ? (
-              <div className="text-sm p-2">Overview</div>
+              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
+                Overview
+              </div>
             ) : (
               <div
                 className={twMerge(
                   classNames(
-                    "stroke-slate-600 hover:cursor-pointer text-sm p-2",
+                    "stroke-slate-600 hover:cursor-pointer text-sm p-2 select-none",
                     {
                       "opacity-35 hover:cursor-not-allowed":
                         selectedExclusionSeeds.length === 0 ||

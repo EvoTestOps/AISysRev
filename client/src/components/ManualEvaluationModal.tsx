@@ -12,6 +12,7 @@ import { Button } from "./Button";
 import { addPaperHumanResult } from "../services/paperService";
 import { JobTaskHumanResult, Paper } from "../state/types";
 import axios from "axios";
+import { AlertMessage } from "./AlertMessage";
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
@@ -123,6 +124,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
               className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
               [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
+              {modelSuggestions.length === 0 && (
+                <AlertMessage message="No model suggestions." />
+              )}
               {modelSuggestions.map((suggestion, i) => (
                 <LlmModelCard
                   key={i}
@@ -145,6 +149,17 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
               className="flex-1 overflow-y-auto
               [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
+              <div className="text-sm pt-2 pb-2">
+                <strong>DOI:</strong>{" "}
+                <a
+                  href={encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover-underline text-blue-600 hover-underline"
+                >
+                  {currentPaper.doi}
+                </a>
+              </div>
               <Description className="text-sm leading-relaxed whitespace-pre-line">
                 {currentPaper.abstract}
               </Description>

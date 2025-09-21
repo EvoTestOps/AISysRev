@@ -120,7 +120,7 @@ export const PapersPage = () => {
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white">
+            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white sticky top-2">
               <button
                 className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
                 data-testid="sort-by-id"
