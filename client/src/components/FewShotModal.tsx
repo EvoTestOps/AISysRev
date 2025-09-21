@@ -62,10 +62,9 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
     </div>
     <div
       className={classNames(
-        "flex items-center content-center justify-center p-2",
+        "rounded-md bg-gray-100 text-xs px-2 py-1 flex items-center content-center justify-center p-2",
         {
-          "text-gray-500 italic text-sm":
-            paper.avg_probability_decision === null,
+          "text-gray-600": paper.avg_probability_decision === null,
         }
       )}
       key={`${paper.uuid}_score`}
@@ -153,8 +152,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
           >
             {(currentStep === "INCLUSION_SEED" ||
               currentStep === "EXCLUSION_SEED") && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50">
-                <div className="font-bold p-2 bg-slate-800 text-white rounded-md">
+              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
+                <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
                   Title
                 </div>
                 <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
