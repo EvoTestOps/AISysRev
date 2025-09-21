@@ -64,7 +64,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
       className="flex items-center content-center justify-center p-2"
       key={`${paper.uuid}_score`}
     >
-      0.956
+      {paper.avg_probability_decision || "N/A"}
     </div>
   </div>
 );
@@ -81,24 +81,13 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
   const papers = getPapersForProject(projectUuid);
 
   const inclusionSeeds = [...papers].filter(
-    (paper) =>
-      paper.human_result !== null &&
-      paper.human_result == JobTaskHumanResult.INCLUDE
+    (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
   );
   const sortedInclusionSeeds = [...inclusionSeeds].sort((a, b) => {
-    if (
-      a.avg_probability_decision === undefined &&
-      b.avg_probability_decision === undefined
-    ) {
-      return 0;
-    }
-    if (a.avg_probability_decision === undefined) {
-      return -1;
-    }
-    if (b.avg_probability_decision === undefined) {
-      return 1;
-    }
-    return a.avg_probability_decision - b.avg_probability_decision;
+    // Hack
+    const aVal = a.avg_probability_decision ?? -100_000;
+    const bVal = b.avg_probability_decision ?? -100_000;
+    return aVal - bVal;
   });
 
   const [selectedInclusionSeeds, setSelectedInclusionSeeds] = useState<
@@ -108,24 +97,13 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
     Array<string>
   >([]);
   const exclusionSeeds = [...papers].filter(
-    (paper) =>
-      paper.human_result !== null &&
-      paper.human_result == JobTaskHumanResult.EXCLUDE
+    (paper) => paper.human_result === JobTaskHumanResult.EXCLUDE
   );
   const sortedExclusionSeeds = [...exclusionSeeds].sort((a, b) => {
-    if (
-      a.avg_probability_decision === undefined &&
-      b.avg_probability_decision === undefined
-    ) {
-      return 0;
-    }
-    if (a.avg_probability_decision === undefined) {
-      return -1;
-    }
-    if (b.avg_probability_decision === undefined) {
-      return 1;
-    }
-    return a.avg_probability_decision - b.avg_probability_decision;
+    // Hack
+    const aVal = a.avg_probability_decision ?? -100_000;
+    const bVal = b.avg_probability_decision ?? -100_000;
+    return aVal - bVal;
   });
 
   return (
