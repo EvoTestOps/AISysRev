@@ -40,7 +40,7 @@ function App() {
   if (!checkedTerms) return null;
 
   return (
-    <div className="flex flex-col bg-gray-200">
+    <div className="flex flex-col bg-gray-200 font-roboto">
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
