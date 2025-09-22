@@ -657,7 +657,11 @@ export const ProjectPage = () => {
                 <Button
                   variant="purple"
                   onClick={createTask}
-                  disabled={openrouterKey == null || fetchedFiles.length === 0}
+                  disabled={
+                    openrouterKey == null ||
+                    fetchedFiles.length === 0 ||
+                    selectedLlm === undefined
+                  }
                   title="Create zero-shot task"
                   className="w-full rounded-lg font-bold text-sm items-center justify-center"
                 >
@@ -672,7 +676,11 @@ export const ProjectPage = () => {
                 <LinkButton
                   href={`/project/${projectUuid}/few_shot`}
                   variant="purple"
-                  disabled={openrouterKey == null || fetchedFiles.length === 0}
+                  disabled={
+                    openrouterKey == null ||
+                    fetchedFiles.length === 0 ||
+                    selectedLlm === undefined
+                  }
                   title="Create few-shot task"
                   className="w-full rounded-lg font-bold text-sm items-center justify-center"
                 >

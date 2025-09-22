@@ -17,7 +17,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
       <div className="flex flex-col sm:flex-row justify-between p-8 relative">
         <div>
           <Link to="/" className="m-0">
-            <span className="text-4xl">AiSysRev</span>
+            <span className="text-4xl font">AiSysRev</span>
           </Link>
           {appEnv === "dev" && (
             <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm absolute top-2 left-2 opacity-40 select-none">
