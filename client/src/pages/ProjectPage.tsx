@@ -26,8 +26,7 @@ import {
   Paper,
   CreatedJob,
   LlmConfig,
-  JobPromptingType,
-  PromptingConfig,
+  createZeroShotPromptingConfig,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -257,9 +256,7 @@ export const ProjectPage = () => {
       top_p: top_p,
     };
 
-    const promptingConfig: PromptingConfig = {
-      screening_type: JobPromptingType.ZERO_SHOT,
-    };
+    const promptingConfig = createZeroShotPromptingConfig();
 
     try {
       const res = await createJob(projectUuid, llmConfig, promptingConfig);

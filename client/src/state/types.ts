@@ -30,11 +30,24 @@ export type ZeroShotPromptingConfig = {
   screening_type: JobPromptingType.ZERO_SHOT;
 };
 
+export const createZeroShotPromptingConfig = (): ZeroShotPromptingConfig => ({
+  screening_type: JobPromptingType.ZERO_SHOT,
+});
+
 export type FewShotPromptingConfig = {
   screening_type: JobPromptingType.FEW_SHOT;
-  seed_paper_inc: Array<string>;
-  seed_paper_exc: Array<string>;
+  seed_paper_inc: string[];
+  seed_paper_exc: string[];
 };
+
+export const createFewShotPromptingConfig = (
+  include_seeds: string[],
+  exclude_seeds: string[]
+): FewShotPromptingConfig => ({
+  screening_type: JobPromptingType.FEW_SHOT,
+  seed_paper_exc: exclude_seeds,
+  seed_paper_inc: include_seeds,
+});
 
 export type CreatedJob = {
   uuid: string;

@@ -13,8 +13,7 @@ import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import {
   CreatedJob,
-  FewShotPromptingConfig,
-  JobPromptingType,
+  createFewShotPromptingConfig,
   JobTaskHumanResult,
   LlmConfig,
   PaperWithModelEval,
@@ -124,11 +123,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   });
 
   const createFewShotJob = useCallback(async () => {
-    const promptingConfig: FewShotPromptingConfig = {
-      screening_type: JobPromptingType.FEW_SHOT,
-      seed_paper_exc: selectedExclusionSeeds,
-      seed_paper_inc: selectedInclusionSeeds,
-    };
+    const promptingConfig = createFewShotPromptingConfig(
+      selectedInclusionSeeds,
+      selectedExclusionSeeds
+    );
 
     try {
       const res = await createJob(projectUuid, llmConfig, promptingConfig);
