@@ -21,7 +21,7 @@ import { ModelResponse, retrieve_models } from "../services/openRouterService";
 import { Button } from "../components/Button";
 import {
   FetchedFile,
-  ScreeningTask,
+  JobTask,
   JobTaskStatus,
   Paper,
   CreatedJob,
@@ -135,7 +135,7 @@ export const ProjectPage = () => {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
-  const [screeningTasks, setScreeningTasks] = useState<ScreeningTask[]>([]);
+  const [screeningTasks, setScreeningTasks] = useState<JobTask[]>([]);
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const getProjectByUuid = useTypedStoreState(

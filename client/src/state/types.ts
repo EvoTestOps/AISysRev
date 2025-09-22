@@ -78,7 +78,7 @@ export enum JobTaskStatus {
   ERROR = "ERROR",
 }
 
-export type ScreeningTask = {
+export type JobTask = {
   uuid: string;
   job_uuid: string;
   job_id: number;
