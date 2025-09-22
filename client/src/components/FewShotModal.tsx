@@ -129,7 +129,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   const createFewShotJob = useCallback(async () => {
     const promptingConfig = createFewShotPromptingConfig(
       selectedInclusionSeeds,
-      selectedExclusionSeeds
+      selectedExclusionSeeds,
+      rememberSelection
     );
 
     try {
@@ -146,7 +147,13 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     } catch (e) {
       console.error("Error creating job:", e);
     }
-  }, [selectedExclusionSeeds, selectedInclusionSeeds, projectUuid, llmConfig]);
+  }, [
+    selectedInclusionSeeds,
+    selectedExclusionSeeds,
+    rememberSelection,
+    projectUuid,
+    llmConfig,
+  ]);
 
   return (
     <Dialog

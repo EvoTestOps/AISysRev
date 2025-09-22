@@ -29,6 +29,7 @@ class FewShotPromptingConfig(BaseModel):
     screening_type: Literal[JobPromptingType.FEW_SHOT]
     seed_paper_inc: List[str]
     seed_paper_exc: List[str]
+    remember_selection: bool
 
 
 PromptingConfig = Annotated[

@@ -38,15 +38,18 @@ export type FewShotPromptingConfig = {
   screening_type: JobPromptingType.FEW_SHOT;
   seed_paper_inc: string[];
   seed_paper_exc: string[];
+  remember_selection: boolean;
 };
 
 export const createFewShotPromptingConfig = (
   include_seeds: string[],
-  exclude_seeds: string[]
+  exclude_seeds: string[],
+  remember_selection = true
 ): FewShotPromptingConfig => ({
   screening_type: JobPromptingType.FEW_SHOT,
   seed_paper_exc: exclude_seeds,
   seed_paper_inc: include_seeds,
+  remember_selection,
 });
 
 export type CreatedJob = {
