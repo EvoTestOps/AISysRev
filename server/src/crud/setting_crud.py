@@ -21,8 +21,8 @@ class SettingCrud:
             Setting.name == name
         )
         result = await self.db.execute(stmt)
-        setting = result.scalars().one_or_none()
-        return SettingRead.model_validate(setting) if setting else None
+        row = result.mappings().one_or_none()
+        return SettingRead(**row) if row else None
 
     async def upsert_setting(self, setting_data: SettingCreate) -> Tuple[int, UUID]:
         stmt = (

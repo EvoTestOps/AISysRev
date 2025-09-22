@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
 from src.services.setting_service import SettingService, get_setting_service
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
 router = APIRouter()
@@ -55,6 +55,11 @@ async def create_job(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="OpenRouter API key is not set, cannot continue",
             )
+        
+        cfg = job_data.prompting_config
+        if isinstance(cfg, FewShotPromptingConfig) and cfg.remember_selection:
+            # await projects.update_project_prefs(job_data.project_uuid)
+            print("TODO")
         create_job = await jobs.create(job_data)
         return create_job
     except HTTPException:
