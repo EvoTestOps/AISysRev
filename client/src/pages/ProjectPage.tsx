@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H4, H5, H6 } from "../components/Typography";
+import { H5, H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -27,6 +27,7 @@ import {
   CreatedJob,
   LlmConfig,
   createZeroShotPromptingConfig,
+  JobPromptingType,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -35,8 +36,10 @@ import { twMerge } from "tailwind-merge";
 import {
   ChartCandlestick,
   CircleAlert,
+  CircleCheck,
   Download,
   FileText,
+  Loader,
   Sparkles,
   Square,
   SquareCheckBig,
@@ -57,6 +60,26 @@ type ActionComponentProps = {
   projectUuid: string;
   downloadCsv: () => unknown;
 };
+
+type BadgeProps = {
+  invert?: boolean;
+  text: string;
+};
+
+const Badge: React.FC<BadgeProps> = ({ invert = false, text }) => (
+  <div
+    className={twMerge(
+      classNames(
+        "bg-white text-purple-700 pl-2 pr-2 rounded-md inline-flex items-center content-center justify-center font-bold select-none",
+        {
+          "bg-purple-700 text-white": invert,
+        }
+      )
+    )}
+  >
+    {text}
+  </div>
+);
 
 const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
@@ -489,8 +512,8 @@ export const ProjectPage = () => {
               <CriteriaList criteria={exclusionCriteria || []} />
             )}
           </Card> */}
-
-          <H4>Screening tasks</H4>
+          {/* 
+          <H4>Screening tasks</H4> */}
           {jobTasks.length === 0 && (
             <AlertMessage message="No screening tasks." />
           )}
@@ -512,31 +535,63 @@ export const ProjectPage = () => {
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
             // console.log("totalCount: ", totalCount);
             // console.log("doneCount: ", doneCount);
-            // console.log("progress: ", progress);
+            console.log("progress: ", progress);
             return (
               <Card key={job.uuid} className="flex-row justify-between">
-                <div className="flex items-center font-semibold">
-                  <Tooltip title={job.llm_config.model_name} enterDelay={50}>
-                    <span className="text-sm text-nowrap">
-                      {job.llm_config.model_name.length > 30
-                        ? job.llm_config.model_name.substring(0, 17) + "..."
-                        : job.llm_config.model_name}
-                    </span>
-                  </Tooltip>
-                </div>
-                <div className="relative w-48 h-8">
-                  <progress
-                    value={progress}
-                    max={100}
-                    className="h-full w-full
-                            [&::-webkit-progress-bar]:rounded-xl
-                            [&::-webkit-progress-bar]:bg-gray-400
-                            [&::-webkit-progress-value]:bg-blue-200
-                            [&::-webkit-progress-value]:rounded-xl
-                          "
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold">
-                    {doneCount}/{totalCount}
+                <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
+                  <>
+                    {job.prompting_config.screening_type ==
+                      JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
+                    {job.prompting_config.screening_type ==
+                      JobPromptingType.FEW_SHOT && <Badge text="FS" invert />}
+                  </>
+                  <div className="flex items-center font-semibold">
+                    <Tooltip title={job.llm_config.model_name} enterDelay={50}>
+                      <span className="text-sm text-nowrap">
+                        {job.llm_config.model_name.length > 30
+                          ? job.llm_config.model_name.substring(0, 17) + "..."
+                          : job.llm_config.model_name}
+                      </span>
+                    </Tooltip>
+                  </div>
+                  <div className="flex justify-end items-end w-full">
+                    <div className="relative w-56 h-8">
+                      {progress !== 100 && (
+                        <progress
+                          value={progress}
+                          max={100}
+                          className={classNames(
+                            "h-full w-full [&::-webkit-progress-bar]:rounded-xl [&::-webkit-progress-bar]:bg-gray-400 [&::-webkit-progress-value]:bg-blue-200 [&::-webkit-progress-value]:rounded-xl",
+                            {
+                              "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
+                                progress < 100,
+                              "[&::-webkit-progress-value]:bg-green-400":
+                                progress === 100,
+                            }
+                          )}
+                        />
+                      )}
+                      <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                        {progress < 100 && (
+                          <>
+                            <Loader
+                              className="animate-spin"
+                              size={16}
+                              strokeWidth={2}
+                            />
+                            <span>
+                              Screening paper {doneCount} of {totalCount}
+                            </span>
+                          </>
+                        )}
+                        {progress === 100 && (
+                          <>
+                            <CircleCheck size={14} className="text-green-600" />
+                            <span className="text-green-600">Done</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -668,9 +723,7 @@ export const ProjectPage = () => {
                   className="w-full rounded-lg font-bold text-sm items-center justify-center"
                 >
                   <Sparkles />
-                  <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
-                    ZS
-                  </div>
+                  <Badge text="ZS" />
                   <span>Create Zero-shot</span>
                 </Button>
               </div>
@@ -687,9 +740,7 @@ export const ProjectPage = () => {
                   className="w-full rounded-lg font-bold text-sm items-center justify-center"
                 >
                   <Sparkles />
-                  <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">
-                    FS
-                  </div>
+                  <Badge text="FS" />
                   <span>Create Few-shot</span>
                 </LinkButton>
               </div>

@@ -17,6 +17,7 @@ class JobCrud:
             Job.uuid,
             Project.uuid.label("project_uuid"),
             Job.llm_config,
+            Job.prompting_config,
             Job.created_at,
             Job.updated_at,
         ).join(Project, Project.id == Job.project_id)
@@ -29,6 +30,7 @@ class JobCrud:
                 Job.uuid,
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
+                Job.prompting_config,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -44,6 +46,7 @@ class JobCrud:
                 Job.uuid,
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
+                Job.prompting_config,
                 Job.created_at,
                 Job.updated_at,
             )

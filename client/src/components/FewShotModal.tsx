@@ -76,7 +76,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
       )}
       key={`${paper.uuid}_score`}
     >
-      {paper.avg_probability_decision || "Pending"}
+      {paper.avg_probability_decision?.toFixed(3) || "Pending"}
     </div>
   </div>
 );
@@ -285,16 +285,9 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               </div>
             ) : (
               <div
-                className={classNames("p-2 text-sm select-none", {
-                  "hover:cursor-pointer hover:underline":
-                    selectedInclusionSeeds.length > 0,
-                  "opacity-35 hover:cursor-not-allowed":
-                    selectedInclusionSeeds.length === 0,
-                })}
+                className={classNames("p-2 text-sm select-none hover:cursor-pointer hover:underline")}
                 onClick={() => {
-                  if (selectedInclusionSeeds.length > 0) {
                     setCurrentStep("EXCLUSION_SEED");
-                  }
                 }}
               >
                 Step 2: Exclusion
@@ -312,15 +305,15 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                     "stroke-slate-600 hover:cursor-pointer text-sm p-2 select-none",
                     {
                       "opacity-35 hover:cursor-not-allowed":
-                        selectedExclusionSeeds.length === 0 ||
-                        selectedInclusionSeeds.length === 0,
+                        selectedExclusionSeeds.length === 0 &&
+                        selectedInclusionSeeds.length === 0
                     }
                   )
                 )}
                 onClick={() => {
                   if (
-                    selectedExclusionSeeds.length > 0 &&
-                    selectedInclusionSeeds.length > 0
+                    !(selectedExclusionSeeds.length == 0 &&
+                    selectedInclusionSeeds.length == 0)
                   ) {
                     setCurrentStep("OVERVIEW");
                   }
@@ -400,7 +393,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               )}
               {currentStep === "EXCLUSION_SEED" && (
                 <Button
-                  disabled={selectedExclusionSeeds.length === 0}
+                  disabled={selectedExclusionSeeds.length === 0 && selectedInclusionSeeds.length === 0}
                   onClick={() => setCurrentStep("OVERVIEW")}
                 >
                   <ArrowRight /> Next: Overview
