@@ -23,6 +23,7 @@ import classNames from "classnames";
 import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
 import { createJob } from "../services/jobService";
+import { Hr } from "./Hr";
 
 type FewShotModalProps = {
   onClose: () => void;
@@ -94,7 +95,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     (state) => state.getPapersForProject
   );
   const papers = getPapersForProject(projectUuid);
-  const [saveSelection, setSaveSelection] = useState(false);
+  const [rememberSelection, setRememberSelection] = useState(false);
 
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
@@ -121,6 +122,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     const bVal = b.avg_probability_decision ?? -100_000;
     return aVal - bVal;
   });
+
+  const getPaperByUuid = useTypedStoreState((state) => state.getPaperByUuid);
 
   const createFewShotJob = useCallback(async () => {
     const promptingConfig = createFewShotPromptingConfig(
@@ -160,12 +163,9 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
           <H3>Few-shot screening</H3>
           <Description className="px-4 py-2 border-l-4 bg-blue-50 border-blue-400 text-blue-700 text-sm ">
             <strong>Few-shot screening</strong> requires seed papers, which can
-            aid in LLM decision making. Below, you can automatically select up
-            to three papers per category (include / exclude), based on your
-            manual evaluation results. The papers are ordered by <br />
-            <strong>1)</strong> suitable category and <strong>2)</strong> the
-            probability of given category. You can always choose the papers
-            manually.
+            aid in LLM decision making. Below, you can select papers per
+            category (include / exclude), based on your manual evaluation
+            results. The papers are ordered by the probability of inclusion.
           </Description>
           <H4>
             {currentStep === "INCLUSION_SEED" &&
@@ -194,15 +194,60 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               <div className="flex flex-col gap-2">
                 <H6>Inclusion seeds</H6>
                 <div className="flex flex-col gap-2">
-                  {selectedInclusionSeeds.map((s) => (
-                    <div key={s}>{s}</div>
-                  ))}
+                  {selectedInclusionSeeds.map((s) => {
+                    const paper = getPaperByUuid(projectUuid, s);
+                    if (!paper) {
+                      return null;
+                    }
+                    return (
+                      <div
+                        key={s}
+                        className="flex flex-row gap-2 justify-between"
+                      >
+                        <div>
+                          <strong>Title:</strong> {paper.title}
+                        </div>
+                        <div>
+                          <strong>Score: </strong>
+                          {paper.avg_probability_decision
+                            ? paper.avg_probability_decision.toFixed(3)
+                            : "Pending"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {selectedInclusionSeeds.length === 0 && (
+                    <AlertMessage message="No inclusion seeds selected." />
+                  )}
                 </div>
+                <Hr />
                 <H6>Exclusion seeds</H6>
                 <div className="flex flex-col gap-2">
-                  {selectedExclusionSeeds.map((s) => (
-                    <div key={s}>{s}</div>
-                  ))}
+                  {selectedExclusionSeeds.map((s) => {
+                    const paper = getPaperByUuid(projectUuid, s);
+                    if (!paper) {
+                      return null;
+                    }
+                    return (
+                      <div
+                        key={s}
+                        className="flex flex-row gap-2 justify-between"
+                      >
+                        <div>
+                          <strong>Title:</strong> {paper.title}
+                        </div>
+                        <div>
+                          <strong>Score: </strong>
+                          {paper.avg_probability_decision
+                            ? paper.avg_probability_decision.toFixed(3)
+                            : "Pending"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {selectedExclusionSeeds.length === 0 && (
+                    <AlertMessage message="No exclusion seeds selected." />
+                  )}
                 </div>
               </div>
             )}
@@ -220,10 +265,6 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                   paper={s}
                   key={s.uuid}
                   selected={selectedInclusionSeeds.includes(s.uuid)}
-                  disabled={
-                    !selectedInclusionSeeds.includes(s.uuid) &&
-                    selectedInclusionSeeds.length === 3
-                  }
                   onTitleClick={() => {
                     if (selectedInclusionSeeds.includes(s.uuid)) {
                       setSelectedInclusionSeeds((prev) =>
@@ -249,10 +290,6 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                   paper={s}
                   key={s.uuid}
                   selected={selectedExclusionSeeds.includes(s.uuid)}
-                  disabled={
-                    !selectedExclusionSeeds.includes(s.uuid) &&
-                    selectedExclusionSeeds.length === 3
-                  }
                   onTitleClick={() => {
                     if (selectedExclusionSeeds.includes(s.uuid)) {
                       setSelectedExclusionSeeds((prev) =>
@@ -285,9 +322,11 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               </div>
             ) : (
               <div
-                className={classNames("p-2 text-sm select-none hover:cursor-pointer hover:underline")}
+                className={classNames(
+                  "p-2 text-sm select-none hover:cursor-pointer hover:underline"
+                )}
                 onClick={() => {
-                    setCurrentStep("EXCLUSION_SEED");
+                  setCurrentStep("EXCLUSION_SEED");
                 }}
               >
                 Step 2: Exclusion
@@ -306,14 +345,16 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                     {
                       "opacity-35 hover:cursor-not-allowed":
                         selectedExclusionSeeds.length === 0 &&
-                        selectedInclusionSeeds.length === 0
+                        selectedInclusionSeeds.length === 0,
                     }
                   )
                 )}
                 onClick={() => {
                   if (
-                    !(selectedExclusionSeeds.length == 0 &&
-                    selectedInclusionSeeds.length == 0)
+                    !(
+                      selectedExclusionSeeds.length == 0 &&
+                      selectedInclusionSeeds.length == 0
+                    )
                   ) {
                     setCurrentStep("OVERVIEW");
                   }
@@ -338,14 +379,14 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                     type="checkbox"
                     name="foo"
                     id="foo"
-                    checked={saveSelection}
-                    onChange={() => setSaveSelection(!saveSelection)}
+                    checked={rememberSelection}
+                    onChange={() => setRememberSelection(!rememberSelection)}
                   />
                   <label
                     htmlFor="foo"
                     className="text-sm select-none font-bold"
                   >
-                    Save selection for future few-shot screening tasks
+                    Remember my selection for the current project
                   </label>
                 </div>
               )}
@@ -393,7 +434,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               )}
               {currentStep === "EXCLUSION_SEED" && (
                 <Button
-                  disabled={selectedExclusionSeeds.length === 0 && selectedInclusionSeeds.length === 0}
+                  disabled={
+                    selectedExclusionSeeds.length === 0 &&
+                    selectedInclusionSeeds.length === 0
+                  }
                   onClick={() => setCurrentStep("OVERVIEW")}
                 >
                   <ArrowRight /> Next: Overview

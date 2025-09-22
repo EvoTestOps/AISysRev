@@ -67,6 +67,11 @@ interface PaperModel {
     (uuid: ProjectUUID) => PaperWithModelEval[],
     StoreModel
   >;
+  getPaperByUuid: Computed<
+    StoreModel,
+    (projectUuid: string, paperUuid: string) => PaperWithModelEval | undefined,
+    StoreModel
+  >;
   getPaperPendingState: Computed<
     StoreModel,
     (paperUuid: string) => boolean,
@@ -174,6 +179,10 @@ export const store = createStore<StoreModel>(
     getPaperPendingState: computed((state) => {
       return (paperUuid: string) =>
         state.papersPendingState[paperUuid] || false;
+    }),
+    getPaperByUuid: computed((state) => {
+      return (projectUuid: string, paperUuid: string) =>
+        (state.papers[projectUuid] || []).find(paper => paper.uuid === paperUuid)
     }),
   },
   {
