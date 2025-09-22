@@ -120,11 +120,11 @@ const SectionHeader: React.FC<{
 );
 
 export const ProjectPage = () => {
-  const params = useParams<{ uuid: string }>();
-  const projectUuid = params.uuid;
+  const params = useParams<{ projectUuid: string }>();
+  const { projectUuid } = params;
   const [, navigate] = useLocation();
-  const [evaluateViewMatch] = useRoute("/project/:uuid/evaluate");
-  const [fewShotViewMatch] = useRoute("/project/:uuid/few_shot");
+  const [evaluateViewMatch] = useRoute("/project/:projectUuid/evaluate");
+  const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
   const [temperature, setTemperature] = useState(0);
@@ -135,7 +135,7 @@ export const ProjectPage = () => {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
-  const [screeningTasks, setScreeningTasks] = useState<JobTask[]>([]);
+  const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const getProjectByUuid = useTypedStoreState(
@@ -170,8 +170,7 @@ export const ProjectPage = () => {
     [papers]
   );
 
-  const evaluationFinished =
-    screeningTasks.length > 0 && pendingTasks.length === 0;
+  const evaluationFinished = jobTasks.length > 0 && pendingTasks.length === 0;
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -200,7 +199,7 @@ export const ProjectPage = () => {
   const paperToTaskMap = useMemo(() => {
     if (
       papers.length === 0 ||
-      screeningTasks.length === 0 ||
+      jobTasks.length === 0 ||
       pendingTasks.length === 0
     ) {
       return {};
@@ -222,7 +221,7 @@ export const ProjectPage = () => {
       }
     });
     return map;
-  }, [papers, screeningTasks, pendingTasks]);
+  }, [papers, jobTasks, pendingTasks]);
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
@@ -346,7 +345,7 @@ export const ProjectPage = () => {
         })
       )
         .then((results) => {
-          setScreeningTasks(results.flat());
+          setJobTasks(results.flat());
           console.log("results: ", results.flat());
         })
         .catch((error) => {
@@ -377,7 +376,7 @@ export const ProjectPage = () => {
     if (idx !== -1) {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
-        if (screeningTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
+        if (jobTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
           navigate(
             `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`
           );
@@ -391,7 +390,7 @@ export const ProjectPage = () => {
   }, [
     paperUuid,
     papers,
-    screeningTasks.length,
+    jobTasks.length,
     paperToTaskMap,
     navigate,
     projectUuid,
@@ -467,10 +466,10 @@ export const ProjectPage = () => {
       )}
     >
       <div className="flex flex-row mb-4">
-        <TabButton href={`/project/${params.uuid}`} active>
+        <TabButton href={`/project/${projectUuid}`} active>
           Screening tasks
         </TabButton>
-        <TabButton href={`/project/${params.uuid}/papers/page/1`}>
+        <TabButton href={`/project/${projectUuid}/papers/page/1`}>
           List of papers
         </TabButton>
       </div>
@@ -492,28 +491,28 @@ export const ProjectPage = () => {
           </Card> */}
 
           <H4>Screening tasks</H4>
-          {screeningTasks.length === 0 && (
+          {jobTasks.length === 0 && (
             <AlertMessage message="No screening tasks." />
           )}
           {createdJobs.map((job) => {
-            const jobTasks = screeningTasks.filter((task) => {
-              console.log(
-                "task.job_uuid:",
-                task.job_uuid,
-                "job.uuid:",
-                job.uuid
-              );
+            const tasks = jobTasks.filter((task) => {
+              // console.log(
+              //   "task.job_uuid:",
+              //   task.job_uuid,
+              //   "job.uuid:",
+              //   job.uuid
+              // );
               return task.job_uuid === job.uuid;
             });
-            const doneCount = jobTasks.filter(
+            const doneCount = tasks.filter(
               (task) => task.status === JobTaskStatus.DONE
             ).length;
-            const totalCount = jobTasks.length;
+            const totalCount = tasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-            console.log("totalCount: ", totalCount);
-            console.log("doneCount: ", doneCount);
-            console.log("progress: ", progress);
+            // console.log("totalCount: ", totalCount);
+            // console.log("doneCount: ", doneCount);
+            // console.log("progress: ", progress);
             return (
               <Card key={job.uuid} className="flex-row justify-between">
                 <div className="flex items-center font-semibold">

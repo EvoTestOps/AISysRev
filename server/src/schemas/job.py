@@ -20,6 +20,7 @@ class ModelConfig(BaseModel):
 
 # Define different configs for prompting strategies
 
+
 class ZeroShotPromptingConfig(BaseModel):
     screening_type: Literal[JobPromptingType.ZERO_SHOT]
 
@@ -38,8 +39,10 @@ PromptingConfig = Annotated[
 
 class JobCreate(BaseModel):
     project_uuid: UUID
-    screening_type: JobPromptingType
+    prompting_config: PromptingConfig
     llm_config: ModelConfig
+    # Ignore all other fields
+    model_config = ConfigDict(extra="ignore")
 
 
 class JobRead(BaseModel):

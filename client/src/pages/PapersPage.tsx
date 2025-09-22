@@ -14,8 +14,8 @@ import { getPaperSortFunction, SortOption } from "../helpers/sort";
 import { AlertMessage } from "../components/AlertMessage";
 
 export const PapersPage = () => {
-  const params = useParams<{ uuid: string; page?: string }>();
-  const projectUuid = params.uuid;
+  const params = useParams<{ projectUuid: string; page?: string }>();
+  const { projectUuid } = params;
   const currentPage = Number(params.page ?? 1);
 
   const id = useId();
@@ -93,10 +93,10 @@ export const PapersPage = () => {
     <Layout title={project.name}>
       <div>
         <div className="flex flex-row mb-4">
-          <TabButton href={`/project/${params.uuid}`}>
+          <TabButton href={`/project/${projectUuid}`}>
             Screening tasks
           </TabButton>
-          <TabButton href={`/project/${params.uuid}/papers/page/1`} active>
+          <TabButton href={`/project/${projectUuid}/papers/page/1`} active>
             List of papers
           </TabButton>
         </div>

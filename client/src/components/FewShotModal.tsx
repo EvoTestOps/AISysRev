@@ -88,8 +88,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   const [currentStep, setCurrentStep] = useState<
     "INCLUSION_SEED" | "EXCLUSION_SEED" | "OVERVIEW"
   >("INCLUSION_SEED");
-  const params = useParams<{ uuid: string }>();
-  const projectUuid = params.uuid;
+  const params = useParams<{ projectUuid: string }>();
+  const { projectUuid } = params;
   const getPapersForProject = useTypedStoreState(
     (state) => state.getPapersForProject
   );

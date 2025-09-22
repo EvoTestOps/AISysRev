@@ -68,8 +68,8 @@ function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] })
 }
 
 export const ResultPage = () => {
-  const params = useParams<{ uuid: string }>();
-  const projectUuid = params.uuid;
+  const params = useParams<{ projectUuid: string }>();
+  const { projectUuid } = params;
   const [result, setResult] = useState<Result[]>([]);
 
   useEffect(() => {

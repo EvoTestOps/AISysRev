@@ -1,28 +1,25 @@
 import json
 from uuid import UUID
 from typing import List
-import pandas as pd
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
 from src.models.project import Project
 from src.schemas.job import JobCreate, JobRead
 
+
 class JobCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
     async def fetch_jobs(self) -> List[JobRead]:
-        stmt = (
-            select(
-                Job.uuid,
-                Project.uuid.label("project_uuid"),
-                Job.llm_config,
-                Job.created_at,
-                Job.updated_at
-            )
-            .join(Project, Project.id == Job.project_id)
-        )
+        stmt = select(
+            Job.uuid,
+            Project.uuid.label("project_uuid"),
+            Job.llm_config,
+            Job.created_at,
+            Job.updated_at,
+        ).join(Project, Project.id == Job.project_id)
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
@@ -33,7 +30,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.created_at,
-                Job.updated_at
+                Job.updated_at,
             )
             .join(Project, Project.id == Job.project_id)
             .where(Project.uuid == project_uuid)
@@ -48,7 +45,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.created_at,
-                Job.updated_at
+                Job.updated_at,
             )
             .join(Project, Project.id == Job.project_id)
             .where(Job.uuid == uuid)
@@ -68,7 +65,8 @@ class JobCrud:
 
         new_job = Job(
             project_id=project.id,
-            llm_config=job_data.llm_config.model_dump()
+            llm_config=job_data.llm_config.model_dump(),
+            prompting_config=job_data.prompting_config.model_dump(),
         )
         self.db.add(new_job)
         await self.db.flush()
