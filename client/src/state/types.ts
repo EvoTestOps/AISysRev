@@ -24,10 +24,22 @@ export type LlmConfig = {
   top_p: number;
 };
 
+export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;
+
+export type ZeroShotPromptingConfig = {
+  screening_type: JobPromptingType.ZERO_SHOT;
+};
+
+export type FewShotPromptingConfig = {
+  screening_type: JobPromptingType.FEW_SHOT;
+  seed_paper_inc: Array<string>;
+  seed_paper_exc: Array<string>;
+};
+
 export type CreatedJob = {
   uuid: string;
   project_uuid: string;
-  prompting_type: JobPromptingType;
+  prompting_config: PromptingConfig;
   llm_config: LlmConfig;
   created_at: string;
   updated_at: string;

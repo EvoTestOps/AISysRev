@@ -20,7 +20,5 @@ class Job(Base, TimestampMixin):
     project_id = Column(
         Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False
     )
-    prompting_type = Column(
-        Enum(JobPromptingType, name="prompting_type"), nullable=False
-    )
     llm_config = Column(JSONB, nullable=False)
+    prompting_config = Column(JSONB, nullable=False)

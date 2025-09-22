@@ -11,14 +11,23 @@ import { H3, H4, H6 } from "./Typography";
 import { Button } from "./Button";
 import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
-import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
+import {
+  CreatedJob,
+  FewShotPromptingConfig,
+  JobPromptingType,
+  JobTaskHumanResult,
+  LlmConfig,
+  PaperWithModelEval,
+} from "../state/types";
 import { twMerge } from "tailwind-merge";
 import classNames from "classnames";
 import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
+import { createJob } from "../services/jobService";
 
 type FewShotModalProps = {
   onClose: () => void;
+  llmConfig: LlmConfig;
 };
 
 type SeedPaperProps = {
@@ -73,7 +82,10 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
   </div>
 );
 
-export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
+export const FewShotModal: React.FC<FewShotModalProps> = ({
+  onClose,
+  llmConfig,
+}) => {
   const [currentStep, setCurrentStep] = useState<
     "INCLUSION_SEED" | "EXCLUSION_SEED" | "OVERVIEW"
   >("INCLUSION_SEED");
@@ -84,9 +96,6 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
   );
   const papers = getPapersForProject(projectUuid);
   const [saveSelection, setSaveSelection] = useState(false);
-  const startFewShotScreening = useCallback(() => {
-    console.log("TODO");
-  }, []);
 
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
@@ -113,6 +122,29 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
     const bVal = b.avg_probability_decision ?? -100_000;
     return aVal - bVal;
   });
+
+  const createFewShotJob = useCallback(async () => {
+    const promptingConfig: FewShotPromptingConfig = {
+      screening_type: JobPromptingType.FEW_SHOT,
+      seed_paper_exc: selectedExclusionSeeds,
+      seed_paper_inc: selectedInclusionSeeds,
+    };
+
+    try {
+      const res = await createJob(projectUuid, llmConfig, promptingConfig);
+      const createdJob: CreatedJob = {
+        uuid: res.uuid,
+        project_uuid: res.project_uuid,
+        llm_config: res.llm_config,
+        prompting_config: res.prompting_config,
+        created_at: res.created_at,
+        updated_at: res.updated_at,
+      };
+      console.log(createdJob);
+    } catch (e) {
+      console.error("Error creating job:", e);
+    }
+  }, [selectedExclusionSeeds, selectedInclusionSeeds, projectUuid, llmConfig]);
 
   return (
     <Dialog
@@ -351,7 +383,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({ onClose }) => {
                 <Button
                   disabled={selectedInclusionSeeds.length === 0}
                   variant="purple"
-                  onClick={() => startFewShotScreening()}
+                  onClick={() => createFewShotJob()}
                 >
                   <Sparkles />
                   <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">

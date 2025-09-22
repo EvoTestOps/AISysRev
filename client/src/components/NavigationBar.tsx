@@ -30,7 +30,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
             href="/"
             className="text-xs sm:text-sm font-semibold text-gray-900"
           >
-            Home
+            Projects
           </Link>
           <Link
             href="/settings"

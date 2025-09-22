@@ -26,6 +26,8 @@ import {
   Paper,
   CreatedJob,
   LlmConfig,
+  JobPromptingType,
+  PromptingConfig,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -242,7 +244,7 @@ export const ProjectPage = () => {
     loadPapers();
   }, [loadPapers]);
 
-  const createTask = useCallback(async () => {
+  const createZeroShotJob = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a llm model before creating a task.");
       setIsLlmSelected(false);
@@ -255,13 +257,17 @@ export const ProjectPage = () => {
       top_p: top_p,
     };
 
+    const promptingConfig: PromptingConfig = {
+      screening_type: JobPromptingType.ZERO_SHOT,
+    };
+
     try {
-      const res = await createJob(projectUuid, llmConfig);
+      const res = await createJob(projectUuid, llmConfig, promptingConfig);
       const createdJob: CreatedJob = {
         uuid: res.uuid,
         project_uuid: res.project_uuid,
         llm_config: res.llm_config,
-        prompting_type: res.prompting_type,
+        prompting_config: res.prompting_config,
         created_at: res.created_at,
         updated_at: res.updated_at,
       };
@@ -570,7 +576,7 @@ export const ProjectPage = () => {
               <div className="flex">
                 <H5 className="pr-16">LLM</H5>
                 <DropdownMenuText
-                  disabled={openrouterKey == null}
+                  disabled={openrouterKey == null || fetchedFiles.length === 0}
                   options={availableModels.map((m) => ({
                     name: m.name,
                     value: m.id,
@@ -611,7 +617,11 @@ export const ProjectPage = () => {
                   max={1}
                   step={0.1}
                   value={temperature}
-                  disabled={openrouterKey == null}
+                  disabled={
+                    openrouterKey == null ||
+                    fetchedFiles.length === 0 ||
+                    selectedLlm === undefined
+                  }
                   onChange={(e) => setTemperature(e.target.valueAsNumber)}
                 />
               </div>
@@ -622,7 +632,11 @@ export const ProjectPage = () => {
                   className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
                   data-testid="seed-input"
                   value={seed}
-                  disabled={openrouterKey == null}
+                  disabled={
+                    openrouterKey == null ||
+                    fetchedFiles.length === 0 ||
+                    selectedLlm === undefined
+                  }
                   onChange={(e) => setSeed(e.target.valueAsNumber)}
                 />
               </div>
@@ -636,27 +650,19 @@ export const ProjectPage = () => {
                   max={1}
                   step={0.1}
                   value={top_p}
-                  disabled={openrouterKey == null}
+                  disabled={
+                    openrouterKey == null ||
+                    fetchedFiles.length === 0 ||
+                    selectedLlm === undefined
+                  }
                   onChange={(e) => setTop_p(e.target.valueAsNumber)}
                 />
               </div>
-              {fetchedFiles.length === 0 && (
-                <div>
-                  <div
-                    className="flex bg-red-300 rounded-md p-4 items-center"
-                    data-testid="error-missing-list-of-papers"
-                  >
-                    <span className="font-bold text-sm text-red-900 select-none">
-                      To create tasks, you must upload a list of papers.
-                    </span>
-                  </div>
-                </div>
-              )}
               <Hr />
               <div className="flex justify-start">
                 <Button
                   variant="purple"
-                  onClick={createTask}
+                  onClick={() => createZeroShotJob()}
                   disabled={
                     openrouterKey == null ||
                     fetchedFiles.length === 0 ||
@@ -722,7 +728,15 @@ export const ProjectPage = () => {
         )}
       </div>
       {fewShotViewMatch && (
-        <FewShotModal onClose={() => navigate(`/project/${projectUuid}`)} />
+        <FewShotModal
+          llmConfig={{
+            model_name: selectedLlm!.value,
+            seed,
+            temperature,
+            top_p,
+          }}
+          onClose={() => navigate(`/project/${projectUuid}`)}
+        />
       )}
       {evaluateViewMatch && paperUuid && (
         <ManualEvaluationModal
