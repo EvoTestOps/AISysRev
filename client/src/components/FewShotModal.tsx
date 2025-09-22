@@ -95,7 +95,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     (state) => state.getPapersForProject
   );
   const papers = getPapersForProject(projectUuid);
-  const [rememberSelection, setRememberSelection] = useState(false);
+  // Default to true
+  const [rememberSelection, setRememberSelection] = useState(true);
 
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
@@ -425,10 +426,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                 </Button>
               )}
               {currentStep === "INCLUSION_SEED" && (
-                <Button
-                  disabled={selectedInclusionSeeds.length === 0}
-                  onClick={() => setCurrentStep("EXCLUSION_SEED")}
-                >
+                <Button onClick={() => setCurrentStep("EXCLUSION_SEED")}>
                   <ArrowRight /> Next: Exclusion seed papers
                 </Button>
               )}
