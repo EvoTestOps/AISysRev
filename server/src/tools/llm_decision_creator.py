@@ -1,12 +1,17 @@
+from src.services.paper_service import get_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
 from src.services.openrouter_service import get_openrouter_service
-from src.schemas.job import JobCreate
+from src.schemas.job import (
+    FewShotPromptingConfig,
+    JobCreate,
+    ZeroShotPromptingConfig,
+)
 from src.models.jobtask import JobTask
 from src.core.llm import (
-    task_prompt,
     StructuredResponse,
 )
+from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
 
 
 def _create_criteria(
@@ -22,9 +27,13 @@ def _create_criteria(
 
 
 async def get_structured_response(
-    db: AsyncSession, job_task_data: JobTask, job_data: JobCreate, inc_exc_criteria: Criteria
+    db: AsyncSession,
+    job_task_data: JobTask,
+    job_data: JobCreate,
+    inc_exc_criteria: Criteria,
 ) -> StructuredResponse:
     openrouter_service = get_openrouter_service(db)
+    paper_service = get_paper_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
     llm_model = job_data.llm_config.model_name
@@ -32,11 +41,31 @@ async def get_structured_response(
     criteria = _create_criteria(
         inc_exc_criteria["inclusion_criteria"], inc_exc_criteria["exclusion_criteria"]
     )
-    prompt_text = task_prompt.format(
-        job_task_data.title, job_task_data.abstract, criteria, additional_instructions
-    )
-    result = await openrouter_service.call_llm(
-        schema=StructuredResponse, model=llm_model, prompt=prompt_text
-    )
+    cfg = job_data.prompting_config
+    if isinstance(cfg, ZeroShotPromptingConfig):
 
-    return result
+        prompt_text = zero_shot_task_prompt.format(
+            job_task_data.title,
+            job_task_data.abstract,
+            criteria,
+            additional_instructions,
+        )
+        result = await openrouter_service.call_llm(
+            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        )
+        return result
+    elif isinstance(cfg, FewShotPromptingConfig):
+        seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
+        seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
+        prompt_text = few_shot_task_prompt.format(
+            job_task_data.title,
+            job_task_data.abstract,
+            criteria,
+            additional_instructions,
+        )
+        result = await openrouter_service.call_llm(
+            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        )
+        return result
+    else:
+        raise RuntimeError("Unknown prompting type.")

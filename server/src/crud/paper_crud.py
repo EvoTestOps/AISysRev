@@ -24,6 +24,11 @@ class PaperCrud:
         stmt = select(Paper).where(Paper.project_uuid == project_uuid)
         result = await self.db.execute(stmt)
         return result.scalars().all()
+    
+    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]) -> List[Paper]:
+        stmt = select(Paper).where(Paper.uuid.in_(paper_uuids))
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
     async def fetch_papers_with_model_evals_by_project_uuid(self, project_uuid: UUID):
         avg_prob = func.avg(

@@ -1,6 +1,6 @@
+from typing import List
 from uuid import UUID
 from src.crud.paper_crud import PaperCrud
-from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
@@ -22,6 +22,10 @@ class PaperService:
 
     async def fetch_papers(self, project_uuid: UUID):
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid)
+        return [PaperRead.model_validate(paper) for paper in papers]
+
+    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]):
+        papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids)
         return [PaperRead.model_validate(paper) for paper in papers]
 
     async def fetch_papers_with_model_evals(self, project_uuid: UUID):

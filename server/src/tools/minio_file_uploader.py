@@ -1,7 +1,8 @@
+import io
 from src.tools.minio_client import minio_client, BUCKET_NAME
 
 
-def upload_file_to_object_storage(file_obj: bytes, filename: str, file_key: str):
+def upload_file_to_object_storage(file_obj: io.BytesIO, filename: str, file_key: str):
     if not minio_client.bucket_exists(BUCKET_NAME):
         minio_client.make_bucket(BUCKET_NAME)
         print("Created bucket", BUCKET_NAME)

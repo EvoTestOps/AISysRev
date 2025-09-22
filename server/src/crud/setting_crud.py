@@ -13,15 +13,16 @@ class SettingCrud:
 
     async def fetch_settings(self) -> List[SettingRead]:
         stmt = select(Setting.uuid, Setting.name, Setting.value, Setting.secret)
-        result = await self.db.execute(stmt)
-        return result.mappings().all()
+        settings = await self.db.execute(stmt)
+        return [SettingRead.model_validate(s) for s in settings]
 
     async def fetch_setting(self, name: str) -> Optional[SettingRead]:
         stmt = select(Setting.uuid, Setting.name, Setting.value, Setting.secret).where(
             Setting.name == name
         )
-        qry = await self.db.execute(stmt)
-        return qry.mappings().one_or_none()
+        result = await self.db.execute(stmt)
+        setting = result.scalars().one_or_none()
+        return SettingRead.model_validate(setting) if setting else None
 
     async def upsert_setting(self, setting_data: SettingCreate) -> Tuple[int, UUID]:
         stmt = (
