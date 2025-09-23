@@ -12,9 +12,9 @@ from src.db.session import get_db
 criteria_adapter = TypeAdapter(List[Criterion])
 
 
-def _ie(x) -> str:
+def _ie(x) -> bool | None:
     s = str(x).lower()
-    return True if s in ("true", "1") else False if s in ("false", "0") else ""
+    return True if s in ("true", "1") else False if s in ("false", "0") else None
 
 
 def create_dataframe(data: list[dict]) -> pd.DataFrame:
@@ -34,6 +34,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
             "probability_decision",
             "inclusion_criteria",
             "exclusion_criteria",
+            "screening_type",
         ],
     )
     df["notes"] = ""
@@ -111,11 +112,13 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
 
     pivot = df.pivot_table(
         index=base_cols,
-        columns="model_name",
+        columns=["model_name", "screening_type"],
         values=values,
         aggfunc="first",
     )
-    pivot.columns = [f"{model}.{field}" for field, model in pivot.columns]
+    pivot.columns = [
+        f"{model}.{stype}.{field}" for field, model, stype in pivot.columns
+    ]
     pivot = pivot.reset_index()
 
     overall_binary = [c for c in pivot.columns if c.endswith(".binary_decision")]

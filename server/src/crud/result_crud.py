@@ -32,6 +32,7 @@ class ResultCrud:
                 ),
                 JobTask.result["inclusion_criteria"].astext.label("inclusion_criteria"),
                 JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria"),
+                Job.prompting_config["screening_type"].astext.label("screening_type")
             )
             .select_from(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)

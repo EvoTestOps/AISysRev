@@ -35,7 +35,13 @@ class UploadedFilePaper(BaseModel):
 
 
 class FileService:
-    def __init__(self, db: AsyncSession, file_crud: FileCrud, paper_crud: PaperCrud, job_crud: JobCrud):
+    def __init__(
+        self,
+        db: AsyncSession,
+        file_crud: FileCrud,
+        paper_crud: PaperCrud,
+        job_crud: JobCrud,
+    ):
         self.db = db
         self.file_crud = file_crud
         self.paper_crud = paper_crud
@@ -96,7 +102,11 @@ class FileService:
 
                     for idx, row in df.iterrows():
                         normalized = {
-                            (k or "").strip().lower() if isinstance(k, str) else str(k).strip().lower(): v
+                            (
+                                (k or "").strip().lower()
+                                if isinstance(k, str)
+                                else str(k).strip().lower()
+                            ): v
                             for k, v in row.items()
                         }
 
@@ -120,10 +130,9 @@ class FileService:
 
                 except S3Error as e:
                     errors.append(
-                        {
-                            "file": f.filename,
-                            "message": f"MinIO upload failed: {str(e)}",
-                        }
+                        FileError(
+                            file=f.filename, message=f"MinIO upload failed: {str(e)}"
+                        )
                     )
                 except Exception as e:
                     raise e

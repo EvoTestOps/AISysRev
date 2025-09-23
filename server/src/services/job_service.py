@@ -48,7 +48,8 @@ class JobService:
         return [
             JobTaskRead(
                 uuid=task.uuid,
-                job_uuid=job_uuid,
+                job_id=task.id,
+                paper_uuid=task.paper_uuid,
                 doi=task.doi,
                 title=task.title,
                 abstract=task.abstract,
@@ -73,6 +74,7 @@ class JobService:
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
             llm_config=new_job.llm_config,
+            prompting_config=new_job.prompting_config,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )

@@ -1,22 +1,18 @@
-import { api } from '../services/api'
+import { api } from "../services/api";
+import { LlmConfig, PromptingConfig } from "../state/types";
 
-export const createJob = async (projectUuid: string, llmConfig: {
-    model_name: string;
-    temperature: number;
-    seed: number;
-    top_p: number;
-}) => {
+export const createJob = async (
+  projectUuid: string,
+  llmConfig: LlmConfig,
+  promptingConfig: PromptingConfig
+) => {
   try {
-    const res = await api.post('/job', {
+    const res = await api.post("/job", {
       project_uuid: projectUuid,
-      llm_config: {
-        model_name: llmConfig.model_name,
-        temperature: llmConfig.temperature,
-        seed: llmConfig.seed,
-        top_p: llmConfig.top_p
-      }
+      llm_config: llmConfig,
+      prompting_config: promptingConfig,
     });
-    console.log("Job created successfully:", res.data);
+    // console.log("Job created successfully:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error creating job:", error);

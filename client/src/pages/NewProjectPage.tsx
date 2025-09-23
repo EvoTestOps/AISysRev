@@ -63,7 +63,7 @@ export const NewProject = () => {
 
       try {
         const res = await create_project(title, criteria);
-        console.log("Project created, res: ", res);
+        // console.log("Project created, res: ", res);
         return { id: res.id, uuid: res.uuid };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
@@ -122,6 +122,7 @@ export const NewProject = () => {
               placeholder="Enter project title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
           </div>
         </Card>

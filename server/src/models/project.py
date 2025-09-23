@@ -11,3 +11,4 @@ class Project(Base, TimestampMixin):
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     name = Column(String(255), nullable=False)
     criteria = Column(JSONB, nullable=False)
+    preferences = Column(JSONB, nullable=True)

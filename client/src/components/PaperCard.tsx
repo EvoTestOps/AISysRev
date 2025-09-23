@@ -32,7 +32,7 @@ export const PaperCard: React.FC<
 
   return (
     <Card {...rest} padding="p-0">
-      <div
+      <button
         className={twMerge(
           classNames(
             "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
@@ -42,18 +42,25 @@ export const PaperCard: React.FC<
           setOpen(!open);
         }}
       >
-        <div className="text-sm font-semibold select-none">
+        <div className="text-sm font-semibold select-none text-left">
           {paper.paper_id}
         </div>
-        <div className="text-sm font-semibold select-none" title={paper.title}>
+        <div
+          className="text-sm font-semibold select-non text-left"
+          title={paper.title}
+        >
           {paper.title.length > 80
             ? paper.title.substring(0, 77) + "..."
             : paper.title}
         </div>
-        <div className="text-center text-sm select-none">
+        <div
+          className={classNames("text-center text-sm select-none", {
+            "text-gray-400": paper.avg_probability_decision == null,
+          })}
+        >
           {paper.avg_probability_decision
             ? paper.avg_probability_decision.toFixed(3)
-            : "Not available"}
+            : "Pending"}
         </div>
         <div>
           {!open && (
@@ -73,9 +80,20 @@ export const PaperCard: React.FC<
             />
           )}
         </div>
-      </div>
+      </button>
       {open && (
         <div className="pl-4 pr-4 pb-4">
+          <div className="text-sm pt-2 pb-2">
+            <strong>DOI:</strong>{" "}
+            <a
+              href={`https://doi.org/${paper.doi}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover-underline text-blue-600 hover-underline"
+            >
+              {paper.doi}
+            </a>
+          </div>
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
             {paper.abstract}
           </div>

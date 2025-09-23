@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
+from src.core.prompts import default_system_prompt
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
@@ -51,7 +52,7 @@ class LLMConfiguration(BaseModel):
     model: str
     api_key: str
     # Defaults to "You are an expert research assistant."
-    system_prompt: str = "You are an expert research assistant."
+    system_prompt: str = default_system_prompt
     # Default seed: 128
     seed: Optional[int] = 128
     # Default temperature: 0

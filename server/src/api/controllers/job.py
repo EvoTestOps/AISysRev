@@ -1,8 +1,14 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
+from src.schemas.project import FewShotPreferences
+from src.services.project_service import (
+    ProjectPreferences,
+    ProjectService,
+    get_project_service,
+)
 from src.services.setting_service import SettingService, get_setting_service
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
 router = APIRouter()
@@ -47,6 +53,7 @@ async def create_job(
     job_data: JobCreate,
     jobs: JobService = Depends(get_job_service),
     settings: SettingService = Depends(get_setting_service),
+    projects: ProjectService = Depends(get_project_service),
 ):
     try:
         openrouter_secret = settings.get_setting("openrouter_api_key")
@@ -55,6 +62,27 @@ async def create_job(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="OpenRouter API key is not set, cannot continue",
             )
+
+        cfg = job_data.prompting_config
+        if isinstance(cfg, FewShotPromptingConfig):
+            # If the user wants to remember their choice:
+            if cfg.remember_selection:
+                await projects.update_project_preferences(
+                    job_data.project_uuid,
+                    # TODO: Validate seed paper validity. Seed papers must exist in the system.
+                    ProjectPreferences(
+                        few_shot=FewShotPreferences(
+                            inc_seed_papers=cfg.seed_paper_inc,
+                            exc_seed_papers=cfg.seed_paper_exc,
+                        )
+                    ),
+                )
+            else:
+                # Otherwise, empty few-shot selection
+                await projects.update_project_preferences(
+                    job_data.project_uuid,
+                    ProjectPreferences(few_shot=None),
+                )
         create_job = await jobs.create(job_data)
         return create_job
     except HTTPException:

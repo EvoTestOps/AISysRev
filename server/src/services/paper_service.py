@@ -1,6 +1,6 @@
+from typing import List
 from uuid import UUID
 from src.crud.paper_crud import PaperCrud
-from src.celery.tasks import process_job_task
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.session import get_db
@@ -22,6 +22,10 @@ class PaperService:
 
     async def fetch_papers(self, project_uuid: UUID):
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid)
+        return [PaperRead.model_validate(paper) for paper in papers]
+
+    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]):
+        papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids)
         return [PaperRead.model_validate(paper) for paper in papers]
 
     async def fetch_papers_with_model_evals(self, project_uuid: UUID):
@@ -52,10 +56,10 @@ class PaperService:
 
         return await self.paper_crud.bulk_create_papers(created_papers)
 
-    async def start_job_tasks(self, job_id: int, job_data: dict):
-        # job_data is of type JobCreate
-        logger.info("start_job_tasks: Processing job %s", job_id)
-        return process_job_task.delay(job_id, job_data)
+    # async def start_job_tasks(self, job_id: int, job_data: dict):
+    #     # job_data is of type JobCreate
+    #     logger.info("start_job_tasks: Processing job %s", job_id)
+    #     return process_job_task.delay(job_id, job_data)
 
     async def add_human_result(self, uuid: UUID, human_result: PaperHumanResult):
         await self.paper_crud.add_paper_human_result(uuid, human_result)

@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
-import evoTestOpsLogo from "../assets/images/evotestops.png";
 
 type NavigationBarProps = {
   pageTitle: string;
@@ -15,18 +14,13 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
   const NavbarActionComponent = navbarActionComponent;
   return (
     <nav className="bg-neutral-50 flex flex-col">
-      <div className="flex flex-col sm:flex-row justify-between p-8">
+      <div className="flex flex-col sm:flex-row justify-between p-8 relative">
         <div>
           <Link to="/" className="m-0">
-            <span className="sr-only">EvoTestOps</span>
-            <img
-              className="h-auto w-45 select-none"
-              src={evoTestOpsLogo}
-              alt="EvoTestOps"
-            />
+            <span className="text-4xl font">AiSysRev</span>
           </Link>
           {appEnv === "dev" && (
-            <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm fixed top-4 left-4 opacity-40 select-none">
+            <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm absolute top-2 left-2 opacity-40 select-none">
               {appEnv}
             </div>
           )}
@@ -36,7 +30,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
             href="/"
             className="text-xs sm:text-sm font-semibold text-gray-900"
           >
-            Home
+            Projects
           </Link>
           <Link
             href="/settings"

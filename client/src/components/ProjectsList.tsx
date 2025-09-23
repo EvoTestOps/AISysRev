@@ -5,6 +5,7 @@ import Skeleton from "react-loading-skeleton";
 import { Trash2 } from "lucide-react";
 import { Card } from "./Card";
 import { useTypedStoreState } from "../state/store";
+import { AlertMessage } from "./AlertMessage";
 
 type ProjectsListProps = {
   handleProjectDelete: (uuid: string) => void;
@@ -20,7 +21,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
   return (
     <>
       {!loadingProjects && projects.length === 0 && (
-        <div className="text-center text-gray-600 mt-8">No projects.</div>
+        <AlertMessage message="No projects." />
       )}
       {loadingProjects && (
         <div className="flex flex-col gap-2">

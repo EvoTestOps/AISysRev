@@ -11,10 +11,11 @@ import { CriteriaList } from "../components/CriteriaList";
 import { H6 } from "../components/Typography";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
+import { AlertMessage } from "../components/AlertMessage";
 
 export const PapersPage = () => {
-  const params = useParams<{ uuid: string; page?: string }>();
-  const projectUuid = params.uuid;
+  const params = useParams<{ projectUuid: string; page?: string }>();
+  const { projectUuid } = params;
   const currentPage = Number(params.page ?? 1);
 
   const id = useId();
@@ -92,10 +93,10 @@ export const PapersPage = () => {
     <Layout title={project.name}>
       <div>
         <div className="flex flex-row mb-4">
-          <TabButton href={`/project/${params.uuid}`}>
+          <TabButton href={`/project/${projectUuid}`}>
             Screening tasks
           </TabButton>
-          <TabButton href={`/project/${params.uuid}/papers/page/1`} active>
+          <TabButton href={`/project/${projectUuid}/papers/page/1`} active>
             List of papers
           </TabButton>
         </div>
@@ -119,8 +120,8 @@ export const PapersPage = () => {
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white">
-              <div
+            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white sticky top-2">
+              <button
                 className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
                 data-testid="sort-by-id"
                 onClick={() => {
@@ -134,8 +135,8 @@ export const PapersPage = () => {
                 <span className="font-bold select-none">ID</span>
                 {sortOption === "ID_ASC" && <ChevronDown />}
                 {sortOption === "ID_DESC" && <ChevronUp />}
-              </div>
-              <div
+              </button>
+              <button
                 className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
                 data-testid="sort-by-name"
                 onClick={() => {
@@ -149,10 +150,12 @@ export const PapersPage = () => {
                 <span className="font-bold select-none">Name</span>
                 {sortOption === "NAME_ASC" && <ChevronDown />}
                 {sortOption === "NAME_DESC" && <ChevronUp />}
-              </div>
-              <div
+              </button>
+              <button
                 className="flex flex-row gap-1 items-center content-center justify-center hover:cursor-pointer"
                 data-testid="sort-by-inclusion-probability"
+                role="button"
+                tabIndex={0}
                 onClick={() => {
                   if (sortOption === "INCLUDE_ASC") {
                     setSortOption("INCLUDE_DESC");
@@ -166,7 +169,7 @@ export const PapersPage = () => {
                 </span>
                 {sortOption === "INCLUDE_ASC" && <ChevronDown />}
                 {sortOption === "INCLUDE_DESC" && <ChevronUp />}
-              </div>
+              </button>
               <div></div>
             </div>
             <div className="flex flex-col gap-1">
@@ -182,12 +185,11 @@ export const PapersPage = () => {
             {!loadingPapers &&
               sortedAndFilteredPapers &&
               sortedAndFilteredPapers.length === 0 && (
-                <div
-                  className="p-4 text-md text-gray-600"
+                <AlertMessage
+                  className="p-4"
                   data-testid="no-papers-text"
-                >
-                  No papers.
-                </div>
+                  message="No papers."
+                />
               )}
             {!loadingPapers &&
               sortedAndFilteredPapers &&

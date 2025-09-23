@@ -58,6 +58,7 @@ class JobTaskService:
                 human_result=task.human_result,
                 status_metadata=task.status_metadata,
                 llm_config=job.llm_config,
+                prompting_config=job.prompting_config
             )
             for task, job in job_tasks_with_jobs
         ]

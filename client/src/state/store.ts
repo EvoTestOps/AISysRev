@@ -10,7 +10,7 @@ import {
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
-import { JobTaskHumanResult, Paper, Project } from "./types";
+import { JobTaskHumanResult, PaperWithModelEval, Project } from "./types";
 
 const injections = {
   projectsService,
@@ -40,9 +40,12 @@ interface ProjectModel {
 
 interface PaperModel {
   // Papers are study-specific
-  papers: Record<string, Array<Paper>>;
+  papers: Record<string, Array<PaperWithModelEval>>;
   papersPendingState: Record<string, boolean>;
-  setPapers: Action<StoreModel, { projectUuid: string; papers: Array<Paper> }>;
+  setPapers: Action<
+    StoreModel,
+    { projectUuid: string; papers: Array<PaperWithModelEval> }
+  >;
   setPaperPendingState: Action<
     StoreModel,
     { paperUuid: string; pending: boolean }
@@ -61,7 +64,12 @@ interface PaperModel {
   >;
   getPapersForProject: Computed<
     StoreModel,
-    (uuid: ProjectUUID) => Paper[],
+    (uuid: ProjectUUID) => PaperWithModelEval[],
+    StoreModel
+  >;
+  getPaperByUuid: Computed<
+    StoreModel,
+    (projectUuid: string, paperUuid: string) => PaperWithModelEval | undefined,
     StoreModel
   >;
   getPaperPendingState: Computed<
@@ -171,6 +179,10 @@ export const store = createStore<StoreModel>(
     getPaperPendingState: computed((state) => {
       return (paperUuid: string) =>
         state.papersPendingState[paperUuid] || false;
+    }),
+    getPaperByUuid: computed((state) => {
+      return (projectUuid: string, paperUuid: string) =>
+        (state.papers[projectUuid] || []).find(paper => paper.uuid === paperUuid)
     }),
   },
   {

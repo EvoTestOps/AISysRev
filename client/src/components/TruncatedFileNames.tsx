@@ -1,5 +1,5 @@
 import React from "react";
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip from "@mui/material/Tooltip";
 import { FetchedFile } from "../state/types";
 
 type TruncatedFileNamesProps = {
@@ -9,10 +9,10 @@ type TruncatedFileNamesProps = {
 
 export const TruncatedFileNames: React.FC<TruncatedFileNamesProps> = ({
   files,
-  maxLength = 20
+  maxLength = 20,
 }) => {
   if (!files || files.length === 0) {
-    return <p className="text-gray-400 italic">No files added</p>;
+    return null;
   }
 
   return (

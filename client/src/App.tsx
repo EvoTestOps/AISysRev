@@ -40,15 +40,16 @@ function App() {
   if (!checkedTerms) return null;
 
   return (
-    <div className="flex flex-col bg-gray-200">
+    <div className="flex flex-col bg-gray-200 font-roboto">
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
-        <Route path="/project/:uuid" component={ProjectPage} />
-        <Route path="/project/:uuid/papers/page/:page" component={PapersPage} />
-        <Route path="/project/:uuid/evaluate" component={ProjectPage} />
+        <Route path="/project/:projectUuid" component={ProjectPage} />
+        <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
+        <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
+        <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
         <Route
           path="/terms-and-conditions"

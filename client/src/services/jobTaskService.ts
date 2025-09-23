@@ -1,5 +1,5 @@
 import { api } from '../services/api';
-import { JobTaskHumanResult, ScreeningTask } from '../state/types';
+import { JobTaskHumanResult, JobTask } from '../state/types';
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
@@ -22,7 +22,7 @@ export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) 
     if (!id && res.data.length > 0) {
       id = res.data[0].job_id;
     }
-    return res.data.map((task: ScreeningTask) => ({
+    return res.data.map((task: JobTask) => ({
       ...task,
       job_uuid: jobUuid,
     }));

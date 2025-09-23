@@ -55,11 +55,11 @@ export type ModelResponse = z.TypeOf<typeof schema>;
 export const retrieve_models = async () => {
   try {
     const res = await axios.get(`${prefix}/openrouter/models`);
-    console.log("Fetching models successful", res.data);
+    // console.log("Fetching models successful", res.data);
     const parsed = schema.parse(res.data);
     return parsed.data;
   } catch (error) {
-    console.log("Fetching models unsuccessful", error);
+    console.error("Fetching models unsuccessful", error);
     throw error;
   }
 };
