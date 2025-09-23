@@ -35,7 +35,7 @@ const sort_include_asc = (
   if (a === undefined) return 1;
   if (b === undefined) return -1;
 
-  return a - b;
+  return (a || 0) - (b || 0);
 };
 
 const sort_include_desc = (
@@ -49,7 +49,7 @@ const sort_include_desc = (
   if (a === undefined) return 1;
   if (b === undefined) return -1;
 
-  return b - a;
+  return (b || 0) - (a || 0);
 };
 
 export const getPaperSortFunction = (opt: SortOption) => {
