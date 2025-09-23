@@ -18,7 +18,7 @@ class Paper(Base, TimestampMixin):
     paper_id = Column(Integer, nullable=False)
     project_uuid = Column(UUID(as_uuid=True), ForeignKey("project.uuid", ondelete="CASCADE"), nullable=False)
     file_uuid = Column(UUID(as_uuid=True), ForeignKey("file.uuid", ondelete="CASCADE"), nullable=False)
-    doi = Column(Text, nullable=False)
+    doi = Column(Text, nullable=True)
     title = Column(Text, nullable=False)
     abstract = Column(Text, nullable=False)
     human_result = Column(Enum(HumanResult, name="human_result"), nullable=True)

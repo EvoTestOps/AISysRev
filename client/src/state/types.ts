@@ -96,7 +96,7 @@ export type JobTask = {
   job_uuid: string;
   job_id: number;
   paper_uuid: string;
-  doi: string;
+  doi: string | null;
   title: string;
   abstract: string;
   status: JobTaskStatus;
@@ -110,7 +110,7 @@ export type Paper = {
   paper_id: number;
   project_uuid: string;
   file_uuid: string;
-  doi: string;
+  doi: string | null;
   title: string;
   abstract: string;
   human_result: JobTaskHumanResult | null;
@@ -123,7 +123,7 @@ export type PaperWithModelEval = {
   paper_id: number;
   project_uuid: string;
   file_uuid: string;
-  doi: string;
+  doi: string | null;
   title: string;
   abstract: string;
   human_result: JobTaskHumanResult | null;
@@ -132,6 +132,7 @@ export type PaperWithModelEval = {
   avg_probability_decision: number | null;
 };
 
+// TODO: Remove result type
 export type Result = {
   title: string;
   abstract: string;

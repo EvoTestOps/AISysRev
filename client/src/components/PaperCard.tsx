@@ -84,15 +84,19 @@ export const PaperCard: React.FC<
       {open && (
         <div className="pl-4 pr-4 pb-4">
           <div className="text-sm pt-2 pb-2">
-            <strong>DOI:</strong>{" "}
-            <a
-              href={`https://doi.org/${paper.doi}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover-underline text-blue-600 hover-underline"
-            >
-              {paper.doi}
-            </a>
+            {paper.doi && (
+              <>
+                <strong>DOI:</strong>{" "}
+                <a
+                  href={`https://doi.org/${paper.doi}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover-underline text-blue-600 hover-underline"
+                >
+                  {paper.doi}
+                </a>
+              </>
+            )}
           </div>
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
             {paper.abstract}

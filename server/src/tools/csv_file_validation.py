@@ -12,6 +12,7 @@ def validate_csv(file_obj: io.BytesIO, filename: str):
         raw = file_obj.read()
         df = pd.read_csv(io.BytesIO(raw), encoding="utf-8-sig")
         df.columns = [str(c).strip().lower() for c in df.columns]
+        df["doi"] = df["doi"].astype(str)
         missing = REQUIRED_FIELDS - set(df.columns)
         if missing:
             return [
@@ -23,6 +24,8 @@ def validate_csv(file_obj: io.BytesIO, filename: str):
             ]
 
         for idx, row in df.iterrows():
+            if pd.isna(row.get("doi")):
+                row["doi"] = None
             try:
                 PublicationRowData(**row.to_dict())
             except ValidationError as e:

@@ -3,22 +3,28 @@ import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
 import { fetchResultFromBackend } from "../services/resultService";
 import { Result } from "../state/types";
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import * as React from "react";
+import Box from "@mui/material/Box";
+import Collapse from "@mui/material/Collapse";
+import IconButton from "@mui/material/IconButton";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Typography from "@mui/material/Typography";
+import Paper from "@mui/material/Paper";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
-function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] }) {
+function Row({
+  paper,
+  modelColumns,
+}: {
+  paper: Result;
+  modelColumns: string[];
+}) {
   const [isOpen, setIsOpen] = React.useState(false);
   return (
     <>
@@ -30,16 +36,20 @@ function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] })
         </TableCell>
         <TableCell>{paper.title}</TableCell>
         <TableCell>
-          <a
-            href={paper.doi}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#1976d2", textDecoration: "underline" }}
-          >
-            {paper.doi}
-          </a>
+          {paper.doi && (
+            <a
+              href={paper.doi}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "#1976d2", textDecoration: "underline" }}
+            >
+              {paper.doi}
+            </a>
+          )}
         </TableCell>
-        <TableCell sx={{ fontWeight: 'bold' }}>{paper.human_result ?? "—"}</TableCell>
+        <TableCell sx={{ fontWeight: "bold" }}>
+          {paper.human_result ?? "—"}
+        </TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
@@ -48,12 +58,17 @@ function Row({ paper, modelColumns }: { paper: Result; modelColumns: string[] })
               <Typography variant="body1" fontWeight="bold" gutterBottom>
                 Model Results
               </Typography>
-              {modelColumns.map(model => (
+              {modelColumns.map((model) => (
                 <Typography key={model} variant="body2">
                   {model}: <b>{paper[model]}</b>
                 </Typography>
               ))}
-              <Typography variant="body1" fontWeight="bold" gutterBottom sx={{ mt: 2 }}>
+              <Typography
+                variant="body1"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ mt: 2 }}
+              >
                 Abstract
               </Typography>
               <Typography variant="body2" gutterBottom>
@@ -81,9 +96,10 @@ export const ResultPage = () => {
   }, [projectUuid]);
 
   const fixedColumns = ["title", "abstract", "doi", "human_result"];
-  const modelColumns = result.length > 0
-    ? Object.keys(result[0]).filter(key => !fixedColumns.includes(key))
-    : [];
+  const modelColumns =
+    result.length > 0
+      ? Object.keys(result[0]).filter((key) => !fixedColumns.includes(key))
+      : [];
 
   return (
     <Layout title="Results">
@@ -99,7 +115,11 @@ export const ResultPage = () => {
           </TableHead>
           <TableBody>
             {result.map((paper, i) => (
-              <Row key={`${paper.title}_${i}`} paper={paper} modelColumns={modelColumns} />
+              <Row
+                key={`${paper.title}_${i}`}
+                paper={paper}
+                modelColumns={modelColumns}
+              />
             ))}
           </TableBody>
         </Table>

@@ -25,7 +25,7 @@ class JobTaskStatus(str, Enum):
 
 class JobTaskCreate(BaseModel):
     job_id: int
-    doi: str
+    doi: Optional[str]
     title: str
     abstract: str
     paper_uuid: UUID
@@ -35,7 +35,7 @@ class JobTaskCreate(BaseModel):
 class JobTaskRead(BaseModel):
     uuid: UUID
     job_id: int
-    doi: str
+    doi: Optional[str]
     title: str
     abstract: str
     paper_uuid: UUID
@@ -57,7 +57,7 @@ class JobTaskRead(BaseModel):
 class JobTaskReadWithLLMConfig(BaseModel):
     uuid: UUID
     job_id: int
-    doi: str
+    doi: Optional[str]
     title: str
     abstract: str
     paper_uuid: UUID

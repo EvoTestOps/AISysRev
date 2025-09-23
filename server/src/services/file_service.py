@@ -109,6 +109,8 @@ class FileService:
                             ): v
                             for k, v in row.items()
                         }
+                        if pd.isna(normalized.get("doi")):
+                            normalized["doi"] = None
 
                         papers.append(
                             PaperCreate(

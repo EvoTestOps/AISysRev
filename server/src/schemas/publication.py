@@ -1,11 +1,12 @@
+from typing import Optional
 from pydantic import BaseModel, field_validator
 
 class PublicationRowData(BaseModel):
     title: str
     abstract: str
-    doi: str
+    doi: Optional[str]
 
-    @field_validator('title', 'abstract', 'doi')
+    @field_validator('title', 'abstract')
     @classmethod
     def check_not_empty(cls, v, field):
         if not isinstance(v, str) or not str(v).strip():

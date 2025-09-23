@@ -26,7 +26,7 @@ class JobTask(Base, TimestampMixin):
     id = Column(Integer, primary_key=True)
     uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     job_id = Column(Integer, ForeignKey("job.id", ondelete="CASCADE"), nullable=False)
-    doi = Column(Text, nullable=False)
+    doi = Column(Text, nullable=True)
     title = Column(Text, nullable=False)
     abstract = Column(Text, nullable=False)
     paper_uuid = Column(
