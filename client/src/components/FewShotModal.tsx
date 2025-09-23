@@ -143,6 +143,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
         created_at: res.created_at,
         updated_at: res.updated_at,
       };
+      onClose();
       console.log(createdJob);
     } catch (e) {
       console.error("Error creating job:", e);
@@ -153,6 +154,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     rememberSelection,
     projectUuid,
     llmConfig,
+    onClose,
   ]);
 
   return (
@@ -421,7 +423,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               )}
               {currentStep === "OVERVIEW" && (
                 <Button
-                  disabled={selectedInclusionSeeds.length === 0}
+                  disabled={
+                    selectedExclusionSeeds.length === 0 &&
+                    selectedInclusionSeeds.length === 0
+                  }
                   variant="purple"
                   onClick={() => createFewShotJob()}
                 >

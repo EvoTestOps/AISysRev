@@ -30,7 +30,7 @@ class PaperCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_papers_with_model_evals_by_project_uuid(self, project_uuid: UUID):
+    async def fetch_papers_with_model_evals_by_project_uuid(self, project_uuid: UUID) -> List[PaperReadWithAvgProbability]:
         avg_prob = func.avg(
             cast(
                 JobTask.result["overall_decision"]["probability_decision"].astext,

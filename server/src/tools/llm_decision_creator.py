@@ -1,3 +1,4 @@
+from src.schemas.paper import PaperHumanResult, PaperRead
 from src.services.paper_service import get_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
@@ -12,6 +13,20 @@ from src.core.llm import (
     StructuredResponse,
 )
 from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
+
+
+def _create_few_shot_examples(papers: list[PaperRead]):
+    txt_parts = []
+
+    for paper in papers:
+        txt_parts.append(
+            f"""Title: {paper.title}
+Abstract: \"{paper.abstract}\"
+Decision: {"Include" if paper.human_result == PaperHumanResult.INCLUDE else "Exclude"}
+"""
+        )
+
+    return "\n\n".join(txt_parts)
 
 
 def _create_criteria(
@@ -57,11 +72,13 @@ async def get_structured_response(
     elif isinstance(cfg, FewShotPromptingConfig):
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
         seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
+        seed_paper_txt = _create_few_shot_examples(seed_papers)
         prompt_text = few_shot_task_prompt.format(
             job_task_data.title,
             job_task_data.abstract,
             criteria,
             additional_instructions,
+            seed_paper_txt,
         )
         result = await openrouter_service.call_llm(
             schema=StructuredResponse, model=llm_model, prompt=prompt_text
