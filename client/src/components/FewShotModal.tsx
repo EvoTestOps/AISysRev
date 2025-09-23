@@ -148,7 +148,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
         updated_at: res.updated_at,
       };
       onClose();
-      console.log(createdJob);
+      // console.log(createdJob);
     } catch (e) {
       console.error("Error creating job:", e);
     }

@@ -54,32 +54,13 @@ import { AlertMessage } from "../components/AlertMessage";
 import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
+import { Badge } from "../components/Badge";
 
 type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
 };
-
-type BadgeProps = {
-  invert?: boolean;
-  text: string;
-};
-
-const Badge: React.FC<BadgeProps> = ({ invert = false, text }) => (
-  <div
-    className={twMerge(
-      classNames(
-        "bg-white text-purple-700 pl-2 pr-2 rounded-md inline-flex items-center content-center justify-center font-bold select-none",
-        {
-          "bg-purple-700 text-white": invert,
-        }
-      )
-    )}
-  >
-    {text}
-  </div>
-);
 
 const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
@@ -257,7 +238,7 @@ export const ProjectPage = () => {
     setPapersLoading(true);
     try {
       const fetched = await fetchPapersFromBackend(projectUuid);
-      console.log("Fetched papers", fetched);
+      // console.log("Fetched papers", fetched);
       setPapers(fetched);
     } catch (e) {
       console.error("Failed to fetch papers", e);
@@ -312,7 +293,7 @@ export const ProjectPage = () => {
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
-          console.log("File upload errors:", res.errors);
+          console.error("File upload errors:", res.errors);
         }
       } catch (e) {
         if (axios.isAxiosError(e)) {
@@ -367,14 +348,14 @@ export const ProjectPage = () => {
     const fetchAll = () => {
       Promise.all(
         createdJobs.map((job) => {
-          console.log("job.uuid", job.uuid);
+          // console.log("job.uuid", job.uuid);
           // @ts-expect-error Expected
           return fetchJobTasksFromBackend(job.uuid, job.id);
         })
       )
         .then((results) => {
           setJobTasks(results.flat());
-          console.log("results: ", results.flat());
+          // console.log("results: ", results.flat());
         })
         .catch((error) => {
           console.error("Error fetching job tasks:", error);
@@ -530,7 +511,7 @@ export const ProjectPage = () => {
             const totalCount = tasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-
+            // console.log(job.prompting_config);
             return (
               <Card key={job.uuid} className="flex-row justify-between">
                 <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">

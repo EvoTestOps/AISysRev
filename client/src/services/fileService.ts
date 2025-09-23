@@ -2,12 +2,12 @@ import { api } from '../services/api'
 
 export const fileFetchFromBackend = async (projectUuid: string) => {
   try {
-    console.log("Fetching files for project UUID:", projectUuid);
+    // console.log("Fetching files for project UUID:", projectUuid);
     const res = await api.get(`/files/${projectUuid}`);
-    console.log("Fetch successful:", res.data);
+    // console.log("Fetch successful:", res.data);
     return res.data;
   } catch (error) {
-    console.log("File fetch error: ", error);
+    console.error("File fetch error: ", error);
     throw error;
   }
 };

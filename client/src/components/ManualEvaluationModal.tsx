@@ -10,7 +10,7 @@ import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
 import { addPaperHumanResult } from "../services/paperService";
-import { JobTaskHumanResult, Paper } from "../state/types";
+import { JobTaskHumanResult, Paper, PromptingConfig } from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
 
@@ -29,6 +29,7 @@ type ModelSuggestion = {
   binary: string;
   likertScale: number;
   probability: number;
+  screening_type: PromptingConfig["screening_type"];
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
@@ -61,20 +62,23 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
     const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return response.data.map((entry: any) => ({
-      modelName: entry.llm_config.model_name,
-      binary: entry.result.overall_decision.binary_decision
-        ? "Include"
-        : "Exclude",
-      likertScale: entry.result.overall_decision.likert_decision,
-      probability: entry.result.overall_decision.probability_decision,
-    }));
+    return response.data.map((entry: any) => {
+      return {
+        modelName: entry.llm_config.model_name,
+        binary: entry.result.overall_decision.binary_decision
+          ? "Include"
+          : "Exclude",
+        likertScale: entry.result.overall_decision.likert_decision,
+        probability: entry.result.overall_decision.probability_decision,
+        screeningType: entry.result.prompting_config.screening_type,
+      };
+    });
   }, []);
 
   useEffect(() => {
     if (paperUuid != null) {
       getModelSuggestions(paperUuid).then((s) => {
-        console.log("Fetched suggestions", s);
+        // console.log("Fetched suggestions", s);
         setModelSuggestions(s);
       });
     }
@@ -134,6 +138,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   binary={suggestion.binary}
                   likertScale={suggestion.likertScale}
                   probability={suggestion.probability}
+                  screeningType={suggestion.screening_type}
                 />
               ))}
             </div>

@@ -12,7 +12,7 @@ export const createJob = async (
       llm_config: llmConfig,
       prompting_config: promptingConfig,
     });
-    console.log("Job created successfully:", res.data);
+    // console.log("Job created successfully:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error creating job:", error);
