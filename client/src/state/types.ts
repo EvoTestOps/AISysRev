@@ -3,10 +3,20 @@ export type Criteria = {
   exclusion_criteria: string[];
 };
 
+type FewShotPreferences = {
+  inc_seed_papers: string[];
+  exc_seed_papers: string[];
+};
+
+type ProjectPreferences = {
+  few_shot?: FewShotPreferences;
+};
+
 export type Project = {
   uuid: string;
   name: string;
   criteria: Criteria;
+  preferences: ProjectPreferences | null;
 };
 
 export type FetchedFile = {

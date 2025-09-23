@@ -94,6 +94,12 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   const getPapersForProject = useTypedStoreState(
     (state) => state.getPapersForProject
   );
+  const projectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
+  const project = projectByUuid(projectUuid);
+
+  const incSeedPapers = project?.preferences?.few_shot?.inc_seed_papers || [];
+  const excSeedPapers = project?.preferences?.few_shot?.exc_seed_papers || [];
+
   const papers = getPapersForProject(projectUuid);
   // Default to true
   const [rememberSelection, setRememberSelection] = useState(true);
@@ -108,12 +114,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     return aVal - bVal;
   });
 
-  const [selectedInclusionSeeds, setSelectedInclusionSeeds] = useState<
-    Array<string>
-  >([]);
-  const [selectedExclusionSeeds, setSelectedExclusionSeeds] = useState<
-    Array<string>
-  >([]);
+  const [selectedInclusionSeeds, setSelectedInclusionSeeds] =
+    useState<Array<string>>(incSeedPapers);
+  const [selectedExclusionSeeds, setSelectedExclusionSeeds] =
+    useState<Array<string>>(excSeedPapers);
   const exclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.EXCLUDE
   );
@@ -156,6 +160,10 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     llmConfig,
     onClose,
   ]);
+
+  if (!project) {
+    return null;
+  }
 
   return (
     <Dialog

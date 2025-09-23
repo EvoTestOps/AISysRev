@@ -161,6 +161,7 @@ export const ProjectPage = () => {
   const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
+  const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
@@ -195,17 +196,21 @@ export const ProjectPage = () => {
 
   const evaluationFinished = jobTasks.length > 0 && pendingTasks.length === 0;
 
-  useEffect(() => {
-    const fetchJobs = async () => {
+  const fetchJobs = useCallback(() => {
+    async function doFetch() {
       try {
         const jobs = await fetchJobsForProject(projectUuid);
         setCreatedJobs(jobs);
       } catch (e) {
         console.error("Failed to fetch jobs for project", e);
       }
-    };
-    fetchJobs();
+    }
+    doFetch().catch(console.error);
   }, [projectUuid]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs, projectUuid]);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -518,24 +523,14 @@ export const ProjectPage = () => {
             <AlertMessage message="No screening tasks." />
           )}
           {createdJobs.map((job) => {
-            const tasks = jobTasks.filter((task) => {
-              // console.log(
-              //   "task.job_uuid:",
-              //   task.job_uuid,
-              //   "job.uuid:",
-              //   job.uuid
-              // );
-              return task.job_uuid === job.uuid;
-            });
+            const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
               (task) => task.status === JobTaskStatus.DONE
             ).length;
             const totalCount = tasks.length;
             const progress =
               totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
-            // console.log("totalCount: ", totalCount);
-            // console.log("doneCount: ", doneCount);
-            console.log("progress: ", progress);
+
             return (
               <Card key={job.uuid} className="flex-row justify-between">
                 <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
@@ -782,7 +777,11 @@ export const ProjectPage = () => {
             temperature,
             top_p,
           }}
-          onClose={() => navigate(`/project/${projectUuid}`)}
+          onClose={() => {
+            loadProjects();
+            fetchJobs();
+            navigate(`/project/${projectUuid}`);
+          }}
         />
       )}
       {evaluateViewMatch && paperUuid && (

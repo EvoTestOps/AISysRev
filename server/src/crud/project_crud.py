@@ -1,9 +1,10 @@
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from src.models.project import Project
-from src.schemas.project import ProjectCreate, ProjectRead
+from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+
 
 class ProjectCrud:
     def __init__(self, db: AsyncSession):
@@ -14,11 +15,35 @@ class ProjectCrud:
             Project.uuid,
             Project.name,
             Project.criteria,
+            Project.preferences,
             Project.created_at,
-            Project.updated_at
+            Project.updated_at,
         )
         result = await self.db.execute(stmt)
         return result.mappings().all()
+
+    async def get_project_preferences(self, uuid: UUID) -> Optional[ProjectPreferences]:
+        stmt = select(Project.preferences).where(Project.uuid == uuid)
+        result = await self.db.execute(stmt)
+        row = result.mappings().one_or_none()
+        if row is None:
+            return None
+        data = row["preferences"]
+        if data is None:
+            return None
+        return ProjectPreferences(**data)
+
+    async def update_project_preferences(
+        self, uuid: UUID, preferences: ProjectPreferences
+    ) -> bool:
+        stmt = (
+            update(Project)
+            .where(Project.uuid == uuid)
+            .values(preferences=preferences.model_dump())
+        )
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.rowcount > 0
 
     async def fetch_project_by_uuid(self, uuid: UUID) -> ProjectRead:
         stmt = select(Project).where(Project.uuid == uuid)
@@ -36,7 +61,7 @@ class ProjectCrud:
         stmt = select(Project).where(Project.uuid == uuid)
         result = await self.db.execute(stmt)
         project = result.scalar_one_or_none()
-        
+
         if project:
             await self.db.delete(project)
             await self.db.commit()
