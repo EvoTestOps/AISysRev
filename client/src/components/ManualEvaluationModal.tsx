@@ -154,17 +154,19 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
               className="flex-1 overflow-y-auto
               [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              <div className="text-sm pt-2 pb-2">
-                <strong>DOI:</strong>{" "}
-                <a
-                  href={encodeURI(`https://doi.org/${currentPaper.doi}`)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover-underline text-blue-600 hover-underline"
-                >
-                  {currentPaper.doi}
-                </a>
-              </div>
+              {currentPaper.doi && (
+                <div className="text-sm pt-2 pb-2">
+                  <strong>DOI:</strong>{" "}
+                  <a
+                    href={encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover-underline text-blue-600 hover-underline"
+                  >
+                    {currentPaper.doi}
+                  </a>
+                </div>
+              )}
               <Description className="text-sm leading-relaxed whitespace-pre-line">
                 {currentPaper.abstract}
               </Description>
