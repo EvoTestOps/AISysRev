@@ -12,7 +12,6 @@ import { Button } from "./Button";
 import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import {
-  CreatedJob,
   createFewShotPromptingConfig,
   JobTaskHumanResult,
   LlmConfig,
@@ -138,15 +137,15 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     );
 
     try {
-      const res = await createJob(projectUuid, llmConfig, promptingConfig);
-      const createdJob: CreatedJob = {
-        uuid: res.uuid,
-        project_uuid: res.project_uuid,
-        llm_config: res.llm_config,
-        prompting_config: res.prompting_config,
-        created_at: res.created_at,
-        updated_at: res.updated_at,
-      };
+      await createJob(projectUuid, llmConfig, promptingConfig);
+      // const createdJob: CreatedJob = {
+      //   uuid: res.uuid,
+      //   project_uuid: res.project_uuid,
+      //   llm_config: res.llm_config,
+      //   prompting_config: res.prompting_config,
+      //   created_at: res.created_at,
+      //   updated_at: res.updated_at,
+      // };
       onClose();
       // console.log(createdJob);
     } catch (e) {

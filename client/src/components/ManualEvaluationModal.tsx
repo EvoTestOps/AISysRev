@@ -29,7 +29,7 @@ type ModelSuggestion = {
   binary: string;
   likertScale: number;
   probability: number;
-  screening_type: PromptingConfig["screening_type"];
+  screeningType: PromptingConfig["screening_type"];
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
@@ -70,7 +70,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           : "Exclude",
         likertScale: entry.result.overall_decision.likert_decision,
         probability: entry.result.overall_decision.probability_decision,
-        screeningType: entry.result.prompting_config.screening_type,
+        screeningType: entry.prompting_config.screening_type,
       };
     });
   }, []);
@@ -138,7 +138,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   binary={suggestion.binary}
                   likertScale={suggestion.likertScale}
                   probability={suggestion.probability}
-                  screeningType={suggestion.screening_type}
+                  screeningType={suggestion.screeningType}
                 />
               ))}
             </div>

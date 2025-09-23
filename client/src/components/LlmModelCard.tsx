@@ -32,11 +32,15 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
       className="flex flex-col gap-4 bg-blue-50 shadow-md p-4 rounded-lg"
       aria-label="Model Card"
     >
-      <span className="font-bold text-lg">
-        {screeningType == JobPromptingType.ZERO_SHOT && <Badge text="ZS" />}
-        {screeningType == JobPromptingType.FEW_SHOT && <Badge text="FS" />}
+      <div className="font-bold text-lg flex flex-col gap-2 items-start content-center">
+        {screeningType == JobPromptingType.ZERO_SHOT && (
+          <Badge text="ZS" invert />
+        )}
+        {screeningType == JobPromptingType.FEW_SHOT && (
+          <Badge text="FS" invert />
+        )}
         {modelName}
-      </span>
+      </div>
       <div>
         <div className="whitespace-nowrap">
           <span className="text-sm font-semibold">Binary: </span>
