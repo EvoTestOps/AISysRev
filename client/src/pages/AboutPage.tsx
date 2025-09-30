@@ -87,13 +87,24 @@ export const AboutPage = () => (
       <H3>License</H3>
       <p>CC-BY-ND 4.0</p>
       <H3>Source code</H3>
-      <p>Available by request.</p>
+      <p>
+        Available at{" "}
+        <a
+          href="https://github.com/EvoTestOps/AiSysRev"
+          target="__blank"
+          rel="noopener noreferrer"
+          className="text-blue-700"
+        >
+          https://github.com/EvoTestOps/AiSysRev
+        </a>
+      </p>
       <H3>Contributors</H3>
       <p>
         See the{" "}
         <a
           href="https://github.com/EvoTestOps"
           target="__blank"
+          rel="noopener noreferrer"
           className="text-blue-700"
         >
           EvoTestOps
