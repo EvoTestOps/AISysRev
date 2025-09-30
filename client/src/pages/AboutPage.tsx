@@ -1,3 +1,4 @@
+import { SquareArrowOutUpRight } from "lucide-react";
 import { Layout } from "../components/Layout";
 import { H1, H3 } from "../components/Typography";
 
@@ -5,6 +6,28 @@ export const AboutPage = () => (
   <Layout title="About AISysRev">
     <div className="flex flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
       <H1>AISysRev</H1>
+      <p>
+        <a
+          href="/docs"
+          target="__blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline flex flex-row gap-2 justify-start items-center w-fit"
+        >
+          <SquareArrowOutUpRight />
+          <span>Swagger UI</span>
+        </a>
+      </p>
+      <p>
+        <a
+          href="/openapi.json"
+          target="__blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline flex flex-row gap-2 justify-start items-center w-fit"
+        >
+          <SquareArrowOutUpRight />
+          <span>OpenAPI JSON</span>
+        </a>
+      </p>
       <p>
         <strong>AISysRev</strong> demonstrates the capabilities of AI-automated
         title-abstract screening of systematic reviews (SRs), which is subject
