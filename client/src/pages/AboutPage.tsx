@@ -85,7 +85,7 @@ export const AboutPage = () => (
         </strong>
       </p>
       <H3>License</H3>
-      <p>CC-BY-ND 4.0</p>
+      <p>MIT License</p>
       <H3>Source code</H3>
       <p>
         Available at{" "}
