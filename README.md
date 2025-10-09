@@ -1,9 +1,9 @@
 # AISysRev
-Project Status: This is a minimum viable product with core functionality working, but many features are missing and bugs remain.
+Project Status: Minimum viable product with core functionality working, but many features are missing and bugs remain.
 
 This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), and data for screening can be imported from [Scopus](https://www.scopus.com/). 
 The application allows you to:
-- Import a CSV file with paper titles and abstracts
+- Import a CSV file with paper titles and abstracts. You can also use our [Demo CSV file](data/Demo_TimePressure_5_papers.csv)
 - Specify include/exclude criteria for paper screening
 - Evaluate papers against the criteria using multiple LLMs
 - Receive LLM evaluations as binary decisions (include/exclude), ordinal ratings (1-7), or inclusion probabilities (0–1)
