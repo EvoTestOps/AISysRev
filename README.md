@@ -44,15 +44,18 @@ Note: Paper screening speed is about 4,5s per paper. We are working on paralleli
 
 
 ### System and software requirements
-- Docker, with Compose plugin installed
+- Docker, with Compose and buildx plugins installed.
 - Enough RAM (16GB recommended) to run multiple containers
 - Network connection
 
-See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Engine and the Docker CLI.**
+See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Buildx, Docker Engine and the Docker CLI.**
+
+If Docker Desktop did not include Buildx plugin, see: [https://github.com/docker/buildx][https://github.com/docker/buildx]
 
 1. Run `docker info` to verify you have Docker installed
-   - Docker `26.0.0` has been tested as working. For MacOS computers, Colima has been rigorously tested to work.
-3. Run `docker compose version` to verify you have Compose installed.
+   - Docker `26.0.0` has been tested as working. For MacOS computers with Colima, Docker version `28.5.1` confirmed to be working.
+2. Run `docker buildx version` to verify you have Docker Buildx installed. For MacOS computers, Buildx plugin version `0.29.1` confirmed to be working.
+3. Run `docker compose version` to verify you have Compose installed. For MacOS computers, Compose plugin version `2.40.3` confirmed to be working.
    - Version `2.33.1` has been tested as working, newer versions should also work.
    - **Note:** Older versions of Compose use `docker-compose` as the compose command. We don't provide support for legacy Compose versions.
 
