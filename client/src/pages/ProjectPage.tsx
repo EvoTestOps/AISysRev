@@ -7,10 +7,7 @@ import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import {
-  fetchJobTasksFromBackend,
-  fetchPapersFromBackend,
-} from "../services/jobTaskService";
+import { fetchJobTasksFromBackend } from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
 import {
   fileUploadToBackend,
@@ -22,7 +19,6 @@ import {
   FetchedFile,
   JobTask,
   JobTaskStatus,
-  Paper,
   CreatedJob,
   LlmConfig,
   createZeroShotPromptingConfig,
@@ -164,8 +160,10 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
-  const [papersLoading, setPapersLoading] = useState(false);
-  const [papers, setPapers] = useState<Paper[]>([]);
+
+  const getPapers = useTypedStoreState((state) => state.getPapersForProject);
+  const papers = getPapers(projectUuid);
+
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
@@ -324,23 +322,6 @@ export const ProjectPage = () => {
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
-  const loadPapers = useCallback(async () => {
-    setPapersLoading(true);
-    try {
-      const fetched = await fetchPapersFromBackend(projectUuid);
-      // console.log("Fetched papers", fetched);
-      setPapers(fetched);
-    } catch (e) {
-      console.error("Failed to fetch papers", e);
-    } finally {
-      setPapersLoading(false);
-    }
-  }, [projectUuid]);
-
-  useEffect(() => {
-    loadPapers();
-  }, [loadPapers]);
-
   const createZeroShotJob = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a model before creating a task.");
@@ -370,19 +351,12 @@ export const ProjectPage = () => {
         updated_at: res.updated_at,
       };
       setCreatedJobs((prev) => [...prev, createdJob]);
-      await loadPapers();
+      // await loadPapers();
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [
-    selectedLlm,
-    selectedLlmProvider,
-    modelFormValues,
-    providerFormValues,
-    projectUuid,
-    loadPapers,
-  ]);
+  }, [selectedLlm, selectedLlmProvider, modelFormValues, providerFormValues, projectUuid]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -424,12 +398,16 @@ export const ProjectPage = () => {
       try {
         await uploadFilesToBackend(files);
         await fetchFiles();
-        await loadPapers();
+        // await loadPapers();
       } catch (error) {
         console.error("Problem uploading the files", error);
       }
     },
-    [uploadFilesToBackend, fetchFiles, loadPapers]
+    [
+      uploadFilesToBackend,
+      fetchFiles,
+      // loadPapers
+    ]
   );
 
   useEffect(() => {
@@ -493,7 +471,7 @@ export const ProjectPage = () => {
         }
       }
     }
-    await loadPapers();
+    // await loadPapers();
     navigate(`/project/${projectUuid}`);
     toast.success("Manual evaluation finished.");
   }, [
@@ -503,7 +481,7 @@ export const ProjectPage = () => {
     paperToTaskMap,
     navigate,
     projectUuid,
-    loadPapers,
+    // loadPapers,
   ]);
 
   useEffect(() => {
@@ -974,7 +952,7 @@ export const ProjectPage = () => {
               variant="green"
               className="px-6 text-md font-bold rounded-lg "
               onClick={openManualEvaluation}
-              disabled={papersLoading || !canStartManualEvaluation}
+              disabled={!canStartManualEvaluation}
             >
               <div className="flex flex-row gap-2">
                 <ChartCandlestick />
