@@ -47,10 +47,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 }) => {
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
+  // TODO: Refactor this to use redux
   const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
     [],
   );
 
+  // TODO: Refactor this to use redux
   const addHumanResult = useCallback(
     async (humanResult: JobTaskHumanResult) => {
       if (!paperUuid) return;
@@ -64,6 +66,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     [paperUuid, onEvaluated],
   );
 
+  // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
     const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
     /* eslint-disable @typescript-eslint/no-explicit-any */

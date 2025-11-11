@@ -184,7 +184,9 @@ export const ProjectPage = () => {
     if (project !== undefined) {
       fetchPapers(projectUuid);
     }
-  }, [fetchPapers, project, projectUuid]);
+    fetchModels();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, projectUuid]);
 
   const paperUuid = useMemo(() => {
     if (!search) return null;
@@ -194,6 +196,7 @@ export const ProjectPage = () => {
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<
     DropdownOption | undefined
   >(undefined);
+
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );

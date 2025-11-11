@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   createStore,
   action,
@@ -15,7 +16,7 @@ import {
   JobTaskHumanResult,
   PaperWithModelEval,
   Project,
-  Provider
+  Provider,
 } from "./types";
 
 const injections = {
@@ -36,7 +37,6 @@ type ProjectUUID = string;
 
 // Defines state, actions and thunks for project-related things.
 interface ProjectModel {
-  // Projects
   projects: Array<Project>;
   setProjects: Action<StoreModel, Array<Project>>;
   setLoadingProjects: Action<StoreModel, boolean>;
@@ -167,7 +167,7 @@ export const store = createStore<StoreModel>(
       const { paperService } = injections;
       await paperService.addPaperHumanResult(
         params.paperUuid,
-        params.humanResult
+        params.humanResult,
       );
       actions.setPaperHumanResult({
         projectUuid: params.projectUuid,
@@ -209,7 +209,7 @@ export const store = createStore<StoreModel>(
     getPaperByUuid: computed((state) => {
       return (projectUuid: string, paperUuid: string) =>
         (state.papers[projectUuid] || []).find(
-          (paper) => paper.uuid === paperUuid
+          (paper) => paper.uuid === paperUuid,
         );
     }),
     providers: [],
@@ -243,7 +243,7 @@ export const store = createStore<StoreModel>(
   {
     injections,
     devTools: process.env.NODE_ENV !== "production",
-  }
+  },
 );
 
 const typedHooks = createTypedHooks<StoreModel>();
