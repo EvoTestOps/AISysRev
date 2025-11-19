@@ -13,6 +13,8 @@ from src.tools.llm_decision_creator import get_structured_response
 
 logger = logging.getLogger(__name__)
 
+redis = get_redis_client()
+
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: Task, job_id: int, job_data: dict):
@@ -49,7 +51,7 @@ async def _async_retry_job_task(func, max_retries=3, base_delay=1):
 
 async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate):
     logger.info("async_process_job: Starting to process job %s", job_id)
-    redis = get_redis_client()
+
     async with AsyncSessionLocal() as db:
         project_crud = ProjectCrud(db)
         jobtask_crud = JobTaskCrud(db)
@@ -66,16 +68,16 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
-                # await redis.publish(
-                #     REDIS_CHANNEL,
-                #     QueueItem(
-                #         event_name=EventName.JOB_TASK_RUNNING,
-                #         value={
-                #             "job_task_id": job_task.id,
-                #             "status": JobTaskStatus.RUNNING,
-                #         },
-                #     ).model_dump_json(),
-                # )
+                await redis.publish(
+                    REDIS_CHANNEL,
+                    QueueItem(
+                        event_name=EventName.JOB_TASK_RUNNING,
+                        value={
+                            "job_task_id": job_task.id,
+                            "status": JobTaskStatus.RUNNING,
+                        },
+                    ).model_dump_json(),
+                )
 
                 celery_task.update_state(
                     state="PROGRESS",
@@ -86,6 +88,7 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                         db, job_task, job_data, project.criteria
                     )
                 )
+
                 await redis.publish(
                     REDIS_CHANNEL,
                     QueueItem(

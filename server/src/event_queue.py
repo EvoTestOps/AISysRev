@@ -17,7 +17,12 @@ class EventName(Enum):
     JOB_CREATED = 3002
     # Events for Project-related things
     PROJECT_CREATED = 4001
+    PROJECT_FILE_UPLOADED = 4002
     # Events for Project-related things
+    # Server-related
+    REDIS_UNSUB = 89990
+    REDIS_SUB = 89991
+    PING = 89992
     # Server error
     SERVER_ERROR = 99999
 

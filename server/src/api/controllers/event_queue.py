@@ -5,22 +5,30 @@ import asyncio
 
 router = APIRouter()
 
+KEEPALIVE_INTERVAL = 10
+
 
 @router.get("/event-queue")
 async def event_bus(request: Request):
     async def stream():
         yield ": connected\n\n"
+
         while True:
+            if await request.is_disconnected():
+                break
+
             try:
-                message: QueueItem = await queue.get()
-                yield "data: " + message.model_dump_json() + "\n\n"
+                message: QueueItem = await asyncio.wait_for(
+                    queue.get(), timeout=KEEPALIVE_INTERVAL
+                )
+
+                yield f"data: {message.model_dump_json()}\n\n"
+
             except asyncio.TimeoutError:
-                if await request.is_disconnected():
-                    break
-                yield ": keep-alive\n\n"
+                yield "event: ping\ndata: keepalive\n\n"
 
     return StreamingResponse(
         stream(),
         media_type="text/event-stream",
-        headers={"Cache-control": "no-cache", "Connection": "keep-alive"},
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
     )

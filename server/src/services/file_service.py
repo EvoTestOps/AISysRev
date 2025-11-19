@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import Depends, UploadFile
 from typing import List
 from pydantic import BaseModel
+from src.event_queue import EventName, QueueItem, push_event
 from src.services.paper_service import PaperCreate, PaperCrud
 from sqlalchemy.ext.asyncio import AsyncSession
 from minio.error import S3Error
@@ -127,9 +128,14 @@ class FileService:
                         await self.paper_crud.bulk_create_papers(papers)
 
                     upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
+                    await push_event(
+                        QueueItem(
+                            event_name=EventName.PROJECT_FILE_UPLOADED,
+                            value={"uuid": result.uuid},
+                        )
+                    )
 
                     valid_filenames.append(f.filename)
-
                 except S3Error as e:
                     errors.append(
                         FileError(

@@ -1,6 +1,6 @@
 import asyncio
 from pydantic import ValidationError
-from src.event_queue import QueueItem, push_event
+from src.event_queue import QueueItem, EventName, push_event
 from src.core.config import settings
 import redis.asyncio as redis
 
@@ -21,6 +21,9 @@ async def redis_subscribe():
         print("Subscribing to " + REDIS_CHANNEL)
         await pubsub.subscribe(REDIS_CHANNEL)
         print("Subscribed to " + REDIS_CHANNEL)
+        await push_event(
+            QueueItem(event_name=EventName.REDIS_SUB, value={"ping": "pong"})
+        )
         print("Starting to listen to events")
         try:
             async for message in pubsub.listen():
@@ -39,6 +42,9 @@ async def redis_subscribe():
         finally:
             try:
                 print("Unsubscribing from " + REDIS_CHANNEL)
+                await push_event(
+                    QueueItem(event_name=EventName.REDIS_UNSUB, value={"ping": "pong"})
+                )
                 await pubsub.unsubscribe(REDIS_CHANNEL)
             except Exception:
                 pass

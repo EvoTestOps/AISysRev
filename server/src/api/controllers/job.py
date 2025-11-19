@@ -8,7 +8,7 @@ from src.services.project_service import (
     get_project_service,
 )
 from src.event_queue import EventName, QueueItem, push_event
-from src.services.setting_service import SettingService, get_setting_service
+from src.services.setting_service import SettingService, get_setting_service_fastapi
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
@@ -53,7 +53,7 @@ async def get_single_job(uuid: UUID, jobs: JobService = Depends(get_job_service)
 async def create_job(
     job_data: JobCreate,
     jobs: JobService = Depends(get_job_service),
-    settings: SettingService = Depends(get_setting_service),
+    settings: SettingService = Depends(get_setting_service_fastapi),
     projects: ProjectService = Depends(get_project_service),
 ):
     try:

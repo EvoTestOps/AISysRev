@@ -14,7 +14,6 @@ import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
-import { EventStream } from "./components/EventStream";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -42,7 +41,6 @@ function App() {
 
   return (
     <div className="flex flex-col bg-gray-200 font-roboto">
-      <EventStream />
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
