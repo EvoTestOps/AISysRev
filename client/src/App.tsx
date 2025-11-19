@@ -11,13 +11,10 @@ import { ProjectPage } from "./pages/ProjectPage";
 import { ScreeningPage } from "./pages/ScreeningPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
-<<<<<<< HEAD
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
-=======
 import { EventStream } from "./components/EventStream";
->>>>>>> 8dbac45 (Implement server-sent events (SSE) with some examples in code)
 
 function App() {
   const [location, navigate] = useLocation();
@@ -44,19 +41,18 @@ function App() {
   if (!checkedTerms) return null;
 
   return (
-<<<<<<< HEAD
     <div className="flex flex-col bg-gray-200 font-roboto">
-=======
-    <div className="flex flex-col bg-gray-200">
       <EventStream />
->>>>>>> 8dbac45 (Implement server-sent events (SSE) with some examples in code)
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:projectUuid" component={ProjectPage} />
-        <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
+        <Route
+          path="/project/:projectUuid/papers/page/:page"
+          component={PapersPage}
+        />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
