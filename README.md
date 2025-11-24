@@ -1,5 +1,5 @@
 # AISysRev
-Project Status: Minimum viable product with core functionality working, but many features are missing and bugs remain.
+Project Status: Minimum viable product with core functionality working, but many features are missing and bugs remain. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
 
 This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), and data for screening can be imported from [Scopus](https://www.scopus.com/). 
 The application allows you to:
