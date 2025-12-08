@@ -43,6 +43,7 @@ import {
   Sparkles,
   Square,
   SquareCheckBig,
+  TriangleAlert,
 } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
@@ -506,11 +507,17 @@ export const ProjectPage = () => {
           {createdJobs.map((job) => {
             const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE
+              (task) => task.status === JobTaskStatus.DONE,
+            ).length;
+            const errorCount = tasks.filter(
+              (task) => task.status === JobTaskStatus.ERROR,
             ).length;
             const totalCount = tasks.length;
+            const completedCount = doneCount + errorCount;
             const progress =
-              totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100);
+              totalCount === 0
+                ? 0
+                : Math.round((completedCount / totalCount) * 100);
             // console.log(job.prompting_config);
             return (
               <Card key={job.uuid} className="flex-row justify-between">
@@ -556,14 +563,25 @@ export const ProjectPage = () => {
                               strokeWidth={2}
                             />
                             <span>
-                              Screening paper {doneCount} of {totalCount}
+                              Screening paper {completedCount} of {totalCount}
                             </span>
                           </>
                         )}
-                        {progress === 100 && (
+                        {progress === 100 && errorCount === 0 && (
                           <>
                             <CircleCheck size={14} className="text-green-600" />
                             <span className="text-green-600">Done</span>
+                          </>
+                        )}
+                        {progress === 100 && errorCount > 0 && (
+                          <>
+                            <TriangleAlert
+                              size={14}
+                              className="text-orange-600"
+                            />
+                            <span className="text-orange-600">
+                              Done with errors ({errorCount})
+                            </span>
                           </>
                         )}
                       </div>

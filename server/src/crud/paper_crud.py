@@ -24,21 +24,28 @@ class PaperCrud:
         stmt = select(Paper).where(Paper.project_uuid == project_uuid)
         result = await self.db.execute(stmt)
         return result.scalars().all()
-    
+
     async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]) -> List[Paper]:
         stmt = select(Paper).where(Paper.uuid.in_(paper_uuids))
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_papers_with_model_evals_by_project_uuid(self, project_uuid: UUID) -> List[PaperReadWithAvgProbability]:
+    async def fetch_papers_with_model_evals_by_project_uuid(
+        self, project_uuid: UUID
+    ) -> List[PaperReadWithAvgProbability]:
         avg_prob = func.avg(
             cast(
                 JobTask.result["overall_decision"]["probability_decision"].astext,
                 Float,
             )
         ).label("avg_probability_decision")
+        error_messages = (
+            func.array_agg(JobTask.error)
+            .filter(JobTask.error.isnot(None))
+            .label("error_messages")
+        )
         stmt = (
-            select(Paper, avg_prob)
+            select(Paper, avg_prob, error_messages)
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
             .where(Paper.project_uuid == project_uuid)
             .group_by(Paper.id)

@@ -60,7 +60,9 @@ export const PaperCard: React.FC<
         >
           {paper.avg_probability_decision
             ? paper.avg_probability_decision.toFixed(3)
-            : "Pending"}
+            : paper.error_messages?.length > 0
+              ? "ERROR"
+              : "Pending"}
         </div>
         <div>
           {!open && (

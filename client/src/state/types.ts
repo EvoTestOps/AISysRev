@@ -103,6 +103,7 @@ export type JobTask = {
   result: Record<string, unknown> | null;
   human_result: JobTaskHumanResult | null;
   status_metadata: Record<string, unknown> | null;
+  error: string | null;
 };
 
 export type Paper = {
@@ -130,6 +131,7 @@ export type PaperWithModelEval = {
   created_at: Date | null;
   updated_at: Date | null;
   avg_probability_decision: number | null;
+  error_messages: string[] | null;
 };
 
 // TODO: Remove result type

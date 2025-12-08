@@ -36,6 +36,7 @@ class PaperService:
             PaperReadWithAvgProbability(
                 **paper.__dict__,  # or unpack via your ORM->schema adapter
                 avg_probability_decision=row["avg_probability_decision"],
+                error_messages=row["error_messages"] or None
             )
             for row in rows
             for paper in [row["Paper"]]
