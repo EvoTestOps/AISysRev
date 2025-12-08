@@ -1,5 +1,6 @@
 from uuid import UUID
 from typing import List
+from schemas.jobtask import JobTaskStatus
 from src.models.jobtask import JobTask
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -33,12 +34,16 @@ class PaperCrud:
     async def fetch_papers_with_model_evals_by_project_uuid(
         self, project_uuid: UUID
     ) -> List[PaperReadWithAvgProbability]:
-        avg_prob = func.avg(
-            cast(
-                JobTask.result["overall_decision"]["probability_decision"].astext,
-                Float,
+        avg_prob = (
+            func.avg(
+                cast(
+                    JobTask.result["overall_decision"]["probability_decision"].astext,
+                    Float,
+                )
             )
-        ).label("avg_probability_decision")
+            .filter(JobTask.status == JobTaskStatus.DONE)
+            .label("avg_probability_decision")
+        )
         error_messages = (
             func.array_agg(JobTask.error)
             .filter(JobTask.error.isnot(None))
