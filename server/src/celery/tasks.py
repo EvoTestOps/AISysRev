@@ -67,11 +67,9 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.ERROR
                 )
-                celery_task.update_state(
-                    state="FAILURE",
-                    meta={"error": str(e)},
-                )
+                await jobtask_crud.update_job_task_error(job_task.id, str(e))
+
                 logger.error(e)
-                raise
+                continue
 
         return {"result": "all job tasks processed"}
