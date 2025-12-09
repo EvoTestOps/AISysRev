@@ -37,7 +37,7 @@ async def download_result_csv(
 
 
 @router.get("/result/html", status_code=200)
-async def download_result_csv(
+async def download_result_html(
     project_uuid: UUID,
     project_service: ProjectService = Depends(get_project_service),
     result_service: ResultService = Depends(get_result_service),

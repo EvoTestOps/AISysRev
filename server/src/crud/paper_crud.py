@@ -1,12 +1,12 @@
 from uuid import UUID
 from typing import List
-from schemas.jobtask import JobTaskStatus
 from src.models.jobtask import JobTask
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
+from src.schemas.jobtask import JobTaskStatus
 from src.models.paper import Paper
 
 

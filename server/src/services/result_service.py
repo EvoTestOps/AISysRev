@@ -35,6 +35,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
             "inclusion_criteria",
             "exclusion_criteria",
             "screening_type",
+            "error",
         ],
     )
     df["notes"] = ""
@@ -49,10 +50,10 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         return df2
 
     df["inclusion_criteria"] = df["inclusion_criteria"].apply(
-        criteria_adapter.validate_json
+        lambda v: criteria_adapter.validate_json(v) if v else []
     )
     df["exclusion_criteria"] = df["exclusion_criteria"].apply(
-        criteria_adapter.validate_json
+        lambda v: criteria_adapter.validate_json(v) if v else []
     )
 
     # make per-criterion columns (one-liners)
@@ -105,6 +106,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         "reason",
         "likert_decision",
         "probability_decision",
+        "error",
         *crit_cols,
     ]
 
@@ -133,6 +135,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
     exc_prob = [c for c in pivot.columns if ".EC" in c and c.endswith(".probability")]
 
     reasons = [c for c in pivot.columns if c.endswith(".reason")]
+    errors = [c for c in pivot.columns if c.endswith(".error")]
 
     new_order = (
         base_cols
@@ -146,6 +149,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         + inc_prob
         + exc_prob
         + reasons
+        + errors
     )
 
     pivot = pivot[[c for c in new_order if c in pivot.columns]]

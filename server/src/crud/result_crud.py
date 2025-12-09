@@ -1,6 +1,5 @@
 import pandas as pd
 from uuid import UUID
-from schemas.jobtask import JobTaskStatus
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
@@ -34,12 +33,13 @@ class ResultCrud:
                 JobTask.result["inclusion_criteria"].astext.label("inclusion_criteria"),
                 JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria"),
                 Job.prompting_config["screening_type"].astext.label("screening_type"),
+                JobTask.error.label("error"),
             )
             .select_from(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
             .outerjoin(Job, Job.id == JobTask.job_id)
-            .where(Project.uuid == project_uuid, JobTask.status != JobTaskStatus.ERROR)
+            .where(Project.uuid == project_uuid)
         )
         result = await self.db.execute(stmt)
         return result.all()
