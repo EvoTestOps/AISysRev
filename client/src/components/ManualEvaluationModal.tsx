@@ -66,7 +66,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
     const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     return response.data
       .filter((entry: any) => entry.status !== JobTaskStatus.ERROR)
       .map((entry: any) => {
@@ -80,6 +80,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           screeningType: entry.prompting_config.screening_type,
         };
       });
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, []);
 
   useEffect(() => {
