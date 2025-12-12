@@ -28,6 +28,22 @@ def test_task(name: str):
     return f"Hello, {name}!"
 
 
+async def _async_retry_job_task(func, max_retries=3, base_delay=1):
+    retries = 0
+    while True:
+        try:
+            return await func()
+        except Exception as e:
+            retries += 1
+            logger.warning(
+                f"Retrying job task (attempt {retries}/{max_retries}) - Error: {e}"
+            )
+            if retries > max_retries:
+                raise e
+            delay = base_delay * (2 ** (retries - 1))
+            await asyncio.sleep(delay)
+
+
 async def async_process_job(
     celery_task: asyncio.Task, job_id: int, job_data: JobCreate
 ):
@@ -52,11 +68,12 @@ async def async_process_job(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
                 )
-                llm_result = await get_structured_response(
-                    db, job_task, job_data, project.criteria
+                llm_result = await _async_retry_job_task(
+                    lambda: get_structured_response(
+                        db, job_task, job_data, project.criteria
+                    )
                 )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
-                print(job_task.result)
 
                 logger.info("Updating job task status to %s", JobTaskStatus.DONE)
                 await jobtask_crud.update_job_task_status(
