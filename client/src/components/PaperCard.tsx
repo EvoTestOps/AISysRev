@@ -29,6 +29,7 @@ export const PaperCard: React.FC<
   const addHumanResult = useTypedStoreActions(
     (actions) => actions.addHumanResult
   );
+  const hasErrors = (paper.error_messages?.length ?? 0) > 0;
 
   return (
     <Card {...rest} padding="p-0">
@@ -60,7 +61,7 @@ export const PaperCard: React.FC<
         >
           {paper.avg_probability_decision
             ? paper.avg_probability_decision.toFixed(3)
-            : paper.error_messages?.length > 0
+            : hasErrors
               ? "ERROR"
               : "Pending"}
         </div>
