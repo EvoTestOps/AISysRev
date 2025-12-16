@@ -12,20 +12,22 @@ KEEPALIVE_INTERVAL = 10
 async def event_bus(request: Request):
     async def stream():
         yield ": connected\n\n"
+        try:
+            while True:
+                if await request.is_disconnected():
+                    print("Client disconnected")
+                    break
 
-        while True:
-            if await request.is_disconnected():
-                break
-
-            try:
-                message: QueueItem = await asyncio.wait_for(
-                    queue.get(), timeout=KEEPALIVE_INTERVAL
-                )
-
-                yield f"data: {message.model_dump_json()}\n\n"
-
-            except asyncio.TimeoutError:
-                yield "event: ping\ndata: keepalive\n\n"
+                try:
+                    message: QueueItem = await asyncio.wait_for(
+                        queue.get(), timeout=KEEPALIVE_INTERVAL
+                    )
+                    yield f"data: {message.model_dump_json()}\n\n"
+                except asyncio.TimeoutError:
+                    yield "event: ping\ndata: keepalive\n\n"
+        except asyncio.CancelledError:
+            print("CancelledError: streaming task was cancelled")
+            raise  # important: re-raise so Uvicorn cleans up properly
 
     return StreamingResponse(
         stream(),

@@ -27,33 +27,41 @@ COPY --from=client-build /app/dist /srv
 
 EXPOSE 443
 
-FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS server
+FROM python:3.14-alpine AS server-builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 WORKDIR /app
 
-COPY server/ .
+COPY server/pyproject.toml /app/pyproject.toml
+COPY server/uv.lock /app/uv.lock
+RUN uv sync --locked --no-install-project --no-editable
 
-RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 8080
+FROM python:3.14-alpine AS server
 
-WORKDIR /app/src
-CMD ["python",  "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN addgroup -S app && adduser -S app -G app
 
-FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS celery
+WORKDIR /app
+COPY --from=server-builder --chown=app:app /app/.venv /app/.venv
 
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
+COPY server/. /app
+RUN chown -R app:app /app
+
+USER app
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+
+FROM python:3.14-alpine AS celery
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
 WORKDIR /app
+COPY --from=server-builder --chown=celeryuser:celeryuser /app/.venv /app/.venv
 
-COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY server/ .
-
+COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
-USER celeryuser
 
-CMD ["python", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
+EXPOSE 8080
+USER celeryuser
+CMD ["uv", "run", "celery", "-A", "src.worker", "worker", "--loglevel=info"]

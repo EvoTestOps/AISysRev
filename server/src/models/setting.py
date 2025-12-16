@@ -1,6 +1,8 @@
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean
+from uuid import UUID as PyUUID
+from sqlalchemy import String, Boolean
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
 from src.db.session import Base
 from .mixins import TimestampMixin
 
@@ -8,8 +10,10 @@ from .mixins import TimestampMixin
 class Setting(Base, TimestampMixin):
     __tablename__ = "setting"
 
-    id = Column(Integer, primary_key=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
-    name = Column(String(1024), nullable=False, unique=True)
-    value = Column(String(1024))
-    secret = Column(Boolean, default=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True)
+    value: Mapped[str] = mapped_column(String(1024), nullable=True)
+    secret: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

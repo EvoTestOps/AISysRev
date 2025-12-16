@@ -96,7 +96,9 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         lambda v: (
             "INCLUDE"
             if str(v).lower() in ("true", "1")
-            else "EXCLUDE" if str(v).lower() in ("false", "0") else ""
+            else "EXCLUDE"
+            if str(v).lower() in ("false", "0")
+            else ""
         )
     )
 
@@ -164,17 +166,17 @@ class ResultService:
 
     async def generate_result_csv(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_csv(index=False)
 
     async def generate_html(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_html(index=False)
 
     async def fetch_result(self, project_uuid: UUID) -> list[dict]:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_dict("records")
 
 

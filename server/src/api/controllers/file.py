@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form, status, Response
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form, status
 from typing import List
 from src.services.file_service import FileService, get_file_service
 from src.schemas.file import FileReadWithPaperCount
@@ -23,6 +23,7 @@ async def list_files(
             detail=f"Failed to fetch files: {str(e)}",
         )
 
+
 @router.post("/files/upload", status_code=200, response_model=dict)
 async def process_csv(
     project_uuid: UUID = Form(...),
@@ -34,9 +35,10 @@ async def process_csv(
         if len(existing_files) != 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Only one file allowed per project",
+                detail="Only one file allowed per project",
             )
-        return await file_service.process_files(project_uuid, files)
+        data = await file_service.process_files(project_uuid, files)
+        return data.__dict__
 
     except HTTPException as e:
         raise e

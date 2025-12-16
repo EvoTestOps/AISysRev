@@ -31,6 +31,7 @@ services:
     ports: ["5678:5678"]
     environment:
       PYTHONPATH: /app
+      DEBUG: ${DEBUG:-false}
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
@@ -41,20 +42,18 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
       OPENROUTER_MOCK: y
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-    volumes:
-      - ./server:/app
     develop:
       watch:
         - action: sync
           path: ./server
           target: /app
           ignore:
-            - node_modules/
-            - dist/
-            - migrations/
-            - server/migrations/
+            - ./migrations/
+            - ./server/migrations/
+            - ./.venv/
+            - ./server/.venv/
         - action: rebuild
-          path: package.json
+          path: server/pyproject.toml
     depends_on:
       - postgres
       - minio
@@ -68,6 +67,8 @@ services:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database_dev
+    ports:
+      - 5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
@@ -113,6 +114,7 @@ services:
     ports: ["5679:5679"]
     environment:
       PYTHONPATH: /app
+      DEBUG: ${DEBUg:-false}
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
@@ -131,8 +133,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-dev
-      target: server
-    command: celery -A src.worker flower --port=5555
+      target: celery
+    command: uv run celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
@@ -143,6 +145,7 @@ services:
       MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+      RUN_MIGRATIONS: false
     ports:
       - ${FLOWER_PORT:-5555}:5555
     depends_on:

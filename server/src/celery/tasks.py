@@ -2,7 +2,7 @@ import asyncio
 import logging
 from celery import Task
 from src.event_queue import EventName, QueueItem
-from src.redis.client import get_redis_client, REDIS_CHANNEL
+from src.redis_client.client import get_redis_client, REDIS_CHANNEL
 from src.worker import celery_app
 from src.db.session import AsyncSessionLocal
 from src.schemas.job import JobCreate
@@ -103,10 +103,11 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                 )
 
                 llm_result = await get_structured_response(
-                    db, job_task, job_data, project.criteria
-                )
-                await jobtask_crud.update_job_task_result(
-                    job_task.id, llm_result.model_dump_json()
+                    # TODO: Fix
+                    db,
+                    job_task,
+                    job_data,
+                    project.criteria,  # type: ignore
                 )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
 

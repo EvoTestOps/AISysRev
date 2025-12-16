@@ -35,7 +35,8 @@ class FileCrud:
             )
         )
         result = await self.db.execute(stmt)
-        return result.mappings().all()
+        # TODO: Fix
+        return result.mappings().all()  # type: ignore
 
     async def create_file_record(self, file_data: FileCreate):
         new_file = File(**file_data.model_dump(exclude_none=True))

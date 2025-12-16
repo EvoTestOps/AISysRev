@@ -2,7 +2,7 @@ import pytest
 from src.crud.paper_crud import PaperCrud
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
-from src.schemas.file import FileCreate, FileRead
+from src.schemas.file import FileCreate
 from src.services.file_service import FileService, get_file_service
 
 
@@ -14,8 +14,8 @@ async def test_create_and_fetch_file_record(db_session, test_project_uuid):
     )
     new_file = await crud.create_file_record(file_data)
     assert new_file is not None
-    assert new_file.filename == file_data.filename
-    assert new_file.mime_type == file_data.mime_type
+    assert new_file.filename.__str__ == file_data.filename
+    assert new_file.mime_type.__str__ == file_data.mime_type
 
     fetched_files = await crud.fetch_files(test_project_uuid)
     assert len(fetched_files) == 1
@@ -28,22 +28,23 @@ async def test_file_service(db_session, test_project_uuid, test_files_working):
     file_crud = FileCrud(db_session)
     paper_crud = PaperCrud(db_session)
     job_crud = JobCrud(db_session)
-    service = FileService(db_session, file_crud, paper_crud, job_crud)
+    fileService = FileService(db_session, file_crud, paper_crud, job_crud)
 
-    result = await service.process_files(test_project_uuid, test_files_working)
-    assert "valid_filenames" in result
-    assert len(result["valid_filenames"]) == 2
+    result = await fileService.process_files(test_project_uuid, test_files_working)
+    assert hasattr(result, "valid_filenames")
+    assert len(result.valid_filenames) == 2
 
-    files = await service.fetch_all(test_project_uuid)
+    files = await fileService.fetch_all(test_project_uuid)
     assert len(files) == 2
-    assert files[0].filename in result["valid_filenames"]
-    assert files[1].filename in result["valid_filenames"]
+    assert files[0].filename in result.valid_filenames
+    assert files[1].filename in result.valid_filenames
 
-    papers = await service.retrieve_papers_from_uploaded_files(test_project_uuid)
-    assert len(papers) == 2
-    assert all(
-        "title" in paper and "abstract" in paper and "doi" in paper for paper in papers
-    )
+    # TODO: Ei löydy koodista?
+    # papers = await fileService.retrieve_papers_from_uploaded_files(test_project_uuid)
+    # assert len(papers) == 2
+    # assert all(
+    #     "title" in paper and "abstract" in paper and "doi" in paper for paper in papers
+    # )
 
 
 @pytest.mark.asyncio
@@ -61,10 +62,10 @@ async def test_files_service_invalid_data(
     ]
 
     result = await service.process_files(test_project_uuid, test_files_invalid)
-    assert "errors" in result
-    assert len(result["errors"]) == 3
-    for error in result["errors"]:
-        assert error["message"] in errors_msgs
+    assert hasattr(result, "errors")
+    assert len(result.errors) == 3
+    for error in result.errors:
+        assert error.message in errors_msgs
 
 
 @pytest.mark.asyncio

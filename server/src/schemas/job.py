@@ -11,7 +11,7 @@ class JobPromptingType(str, Enum):
     FEW_SHOT = "FEW_SHOT"
 
 
-class ModelConfig(BaseModel):
+class LLMModelConfig(BaseModel):
     model_name: str
     temperature: float = Field(ge=0, le=1)
     seed: int
@@ -41,7 +41,7 @@ PromptingConfig = Annotated[
 class JobCreate(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
-    llm_config: ModelConfig
+    llm_config: LLMModelConfig
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
@@ -50,7 +50,7 @@ class JobRead(BaseModel):
     uuid: UUID
     project_uuid: UUID
     prompting_config: PromptingConfig
-    llm_config: ModelConfig
+    llm_config: LLMModelConfig
     created_at: datetime
     updated_at: datetime
 

@@ -1,7 +1,10 @@
 import enum
 import uuid
-from sqlalchemy import Column, Enum, Integer, ForeignKey
+from uuid import UUID as PyUUID
+from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import Mapped, mapped_column
+from src.schemas.job import LLMModelConfig, PromptingConfig
 from src.db.session import Base
 from .mixins import TimestampMixin
 
@@ -15,10 +18,12 @@ class JobPromptingType(enum.Enum):
 class Job(Base, TimestampMixin):
     __tablename__ = "job"
 
-    id = Column(Integer, primary_key=True)
-    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
-    project_id = Column(
-        Integer, ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    id: Mapped[int] = mapped_column(primary_key=True)
+    uuid: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False
     )
-    llm_config = Column(JSONB, nullable=False)
-    prompting_config = Column(JSONB, nullable=False)
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("project.id", ondelete="CASCADE"), nullable=False
+    )
+    llm_config: Mapped[LLMModelConfig] = mapped_column(JSONB, nullable=False)
+    prompting_config: Mapped[PromptingConfig] = mapped_column(JSONB, nullable=False)

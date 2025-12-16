@@ -26,6 +26,7 @@ async def redis_subscribe():
         )
         print("Starting to listen to events")
         try:
+            print("Now listening for events")
             async for message in pubsub.listen():
                 if message["type"] == "message":
                     print(f"Received: {message['data']}")

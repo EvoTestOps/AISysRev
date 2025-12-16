@@ -5,6 +5,7 @@ from src.tools.diagnostics.celery_check import check_celery_worker
 
 router = APIRouter()
 
+
 @router.get("/health")
 async def health_check():
     db_status = "ok"

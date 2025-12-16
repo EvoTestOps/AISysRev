@@ -20,6 +20,7 @@ class UpsertData(BaseModel):
     name: str
     value: str
 
+
 @router.post("/setting", status_code=status.HTTP_201_CREATED)
 async def upsert_setting(
     data: UpsertData,

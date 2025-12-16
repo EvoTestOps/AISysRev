@@ -1,6 +1,6 @@
 import asyncio
+from enum import Enum
 from pydantic import BaseModel
-from pydantic.types import Enum
 
 
 class EventName(Enum):
@@ -32,7 +32,7 @@ class QueueItem(BaseModel):
     value: dict
 
 
-queue = asyncio.Queue(maxsize=1000)
+queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 
 
 async def push_event(event: QueueItem):

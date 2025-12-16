@@ -14,13 +14,14 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class LLM(ABC):
-
     @abstractmethod
     def __init__(self, config: LLMConfiguration):
         pass
 
     @abstractmethod
-    async def generate_answer_async(self, schema: Type[T], prompt: str) -> tuple[T, str]:
+    async def generate_answer_async(
+        self, schema: Type[T], prompt: str
+    ) -> tuple[T, str]:
         pass
 
     @property
@@ -33,9 +34,7 @@ class MockLLM(LLM):
     def __init__(self, config):
         self._config = config
 
-    async def generate_answer_async(
-        self, schema: Type[T], prompt: str
-    ) -> tuple[StructuredResponse, str]:
+    async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
         import json
 
         return (
@@ -68,7 +67,7 @@ class MockLLM(LLM):
                         ),
                     )
                 ],
-            ),
+            ),  # type: ignore
             json.dumps({"Foo": "Bar"}),
         )
 
@@ -78,13 +77,10 @@ class MockLLM(LLM):
 
 
 class OpenRouterLLM(LLM):
-
     def __init__(self, config: LLMConfiguration):
         self._config = config
 
-    async def generate_answer_async(
-        self, schema: type[T], prompt
-    ) -> tuple[T, str]:
+    async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json

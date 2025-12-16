@@ -34,10 +34,10 @@ def _create_criteria(
 ) -> str:
     criteria = "\nInclusion criteria:\n\n"
     for i, criterion in enumerate(inclusion_criteria):
-        criteria += f"- IC{i+1}: {criterion}\n"
+        criteria += f"- IC{i + 1}: {criterion}\n"
     criteria += "\nExclusion criteria:\n\n"
     for i, criterion in enumerate(exclusion_criteria):
-        criteria += f"- EC{i+1}: {criterion}\n"
+        criteria += f"- EC{i + 1}: {criterion}\n"
     return criteria
 
 
@@ -54,11 +54,12 @@ async def get_structured_response(
     llm_model = job_data.llm_config.model_name
 
     criteria = _create_criteria(
-        inc_exc_criteria["inclusion_criteria"], inc_exc_criteria["exclusion_criteria"]
+        # TODO: Fix
+        inc_exc_criteria["inclusion_criteria"],  # type: ignore
+        inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
     cfg = job_data.prompting_config
     if isinstance(cfg, ZeroShotPromptingConfig):
-
         prompt_text = zero_shot_task_prompt.format(
             job_task_data.title,
             job_task_data.abstract,

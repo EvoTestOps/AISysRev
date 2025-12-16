@@ -48,7 +48,9 @@ async def create_new_project(
 ):
     try:
         new_id, new_uuid = await projects.create(project_data)
-        await push_event(QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid}))
+        await push_event(
+            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid})
+        )
         return {"id": new_id, "uuid": str(new_uuid)}
     except Exception as e:
         raise HTTPException(

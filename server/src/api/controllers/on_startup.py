@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import APIRouter
-from src.redis.client import redis_subscribe
+from src.redis_client.client import redis_subscribe
 from src.tools.minio_client import check_and_create_s3_bucket
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.db_check import (

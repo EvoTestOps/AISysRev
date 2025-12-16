@@ -26,7 +26,7 @@ async def run_test_task():
 
 @router.get("/task-status/{task_id}")
 async def get_task_status(task_id: str):
-    task_result = AsyncResult(task_id, app=test_task.app)
+    task_result: AsyncResult = AsyncResult(task_id, app=test_task.app)
     if not task_result:
         return {"error": "Task not found"}
     response = {

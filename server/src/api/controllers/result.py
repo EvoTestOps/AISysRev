@@ -19,7 +19,7 @@ async def download_result_csv(
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project not found",
+            detail="Project not found",
         )
     try:
         csv_content = await result_service.generate_result_csv(project_uuid)
@@ -46,7 +46,7 @@ async def download_result_html(
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project not found",
+            detail="Project not found",
         )
     try:
         content = await result_service.generate_html(project_uuid)
@@ -83,7 +83,7 @@ async def get_result(
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Project not found",
+            detail="Project not found",
         )
     try:
         return await result_service.fetch_result(project_uuid)

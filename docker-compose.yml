@@ -113,7 +113,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: server
-    command: celery -A src.worker flower --port=5555
+    command: uv run celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
       APP_ENV: prod

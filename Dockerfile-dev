@@ -21,35 +21,46 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS server
+FROM python:3.14-alpine AS server-builder
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
 WORKDIR /app
 
-COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir debugpy
+COPY server/pyproject.toml /app/pyproject.toml
+COPY server/uv.lock /app/uv.lock
+RUN uv sync --locked --no-install-project --no-editable
 
-COPY server/ .
 
-EXPOSE 8080 5678
+FROM python:3.14-alpine AS server
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN addgroup -S app && adduser -S app -G app
 
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "fastapi", "dev", "src/main.py", "--host", "0.0.0.0", "--port", "8080"]
+WORKDIR /app
+COPY --from=server-builder --chown=app:app /app/.venv /app/.venv
 
-FROM python:3.13-alpine@sha256:9ba6d8cbebf0fb6546ae71f2a1c14f6ffd2fdab83af7fa5669734ef30ad48844 AS celery
+COPY server/. /app
+RUN chown -R app:app /app
+RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
 
-ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
+EXPOSE 8080
+EXPOSE 5678
+USER app
+ENTRYPOINT ["/bin/sh", "/app/start-dev.sh"]
+
+FROM python:3.14-alpine AS celery
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
 WORKDIR /app
+COPY --from=server-builder --chown=celeryuser:celeryuser /app/.venv /app/.venv
 
-COPY server/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir debugpy
-
-COPY server/ .
-
+COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
-USER celeryuser
+RUN chown celeryuser:celerygroup /app/start-celery-dev.sh && chmod +x /app/start-celery-dev.sh
 
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "-m", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
+EXPOSE 8080
+EXPOSE 5678
+
+USER celeryuser
+ENTRYPOINT ["/bin/sh", "/app/start-celery-dev.sh"]

@@ -30,7 +30,17 @@ class JobService:
 
     async def fetch_all(self) -> list[JobRead]:
         rows = await self.job_crud.fetch_jobs()
-        return [JobRead(**row) for row in rows]
+        return [
+            JobRead(
+                uuid=row.uuid,
+                project_uuid=row.project_uuid,
+                prompting_config=row.prompting_config,
+                llm_config=row.llm_config,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+            )
+            for row in rows
+        ]
 
     async def fetch_by_project(self, project_uuid: UUID) -> list[JobRead]:
         rows = await self.job_crud.fetch_jobs_by_project(project_uuid)
@@ -38,7 +48,14 @@ class JobService:
 
     async def fetch_by_uuid(self, uuid: UUID) -> JobRead:
         job = await self.job_crud.fetch_job_by_uuid(uuid)
-        return JobRead(**job)
+        return JobRead(
+            uuid=job.uuid,
+            project_uuid=job.project_uuid,
+            prompting_config=job.prompting_config,
+            llm_config=job.llm_config,
+            created_at=job.created_at,
+            updated_at=job.updated_at,
+        )
 
     async def fetch_job_tasks(self, job_uuid: UUID):
         job_tasks = await self.jobtask_service.jobtask_crud.fetch_job_tasks_by_job_uuid(

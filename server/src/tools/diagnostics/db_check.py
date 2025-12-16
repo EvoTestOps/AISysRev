@@ -9,6 +9,7 @@ from src.db.engine import engine
 
 url = make_url(engine.url)
 
+
 async def check_database_connection():
     try:
         async with engine.connect() as conn:
@@ -18,17 +19,19 @@ async def check_database_connection():
     except SQLAlchemyError as e:
         print(f"Database connection failed: {e}")
 
+
 async def wait_for_db():
-    max_retries = 7
+    max_retries = 3
     for i in range(max_retries):
         try:
             await check_database_connection()
             print("Database is ready!")
             return
         except Exception as e:
-            print(f"Database not ready (attempt {i+1}/{max_retries}): {e}")
+            print(f"Database not ready (attempt {i + 1}/{max_retries}): {e}")
             await asyncio.sleep(2**i)
     raise Exception("Database failed to become ready")
+
 
 async def run_migration():
     alembic_cfg = Config(
