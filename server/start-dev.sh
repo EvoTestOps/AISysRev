@@ -1,10 +1,12 @@
 #!/bin/sh
-# Enable strict mode
 set -e
 
 HOST=${HOST:-0.0.0.0}
 PORT=${PORT:-8080}
 DEBUG_PORT=${DEBUG_PORT:-5678}
+
+: "${DB_URL:?DB_URL is not set}"
+./migrate.sh
 
 if [ "$DEBUG" = "true" ]; then
     echo "Starting server in DEBUG mode on port $DEBUG_PORT..."

@@ -13,7 +13,7 @@ url = make_url(engine.url)
 async def check_database_connection():
     try:
         async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT * FROM pg_database"))
+            result = await conn.execute(text("SELECT 1"))
             result.fetchall()
             print("Database check successful.")
     except SQLAlchemyError as e:

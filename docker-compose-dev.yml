@@ -42,6 +42,8 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
       OPENROUTER_MOCK: y
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+    volumes:
+      - ./server/migrations:/app/migrations
     develop:
       watch:
         - action: sync
@@ -133,7 +135,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-dev
-      target: celery
+      target: server
     command: uv run celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app

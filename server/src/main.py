@@ -19,29 +19,16 @@ from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.redis_client.client import redis_subscribe
 from src.tools.minio_client import check_and_create_s3_bucket
 from src.tools.diagnostics.redis_check import check_redis_connection
-from src.tools.diagnostics.db_check import (
-    check_database_connection,
-    wait_for_db,
-    run_migration,
-)
+from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import os
-
     print("Waiting for database connection...")
     await wait_for_db()
 
     print("Checking database connection...")
     await check_database_connection()
-
-    if settings.RUN_MIGRATIONS:
-        print("Starting migration...")
-        await run_migration()
-        print("Migration complete!")
-    else:
-        print("Skipping migrations")
 
     print("Checking Redis connection...")
     await check_redis_connection()

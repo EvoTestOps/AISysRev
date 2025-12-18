@@ -41,11 +41,12 @@ COPY --from=server-builder --chown=app:app /app/.venv /app/.venv
 COPY server/. /app
 RUN chown -R app:app /app
 RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
+RUN chown app:app /app/migrate.sh && chmod +x /app/migrate.sh
 
 EXPOSE 8080
 EXPOSE 5678
 USER app
-ENTRYPOINT ["/bin/sh", "/app/start-dev.sh"]
+CMD ["/bin/sh", "/app/start-dev.sh"]
 
 FROM python:3.14-alpine AS celery
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -63,4 +64,4 @@ EXPOSE 8080
 EXPOSE 5678
 
 USER celeryuser
-ENTRYPOINT ["/bin/sh", "/app/start-celery-dev.sh"]
+CMD ["/bin/sh", "/app/start-celery-dev.sh"]

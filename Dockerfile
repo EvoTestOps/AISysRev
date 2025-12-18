@@ -45,11 +45,14 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=server-builder --chown=app:app /app/.venv /app/.venv
 
+
 COPY server/. /app
 RUN chown -R app:app /app
+RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
+RUN chown app:app /app/migrate.sh && chmod +x /app/migrate.sh
 
 USER app
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["/bin/sh", "/app/start.sh"]
 
 FROM python:3.14-alpine AS celery
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -64,4 +67,4 @@ RUN chown -R celeryuser:celerygroup /app
 
 EXPOSE 8080
 USER celeryuser
-CMD ["uv", "run", "celery", "-A", "src.worker", "worker", "--loglevel=info"]
+CMD ["/bin/sh", "/app/start-celery.sh"]
