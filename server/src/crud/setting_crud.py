@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from src.models.setting import Setting
+from src.db.models.setting import Setting
 from src.schemas.setting import SettingCreate, SettingRead
 
 

@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import Depends
 from pydantic import TypeAdapter
 from src.schemas.llm import Criterion
-from src.models.paper import HumanResult
+from src.db.models.paper import HumanResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.crud.result_crud import ResultCrud
 from src.db.session import get_db

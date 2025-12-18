@@ -8,7 +8,7 @@ from src.schemas.job import (
     JobCreate,
     ZeroShotPromptingConfig,
 )
-from src.models.jobtask import JobTask
+from src.db.models.jobtask import JobTask
 from src.core.llm import (
     StructuredResponse,
 )

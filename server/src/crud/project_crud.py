@@ -2,7 +2,7 @@ from typing import Optional, Sequence, Tuple
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
-from src.models.project import Project
+from src.db.models.project import Project
 from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
 
 

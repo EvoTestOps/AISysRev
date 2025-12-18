@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Row, select, update
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
 from src.schemas.paper import PaperCreate
-from src.models.paper import Paper
-from src.models.job import Job
-from src.models.jobtask import JobTask
+from src.db.models.paper import Paper
+from src.db.models.job import Job
+from src.db.models.jobtask import JobTask
 
 
 class JobTaskCrud:
