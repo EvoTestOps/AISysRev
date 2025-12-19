@@ -5,6 +5,7 @@ description = "AiSysRev server"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "aiohttp>=3.13.2",
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
     "celery[redis]>=5.6.0",
