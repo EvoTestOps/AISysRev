@@ -57,12 +57,12 @@ async def create_job(
     projects: ProjectService = Depends(get_project_service),
 ):
     try:
-        openrouter_secret = await settings.get_setting("openrouter_api_key")
-        if openrouter_secret is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="OpenRouter API key is not set, cannot continue",
-            )
+        # openrouter_secret = await settings.get_setting("openrouter_api_key")
+        # if openrouter_secret is None:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="OpenRouter API key is not set, cannot continue",
+        #     )
 
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):

@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
+from src.core.readiness import startup_complete
 from src.tools.diagnostics.db_check import check_database_connection
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.celery_check import check_celery_worker
@@ -8,28 +10,46 @@ router = APIRouter()
 
 @router.get("/health")
 async def health_check():
-    db_status = "ok"
-    redis_status = "ok"
-    celery_status = "ok"
+    if not startup_complete.is_set():
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "starting",
+                "reason": "FastAPI lifespan not completed",
+            },
+        )
+
+    results = {
+        "db": "ok",
+        "redis": "ok",
+        "celery": "ok",
+    }
+
     try:
         await check_database_connection()
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        results["db"] = f"error: {e}"
+
     try:
         await check_redis_connection()
     except Exception as e:
-        redis_status = f"error: {str(e)}"
+        results["redis"] = f"error: {e}"
+
     try:
         await check_celery_worker()
     except Exception as e:
-        celery_status = f"error: {str(e)}"
-    return {
-        "status": (
-            "ok"
-            if db_status == "ok" and redis_status == "ok" and celery_status == "ok"
-            else "error"
-        ),
-        "db": db_status,
-        "redis": redis_status,
-        "celery": celery_status,
+        results["celery"] = f"error: {e}"
+
+    is_healthy = all(v == "ok" for v in results.values())
+
+    payload = {
+        "status": "ok" if is_healthy else "error",
+        **results,
     }
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK
+        if is_healthy
+        else status.HTTP_503_SERVICE_UNAVAILABLE,
+        content=payload,
+    )

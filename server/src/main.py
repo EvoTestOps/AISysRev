@@ -4,6 +4,7 @@ import asyncio
 from fastapi import FastAPI, APIRouter
 from fastapi.logger import logger
 from src.core.config import settings
+from src.core.readiness import startup_complete
 from src.api.controllers.fixture import router as fixture_router
 from src.api.controllers.health_check import router as health_check_router
 from src.api.controllers.project import router as project_router
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
     print(f"Redis subscriber task created: {redis_task!r}")
 
     print("Application startup complete!")
+    startup_complete.set()
 
     yield
 

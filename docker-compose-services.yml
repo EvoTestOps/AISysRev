@@ -10,13 +10,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
     ports:
-      - 5432:5432
+      - 127.0.0.1:5432:5432
 
   adminer:
       image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
       restart: always
       ports:
-        - 8080:8080
+        - 127.0.0.1:8080:8080
 
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
@@ -25,8 +25,8 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -39,7 +39,7 @@ services:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     privileged: true
     ports:
-      - 6379:6379
+      - 127.0.0.1:6379:6379
     volumes: 
       - redis_data:/data
 

@@ -10,6 +10,9 @@ start-dev-debug:
 start-test:
 	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test down -v
 	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test up --build
+start-test-debug:
+	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test down -v
+	DEBUG=true FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test docker compose -f docker-compose-dev.yml -p test up --build
 # PROD
 start-prod:
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod down

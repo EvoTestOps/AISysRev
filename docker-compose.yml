@@ -8,8 +8,8 @@ services:
       dockerfile: Dockerfile
       target: client
     ports:
-      - "443:443"
-      - "80:80"
+      - "127.0.0.1:443:443"
+      - "127.0.0.1:80:80"
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: server
-    ports: ["5678:5678"]
+    ports: ["127.0.0.1:5678:5678"]
     environment:
       PYTHONPATH: /app
       APP_ENV: prod
@@ -57,7 +57,7 @@ services:
     image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
     restart: always
     ports:
-      - ${ADMINER_PORT:-8080}:8080
+      - 127.0.0.1:${ADMINER_PORT:-8080}:8080
     depends_on:
       - postgres
   
@@ -69,8 +69,8 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -92,7 +92,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: celery
-    ports: ["5679:5679"]
+    ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
       APP_ENV: prod
@@ -125,7 +125,7 @@ services:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
-      - ${FLOWER_PORT:-5555}:5555
+      - 127.0.0.1:${FLOWER_PORT:-5555}:5555
     depends_on:
       - redis
       - celery
