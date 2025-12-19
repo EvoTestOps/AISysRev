@@ -1,7 +1,7 @@
 """Switch SQLAlchemy to use Mapped
 
 Revision ID: a7d869b16346
-Revises: eacfbb93fec2
+Revises: 6e6fe5091797
 Create Date: 2025-12-17 08:24:55.819284
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'a7d869b16346'
-down_revision: Union[str, None] = 'eacfbb93fec2'
+down_revision: Union[str, None] = '6e6fe5091797'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
