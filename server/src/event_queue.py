@@ -38,5 +38,5 @@ queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 async def push_event(event: QueueItem):
     try:
         await queue.put(event)
-    except:
+    except:  # noqa: E722
         print("An error occured while pushing events to the front-end")
