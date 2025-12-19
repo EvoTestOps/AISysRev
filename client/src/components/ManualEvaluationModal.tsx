@@ -10,7 +10,12 @@ import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
 import { addPaperHumanResult } from "../services/paperService";
-import { JobTaskHumanResult, Paper, PromptingConfig } from "../state/types";
+import {
+  JobTaskHumanResult,
+  JobTaskStatus,
+  Paper,
+  PromptingConfig,
+} from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
 
@@ -43,7 +48,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
   const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
-    []
+    [],
   );
 
   const addHumanResult = useCallback(
@@ -56,23 +61,26 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         console.error("Error adding human result:", error);
       }
     },
-    [paperUuid, onEvaluated]
+    [paperUuid, onEvaluated],
   );
 
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
     const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return response.data.map((entry: any) => {
-      return {
-        modelName: entry.llm_config.model_name,
-        binary: entry.result.overall_decision.binary_decision
-          ? "Include"
-          : "Exclude",
-        likertScale: entry.result.overall_decision.likert_decision,
-        probability: entry.result.overall_decision.probability_decision,
-        screeningType: entry.prompting_config.screening_type,
-      };
-    });
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    return response.data
+      .filter((entry: any) => entry.status !== JobTaskStatus.ERROR)
+      .map((entry: any) => {
+        return {
+          modelName: entry.llm_config.model_name,
+          binary: entry.result.overall_decision.binary_decision
+            ? "Include"
+            : "Exclude",
+          likertScale: entry.result.overall_decision.likert_decision,
+          probability: entry.result.overall_decision.probability_decision,
+          screeningType: entry.prompting_config.screening_type,
+        };
+      });
+    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, []);
 
   useEffect(() => {

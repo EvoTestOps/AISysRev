@@ -51,5 +51,6 @@ class PaperReadWithAvgProbability(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     avg_probability_decision: Optional[float]
+    error_messages: Optional[list[str]] = None
 
     model_config = ConfigDict(from_attributes=True)

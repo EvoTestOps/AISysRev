@@ -38,3 +38,4 @@ class JobTask(Base, TimestampMixin):
         Enum(JobTaskStatus), default=JobTaskStatus.NOT_STARTED, nullable=False
     )
     status_metadata = Column(JSONB, nullable=True)
+    error = Column(Text, nullable=True)

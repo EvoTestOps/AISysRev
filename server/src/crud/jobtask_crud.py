@@ -71,6 +71,11 @@ class JobTaskCrud:
         await self.db.execute(stmt)
         await self.db.commit()
 
+    async def update_job_task_error(self, job_task_id: int, error: str):
+        stmt = update(JobTask).where(JobTask.id == job_task_id).values(error=error)
+        await self.db.execute(stmt)
+        await self.db.commit()
+
     async def add_jobtask_human_result(
         self, job_task_uuid: UUID, human_result: JobTaskHumanResult
     ):
