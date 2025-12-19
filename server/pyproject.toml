@@ -13,6 +13,7 @@ dependencies = [
     "fastapi[standard]>=0.124.4",
     "flower>=2.0.1",
     "minio>=7.2.20",
+    "openai>=2.14.0",
     "pandas>=2.3.3",
     "pydantic>=2.12.5",
     "pytest>=9.0.2",
