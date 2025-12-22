@@ -1,6 +1,6 @@
 from fastapi.responses import StreamingResponse
 from fastapi import APIRouter, Request
-from src.event_queue import QueueItem, queue
+from src.event_queue import QueueItemWithTimestamp, queue
 import asyncio
 
 router = APIRouter()
@@ -19,7 +19,7 @@ async def event_bus(request: Request):
                     break
 
                 try:
-                    message: QueueItem = await asyncio.wait_for(
+                    message: QueueItemWithTimestamp = await asyncio.wait_for(
                         queue.get(), timeout=KEEPALIVE_INTERVAL
                     )
                     yield f"data: {message.model_dump_json()}\n\n"

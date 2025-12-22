@@ -13,8 +13,6 @@ from src.tools.llm_decision_creator import get_structured_response
 
 logger = logging.getLogger(__name__)
 
-redis = get_redis_client()
-
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: Task, job_id: int, job_data: dict):
@@ -51,6 +49,7 @@ async def _async_retry_job_task(func, max_retries=3, base_delay=1):
 
 async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate):
     logger.info("async_process_job: Starting to process job %s", job_id)
+    redis = get_redis_client()
 
     async with AsyncSessionLocal() as db:
         project_crud = ProjectCrud(db)
@@ -58,6 +57,8 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
 
         logger.info("Fetching project by UUID %s", job_data.project_uuid)
         project = await project_crud.fetch_project_by_uuid(job_data.project_uuid)
+        if project is None:
+            raise RuntimeError("Project not found")
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
@@ -75,10 +76,11 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                         value={
                             "job_task_id": job_task.id,
                             "status": JobTaskStatus.RUNNING,
+                            "current": i + 1,
+                            "total": len(job_tasks),
                         },
                     ).model_dump_json(),
                 )
-
                 celery_task.update_state(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
@@ -87,19 +89,6 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                     lambda: get_structured_response(
                         db, job_task, job_data, project.criteria
                     )
-                )
-
-                await redis.publish(
-                    REDIS_CHANNEL,
-                    QueueItem(
-                        event_name=EventName.JOB_TASK_RUNNING,
-                        value={
-                            "job_task_id": job_task.id,
-                            "status": JobTaskStatus.RUNNING,
-                            "current": i + 1,
-                            "total": len(job_tasks),
-                        },
-                    ).model_dump_json(),
                 )
 
                 llm_result = await get_structured_response(
