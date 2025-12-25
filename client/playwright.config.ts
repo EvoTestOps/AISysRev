@@ -54,10 +54,10 @@ export default defineConfig({
     cwd: "../",
     url: "http://localhost:3002/api/v1/health",
     reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000,
+    timeout: 120 * 1000,
     gracefulShutdown: {
       signal: "SIGINT",
-      timeout: 5 * 1000,
+      timeout: 10 * 1000,
     },
   },
 });
