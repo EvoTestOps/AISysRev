@@ -1,10 +1,15 @@
 import pytest
 from src.api.controllers.health_check import health_check
 
+
 @pytest.mark.asyncio
 async def test_health_check_logic(monkeypatch):
-    async def ok(): return None
-    monkeypatch.setattr("src.api.controllers.health_check.check_database_connection", ok)
+    async def ok():
+        return None
+
+    monkeypatch.setattr(
+        "src.api.controllers.health_check.check_database_connection", ok
+    )
     monkeypatch.setattr("src.api.controllers.health_check.check_redis_connection", ok)
     monkeypatch.setattr("src.api.controllers.health_check.check_celery_worker", ok)
 

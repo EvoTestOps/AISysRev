@@ -1,5 +1,4 @@
 import pytest
-import os
 import pytest_asyncio
 import asyncio
 from io import BytesIO
@@ -13,13 +12,12 @@ from src.db.session import AsyncSessionLocal, Base, engine
 from src.tools.diagnostics.db_check import run_migration
 from src.crud.project_crud import ProjectCrud
 from src.schemas.project import ProjectCreate, Criteria
-from src.schemas.job import JobCreate, ModelConfig
-
-RUN_DB_MIGRATIONS = os.getenv("RUN_DB_MIGRATIONS", "false").lower() in {
-    "1",
-    "true",
-    "yes",
-}
+from src.schemas.job import (
+    JobCreate,
+    JobPromptingType,
+    LLMModelConfig,
+    ZeroShotPromptingConfig,
+)
 
 
 @pytest.fixture(scope="function")
@@ -46,11 +44,14 @@ async def test_project_uuid(db_session):
 def test_job_data(test_project_uuid):
     return JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
+        llm_config=LLMModelConfig(
             model_name="test-model",
             temperature=round(random(), 1),
             seed=42,
             top_p=round(random(), 1),
+        ),
+        prompting_config=ZeroShotPromptingConfig(
+            screening_type=JobPromptingType.ZERO_SHOT
         ),
     )
 
@@ -92,7 +93,8 @@ async def test_files_invalid():
 
 @pytest.fixture(scope="session", autouse=True)
 def reset_db():
-    if settings.APP_ENV == "test" and RUN_DB_MIGRATIONS:
+    if settings.APP_ENV == "test" and settings.RUN_MIGRATIONS:
+
         async def drop_and_create():
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.drop_all)

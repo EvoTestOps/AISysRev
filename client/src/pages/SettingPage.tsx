@@ -87,12 +87,14 @@ export const SettingsPage = () => {
                   disabled={value === setting?.value || loading}
                   onClick={(e) => {
                     e.preventDefault();
-                    update({
-                      value,
-                    });
-                    setEditMode(false);
-                    setValue("");
-                    refresh();
+                    if (value !== "") {
+                      update({
+                        value,
+                      });
+                      setEditMode(false);
+                      setValue("");
+                      refresh();
+                    }
                   }}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">

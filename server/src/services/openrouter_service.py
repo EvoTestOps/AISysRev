@@ -4,12 +4,12 @@ from fastapi import Depends
 from pydantic import BaseModel
 from src.crud.setting_crud import SettingCrud
 from src.services.setting_service import SettingService
-from src.db.session import AsyncSessionLocal, get_db
+from src.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.llm import LLMConfiguration
 from src.core.llm import MockLLM, OpenRouterLLM
 from src.core.config import settings
-from src.models.openrouter import OpenrouterModelResponse
+from src.schemas.openrouter import OpenrouterModelResponse
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -57,7 +57,9 @@ def get_openrouter_service(db: AsyncSession) -> OpenRouterService:
     return OpenRouterService(setting_service)
 
 
-def get_openrouter_service_fastapi(db: AsyncSession = Depends(get_db)) -> OpenRouterService:
+def get_openrouter_service_fastapi(
+    db: AsyncSession = Depends(get_db),
+) -> OpenRouterService:
     setting_crud = SettingCrud(db)
     setting_service = SettingService(db, setting_crud)
     return OpenRouterService(setting_service)

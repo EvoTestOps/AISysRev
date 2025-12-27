@@ -40,6 +40,12 @@ class Settings:
             "true",
             "yes",
         ]
+        self.RUN_MIGRATIONS: bool = get_env("RUN_MIGRATIONS", "false").lower() in [
+            "y",
+            "1",
+            "true",
+            "yes",
+        ]
 
 
 settings = Settings()

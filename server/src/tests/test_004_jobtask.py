@@ -2,7 +2,7 @@ import pytest
 import uuid
 from unittest.mock import MagicMock, call
 from src.crud.paper_crud import PaperCrud
-from src.services.paper_service import PaperService, get_paper_service
+from src.services.paper_service import PaperService
 from src.celery.tasks import async_process_job
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
@@ -10,7 +10,13 @@ from src.crud.jobtask_crud import JobTaskCrud
 from src.services.file_service import FileService
 from src.services.job_service import JobService
 from src.services.jobtask_service import JobTaskService
-from src.schemas.job import JobCreate, JobRead, ModelConfig
+from src.schemas.job import (
+    JobCreate,
+    JobPromptingType,
+    JobRead,
+    LLMModelConfig,
+    ZeroShotPromptingConfig,
+)
 from src.schemas.jobtask import JobTaskCreate, JobTaskStatus
 
 
@@ -29,8 +35,11 @@ async def test_create_jobtask(db_session, test_project_uuid, test_files_working)
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
+        llm_config=LLMModelConfig(
             model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+        ),
+        prompting_config=ZeroShotPromptingConfig(
+            screening_type=JobPromptingType.ZERO_SHOT
         ),
     )
 
@@ -66,8 +75,11 @@ async def test_create_job_transaction_rollback(
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
+        llm_config=LLMModelConfig(
             model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+        ),
+        prompting_config=ZeroShotPromptingConfig(
+            screening_type=JobPromptingType.ZERO_SHOT
         ),
     )
 
@@ -91,7 +103,7 @@ async def test_async_process_job(db_session, test_job_data):
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
-            paper_uuid=uuid.uuidv4(),
+            paper_uuid=uuid.uuid4(),
         )
         for i in range(1, 3)
     ]
@@ -124,7 +136,7 @@ async def test_async_process_job_failure(db_session, test_job_data, monkeypatch)
             title=f"Mock Title {i}",
             abstract=f"Mock Abstract {i}",
             status=JobTaskStatus.NOT_STARTED,
-            paper_uuid=uuid.uuidv4(),
+            paper_uuid=uuid.uuid4(),
         )
         for i in range(1, 3)
     ]

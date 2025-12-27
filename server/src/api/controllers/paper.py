@@ -8,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/paper/{project_uuid}", status_code=status.HTTP_200_OK)
-async def get_papers(
+async def get_project_papers(
     project_uuid: UUID, papers: PaperService = Depends(get_paper_service)
 ):
     try:
@@ -21,9 +21,12 @@ async def get_papers(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch papers: {str(e)}",
         ) from e
-    
-@router.get("/paper/{project_uuid}/with_model_evaluations", status_code=status.HTTP_200_OK)
-async def get_papers(
+
+
+@router.get(
+    "/paper/{project_uuid}/with_model_evaluations", status_code=status.HTTP_200_OK
+)
+async def get_project_papers_with_model_evals(
     project_uuid: UUID, papers: PaperService = Depends(get_paper_service)
 ):
     try:
@@ -37,11 +40,12 @@ async def get_papers(
             detail=f"Failed to fetch papers: {str(e)}",
         ) from e
 
+
 @router.patch("/paper/{uuid}", status_code=status.HTTP_200_OK)
 async def add_paper_human_result(
     uuid: UUID,
     result: PaperHumanResultUpdate,
-    papers: PaperService = Depends(get_paper_service)
+    papers: PaperService = Depends(get_paper_service),
 ):
     try:
         await papers.add_human_result(uuid, result.human_result)
@@ -49,4 +53,7 @@ async def add_paper_human_result(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to add human result to paper: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add human result to paper: {str(e)}",
+        )

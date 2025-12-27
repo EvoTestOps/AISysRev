@@ -1,0 +1,19 @@
+import uuid
+from uuid import UUID as PyUUID
+from sqlalchemy import Integer, String
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import Mapped, mapped_column
+from src.db.session import Base
+from .mixins import TimestampMixin
+
+
+class Project(Base, TimestampMixin):
+    __tablename__ = "project"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    uuid: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    criteria: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    preferences: Mapped[dict] = mapped_column(JSONB, nullable=True)

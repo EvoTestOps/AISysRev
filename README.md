@@ -45,7 +45,8 @@ Note: Paper screening speed is about 4,5s per paper. We are working on paralleli
 
 ### System and software requirements
 - Docker, with Compose and buildx plugins installed.
-- Enough RAM (16GB recommended) to run multiple containers
+- `uv` Python package and project manager: https://docs.astral.sh/uv/getting-started/installation/
+- Enough RAM (At least 8GB recommended)
 - Network connection
 
 See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Buildx, Docker Engine and the Docker CLI.**
@@ -71,25 +72,26 @@ cd AISysRev
 ```
 
 #### MacOS, Linux and Windows (WSL)
-Start the application
+Start the application in production mode:
 ```bash
 make start-prod
 ``` 
-If it does not work try
+If you want to develop the app, run:
 ```bash
 make start-dev
 ``` 
-The start up may take up to 3 minutes to start due to installation and downloading of necessary components.
+The startup of the app may a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
 
-After startup, open the application: 
+After startup, open the application:
 
-If `start-prod` worked, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
+If you ran `start-prod`, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
 
 If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
 
 
 #### Windows (non-WSL)
-If you do not have Windows Subsystem for Linux (WSL). Start with 
+
+If you do not have Windows Subsystem for Linux (WSL), start the application with 
 ```bash
 ./start-prod.bat
 ```
@@ -106,8 +108,9 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 ## Development requirements
 - Node.js v22 LTS
-- Python 3.9
+- Python 3.14
 - Docker, with Compose plugin installed
+- UV: https://docs.astral.sh/uv/getting-started/installation/
 
 ## Running in development mode
 

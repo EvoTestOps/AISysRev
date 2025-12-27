@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 from fastapi import Depends
 from src.db.session import get_db
 from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
@@ -24,7 +25,7 @@ class SettingService:
 
         return setting_model
 
-    async def upsert_setting(self, name: str, value: str, secret=True) -> str:
+    async def upsert_setting(self, name: str, value: str, secret=True) -> UUID:
         affected_rows, uuid = await self.setting_crud.upsert_setting(
             SettingCreate(name=name, value=value, secret=secret)
         )
@@ -34,7 +35,9 @@ class SettingService:
 
 def get_setting_service() -> SettingService:
     db = get_db()
-    return SettingService(db, SettingCrud(db))
+    # TODO: Fix
+    return SettingService(db, SettingCrud(db))  # type: ignore
 
-def get_setting_service_fastapi(db = Depends(get_db)) -> SettingService:
+
+def get_setting_service_fastapi(db=Depends(get_db)) -> SettingService:
     return SettingService(db, SettingCrud(db))

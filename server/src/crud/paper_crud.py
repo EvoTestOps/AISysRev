@@ -1,13 +1,12 @@
 from uuid import UUID
-from typing import List
-from src.models.jobtask import JobTask
+from typing import List, Sequence
+from src.db.models.jobtask import JobTask
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
-from src.schemas.jobtask import JobTaskStatus
-from src.models.paper import Paper
+from src.db.models.paper import Paper
 
 
 class PaperCrud:
@@ -21,12 +20,14 @@ class PaperCrud:
         await self.db.flush()
         return db_objs
 
-    async def fetch_papers_by_project_uuid(self, project_uuid: UUID) -> List[Paper]:
+    async def fetch_papers_by_project_uuid(self, project_uuid: UUID) -> Sequence[Paper]:
         stmt = select(Paper).where(Paper.project_uuid == project_uuid)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]) -> List[Paper]:
+    async def fetch_papers_by_paper_uuids(
+        self, paper_uuids: List[str]
+    ) -> Sequence[Paper]:
         stmt = select(Paper).where(Paper.uuid.in_(paper_uuids))
         result = await self.db.execute(stmt)
         return result.scalars().all()
@@ -34,16 +35,12 @@ class PaperCrud:
     async def fetch_papers_with_model_evals_by_project_uuid(
         self, project_uuid: UUID
     ) -> List[PaperReadWithAvgProbability]:
-        avg_prob = (
-            func.avg(
-                cast(
-                    JobTask.result["overall_decision"]["probability_decision"].astext,
-                    Float,
-                )
+        avg_prob = func.avg(
+            cast(
+                JobTask.result["overall_decision"]["probability_decision"].astext,
+                Float,
             )
-            .filter(JobTask.status == JobTaskStatus.DONE)
-            .label("avg_probability_decision")
-        )
+        ).label("avg_probability_decision")
         error_messages = (
             func.array_agg(JobTask.error)
             .filter(JobTask.error.isnot(None))
@@ -56,7 +53,8 @@ class PaperCrud:
             .group_by(Paper.id)
         )
         result = await self.db.execute(stmt)
-        return result.mappings().all()
+        # TODO: Fix
+        return result.mappings().all()  # type: ignore
 
     async def add_paper_human_result(
         self, paper_uuid: UUID, human_result: PaperHumanResult

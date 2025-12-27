@@ -1,0 +1,15 @@
+server/.env
+server/__pycache__
+server/**/__pycache__
+server/venv
+server/.venv
+server/.mypy_cache
+server/.pytest_cache
+server/.ruff_cache
+server/htmlcov
+server/.coverage
+server/.env*
+client/dist
+client/node_modules
+client/playwright-report
+client/test-results

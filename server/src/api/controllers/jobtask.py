@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 @router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
-async def get_job_tasks(
+async def get_job_task(
     uuid: UUID, jobtasks: JobTaskService = Depends(get_jobtask_service)
 ):
     try:
@@ -32,7 +32,7 @@ async def get_job_tasks(
     response_model=list[JobTaskReadWithLLMConfig],
 )
 async def get_job_tasks(
-    paper_uuid: str, jobtasks: JobTaskService = Depends(get_jobtask_service)
+    paper_uuid: UUID, jobtasks: JobTaskService = Depends(get_jobtask_service)
 ):
     try:
         job_tasks = await jobtasks.fetch_job_tasks_for_paper(paper_uuid)

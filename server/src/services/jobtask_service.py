@@ -1,4 +1,5 @@
 from uuid import UUID
+
 from src.services.paper_service import PaperService, get_paper_service
 from src.celery.tasks import process_job_task
 from fastapi import Depends
@@ -58,7 +59,7 @@ class JobTaskService:
                 human_result=task.human_result,
                 status_metadata=task.status_metadata,
                 llm_config=job.llm_config,
-                prompting_config=job.prompting_config
+                prompting_config=job.prompting_config,
             )
             for task, job in job_tasks_with_jobs
         ]
@@ -84,7 +85,7 @@ class JobTaskService:
 
     async def start_job_tasks(self, job_id: int, job_data: dict):
         # job_data is of type JobCreate
-        print("start_job_tasks: Processing job %s", job_id)
+        print(f"start_job_tasks: Processing job {job_id}")
         return process_job_task.delay(job_id, job_data)
 
 
