@@ -6,7 +6,6 @@ from sqlalchemy import select, update
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
-from src.schemas.jobtask import JobTaskStatus
 from src.db.models.paper import Paper
 
 
@@ -41,9 +40,7 @@ class PaperCrud:
                 JobTask.result["overall_decision"]["probability_decision"].astext,
                 Float,
             )
-            .filter(JobTask.status == JobTaskStatus.DONE)
-            .label("avg_probability_decision")
-        )
+        ).label("avg_probability_decision")
         error_messages = (
             func.array_agg(JobTask.error)
             .filter(JobTask.error.isnot(None))
