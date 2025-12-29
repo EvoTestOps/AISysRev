@@ -194,6 +194,7 @@ class OpenAiSDKLLM(LLM):
                     seed=self.config.seed,
                     top_p=self.config.top_p,
                     temperature=self.config.temperature,
+                    # Structured Outputs is available in OpenAI's latest large language models, starting with GPT-4o
                     text_format=schema,
                 )
                 return response.output_parsed, None

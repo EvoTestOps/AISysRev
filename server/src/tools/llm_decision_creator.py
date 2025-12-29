@@ -2,7 +2,7 @@ from src.schemas.paper import PaperHumanResult, PaperRead
 from src.services.paper_service import get_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
-from src.services.openrouter_service import get_openrouter_service
+from src.services.llm_service import get_llm_service
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
@@ -13,6 +13,7 @@ from src.core.llm import (
     StructuredResponse,
 )
 from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
+from src.services.setting_service import get_setting_service
 
 
 def _create_few_shot_examples(papers: list[PaperRead]):
@@ -47,11 +48,11 @@ async def get_structured_response(
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
 ) -> StructuredResponse:
-    openrouter_service = get_openrouter_service(db)
+    llm_service = get_llm_service(db)
     paper_service = get_paper_service(db)
+    setting_service = get_setting_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
-    llm_model = job_data.llm_config.model_name
 
     criteria = _create_criteria(
         # TODO: Fix
@@ -66,8 +67,18 @@ async def get_structured_response(
             criteria,
             additional_instructions,
         )
-        result = await openrouter_service.call_llm(
-            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        api_key = await setting_service.get_setting(
+            f"{job_data.llm_config.provider_name}_api_key"
+        )
+        if api_key is None:
+            raise RuntimeError(
+                f"API key for provider {job_data.llm_config.provider_name} is missing"
+            )
+        result = await llm_service.call_llm(
+            schema=StructuredResponse,
+            llm_config=job_data.llm_config,
+            prompt=prompt_text,
+            api_key=api_key,
         )
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
@@ -81,8 +92,18 @@ async def get_structured_response(
             additional_instructions,
             seed_paper_txt,
         )
-        result = await openrouter_service.call_llm(
-            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        api_key = await setting_service.get_setting(
+            f"{job_data.llm_config.provider_name}_api_key"
+        )
+        if api_key is None:
+            raise RuntimeError(
+                f"API key for provider {job_data.llm_config.provider_name} is missing"
+            )
+        result = await llm_service.call_llm(
+            schema=StructuredResponse,
+            llm_config=job_data.llm_config,
+            prompt=prompt_text,
+            api_key=api_key,
         )
         return result
     else:

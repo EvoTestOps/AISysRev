@@ -2,9 +2,9 @@ from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
 from fastapi import Depends
 from src.schemas.openrouter import OpenrouterModelResponse
-from src.services.openrouter_service import (
-    OpenRouterService,
-    get_openrouter_service_fastapi,
+from src.services.llm_service import (
+    LLMService,
+    get_llm_service_fastapi,
 )
 
 router = APIRouter()
@@ -16,7 +16,7 @@ router = APIRouter()
     response_model=OpenrouterModelResponse,
 )
 async def get_available_models(
-    openrouter: OpenRouterService = Depends(get_openrouter_service_fastapi),
+    openrouter: LLMService = Depends(get_llm_service_fastapi),
 ):
     required_parameters = [
         "structured_outputs",
