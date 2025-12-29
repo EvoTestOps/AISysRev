@@ -166,3 +166,51 @@ class OpenRouterLLM(LLM):
     @property
     def config(self) -> LLMConfiguration:
         return self._config
+
+
+class OpenAiSDKLLM(LLM):
+    def __init__(self, config: LLMConfiguration):
+        self._config = config
+
+    async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
+        from openai import AsyncOpenAI
+        import openai
+
+        async with AsyncOpenAI(
+            api_key=self.config.api_key, base_url=self.config.base_url
+        ) as client:
+            try:
+                response = await client.responses.parse(
+                    model=self.config.model,
+                    input=[
+                        (
+                            {
+                                "role": "system",
+                                "content": self.config.system_prompt,
+                            }
+                        ),
+                        {"role": "user", "content": prompt},
+                    ],
+                    seed=self.config.seed,
+                    top_p=self.config.top_p,
+                    temperature=self.config.temperature,
+                    text_format=schema,
+                )
+                return response.output_parsed, None
+            except openai.APIConnectionError as e:
+                print("The server could not be reached")
+                print(e.__cause__)
+            except openai.RateLimitError as e:
+                print("HTTP 429 status code was received; we should back off a bit.")
+                print(e.status_code)
+                print(e.response)
+            except openai.APIStatusError as e:
+                print("Another non-200-range status code was received")
+                print(e.status_code)
+                print(e.response)
+
+        return None, None
+
+    @property
+    def config(self) -> LLMConfiguration:
+        return self._config
