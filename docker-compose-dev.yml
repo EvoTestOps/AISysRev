@@ -51,7 +51,7 @@ services:
       retries: 3
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./server
           target: /app
           ignore:
@@ -59,6 +59,7 @@ services:
             - ./server/migrations/
             - ./.venv/
             - ./server/.venv/
+            - ./client
         - action: rebuild
           path: server/pyproject.toml
     depends_on:

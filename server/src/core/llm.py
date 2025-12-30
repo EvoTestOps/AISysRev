@@ -1,4 +1,5 @@
-from typing import Type, TypeVar
+from typing import Any, List, Type, TypeVar
+from openai.types.model import Model
 from pydantic import BaseModel, ValidationError
 from src.schemas.llm import (
     Criterion,
@@ -14,8 +15,14 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class LLM(ABC):
+    from openai.types.model import Model
+
     @abstractmethod
     def __init__(self, config: LLMConfiguration):
+        pass
+
+    @abstractmethod
+    async def get_available_models(self) -> List[Model]:
         pass
 
     @abstractmethod
@@ -33,6 +40,9 @@ class LLM(ABC):
 class MockLLM(LLM):
     def __init__(self, config):
         self._config = config
+
+    async def get_available_models(self) -> List[Model]:
+        return list()
 
     async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
         import json
@@ -80,6 +90,27 @@ class OpenRouterLLM(LLM):
     def __init__(self, config: LLMConfiguration):
         self._config = config
 
+    async def get_available_models(self) -> Any:
+        import aiohttp
+
+        required_parameters = [
+            "structured_outputs",
+            "response_format",
+            "temperature",
+            "top_p",
+            "seed",
+        ]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{self.config.base_url}/models?supported_parameters={','.join(required_parameters)}",
+                headers={
+                    "Authorization": f"Bearer {self.config.api_key}",
+                    "Content-type": "application/json",
+                },
+            ) as response:
+                body = await response.json()
+                return body
+
     async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
@@ -119,7 +150,7 @@ class OpenRouterLLM(LLM):
             }
 
             async with session.post(
-                self.config.base_url,
+                f"{self.config.base_url}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self.config.api_key}",
                     "Content-type": "application/json",
@@ -169,8 +200,19 @@ class OpenRouterLLM(LLM):
 
 
 class OpenAiSDKLLM(LLM):
+    from openai.types.model import Model
+
     def __init__(self, config: LLMConfiguration):
         self._config = config
+
+    async def get_available_models(self) -> List[Model]:
+        from openai import AsyncOpenAI
+
+        async with AsyncOpenAI(
+            api_key=self.config.api_key, base_url=self.config.base_url
+        ) as client:
+            models = await client.models.list()
+            return models.data
 
     async def generate_answer_async(self, schema: type[T], prompt) -> tuple[T, str]:
         from openai import AsyncOpenAI

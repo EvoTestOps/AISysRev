@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H5, H6 } from "../components/Typography";
+import { H4, H5, H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -31,7 +31,6 @@ import {
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
-import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
 import {
   ChartCandlestick,
@@ -39,6 +38,7 @@ import {
   CircleCheck,
   Download,
   FileText,
+  InfoIcon,
   Loader,
   Sparkles,
   Square,
@@ -56,6 +56,7 @@ import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
+import { useConfig } from "../config/config";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -124,6 +125,36 @@ const SectionHeader: React.FC<{
   </div>
 );
 
+type ApiKeyCheckProps = {
+  config_key: "openai_api_key" | "openrouter_api_key";
+  title: string;
+  should_show: boolean;
+};
+
+const ApiKeyCheck: React.FC<ApiKeyCheckProps> = ({
+  config_key,
+  should_show,
+  title,
+}) => {
+  const { loading, setting } = useConfig(config_key);
+  return !loading && setting == null && should_show ? (
+    <div>
+      <div
+        className="inline-flex bg-red-300 rounded-md p-4 items-center w-full"
+        data-testid={`error-missing-${config_key}`}
+      >
+        <span className="font-bold text-sm text-red-900 select-none">
+          {title} is not set.
+          <br />
+          <Link className="text-blue-800" to="/settings">
+            Go to settings
+          </Link>
+        </span>
+      </div>
+    </div>
+  ) : null;
+};
+
 export const ProjectPage = () => {
   const params = useParams<{ projectUuid: string }>();
   const { projectUuid } = params;
@@ -135,7 +166,8 @@ export const ProjectPage = () => {
   const [temperature, setTemperature] = useState(0);
   const [seed, setSeed] = useState(128);
   const [top_p, setTop_p] = useState(0.1);
-  const [isLlmSelected, setIsLlmSelected] = useState(true);
+  const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
+  const [isLlmSelected, setIsLlmSelected] = useState(false);
   const [papersLoading, setPapersLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
@@ -147,6 +179,7 @@ export const ProjectPage = () => {
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
+  const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
 
   const project = getProjectByUuid(projectUuid);
@@ -157,16 +190,16 @@ export const ProjectPage = () => {
     }
   }, [fetchPapers, project, projectUuid]);
 
-  const { loading: openrouterKeyLoading, setting: openrouterKey } =
-    useConfig("openrouter_api_key");
-
   const paperUuid = useMemo(() => {
     if (!search) return null;
     return new URLSearchParams(search).get("paperUuid");
   }, [search]);
-  const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
-    []
-  );
+  // const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
+  //   []
+  // );
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<
+    DropdownOption | undefined
+  >(undefined);
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );
@@ -194,17 +227,17 @@ export const ProjectPage = () => {
     fetchJobs();
   }, [fetchJobs, projectUuid]);
 
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const models = await retrieve_models();
-        setAvailableModels(models);
-      } catch (error) {
-        console.error("Failed to fetch models", error);
-      }
-    };
-    fetchModels();
-  }, []);
+  // useEffect(() => {
+  //   const fetchModels = async () => {
+  //     try {
+  //       const models = await retrieve_models();
+  //       setAvailableModels(models);
+  //     } catch (error) {
+  //       console.error("Failed to fetch models", error);
+  //     }
+  //   };
+  //   fetchModels();
+  // }, []);
 
   const paperToTaskMap = useMemo(() => {
     if (
@@ -485,32 +518,16 @@ export const ProjectPage = () => {
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          {/* <Card>
-            <H6>Inclusion criteria</H6>
-            {loadingProjects ? (
-              <Skeleton />
-            ) : (
-              <CriteriaList criteria={inclusionCriteria || []} />
-            )}
-            <H6>Exclusion criteria</H6>
-            {loadingProjects ? (
-              <Skeleton />
-            ) : (
-              <CriteriaList criteria={exclusionCriteria || []} />
-            )}
-          </Card> */}
-          {/* 
-          <H4>Screening tasks</H4> */}
           {jobTasks.length === 0 && (
             <AlertMessage message="No screening tasks." />
           )}
           {createdJobs.map((job) => {
             const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE,
+              (task) => task.status === JobTaskStatus.DONE
             ).length;
             const errorCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.ERROR,
+              (task) => task.status === JobTaskStatus.ERROR
             ).length;
             const totalCount = tasks.length;
             const completedCount = doneCount + errorCount;
@@ -518,7 +535,7 @@ export const ProjectPage = () => {
               totalCount === 0
                 ? 0
                 : Math.round((completedCount / totalCount) * 100);
-            // console.log(job.prompting_config);
+
             return (
               <Card key={job.uuid} className="flex-row justify-between">
                 <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
@@ -610,135 +627,188 @@ export const ProjectPage = () => {
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
-          <Card className="relative">
+          <Card className="relative w-72">
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
                 <span>To create tasks, you must first upload papers.</span>
               </div>
             )}
-            <>
-              <div className="flex">
-                <H5 className="pr-16">LLM</H5>
-                <DropdownMenuText
-                  disabled={openrouterKey == null || fetchedFiles.length === 0}
-                  options={availableModels.map((m) => ({
-                    name: m.name,
-                    value: m.id,
-                  }))}
-                  selected={selectedLlm}
-                  onSelect={setSelectedLlm}
-                  isLlmSelected={isLlmSelected}
-                  setIsLlmSelected={setIsLlmSelected}
-                />
-              </div>
-              {!openrouterKeyLoading && openrouterKey == null && (
-                <div>
-                  <div
-                    className="flex bg-red-300 rounded-md p-4 items-center"
-                    data-testid="error-missing-openrouter-api-key"
-                  >
-                    <span className="font-bold text-sm text-red-900 select-none">
-                      OpenRouter API key is not set
-                      <br />
-                      <Link className="text-blue-800" to="/settings">
-                        Go to settings
-                      </Link>
-                    </span>
+            <div className="flex flex-col items-start gap-2">
+              <H4 className="pr-16">Provider</H4>
+              <DropdownMenuText
+                disabled={false}
+                options={providers.map((provider) => ({
+                  name: provider.title,
+                  value: provider.name,
+                }))}
+                selected={selectedLlmProvider}
+                onSelect={setSelectedLlmProvider}
+                isSelected={isLlmProviderSelected}
+                setSelected={setIsLlmProviderSelected}
+              />
+              {isLlmProviderSelected && (
+                <div className="text-xs bg-slate-600 p-2 rounded-lg text-white inline-flex w-full flex-row gap-2 items-start">
+                  <div>
+                    <InfoIcon size={16} />
                   </div>
+                  <span>
+                    {
+                      providers.find(
+                        (provider) =>
+                          provider.name === selectedLlmProvider?.value
+                      )?.description
+                    }
+                  </span>
                 </div>
               )}
-              <Hr />
-              <p className="text-md font-bold">LLM configuration</p>
-              <div className="flex justify-between">
-                <p className="text-md font-semibold">
-                  Temperature ({temperature})
-                </p>
-                <input
-                  type="range"
-                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                  data-testid="temperature-input"
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  value={temperature}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setTemperature(e.target.valueAsNumber)}
+            </div>
+            {isLlmProviderSelected &&
+              selectedLlmProvider?.value === "openai" && (
+                <>
+                  <div className="flex flex-col items-stretch gap-2">
+                    <H5 className="pr-16">Provider configuration</H5>
+                    <div className="flex flex-col gap-1 w-full min-w-0">
+                      <label
+                        htmlFor="overwrite-base-url"
+                        className="text-xs font-bold"
+                      >
+                        Base URL
+                      </label>
+
+                      <input
+                        type="text"
+                        id="overwrite-base-url"
+                        className="border-2 border-gray-300 p-2 text-xs w-full rounded-lg"
+                        placeholder="http://localhost:1234/api/v1"
+                      />
+
+                      <div className="w-full text-xs p-2 bg-blue-300 rounded-lg font-bold whitespace-normal break-words">
+                        Please change the base URL to point to your specified
+                        OpenAI-compatible API instance.
+                        <br />
+                        You can use locally hosted LLMs by providing a URL that
+                        starts with http://localhost.
+                      </div>
+                    </div>
+                  </div>
+                  <hr />
+                </>
+              )}
+            <ApiKeyCheck
+              config_key="openrouter_api_key"
+              title="OpenRouter API key"
+              should_show={selectedLlmProvider?.value === "openrouter"}
+            />
+            <ApiKeyCheck
+              config_key="openai_api_key"
+              title="OpenAI API key"
+              should_show={selectedLlmProvider?.value === "openai"}
+            />
+            {isLlmProviderSelected && (
+              <div className="flex flex-col items-start gap-2 w-full">
+                <H4 className="pr-16">Model</H4>
+                <DropdownMenuText
+                  disabled={fetchedFiles.length === 0}
+                  options={[]} // TODO: Add
+                  selected={selectedLlm}
+                  onSelect={setSelectedLlm}
+                  isSelected={isLlmSelected}
+                  setSelected={setIsLlmSelected}
                 />
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-md font-semibold">Seed</p>
-                <input
-                  type="number"
-                  className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
-                  data-testid="seed-input"
-                  value={seed}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setSeed(e.target.valueAsNumber)}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-md font-semibold">top_p ({top_p})</p>
-                <input
-                  type="range"
-                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                  data-testid="top_p-input"
-                  min={0.1}
-                  max={1}
-                  step={0.1}
-                  value={top_p}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setTop_p(e.target.valueAsNumber)}
-                />
-              </div>
-              <Hr />
-              <div className="flex justify-start">
-                <Button
-                  variant="purple"
-                  onClick={() => createZeroShotJob()}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  title="Create zero-shot task"
-                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
-                >
-                  <Sparkles />
-                  <Badge text="ZS" />
-                  <span>Create Zero-shot</span>
-                </Button>
-              </div>
-              <div className="flex justify-start">
-                <LinkButton
-                  href={`/project/${projectUuid}/few_shot`}
-                  variant="purple"
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  title="Create few-shot task"
-                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
-                >
-                  <Sparkles />
-                  <Badge text="FS" />
-                  <span>Create Few-shot</span>
-                </LinkButton>
-              </div>
-            </>
+            )}
+            <Hr />
+            {isLlmSelected && (
+              <p className="text-md font-bold">Model configuration</p>
+            )}
+            {isLlmSelected && (
+              <>
+                <div className="flex justify-between">
+                  <p className="text-md font-semibold">
+                    Temperature ({temperature})
+                  </p>
+                  <input
+                    type="range"
+                    className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                    data-testid="temperature-input"
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    value={temperature}
+                    disabled={
+                      // openrouterKey == null ||
+                      fetchedFiles.length === 0 || selectedLlm === undefined
+                    }
+                    onChange={(e) => setTemperature(e.target.valueAsNumber)}
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-md font-semibold">Seed</p>
+                  <input
+                    type="number"
+                    className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
+                    data-testid="seed-input"
+                    value={seed}
+                    disabled={
+                      // openrouterKey == null ||
+                      fetchedFiles.length === 0 || selectedLlm === undefined
+                    }
+                    onChange={(e) => setSeed(e.target.valueAsNumber)}
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-md font-semibold">top_p ({top_p})</p>
+                  <input
+                    type="range"
+                    className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                    data-testid="top_p-input"
+                    min={0.1}
+                    max={1}
+                    step={0.1}
+                    value={top_p}
+                    disabled={
+                      // openrouterKey == null ||
+                      fetchedFiles.length === 0 || selectedLlm === undefined
+                    }
+                    onChange={(e) => setTop_p(e.target.valueAsNumber)}
+                  />
+                </div>
+                <Hr />
+              </>
+            )}
+            <div className="flex justify-start">
+              <Button
+                variant="purple"
+                onClick={() => createZeroShotJob()}
+                disabled={
+                  // openrouterKey == null ||
+                  fetchedFiles.length === 0 || selectedLlm === undefined
+                }
+                title="Create zero-shot task"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <Badge text="ZS" />
+                <span>Create Zero-shot</span>
+              </Button>
+            </div>
+            <div className="flex justify-start">
+              <LinkButton
+                href={`/project/${projectUuid}/few_shot`}
+                variant="purple"
+                disabled={
+                  // openrouterKey == null ||
+                  fetchedFiles.length === 0 || selectedLlm === undefined
+                }
+                title="Create few-shot task"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <Badge text="FS" />
+                <span>Create Few-shot</span>
+              </LinkButton>
+            </div>
           </Card>
         </div>
       </div>

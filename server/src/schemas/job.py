@@ -3,6 +3,12 @@ from typing import Annotated, List, Literal, Optional, Union
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
+from src.core.llm_providers import (
+    LLMProvider,
+    OpenAICloudParams,
+    LocalOpenAISDKParams,
+    OpenRouterParams,
+)
 
 
 class JobPromptingType(str, Enum):
@@ -10,18 +16,12 @@ class JobPromptingType(str, Enum):
     ONE_SHOT = "ONE_SHOT"
     FEW_SHOT = "FEW_SHOT"
 
-class JobProviderType(str, Enum):
-    openrouter = "openrouter"
-    openai = "openai"
-
 
 class LLMModelConfig(BaseModel):
     base_url: Optional[str]
-    provider_name: JobProviderType
+    provider_name: LLMProvider
     model_name: str
-    temperature: float = Field(ge=0, le=1)
-    seed: int
-    top_p: float = Field(ge=0.1, le=1)
+    configuration: Union[OpenRouterParams, OpenAICloudParams, LocalOpenAISDKParams]
 
 
 # Define different configs for prompting strategies

@@ -1,9 +1,10 @@
-from typing import TypeVar
+from typing import Optional, TypeVar
 
 from fastapi import Depends
 from pydantic import BaseModel
+from src.core.llm_providers import LLMProvider
 from src.crud.setting_crud import SettingCrud
-from src.schemas.job import JobProviderType, LLMModelConfig
+from src.schemas.job import LLMModelConfig
 from src.services.setting_service import SettingService
 from src.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,14 +20,24 @@ class LLMService:
         self.setting_service = setting_service
 
     def get_base_url(self, configuration: LLMModelConfig) -> str:
-        if configuration.base_url is not None:
-            # If base url is overwritten, we return it directly
+        defaults: dict[LLMProvider, Optional[str]] = {
+            LLMProvider.openrouter: "https://openrouter.ai/api/v1",
+            LLMProvider.openai: "https://api.openai.com/v1/chat/completions",
+            LLMProvider.openai_local: None,
+        }
+
+        try:
+            default = defaults[configuration.provider_name]
+        except KeyError:
+            raise RuntimeError(f"Unknown provider {configuration.provider_name}")
+
+        if configuration.base_url:
             return configuration.base_url
-        if configuration.provider_name == "openrouter":
-            return "https://openrouter.ai/api/v1/chat/completions"
-        if configuration.provider_name == "openai":
-            return "https://api.openai.com/v1/chat/completions"
-        raise RuntimeError(f"Unknown provider {configuration.provider_name}")
+
+        if default is None:
+            raise RuntimeError("No base_url configured for provider {configuration.provider_name}")
+
+        return default
 
     def get_llm(self, configuration: LLMModelConfig, api_key: str) -> LLM:
         config = LLMConfiguration(
@@ -38,9 +49,11 @@ class LLMService:
             temperature=configuration.temperature,
         )
         # Currently we support openrouter and openai as providers. Local models should work fine.
-        if configuration.provider_name == JobProviderType.openrouter:
+        if configuration.provider_name == LLMProvider.openrouter:
             return OpenRouterLLM(config)
-        if configuration.provider_name == JobProviderType.openai:
+        if configuration.provider_name == LLMProvider.openai:
+            return OpenAiSDKLLM(config)
+        if configuration.provider_name == LLMProvider.openai_local:
             return OpenAiSDKLLM(config)
         raise RuntimeError("Unknown LLM provider")
 

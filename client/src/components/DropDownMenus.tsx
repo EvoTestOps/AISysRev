@@ -11,15 +11,15 @@ type EllipsisProps = {
   items: EllipsisItem[];
 };
 
-export type DropdownOption = { name: string; value: string };
+export type DropdownOption<T = string> = { name: string; value: T };
 
 export type TextProps = {
   options: Array<DropdownOption>;
   disabled: boolean;
   selected: DropdownOption | undefined;
   onSelect: (value?: DropdownOption) => void;
-  isLlmSelected: boolean;
-  setIsLlmSelected: (isLlmSelected: boolean) => void;
+  isSelected: boolean;
+  setSelected: (isSelected: boolean) => void;
 };
 
 export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
@@ -46,7 +46,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
               key={i}
               as="button"
               onClick={item.onClick}
-              className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
+              className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
             >
               <Label />
             </MenuItem>
@@ -62,22 +62,22 @@ export const DropdownMenuText: React.FC<TextProps> = ({
   disabled,
   selected,
   onSelect,
-  isLlmSelected,
-  setIsLlmSelected,
+  isSelected,
+  setSelected,
 }) => {
   return (
-    <Menu as="div" className="relative inline-block text-center">
+    <Menu as="div" className="relative text-center">
       <MenuButton
         disabled={disabled}
         className={classNames(
           "w-48 p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed select-none text-sm",
           {
-            "border-gray-300": isLlmSelected,
-            "border-red-500 animate-pulse": !isLlmSelected,
+            "border-gray-300": isSelected,
+            "border-red-500 animate-pulse": !isSelected,
           }
         )}
       >
-        {selected?.name || "Select model"}
+        {selected?.name || "-"}
       </MenuButton>
 
       <MenuItems
@@ -87,7 +87,7 @@ export const DropdownMenuText: React.FC<TextProps> = ({
         {options.map((option) => (
           <MenuItem
             className={
-              "block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 focus:outline-none"
+              "block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 focus:outline-none hover:cursor-pointer"
             }
             key={option.value}
             value={option.value}
@@ -95,7 +95,7 @@ export const DropdownMenuText: React.FC<TextProps> = ({
             disabled={disabled}
             onClick={() => {
               onSelect(option);
-              setIsLlmSelected(true);
+              setSelected(true);
             }}
           >
             {option.name}

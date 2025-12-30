@@ -22,6 +22,9 @@ function App() {
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
   );
+  const fetchProviders = useTypedStoreActions(
+    (actions) => actions.fetchProviders
+  );
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
@@ -33,6 +36,7 @@ function App() {
 
   // Initialization hook
   useEffect(() => {
+    fetchProviders();
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

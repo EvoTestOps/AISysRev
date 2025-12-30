@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 export type Criteria = {
   inclusion_criteria: string[];
   exclusion_criteria: string[];
@@ -142,3 +144,17 @@ export type Result = {
   human_result: string;
   [modelName: string]: string;
 };
+
+// Keep this up-to-date with server/src/core/llm_providers.py
+const LLMProviderSchema = z.enum(["openrouter", "openai", "local_llm_openai"]);
+export type LLMProvider = z.infer<typeof LLMProviderSchema>;
+export const ProviderSchema = z.object({
+  name: LLMProviderSchema,
+  title: z.string(),
+  description: z.string(),
+  parameter_schema: z.object(),
+});
+
+export const ProviderResponse = z.array(ProviderSchema);
+
+export type Provider = z.infer<typeof ProviderSchema>;
