@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Type
 
 from src.core.llm.providers.provider import T, BaseLLMParams, LLMProvider
 
@@ -13,23 +13,23 @@ class LocalOpenAISDKModelParams(BaseLLMParams):
 
 
 class LocalOpenAISDKProvider(LLMProvider):
-    def __init__(self, config: ProviderRuntimeConfiguration):
-        super().__init__(config)
+    def __init__(self, runtime_config: ProviderRuntimeConfiguration):
+        super().__init__(runtime_config)
 
     provider_title = "Local (OpenAI SDK)"
     provider_name = "local-openai-sdk"
     provider_base_url = None
     provider_description = "Use any locally-ran LLM that is compatible with the OpenAI SDK, e.g. Llama.cpp or LM Studio. Make sure that the model you are planning to use supports structured responses."
-    provider_model_parameters = LocalOpenAISDKModelParams.model_json_schema()
+    provider_model_parameters = LocalOpenAISDKModelParams
     api_key_config_parameter = None
     provider_config_parameters = []
 
     @property
     def config(self) -> ProviderRuntimeConfiguration:
-        return self.config
+        return self._config
 
     async def generate_answer_async(
-        self, api_key: str | None, configuration: BaseLLMParams, schema: type[T], prompt
+        self, configuration: BaseLLMParams, schema: Type[T], prompt: str
     ) -> tuple[T, str]:
         from openai import AsyncOpenAI
         import openai

@@ -19,8 +19,8 @@ class OpenRouterModelParams(BaseLLMParams):
 
 
 class OpenRouterProvider(LLMProvider):
-    def __init__(self, config: ProviderRuntimeConfiguration):
-        super().__init__(config)
+    def __init__(self, runtime_config: ProviderRuntimeConfiguration):
+        super().__init__(runtime_config)
 
     provider_title = "OpenRouter (Cloud)"
     provider_name = "openrouter"
@@ -38,10 +38,10 @@ class OpenRouterProvider(LLMProvider):
 
     @property
     def config(self) -> ProviderRuntimeConfiguration:
-        return self.config
+        return self._config
 
     async def generate_answer_async(
-        self, api_key: str | None, configuration: BaseLLMParams, schema: type[T], prompt
+        self, configuration: BaseLLMParams, schema: type[T], prompt
     ) -> tuple[T, str]:
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
@@ -49,6 +49,9 @@ class OpenRouterProvider(LLMProvider):
         import logging
 
         logger = logging.getLogger(__name__)
+
+        if self.config.api_key is None:
+            raise RuntimeError("API Key is not defined")
 
         content = None
         data = None
@@ -75,9 +78,9 @@ class OpenRouterProvider(LLMProvider):
                         "schema": to_strict_json_schema(schema),
                     },
                 },
-                "temperature": self.model_parameters.temperature,
-                "seed": self.model_parameters.seed,
-                "top_p": self.model_parameters.top_p,
+                "temperature": configuration.temperature,
+                "seed": configuration.seed,
+                "top_p": configuration.top_p,
             }
 
             async with session.post(

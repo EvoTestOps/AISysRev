@@ -18,20 +18,24 @@ class LLMService:
         self._mock = mock
         self.setting_service = setting_service
 
-    def get_llm(
-        self, provider: str, runtime_configuration: ProviderRuntimeConfiguration
-    ) -> LLMProvider:
+    def get_llm(self, provider: str) -> type[LLMProvider]:
         Provider = next(
             prov for prov in llm_providers if prov.provider_name == provider
         )
-        return Provider(runtime_configuration)
+        return Provider
 
     async def call_llm(
-        self, schema: type[T], config: BaseLLMParams, prompt: str, api_key: str
+        self,
+        llm: type[LLMProvider],
+        schema: type[T],
+        runtime_configuration: ProviderRuntimeConfiguration,
+        model_configuration: BaseLLMParams,
+        prompt: str,
     ):
-        llm = self.get_llm(config)
-        response_formatted, response_raw = await llm.generate_answer_async(
-            api_key="", configuration=config, prompt=prompt, schema=schema
+        response_formatted, response_raw = await llm(
+            runtime_configuration
+        ).generate_answer_async(
+            configuration=model_configuration, prompt=prompt, schema=schema
         )
         return response_formatted
 

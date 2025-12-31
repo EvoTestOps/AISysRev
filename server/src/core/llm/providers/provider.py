@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Literal, Optional, Type, TypeVar, Union
+from typing import ClassVar, List, Literal, Optional, Type, TypeVar, Union
 from pydantic import BaseModel, Field
+
+from src.schemas.llm import ProviderRuntimeConfiguration
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -42,52 +44,30 @@ class ConfigParameter(BaseModel):
 class LLMProvider(ABC):
     from openai.types.model import Model
 
-    # @abstractmethod
-    # def __init__(self, runtime_config: ProviderRuntimeConfiguration, llm_parameter_config: K):
-    #     pass
+    # ---------- CLASS METADATA ----------
+    provider_name: ClassVar[str]
+    provider_title: ClassVar[str]
+    provider_description: ClassVar[str]
+    provider_model_parameters: ClassVar[type[BaseModel]]
+    provider_config_parameters: ClassVar[list[ConfigParameter]]
+    api_key_config_parameter: ClassVar[ConfigParameter | None] = None
 
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    @property
-    @abstractmethod
-    def provider_name(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def provider_title(self) -> str:
-        pass
+    # ---------- INSTANCE ----------
+    def __init__(self, runtime_config: ProviderRuntimeConfiguration):
+        self._config = runtime_config
 
     @property
-    @abstractmethod
-    def provider_description(self) -> str:
-        pass
+    def config(self) -> ProviderRuntimeConfiguration:
+        return self._config
 
-    @property
+    # ---------- RUNTIME BEHAVIOR ----------
     @abstractmethod
-    def provider_model_parameters(self) -> BaseModel:
-        pass
-
-    @property
-    @abstractmethod
-    def provider_config_parameters(self) -> list[ConfigParameter]:
-        pass
-
-    @property
-    @abstractmethod
-    def api_key_config_parameter_name(self) -> ConfigParameter | None:
-        pass
-
-    @abstractmethod
-    async def get_available_models(self) -> List[Model]:
+    async def get_available_models(self) -> List["Model"]:
         pass
 
     @abstractmethod
     async def generate_answer_async(
         self,
-        api_key: str | None,
         configuration: BaseLLMParams,
         schema: Type[T],
         prompt: str,
