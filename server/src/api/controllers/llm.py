@@ -1,13 +1,24 @@
-from src.core.llm_providers import Provider, ConfigParameter, providers
+from src.core.llm.providers import llm_providers
 from pydantic import BaseModel
 from fastapi import APIRouter, status
+
+from src.core.llm.providers.provider import ConfigParameter, Provider
 
 router = APIRouter()
 
 
 @router.get("/llm/providers", status_code=status.HTTP_200_OK)
 async def get_providers() -> list[Provider]:
-    return providers
+    return [
+        Provider(
+            title=provider.provider_title,
+            description=provider.provider_description,
+            name=provider.provider_name,
+            model_parameters=provider.provider_model_parameters,
+            config_parameters=provider.provider_config_parameters,
+        )
+        for provider in llm_providers
+    ]
 
 
 class ProviderConfigParamsResponse(BaseModel):
@@ -22,11 +33,11 @@ class ProviderConfigParamsResponse(BaseModel):
 )
 async def get_provider_config_params() -> dict[str, list[ConfigParameter]]:
     return {
-        provider.name: ProviderConfigParamsResponse(
-            title=provider.title,
-            config_parameters=provider.config_parameters,
+        provider.provider_name: ProviderConfigParamsResponse(
+            title=provider.provider_title,
+            config_parameters=provider.provider_config_parameters,
         )
-        for provider in providers
+        for provider in llm_providers
     }
 
 

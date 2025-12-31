@@ -17,7 +17,6 @@ import {
   fileFetchFromBackend,
 } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
-import { ModelResponse, retrieve_models } from "../services/openRouterService";
 import { Button } from "../components/Button";
 import {
   FetchedFile,
@@ -131,7 +130,7 @@ type ApiKeyCheckProps = {
   should_show: boolean;
 };
 
-const ApiKeyCheck: React.FC<ApiKeyCheckProps> = ({
+const ConfigKeyCheck: React.FC<ApiKeyCheckProps> = ({
   config_key,
   should_show,
   title,
@@ -203,6 +202,9 @@ export const ProjectPage = () => {
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );
+  const provider = providers.find((p) => p.name === selectedLlmProvider?.value);
+  const providerConfigParameters = provider?.config_parameters;
+  const providerModelParameters = provider?.model_parameters;
 
   const pendingTasks = useMemo(
     () => papers.filter((paper) => paper.human_result == null),
@@ -695,16 +697,16 @@ export const ProjectPage = () => {
                   <hr />
                 </>
               )}
-            <ApiKeyCheck
+            {/* <ConfigKeyCheck
               config_key="openrouter_api_key"
               title="OpenRouter API key"
               should_show={selectedLlmProvider?.value === "openrouter"}
             />
-            <ApiKeyCheck
+            <ConfigKeyCheck
               config_key="openai_api_key"
               title="OpenAI API key"
               should_show={selectedLlmProvider?.value === "openai"}
-            />
+            /> */}
             {isLlmProviderSelected && (
               <div className="flex flex-col items-start gap-2 w-full">
                 <H4 className="pr-16">Model</H4>
@@ -722,6 +724,10 @@ export const ProjectPage = () => {
             {isLlmSelected && (
               <p className="text-md font-bold">Model configuration</p>
             )}
+            {providerModelParameters &&
+              Object.keys(providerModelParameters).map((key) => {
+                return JSON.stringify(providerModelParameters[key]);
+              })}
             {isLlmSelected && (
               <>
                 <div className="flex justify-between">
@@ -737,7 +743,6 @@ export const ProjectPage = () => {
                     step={0.1}
                     value={temperature}
                     disabled={
-                      // openrouterKey == null ||
                       fetchedFiles.length === 0 || selectedLlm === undefined
                     }
                     onChange={(e) => setTemperature(e.target.valueAsNumber)}
@@ -751,7 +756,6 @@ export const ProjectPage = () => {
                     data-testid="seed-input"
                     value={seed}
                     disabled={
-                      // openrouterKey == null ||
                       fetchedFiles.length === 0 || selectedLlm === undefined
                     }
                     onChange={(e) => setSeed(e.target.valueAsNumber)}
@@ -768,7 +772,6 @@ export const ProjectPage = () => {
                     step={0.1}
                     value={top_p}
                     disabled={
-                      // openrouterKey == null ||
                       fetchedFiles.length === 0 || selectedLlm === undefined
                     }
                     onChange={(e) => setTop_p(e.target.valueAsNumber)}
@@ -782,7 +785,6 @@ export const ProjectPage = () => {
                 variant="purple"
                 onClick={() => createZeroShotJob()}
                 disabled={
-                  // openrouterKey == null ||
                   fetchedFiles.length === 0 || selectedLlm === undefined
                 }
                 title="Create zero-shot task"
@@ -798,7 +800,6 @@ export const ProjectPage = () => {
                 href={`/project/${projectUuid}/few_shot`}
                 variant="purple"
                 disabled={
-                  // openrouterKey == null ||
                   fetchedFiles.length === 0 || selectedLlm === undefined
                 }
                 title="Create few-shot task"

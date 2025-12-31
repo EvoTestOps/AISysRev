@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 from pydantic import BaseModel, Field
 from src.core.prompts import default_system_prompt
 
@@ -47,15 +46,8 @@ class StructuredResponse(BaseModel, extra="forbid"):
     exclusion_criteria: list[Criterion]
 
 
-class LLMConfiguration(BaseModel):
-    base_url: str
+class ProviderRuntimeConfiguration(BaseModel):
     model: str
     api_key: str
     # Defaults to "You are an expert research assistant."
     system_prompt: str = default_system_prompt
-    # Default seed: 128
-    seed: Optional[int] = 128
-    # Default temperature: 0
-    temperature: Optional[float] = 0
-    # Default top_p: 0.1
-    top_p: Optional[float] = 0.1

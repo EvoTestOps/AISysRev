@@ -16,6 +16,7 @@ import {
   PaperWithModelEval,
   Project,
   Provider,
+  ProviderResponse,
 } from "./types";
 
 const injections = {
@@ -213,7 +214,6 @@ export const store = createStore<StoreModel>(
         );
     }),
     providers: [],
-    // eslint-disable-next-line no-empty-pattern, @typescript-eslint/no-unused-vars
     fetchProviders: thunk(async (actions, _, { injections }) => {
       actions.setLoadingProviders(true);
       const { providerService } = injections;
