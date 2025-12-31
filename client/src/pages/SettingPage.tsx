@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import * as z from "zod";
 import Skeleton from "react-loading-skeleton";
 import { Button } from "../components/Button";
 import { Layout } from "../components/Layout";
 import { useConfig } from "../config/config";
 import { CircleX, Pencil, Save } from "lucide-react";
 import { Card } from "../components/Card";
+import { H4 } from "../components/Typography";
 
 type SettingEntryProps = {
   config_key: string;
@@ -122,16 +124,76 @@ const SettingEntry: React.FC<SettingEntryProps> = ({ title, config_key }) => {
   );
 };
 
+/**
+ * Matches ConfigParameter from the backend
+ */
+const ConfigParameterSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  type: z.enum(["string", "number", "boolean"]).default("string"),
+  defaultValue: z
+    .union([z.string(), z.number(), z.boolean()])
+    .nullable()
+    .optional(),
+  secret: z.boolean(),
+});
+
+/**
+ * Matches ProviderConfigParamsResponse
+ */
+const ProviderConfigParamsResponseSchema = z.object({
+  title: z.string(),
+  config_parameters: z.array(ConfigParameterSchema),
+});
+
+/**
+ * dict[str, ProviderConfigParamsResponse]
+ */
+const ProviderConfigParamsMapSchema = z.record(
+  z.string(),
+  ProviderConfigParamsResponseSchema
+);
+
+type ProviderConfigParamsMap = z.infer<typeof ProviderConfigParamsMapSchema>;
+
 export const SettingsPage = () => {
+  const [entries, setEntries] = useState<ProviderConfigParamsMap>({});
+  useEffect(() => {
+    fetch("/api/v1/llm/provider_config_params")
+      .then((res) => {
+        return res.json().then((jsonData) => {
+          console.log("json", jsonData);
+          const contents = ProviderConfigParamsMapSchema.parse(jsonData);
+          setEntries(contents);
+        });
+      })
+      .catch();
+  }, []);
   return (
     <Layout title="Settings">
       <Card>
-        <SettingEntry
-          title="OpenRouter API key"
-          config_key="openrouter_api_key"
-        />
-        <hr />
-        <SettingEntry title="OpenAI API key" config_key="openai_api_key" />
+        {Object.keys(entries).map((key) => {
+          const entry = entries[key];
+          if (entry.config_parameters.length === 0) {
+            return null;
+          }
+          return (
+            <div key={`${key}_container`} className="p-4 bg-gray-100">
+              <H4>{entry.title}</H4>
+              <div className="pt-4">
+                {entry.config_parameters.map((setting) => {
+                  return (
+                    <SettingEntry
+                      key={setting.key}
+                      title={setting.title}
+                      config_key={setting.key}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </Card>
     </Layout>
   );

@@ -35,7 +35,9 @@ class LLMService:
             return configuration.base_url
 
         if default is None:
-            raise RuntimeError("No base_url configured for provider {configuration.provider_name}")
+            raise RuntimeError(
+                "No base_url configured for provider {configuration.provider_name}"
+            )
 
         return default
 
