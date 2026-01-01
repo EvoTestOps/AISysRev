@@ -5,11 +5,12 @@ from pydantic import BaseModel, Field
 from src.schemas.llm import ProviderRuntimeConfiguration
 
 T = TypeVar("T", bound=BaseModel)
+K = TypeVar("K", bound=BaseModel)
 
 
 class BaseLLMParams(BaseModel):
     temperature: float = Field(
-        default=0.0,
+        default=0,
         title="Temperature",
         description="Controls the generated text's randomness.",
         ge=0.0,
@@ -24,7 +25,7 @@ class BaseLLMParams(BaseModel):
         default=0.1,
         title="top_p",
         description="Nucleus sampling. Controls the diversity of the generated text.",
-        ge=0.0,
+        ge=0.1,
         le=1.0,
     )
 
@@ -65,7 +66,7 @@ class LLMProvider(ABC):
     @abstractmethod
     async def generate_answer_async(
         self,
-        configuration: BaseLLMParams,
+        configuration: Type[K],
         schema: Type[T],
         prompt: str,
     ) -> tuple[T, str]:

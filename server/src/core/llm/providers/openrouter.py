@@ -24,17 +24,13 @@ class OpenRouterProvider(LLMProvider):
 
     provider_title = "OpenRouter (Cloud)"
     provider_name = "openrouter"
-    provider_base_url = "https://openrouter.ai/api/v1"
+    provider_base_url = "https://openrouter.ai/api/v1" # Needed as we make a raw HTTP request
     provider_description = "OpenRouter provides one API for any model. Access all major models through a single, unified interface. OpenAI SDK works out of the box."
     provider_model_parameters = OpenRouterModelParams
     api_key_config_parameter = ConfigParameter(
         key="openrouter_api_key", title="OpenRouter API key"
     )
     provider_config_parameters = [api_key_config_parameter]
-
-    @property
-    def set_model_parameters(self, params: OpenRouterModelParams):
-        self.model_parameters = params
 
     @property
     def config(self) -> ProviderRuntimeConfiguration:
@@ -84,7 +80,7 @@ class OpenRouterProvider(LLMProvider):
             }
 
             async with session.post(
-                f"{self.config.base_url}/chat/completions",
+                f"{self.provider_base_url}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {self.config.api_key}",
                     "Content-type": "application/json",

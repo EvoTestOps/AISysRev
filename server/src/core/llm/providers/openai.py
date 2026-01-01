@@ -21,7 +21,7 @@ class OpenAIProvider(LLMProvider):
 
     provider_title = "OpenAI (Cloud)"
     provider_name = "openai"
-    provider_base_url = "https://api.openai.com/v1"
+    provider_base_url = None # Not needed, SDK sets it automatically
     provider_description = "Access all OpenAI models from the OpenAI API & SDK."
     provider_model_parameters = OpenAIModelParams
     api_key_config_parameter = ConfigParameter(
@@ -39,6 +39,9 @@ class OpenAIProvider(LLMProvider):
         from openai import AsyncOpenAI
         import openai
 
+        if self.config.model is None:
+            raise RuntimeError("Model needs to be defined")
+
         if self.config.api_key is None:
             raise RuntimeError("API Key is not defined")
 
@@ -55,13 +58,16 @@ class OpenAIProvider(LLMProvider):
                         ),
                         {"role": "user", "content": prompt},
                     ],
-                    seed=configuration.seed,
+                    # seed=configuration.seed,
                     top_p=configuration.top_p,
                     temperature=configuration.temperature,
                     # Structured Outputs is available in OpenAI's latest large language models, starting with GPT-4o
                     text_format=schema,
                 )
-                return response.output_parsed, None
+                if response.output_parsed is None:
+                    raise RuntimeError("LLM response was empty")
+
+                return response.output_parsed, ""
             except openai.APIConnectionError as e:
                 print("The server could not be reached")
                 print(e.__cause__)
@@ -74,7 +80,7 @@ class OpenAIProvider(LLMProvider):
                 print(e.status_code)
                 print(e.response)
 
-        return None, None
+        raise RuntimeError("Failed to call LLM")
 
     async def get_available_models(self) -> List[Model]:
         from openai import AsyncOpenAI

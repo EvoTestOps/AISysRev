@@ -34,7 +34,14 @@ class LocalOpenAISDKProvider(LLMProvider):
         from openai import AsyncOpenAI
         import openai
 
-        async with AsyncOpenAI(api_key="", base_url=self.config.base_url) as client:
+        if self.config.model is None:
+            raise RuntimeError("Model needs to be defined")
+
+        async with AsyncOpenAI(
+            # TODO: Fix
+            api_key="",
+            base_url="http://localhost:1234/v1",
+        ) as client:
             try:
                 response = await client.responses.parse(
                     model=self.config.model,
@@ -47,13 +54,14 @@ class LocalOpenAISDKProvider(LLMProvider):
                         ),
                         {"role": "user", "content": prompt},
                     ],
-                    seed=self.config.seed,
-                    top_p=self.config.top_p,
-                    temperature=self.config.temperature,
+                    top_p=configuration.top_p,
+                    temperature=configuration.temperature,
                     # Structured Outputs is available in OpenAI's latest large language models, starting with GPT-4o
                     text_format=schema,
                 )
-                return response.output_parsed, None
+                if response.output_parsed is None:
+                    raise RuntimeError("Output from LLM was empty")
+                return response.output_parsed, ""
             except openai.APIConnectionError as e:
                 print("The server could not be reached")
                 print(e.__cause__)
@@ -66,13 +74,15 @@ class LocalOpenAISDKProvider(LLMProvider):
                 print(e.status_code)
                 print(e.response)
 
-        return None, None
+            raise RuntimeError("LLM call failed")
 
     async def get_available_models(self) -> List[Model]:
         from openai import AsyncOpenAI
 
         async with AsyncOpenAI(
-            api_key=self.config.api_key, base_url=self.config.base_url
+            # TODO: Fix
+            api_key=self.config.api_key,
+            base_url="http://localhost:1234/v1",
         ) as client:
             models = await client.models.list()
             return models.data

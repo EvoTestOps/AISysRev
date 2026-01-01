@@ -30,10 +30,9 @@ export type FetchedFile = {
 };
 
 export type LlmConfig = {
+  provider_name: string;
   model_name: string;
-  temperature: number;
-  seed: number;
-  top_p: number;
+  configuration: Record<string, unknown>;
 };
 
 export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;

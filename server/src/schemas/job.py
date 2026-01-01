@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Union
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,7 +15,6 @@ class JobPromptingType(str, Enum):
 
 
 class LLMModelConfig(BaseModel):
-    base_url: Optional[str]
     provider_name: str
     model_name: str
     configuration: Union[

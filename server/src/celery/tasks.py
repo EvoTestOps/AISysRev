@@ -90,14 +90,6 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                         db, job_task, job_data, project.criteria
                     )
                 )
-
-                llm_result = await get_structured_response(
-                    # TODO: Fix
-                    db,
-                    job_task,
-                    job_data,
-                    project.criteria,  # type: ignore
-                )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
 
                 logger.info("Updating job task status to %s", JobTaskStatus.DONE)
