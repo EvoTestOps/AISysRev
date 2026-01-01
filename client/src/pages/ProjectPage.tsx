@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H4, H5, H6 } from "../components/Typography";
+import { H4, H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -56,6 +56,7 @@ import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
+import { retrieve_models } from "../services/llmService";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -124,13 +125,13 @@ const SectionHeader: React.FC<{
   </div>
 );
 
-type ApiKeyCheckProps = {
-  config_key: "openai_api_key" | "openrouter_api_key";
+type ConfigKeyCheckProps = {
+  config_key: string;
   title: string;
   should_show: boolean;
 };
 
-const ConfigKeyCheck: React.FC<ApiKeyCheckProps> = ({
+const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({
   config_key,
   should_show,
   title,
@@ -162,9 +163,7 @@ export const ProjectPage = () => {
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
-  const [temperature, setTemperature] = useState(0);
-  const [seed, setSeed] = useState(128);
-  const [top_p, setTop_p] = useState(0.1);
+  const [formValues, setFormValue] = useState<Record<string, unknown>>({});
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
   const [papersLoading, setPapersLoading] = useState(false);
@@ -172,7 +171,9 @@ export const ProjectPage = () => {
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
-
+  const [availableModels, setAvailableModels] = useState<
+    Array<{ id: string; created: number; object: "model"; owned_by: string }>
+  >([]);
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
@@ -229,17 +230,23 @@ export const ProjectPage = () => {
     fetchJobs();
   }, [fetchJobs, projectUuid]);
 
-  // useEffect(() => {
-  //   const fetchModels = async () => {
-  //     try {
-  //       const models = await retrieve_models();
-  //       setAvailableModels(models);
-  //     } catch (error) {
-  //       console.error("Failed to fetch models", error);
-  //     }
-  //   };
-  //   fetchModels();
-  // }, []);
+  useEffect(() => {
+    async function fetch_models() {
+      if (selectedLlmProvider && selectedLlmProvider.value) {
+        try {
+          const models = await retrieve_models(selectedLlmProvider.value);
+          setAvailableModels(models);
+        } catch (error) {
+          console.error(
+            "Failed to fetch available models for provider " +
+              selectedLlmProvider.value,
+            error
+          );
+        }
+      }
+    }
+    fetch_models().catch();
+  }, [selectedLlmProvider]);
 
   const paperToTaskMap = useMemo(() => {
     if (
@@ -295,9 +302,9 @@ export const ProjectPage = () => {
     }
     const llmConfig: LlmConfig = {
       model_name: selectedLlm.value,
-      temperature: temperature,
-      seed: seed,
-      top_p: top_p,
+      temperature: 0,
+      seed: 128,
+      top_p: 0.1,
     };
 
     const promptingConfig = createZeroShotPromptingConfig();
@@ -318,7 +325,7 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [projectUuid, selectedLlm, temperature, seed, top_p, loadPapers]);
+  }, [projectUuid, selectedLlm, loadPapers]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -666,53 +673,25 @@ export const ProjectPage = () => {
               )}
             </div>
             {isLlmProviderSelected &&
-              selectedLlmProvider?.value === "openai" && (
-                <>
-                  <div className="flex flex-col items-stretch gap-2">
-                    <H5 className="pr-16">Provider configuration</H5>
-                    <div className="flex flex-col gap-1 w-full min-w-0">
-                      <label
-                        htmlFor="overwrite-base-url"
-                        className="text-xs font-bold"
-                      >
-                        Base URL
-                      </label>
-
-                      <input
-                        type="text"
-                        id="overwrite-base-url"
-                        className="border-2 border-gray-300 p-2 text-xs w-full rounded-lg"
-                        placeholder="http://localhost:1234/api/v1"
-                      />
-
-                      <div className="w-full text-xs p-2 bg-blue-300 rounded-lg font-bold whitespace-normal break-words">
-                        Please change the base URL to point to your specified
-                        OpenAI-compatible API instance.
-                        <br />
-                        You can use locally hosted LLMs by providing a URL that
-                        starts with http://localhost.
-                      </div>
-                    </div>
-                  </div>
-                  <hr />
-                </>
-              )}
-            {/* <ConfigKeyCheck
-              config_key="openrouter_api_key"
-              title="OpenRouter API key"
-              should_show={selectedLlmProvider?.value === "openrouter"}
-            />
-            <ConfigKeyCheck
-              config_key="openai_api_key"
-              title="OpenAI API key"
-              should_show={selectedLlmProvider?.value === "openai"}
-            /> */}
+              providerConfigParameters &&
+              providerConfigParameters.map((param) => (
+                <ConfigKeyCheck
+                  config_key={param.key}
+                  should_show
+                  title={param.title}
+                />
+              ))}
             {isLlmProviderSelected && (
               <div className="flex flex-col items-start gap-2 w-full">
                 <H4 className="pr-16">Model</H4>
                 <DropdownMenuText
                   disabled={fetchedFiles.length === 0}
-                  options={[]} // TODO: Add
+                  options={[
+                    ...availableModels.map((model) => ({
+                      name: model.id,
+                      value: model.id,
+                    })),
+                  ].sort((a, b) => a.name.localeCompare(b.name))}
                   selected={selectedLlm}
                   onSelect={setSelectedLlm}
                   isSelected={isLlmSelected}
@@ -725,61 +704,57 @@ export const ProjectPage = () => {
               <p className="text-md font-bold">Model configuration</p>
             )}
             {providerModelParameters &&
-              Object.keys(providerModelParameters).map((key) => {
-                return JSON.stringify(providerModelParameters[key]);
+              Object.keys(providerModelParameters.properties).map((key) => {
+                const property = providerModelParameters.properties[key];
+                return (
+                  <div
+                    className="flex flex-col justify-between gap-2"
+                    key={`property_${key}`}
+                  >
+                    <p className="text-md font-semibold">{property.title}</p>
+                    <p className="text-xs pt-2 pb-2 text-gray-500">
+                      {property.description}
+                    </p>
+                    {property.type === "number" && (
+                      <input
+                        type="range"
+                        className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                        data-testid={`property_${key}_input`}
+                        min={property.minimum}
+                        max={property.maximum}
+                        step={0.1}
+                        defaultValue={property.default || undefined}
+                        onChange={(e) => {
+                          setFormValue((vals) => ({
+                            ...vals,
+                            [key]: e.target.value,
+                          }));
+                        }}
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-expect-error Ok
+                        value={formValues[key]}
+                      />
+                    )}
+                    {property.type === "integer" && (
+                      <input
+                        type="number"
+                        className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
+                        data-testid={`property_${key}_input`}
+                        defaultValue={property.default || undefined}
+                        onChange={(e) => {
+                          setFormValue((vals) => ({
+                            ...vals,
+                            [key]: e.target.value,
+                          }));
+                        }}
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-expect-error Ok
+                        value={formValues[key]}
+                      />
+                    )}
+                  </div>
+                );
               })}
-            {isLlmSelected && (
-              <>
-                <div className="flex justify-between">
-                  <p className="text-md font-semibold">
-                    Temperature ({temperature})
-                  </p>
-                  <input
-                    type="range"
-                    className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                    data-testid="temperature-input"
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    value={temperature}
-                    disabled={
-                      fetchedFiles.length === 0 || selectedLlm === undefined
-                    }
-                    onChange={(e) => setTemperature(e.target.valueAsNumber)}
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-md font-semibold">Seed</p>
-                  <input
-                    type="number"
-                    className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
-                    data-testid="seed-input"
-                    value={seed}
-                    disabled={
-                      fetchedFiles.length === 0 || selectedLlm === undefined
-                    }
-                    onChange={(e) => setSeed(e.target.valueAsNumber)}
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-md font-semibold">top_p ({top_p})</p>
-                  <input
-                    type="range"
-                    className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                    data-testid="top_p-input"
-                    min={0.1}
-                    max={1}
-                    step={0.1}
-                    value={top_p}
-                    disabled={
-                      fetchedFiles.length === 0 || selectedLlm === undefined
-                    }
-                    onChange={(e) => setTop_p(e.target.valueAsNumber)}
-                  />
-                </div>
-                <Hr />
-              </>
-            )}
             <div className="flex justify-start">
               <Button
                 variant="purple"
@@ -843,9 +818,9 @@ export const ProjectPage = () => {
         <FewShotModal
           llmConfig={{
             model_name: selectedLlm!.value,
-            seed,
-            temperature,
-            top_p,
+            seed: 128,
+            temperature: 0,
+            top_p: 0.1,
           }}
           onClose={() => {
             loadProjects();

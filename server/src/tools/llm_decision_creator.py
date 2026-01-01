@@ -10,9 +10,7 @@ from src.schemas.job import (
     ZeroShotPromptingConfig,
 )
 from src.db.models.jobtask import JobTask
-from src.core.llm import (
-    StructuredResponse,
-)
+from src.schemas.llm import StructuredResponse
 from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
 from src.services.setting_service import get_setting_service
 
@@ -57,13 +55,15 @@ async def get_structured_response(
 
     criteria = _create_criteria(
         # TODO: Fix
-        inc_exc_criteria["inclusion_criteria"],  # type: ignore
+        inc_exc_criteria["inclusion_criteria"],
         inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
     cfg = job_data.prompting_config
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
-        api_key = await setting_service.get_setting(llm.api_key_config_parameter.key)
+        api_key = await setting_service.get_setting(
+            llm.api_key_config_parameter.key, mask_secret=True
+        )
         if api_key is None:
             raise RuntimeError(
                 f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
@@ -96,7 +96,7 @@ async def get_structured_response(
             seed_paper_txt,
         )
         api_key = await setting_service.get_setting(
-            f"{job_data.llm_config.provider_name}_api_key"
+            f"{job_data.llm_config.provider_name}_api_key", mask_secret=False
         )
         if api_key is None:
             raise RuntimeError(

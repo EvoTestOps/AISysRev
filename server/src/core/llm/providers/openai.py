@@ -79,6 +79,8 @@ class OpenAIProvider(LLMProvider):
     async def get_available_models(self) -> List[Model]:
         from openai import AsyncOpenAI
 
+        if self.config.api_key is None:
+            raise RuntimeError("API key is not defined")
         async with AsyncOpenAI(api_key=self.config.api_key) as client:
             models = await client.models.list()
             return models.data

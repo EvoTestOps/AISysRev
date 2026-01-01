@@ -44,7 +44,6 @@ class ConfigParameter(BaseModel):
 class LLMProvider(ABC):
     from openai.types.model import Model
 
-    # ---------- CLASS METADATA ----------
     provider_name: ClassVar[str]
     provider_title: ClassVar[str]
     provider_description: ClassVar[str]
@@ -52,7 +51,6 @@ class LLMProvider(ABC):
     provider_config_parameters: ClassVar[list[ConfigParameter]]
     api_key_config_parameter: ClassVar[ConfigParameter | None] = None
 
-    # ---------- INSTANCE ----------
     def __init__(self, runtime_config: ProviderRuntimeConfiguration):
         self._config = runtime_config
 
@@ -60,7 +58,6 @@ class LLMProvider(ABC):
     def config(self) -> ProviderRuntimeConfiguration:
         return self._config
 
-    # ---------- RUNTIME BEHAVIOR ----------
     @abstractmethod
     async def get_available_models(self) -> List["Model"]:
         pass

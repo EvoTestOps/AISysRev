@@ -140,11 +140,20 @@ class OpenRouterProvider(LLMProvider):
         ]
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{self.config.base_url}/models?supported_parameters={','.join(required_parameters)}",
+                f"{self.provider_base_url}/models?supported_parameters={','.join(required_parameters)}",
                 headers={
                     "Authorization": f"Bearer {self.config.api_key}",
                     "Content-type": "application/json",
                 },
             ) as response:
                 body = await response.json()
-                return body
+                models = body["data"]
+                return [
+                    Model(
+                        id=model["id"],
+                        created=model["created"],
+                        object="model",
+                        owned_by=model["canonical_slug"],
+                    )
+                    for model in models
+                ]

@@ -146,7 +146,6 @@ export type Result = {
 };
 
 // Keep this up-to-date with server/src/core/llm_providers.py
-const LLMProviderSchema = z.enum(["openrouter", "openai", "local_llm_openai"]);
 const ConfigParameterSchema = z.object({
   key: z.string(),
   title: z.string(),
@@ -158,9 +157,8 @@ const ConfigParameterSchema = z.object({
   secret: z.boolean(),
 });
 
-export type LLMProvider = z.infer<typeof LLMProviderSchema>;
 export const ProviderSchema = z.object({
-  name: LLMProviderSchema,
+  name: z.string(),
   title: z.string(),
   description: z.string(),
   model_parameters: z.object({}).catchall(z.any()),

@@ -66,11 +66,11 @@ export const DropdownMenuText: React.FC<TextProps> = ({
   setSelected,
 }) => {
   return (
-    <Menu as="div" className="relative text-center">
+    <Menu as="div" className="w-full relative text-center">
       <MenuButton
         disabled={disabled}
         className={classNames(
-          "w-48 p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed select-none text-sm",
+          "w-full p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed select-none text-sm",
           {
             "border-gray-300": isSelected,
             "border-red-500 animate-pulse": !isSelected,

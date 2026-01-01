@@ -52,12 +52,15 @@ export const schema = z.object({
 
 export type ModelResponse = z.TypeOf<typeof schema>;
 
-export const retrieve_models = async () => {
+export const retrieve_models = async (
+  provider: string
+): Promise<
+  Array<{ id: string; created: number; object: "model"; owned_by: string }>
+> => {
   try {
-    const res = await axios.get(`${prefix}/openrouter/models`);
-    // console.log("Fetching models successful", res.data);
-    const parsed = schema.parse(res.data);
-    return parsed.data;
+    const res = await axios.get(`${prefix}/llm/${provider}/models`);
+    // TODO: Data validation
+    return res.data;
   } catch (error) {
     console.error("Fetching models unsuccessful", error);
     throw error;
