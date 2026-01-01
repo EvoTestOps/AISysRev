@@ -58,10 +58,8 @@ class OpenAIProvider(LLMProvider):
                         ),
                         {"role": "user", "content": prompt},
                     ],
-                    # seed=configuration.seed,
                     top_p=configuration.top_p,
                     temperature=configuration.temperature,
-                    # Structured Outputs is available in OpenAI's latest large language models, starting with GPT-4o
                     text_format=schema,
                 )
                 if response.output_parsed is None:
@@ -71,14 +69,17 @@ class OpenAIProvider(LLMProvider):
             except openai.APIConnectionError as e:
                 print("The server could not be reached")
                 print(e.__cause__)
+                raise e
             except openai.RateLimitError as e:
                 print("HTTP 429 status code was received; we should back off a bit.")
                 print(e.status_code)
                 print(e.response)
+                raise e
             except openai.APIStatusError as e:
                 print("Another non-200-range status code was received")
                 print(e.status_code)
                 print(e.response)
+                raise e
 
         raise RuntimeError("Failed to call LLM")
 
