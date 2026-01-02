@@ -1,4 +1,6 @@
-from typing import List
+from typing import Any, List
+
+from pydantic import BaseModel
 
 from src.core.llm.providers.provider import (
     T,
@@ -8,58 +10,60 @@ from src.core.llm.providers.provider import (
 )
 from openai.types.model import Model
 
-from src.schemas.llm import ProviderRuntimeConfiguration
+from src.schemas.llm import ProviderRuntimeParameters
+
+
+class EmptyProviderParams(BaseModel):
+    pass
 
 
 class OpenAIModelParams(BaseLLMParams):
     pass
 
 
-class OpenAIProvider(LLMProvider):
-    def __init__(self, runtime_config: ProviderRuntimeConfiguration):
-        super().__init__(runtime_config)
+class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
+    def __init__(
+        self, provider_params: dict[str, Any], runtime_config: ProviderRuntimeParameters
+    ):
+        super().__init__(provider_params, runtime_config)
 
     provider_title = "OpenAI (Cloud)"
     provider_name = "openai"
-    provider_base_url = None # Not needed, SDK sets it automatically
     provider_description = "Access all OpenAI models from the OpenAI API & SDK."
-    provider_model_parameters = OpenAIModelParams
+
+    model_parameters_schema = OpenAIModelParams
     api_key_config_parameter = ConfigParameter(
         key="openai_api_key", title="OpenAI API key"
     )
-    provider_config_parameters = [api_key_config_parameter]
-
-    @property
-    def config(self) -> ProviderRuntimeConfiguration:
-        return self._config
+    config_parameters = [api_key_config_parameter]
 
     async def generate_answer_async(
-        self, configuration: BaseLLMParams, schema: type[T], prompt
+        self, model_parameters: dict[str, Any], schema: type[T], prompt
     ) -> tuple[T, str]:
+        model_cfg = self.parse_model_parameters(model_parameters)
+
         from openai import AsyncOpenAI
         import openai
 
-        if self.config.model is None:
+        if self.runtime_parameters.model is None:
             raise RuntimeError("Model needs to be defined")
 
-        if self.config.api_key is None:
+        if self.runtime_parameters.api_key is None:
             raise RuntimeError("API Key is not defined")
 
-        async with AsyncOpenAI(api_key=self.config.api_key) as client:
+        async with AsyncOpenAI(api_key=self.runtime_parameters.api_key) as client:
             try:
                 response = await client.responses.parse(
-                    model=self.config.model,
+                    model=self.runtime_parameters.model,
                     input=[
-                        (
-                            {
-                                "role": "system",
-                                "content": self.config.system_prompt,
-                            }
-                        ),
+                        {
+                            "role": "system",
+                            "content": self.runtime_parameters.system_prompt,
+                        },
                         {"role": "user", "content": prompt},
                     ],
-                    top_p=configuration.top_p,
-                    temperature=configuration.temperature,
+                    top_p=model_cfg.top_p,
+                    temperature=model_cfg.temperature,
                     text_format=schema,
                 )
                 if response.output_parsed is None:
@@ -80,14 +84,16 @@ class OpenAIProvider(LLMProvider):
                 print(e.status_code)
                 print(e.response)
                 raise e
+            except Exception as e:
+                raise RuntimeError("LLM call failed") from e
 
         raise RuntimeError("Failed to call LLM")
 
     async def get_available_models(self) -> List[Model]:
         from openai import AsyncOpenAI
 
-        if self.config.api_key is None:
+        if self.runtime_parameters.api_key is None:
             raise RuntimeError("API key is not defined")
-        async with AsyncOpenAI(api_key=self.config.api_key) as client:
+        async with AsyncOpenAI(api_key=self.runtime_parameters.api_key) as client:
             models = await client.models.list()
             return models.data

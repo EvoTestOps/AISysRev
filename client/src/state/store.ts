@@ -15,8 +15,7 @@ import {
   JobTaskHumanResult,
   PaperWithModelEval,
   Project,
-  Provider,
-  ProviderResponse,
+  Provider
 } from "./types";
 
 const injections = {

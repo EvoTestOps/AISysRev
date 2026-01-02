@@ -1,11 +1,8 @@
 from enum import Enum
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Any, List, Literal, Union
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from src.core.llm.providers.local_openai_sdk import LocalOpenAISDKModelParams
-from src.core.llm.providers.openai import OpenAIModelParams
-from src.core.llm.providers.openrouter import OpenRouterModelParams
 
 
 class JobPromptingType(str, Enum):
@@ -17,20 +14,19 @@ class JobPromptingType(str, Enum):
 class LLMModelConfig(BaseModel):
     provider_name: str
     model_name: str
-    configuration: Union[
-        OpenRouterModelParams, OpenAIModelParams, LocalOpenAISDKModelParams
-    ]
+    provider_parameters: dict[str, Any]  # These will be type-checked run-time
+    model_parameters: dict[str, Any]  # These will be type-checked run-time
 
 
 # Define different configs for prompting strategies
 
 
 class ZeroShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.ZERO_SHOT]
+    screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
 
 
 class FewShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.FEW_SHOT]
+    screening_type: Literal[JobPromptingType.FEW_SHOT] = JobPromptingType.FEW_SHOT
     seed_paper_inc: List[str]
     seed_paper_exc: List[str]
     remember_selection: bool

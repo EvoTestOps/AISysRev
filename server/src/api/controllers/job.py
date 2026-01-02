@@ -19,7 +19,7 @@ async def get_jobs(
     project: Optional[UUID] = None, jobs: JobService = Depends(get_job_service)
 ):
     try:
-        if project:
+        if project is not None:
             return await jobs.fetch_by_project(project)
         else:
             return await jobs.fetch_all()
@@ -27,7 +27,7 @@ async def get_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch jobs: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead)

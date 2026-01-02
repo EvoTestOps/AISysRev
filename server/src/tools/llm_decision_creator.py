@@ -1,5 +1,6 @@
-from src.schemas.llm import ProviderRuntimeConfiguration
+from src.schemas.llm import ProviderRuntimeParameters
 from src.schemas.paper import PaperHumanResult, PaperRead
+from src.schemas.setting import SettingRead
 from src.services.paper_service import get_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
@@ -55,19 +56,22 @@ async def get_structured_response(
 
     criteria = _create_criteria(
         # TODO: Fix
-        inc_exc_criteria["inclusion_criteria"],
+        inc_exc_criteria["inclusion_criteria"],  # type: ignore
         inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
+
+    api_key: SettingRead | None = None
     cfg = job_data.prompting_config
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
         api_key = await setting_service.get_setting(
-            llm.api_key_config_parameter.key, mask_secret=True
+            llm.api_key_config_parameter.key, mask_secret=False
         )
         if api_key is None:
             raise RuntimeError(
                 f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
             )
+
     if isinstance(cfg, ZeroShotPromptingConfig):
         prompt_text = zero_shot_task_prompt.format(
             job_task_data.title,
@@ -75,13 +79,16 @@ async def get_structured_response(
             criteria,
             additional_instructions,
         )
-
         result = await llm_service.call_llm(
             llm,
-            model_configuration=job_data.llm_config.configuration,
-            runtime_configuration=ProviderRuntimeConfiguration(model="", api_key=""),
-            schema=StructuredResponse,
-            prompt=prompt_text,
+            provider_parameters=job_data.llm_config.provider_parameters,
+            model_parameters=job_data.llm_config.model_parameters,
+            runtime_parameters=ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            response_schema=StructuredResponse,
+            user_prompt=prompt_text,
         )
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
@@ -95,18 +102,16 @@ async def get_structured_response(
             additional_instructions,
             seed_paper_txt,
         )
-        api_key = await setting_service.get_setting(
-            f"{job_data.llm_config.provider_name}_api_key", mask_secret=False
-        )
-        if api_key is None:
-            raise RuntimeError(
-                f"API key for provider {job_data.llm_config.provider_name} is missing"
-            )
         result = await llm_service.call_llm(
-            schema=StructuredResponse,
-            llm_config=job_data.llm_config,
-            prompt=prompt_text,
-            api_key=api_key,
+            llm,
+            provider_parameters=job_data.llm_config.provider_parameters,
+            model_parameters=job_data.llm_config.model_parameters,
+            runtime_parameters=ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            response_schema=StructuredResponse,
+            user_prompt=prompt_text,
         )
         return result
     else:

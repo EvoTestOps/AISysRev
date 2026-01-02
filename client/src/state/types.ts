@@ -32,7 +32,8 @@ export type FetchedFile = {
 export type LlmConfig = {
   provider_name: string;
   model_name: string;
-  configuration: Record<string, unknown>;
+  provider_parameters: Record<string, unknown>;
+  model_parameters: Record<string, unknown>;
 };
 
 export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;
@@ -160,7 +161,8 @@ export const ProviderSchema = z.object({
   name: z.string(),
   title: z.string(),
   description: z.string(),
-  model_parameters: z.object({}).catchall(z.any()),
+  model_parameters_json_schema: z.object({}).catchall(z.any()),
+  provider_parameters_json_schema: z.object({}).catchall(z.any()).nullable(),
   config_parameters: z.array(ConfigParameterSchema),
 });
 

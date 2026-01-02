@@ -47,7 +47,7 @@ class StructuredResponse(BaseModel, extra="forbid"):
     exclusion_criteria: list[Criterion]
 
 
-class ProviderRuntimeConfiguration(BaseModel):
+class ProviderRuntimeParameters(BaseModel):
     model: Optional[str] = None
     api_key: Optional[str] = None
     # Defaults to "You are an expert research assistant."

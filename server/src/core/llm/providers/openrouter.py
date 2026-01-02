@@ -1,6 +1,6 @@
-from typing import List
+from typing import Any, List, Type
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from src.core.llm.providers.provider import (
     T,
     BaseLLMParams,
@@ -9,36 +9,47 @@ from src.core.llm.providers.provider import (
 )
 
 from src.schemas.llm import (
-    ProviderRuntimeConfiguration,
+    ProviderRuntimeParameters,
 )
 from openai.types.model import Model
+
+
+class OpenRouterProviderParams(BaseModel):
+    pass
 
 
 class OpenRouterModelParams(BaseLLMParams):
     pass
 
 
-class OpenRouterProvider(LLMProvider):
-    def __init__(self, runtime_config: ProviderRuntimeConfiguration):
-        super().__init__(runtime_config)
+class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelParams]):
+    def __init__(
+        self,
+        provider_parameters: dict[str, Any],
+        runtime_config: ProviderRuntimeParameters,
+    ):
+        super().__init__(provider_parameters, runtime_config)
 
     provider_title = "OpenRouter (Cloud)"
     provider_name = "openrouter"
-    provider_base_url = "https://openrouter.ai/api/v1" # Needed as we make a raw HTTP request
     provider_description = "OpenRouter provides one API for any model. Access all major models through a single, unified interface. OpenAI SDK works out of the box."
-    provider_model_parameters = OpenRouterModelParams
+    provider_parameters_schema = OpenRouterProviderParams
+
+    model_parameters_schema = OpenRouterModelParams
+
     api_key_config_parameter = ConfigParameter(
         key="openrouter_api_key", title="OpenRouter API key"
     )
-    provider_config_parameters = [api_key_config_parameter]
-
-    @property
-    def config(self) -> ProviderRuntimeConfiguration:
-        return self._config
+    config_parameters = [api_key_config_parameter]
 
     async def generate_answer_async(
-        self, configuration: BaseLLMParams, schema: type[T], prompt
+        self,
+        model_parameters: dict[str, Any],
+        schema: Type[T],
+        prompt: str,
     ) -> tuple[T, str]:
+        cfg = self.parse_model_parameters(model_parameters)
+
         import aiohttp
         from openai.lib._pydantic import to_strict_json_schema
         import json
@@ -46,22 +57,23 @@ class OpenRouterProvider(LLMProvider):
 
         logger = logging.getLogger(__name__)
 
-        if self.config.api_key is None:
+        if self.runtime_parameters.api_key is None:
             raise RuntimeError("API Key is not defined")
+
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
 
         content = None
         data = None
         async with aiohttp.ClientSession() as session:
             data = {
-                "model": self.config.model,
+                "model": self.runtime_parameters.model,
                 "messages": [
-                    (
-                        {
-                            "role": "system",
-                            # "content": system_prompt + "\r\n" + json_instruct_prompt, <-- Test if JSON responses work without this
-                            "content": self.config.system_prompt,
-                        }
-                    ),
+                    {
+                        "role": "system",
+                        # "content": system_prompt + "\r\n" + json_instruct_prompt, <-- Test if JSON responses work without this
+                        "content": self.runtime_parameters.system_prompt,
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 "provider": {"require_parameters": True, "data_collection": "deny"},
@@ -74,15 +86,14 @@ class OpenRouterProvider(LLMProvider):
                         "schema": to_strict_json_schema(schema),
                     },
                 },
-                "temperature": configuration.temperature,
-                "seed": configuration.seed,
-                "top_p": configuration.top_p,
+                "temperature": cfg.temperature,
+                "top_p": cfg.top_p,
             }
 
             async with session.post(
-                f"{self.provider_base_url}/chat/completions",
+                "https://openrouter.ai/api/v1/chat/completions",
                 headers={
-                    "Authorization": f"Bearer {self.config.api_key}",
+                    "Authorization": f"Bearer {self.runtime_parameters.api_key}",
                     "Content-type": "application/json",
                 },
                 json=data,
@@ -125,6 +136,12 @@ class OpenRouterProvider(LLMProvider):
         return content, data
 
     async def get_available_models(self) -> List[Model]:
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
+
+        if self.runtime_parameters.api_key is None:
+            raise RuntimeError("API Key is not defined")
+
         import aiohttp
 
         required_parameters = [
@@ -132,13 +149,12 @@ class OpenRouterProvider(LLMProvider):
             "response_format",
             "temperature",
             "top_p",
-            "seed",
         ]
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"{self.provider_base_url}/models?supported_parameters={','.join(required_parameters)}",
+                f"https://openrouter.ai/api/v1/models?supported_parameters={','.join(required_parameters)}",
                 headers={
-                    "Authorization": f"Bearer {self.config.api_key}",
+                    "Authorization": f"Bearer {self.runtime_parameters.api_key}",
                     "Content-type": "application/json",
                 },
             ) as response:

@@ -53,12 +53,15 @@ export const schema = z.object({
 export type ModelResponse = z.TypeOf<typeof schema>;
 
 export const retrieve_models = async (
-  provider: string
+  provider: string,
+  provider_parameters: Record<string, unknown> = {}
 ): Promise<
   Array<{ id: string; created: number; object: "model"; owned_by: string }>
 > => {
   try {
-    const res = await axios.get(`${prefix}/llm/${provider}/models`);
+    const res = await axios.post(`${prefix}/llm/${provider}/models`, {
+      provider_parameters,
+    });
     // TODO: Data validation
     return res.data;
   } catch (error) {

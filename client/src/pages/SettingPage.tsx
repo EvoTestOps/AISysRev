@@ -71,7 +71,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({ title, config_key }) => {
             <>
               <input
                 type="password"
-                className="border border-gray-300 rounded-lg py-2 px-4 w-full shadow-sm focus:outline-none"
+                className="border border-gray-300 bg-white rounded-lg mt-2 py-2 px-4 w-full shadow-sm focus:outline-none"
                 placeholder="Value"
                 disabled={loading}
                 value={value}
