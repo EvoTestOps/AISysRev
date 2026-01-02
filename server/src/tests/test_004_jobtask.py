@@ -12,7 +12,6 @@ from src.services.job_service import JobService
 from src.services.jobtask_service import JobTaskService
 from src.schemas.job import (
     JobCreate,
-    JobPromptingType,
     JobRead,
     LLMModelConfig,
     ZeroShotPromptingConfig,
@@ -36,11 +35,12 @@ async def test_create_jobtask(db_session, test_project_uuid, test_files_working)
     job_data = JobCreate(
         project_uuid=test_project_uuid,
         llm_config=LLMModelConfig(
-            model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+            model_name="test-model",
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
     new_job = await job_service.create(job_data)
@@ -76,11 +76,12 @@ async def test_create_job_transaction_rollback(
     job_data = JobCreate(
         project_uuid=test_project_uuid,
         llm_config=LLMModelConfig(
-            model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+            model_name="test-model",
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
     with pytest.raises(Exception, match="Simulated failure"):

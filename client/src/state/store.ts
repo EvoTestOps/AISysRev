@@ -10,15 +10,26 @@ import {
 } from "easy-peasy";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
-import { JobTaskHumanResult, PaperWithModelEval, Project } from "./types";
+import * as providerService from "../services/providerService";
+import {
+  JobTaskHumanResult,
+  PaperWithModelEval,
+  Project,
+  Provider
+} from "./types";
 
 const injections = {
   projectsService,
   paperService,
+  providerService,
 };
 
 type LoadingModel = {
-  loading: { projects: boolean; papers: Record<string, boolean> };
+  loading: {
+    projects: boolean;
+    papers: Record<string, boolean>;
+    providers: boolean;
+  };
 };
 
 type ProjectUUID = string;
@@ -79,7 +90,21 @@ interface PaperModel {
   >;
 }
 
-type StoreModel = {} & LoadingModel & ProjectModel & PaperModel;
+interface ProviderModel {
+  // Projects
+  providers: Array<Provider>;
+  setProviders: Action<StoreModel, Array<Provider>>;
+  setLoadingProviders: Action<StoreModel, boolean>;
+  fetchProviders: Thunk<StoreModel, undefined, Injections>;
+  getProviderByName: Computed<
+    StoreModel,
+    (name: string) => Provider | undefined,
+    StoreModel
+  >;
+  refreshProviders: Thunk<StoreModel, undefined, Injections>;
+}
+
+type StoreModel = {} & LoadingModel & ProjectModel & PaperModel & ProviderModel;
 
 export type Injections = typeof injections;
 
@@ -168,6 +193,7 @@ export const store = createStore<StoreModel>(
     // Loading state
     loading: {
       projects: false,
+      providers: false,
       papers: {},
     },
     papers: {},
@@ -182,7 +208,36 @@ export const store = createStore<StoreModel>(
     }),
     getPaperByUuid: computed((state) => {
       return (projectUuid: string, paperUuid: string) =>
-        (state.papers[projectUuid] || []).find(paper => paper.uuid === paperUuid)
+        (state.papers[projectUuid] || []).find(
+          (paper) => paper.uuid === paperUuid
+        );
+    }),
+    providers: [],
+    fetchProviders: thunk(async (actions, _, { injections }) => {
+      actions.setLoadingProviders(true);
+      const { providerService } = injections;
+      return providerService
+        .fetchProviders()
+        .then((p) => {
+          actions.setProviders(p);
+          actions.setLoadingProviders(false);
+        })
+        .catch(console.error)
+        .finally(() => actions.setLoadingProviders(false));
+    }),
+    refreshProviders: thunk(async (actions) => {
+      actions.setProviders([]);
+      return actions.fetchProviders();
+    }),
+    setProviders: action((state, payload) => {
+      state.providers = payload;
+    }),
+    setLoadingProviders: action((state, payload) => {
+      state.loading.providers = payload;
+    }),
+    getProviderByName: computed((state) => {
+      return (name: string) =>
+        (state.providers || []).find((provider) => provider.name === name);
     }),
   },
   {

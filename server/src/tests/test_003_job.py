@@ -2,7 +2,6 @@ import pytest
 from src.crud.job_crud import JobCrud
 from src.schemas.job import (
     JobCreate,
-    JobPromptingType,
     JobRead,
     LLMModelConfig,
     ZeroShotPromptingConfig,
@@ -29,9 +28,12 @@ async def test_create_and_fetch_job_crud(db_session, test_job_data):
     assert isinstance(job, JobRead)
     assert job.project_uuid == test_job_data.project_uuid
     assert job.llm_config.model_name == test_job_data.llm_config.model_name
-    assert job.llm_config.temperature == test_job_data.llm_config.temperature
-    assert job.llm_config.seed == test_job_data.llm_config.seed
-    assert job.llm_config.top_p == test_job_data.llm_config.top_p
+    assert (
+        job.llm_config.model_parameters["temperature"]
+        == test_job_data.llm_config.temperature
+    )
+    assert job.llm_config.model_parameters["seed"] == test_job_data.llm_config.seed
+    assert job.llm_config.model_parameters["top_p"] == test_job_data.llm_config.top_p
 
 
 @pytest.mark.asyncio
@@ -40,14 +42,15 @@ async def test_fetch_jobs_by_project(db_session, test_project_uuid):
     for i in range(1, 11):
         job_data = JobCreate(
             project_uuid=test_project_uuid,
+            prompting_config=ZeroShotPromptingConfig(),
             llm_config=LLMModelConfig(
                 model_name=f"project-test-model {i}",
-                temperature=0.5,
-                seed=42,
-                top_p=0.9,
-            ),
-            prompting_config=ZeroShotPromptingConfig(
-                screening_type=JobPromptingType.ZERO_SHOT
+                provider_name="Test provider",
+                provider_parameters={},
+                model_parameters={
+                    "temperature": 0.5,
+                    "top_p": 0.9,
+                },
             ),
         )
         await crud.create_job(job_data)

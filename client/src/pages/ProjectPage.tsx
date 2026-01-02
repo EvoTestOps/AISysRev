@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H5, H6 } from "../components/Typography";
+import { H3, H4, H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -17,7 +17,6 @@ import {
   fileFetchFromBackend,
 } from "../services/fileService";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
-import { ModelResponse, retrieve_models } from "../services/openRouterService";
 import { Button } from "../components/Button";
 import {
   FetchedFile,
@@ -31,7 +30,6 @@ import {
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
-import { useConfig } from "../config/config";
 import { twMerge } from "tailwind-merge";
 import {
   ChartCandlestick,
@@ -50,12 +48,13 @@ import { TabButton } from "../components/TabButton";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
-import { Hr } from "../components/Hr";
 import { AlertMessage } from "../components/AlertMessage";
 import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
+import { useConfig } from "../config/config";
+import { retrieve_models } from "../services/llmService";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -124,6 +123,36 @@ const SectionHeader: React.FC<{
   </div>
 );
 
+type ConfigKeyCheckProps = {
+  config_key: string;
+  title: string;
+  should_show: boolean;
+};
+
+const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({
+  config_key,
+  should_show,
+  title,
+}) => {
+  const { loading, setting } = useConfig(config_key);
+  return !loading && setting == null && should_show ? (
+    <div>
+      <div
+        className="inline-flex bg-red-300 rounded-md p-4 items-center w-full"
+        data-testid={`error-missing-${config_key}`}
+      >
+        <span className="font-bold text-sm text-red-900 select-none">
+          {title} is not set.
+          <br />
+          <Link className="text-blue-800" to="/settings">
+            Go to settings
+          </Link>
+        </span>
+      </div>
+    </div>
+  ) : null;
+};
+
 export const ProjectPage = () => {
   const params = useParams<{ projectUuid: string }>();
   const { projectUuid } = params;
@@ -132,21 +161,23 @@ export const ProjectPage = () => {
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
   const jobTaskRefetchIntervalMs = 5000;
-  const [temperature, setTemperature] = useState(0);
-  const [seed, setSeed] = useState(128);
-  const [top_p, setTop_p] = useState(0.1);
-  const [isLlmSelected, setIsLlmSelected] = useState(true);
+  const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [isLlmSelected, setIsLlmSelected] = useState(false);
   const [papersLoading, setPapersLoading] = useState(false);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
-
+  const [availableModels, setAvailableModels] = useState<
+    Array<{ id: string; created: number; object: "model"; owned_by: string }>
+  >([]);
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
     (state) => state.getProjectByUuid
   );
+  const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
 
   const project = getProjectByUuid(projectUuid);
@@ -157,19 +188,66 @@ export const ProjectPage = () => {
     }
   }, [fetchPapers, project, projectUuid]);
 
-  const { loading: openrouterKeyLoading, setting: openrouterKey } =
-    useConfig("openrouter_api_key");
-
   const paperUuid = useMemo(() => {
     if (!search) return null;
     return new URLSearchParams(search).get("paperUuid");
   }, [search]);
-  const [availableModels, setAvailableModels] = useState<ModelResponse["data"]>(
-    []
-  );
+
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<
+    DropdownOption | undefined
+  >(undefined);
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
     undefined
   );
+  const provider = providers.find((p) => p.name === selectedLlmProvider?.value);
+
+  const configParameters = provider?.config_parameters;
+  const modelParametersSchema = provider?.model_parameters_json_schema;
+  const providerParametersSchema = provider?.provider_parameters_json_schema;
+  const defaultProviderValues = useMemo(() => {
+    if (!providerParametersSchema) {
+      return {};
+    }
+    return Object.keys(providerParametersSchema.properties).reduce(
+      (prev, curr) => {
+        const defaultVal = providerParametersSchema.properties[curr].default;
+        return {
+          ...prev,
+          [curr]: defaultVal === undefined ? undefined : defaultVal,
+        };
+      },
+      {}
+    );
+  }, [providerParametersSchema]);
+  const defaultModelValues = useMemo(() => {
+    if (!modelParametersSchema) {
+      return {};
+    }
+    return Object.keys(modelParametersSchema.properties).reduce(
+      (prev, curr) => {
+        const defaultVal = modelParametersSchema.properties[curr].default;
+        return {
+          ...prev,
+          [curr]: defaultVal === undefined ? undefined : defaultVal,
+        };
+      },
+      {}
+    );
+  }, [modelParametersSchema]);
+
+  const [modelFormValues, setModelFormValue] = useState<
+    Record<string, unknown>
+  >({});
+  useEffect(() => {
+    setModelFormValue(defaultModelValues);
+  }, [defaultModelValues]);
+
+  const [providerFormValues, setProviderFormValue] = useState<
+    Record<string, unknown>
+  >({});
+  useEffect(() => {
+    setProviderFormValue(defaultProviderValues);
+  }, [defaultProviderValues]);
 
   const pendingTasks = useMemo(
     () => papers.filter((paper) => paper.human_result == null),
@@ -194,17 +272,28 @@ export const ProjectPage = () => {
     fetchJobs();
   }, [fetchJobs, projectUuid]);
 
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const models = await retrieve_models();
-        setAvailableModels(models);
-      } catch (error) {
-        console.error("Failed to fetch models", error);
+  const fetchModels = useCallback(() => {
+    async function fetch_models() {
+      if (selectedLlmProvider && selectedLlmProvider.value) {
+        try {
+          setModelsLoaded(false);
+          const models = await retrieve_models(
+            selectedLlmProvider.value,
+            providerFormValues
+          );
+          setAvailableModels(models);
+          setModelsLoaded(true);
+        } catch (error) {
+          console.error(
+            "Failed to fetch available models for provider " +
+              selectedLlmProvider.value,
+            error
+          );
+        }
       }
-    };
-    fetchModels();
-  }, []);
+    }
+    fetch_models().catch();
+  }, [providerFormValues, selectedLlmProvider]);
 
   const paperToTaskMap = useMemo(() => {
     if (
@@ -254,15 +343,18 @@ export const ProjectPage = () => {
 
   const createZeroShotJob = useCallback(async () => {
     if (!selectedLlm) {
-      toast.error("Please select a llm model before creating a task.");
-      setIsLlmSelected(false);
+      toast.error("Please select a model before creating a task.");
+      return;
+    }
+    if (!selectedLlmProvider) {
+      toast.error("Please select a provider before creating a task.");
       return;
     }
     const llmConfig: LlmConfig = {
       model_name: selectedLlm.value,
-      temperature: temperature,
-      seed: seed,
-      top_p: top_p,
+      provider_name: selectedLlmProvider.value,
+      model_parameters: modelFormValues, // Form values contain all LLM-specific configuration what is needed
+      provider_parameters: providerFormValues,
     };
 
     const promptingConfig = createZeroShotPromptingConfig();
@@ -283,7 +375,14 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [projectUuid, selectedLlm, temperature, seed, top_p, loadPapers]);
+  }, [
+    selectedLlm,
+    selectedLlmProvider,
+    modelFormValues,
+    providerFormValues,
+    projectUuid,
+    loadPapers,
+  ]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -485,32 +584,16 @@ export const ProjectPage = () => {
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          {/* <Card>
-            <H6>Inclusion criteria</H6>
-            {loadingProjects ? (
-              <Skeleton />
-            ) : (
-              <CriteriaList criteria={inclusionCriteria || []} />
-            )}
-            <H6>Exclusion criteria</H6>
-            {loadingProjects ? (
-              <Skeleton />
-            ) : (
-              <CriteriaList criteria={exclusionCriteria || []} />
-            )}
-          </Card> */}
-          {/* 
-          <H4>Screening tasks</H4> */}
           {jobTasks.length === 0 && (
             <AlertMessage message="No screening tasks." />
           )}
           {createdJobs.map((job) => {
             const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE,
+              (task) => task.status === JobTaskStatus.DONE
             ).length;
             const errorCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.ERROR,
+              (task) => task.status === JobTaskStatus.ERROR
             ).length;
             const totalCount = tasks.length;
             const completedCount = doneCount + errorCount;
@@ -518,7 +601,7 @@ export const ProjectPage = () => {
               totalCount === 0
                 ? 0
                 : Math.round((completedCount / totalCount) * 100);
-            // console.log(job.prompting_config);
+
             return (
               <Card key={job.uuid} className="flex-row justify-between">
                 <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
@@ -610,135 +693,256 @@ export const ProjectPage = () => {
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
-          <Card className="relative">
+          <Card className="relative w-72">
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
                 <span>To create tasks, you must first upload papers.</span>
               </div>
             )}
-            <>
-              <div className="flex">
-                <H5 className="pr-16">LLM</H5>
+            <div className="flex flex-col items-start gap-2">
+              <H3>Provider</H3>
+              <DropdownMenuText
+                disabled={false}
+                options={providers.map((provider) => ({
+                  name: provider.title,
+                  value: provider.name,
+                }))}
+                selected={selectedLlmProvider}
+                onSelect={(val) => {
+                  setSelectedLlmProvider(val);
+                  setAvailableModels([]);
+                  setModelsLoaded(false);
+                  setIsLlmSelected(false);
+                  setSelectedLlm(undefined);
+                }}
+                isSelected={isLlmProviderSelected}
+                setSelected={setIsLlmProviderSelected}
+              />
+              {/* {isLlmProviderSelected && (
+                <div className="text-xs bg-slate-600 p-2 rounded-lg text-white inline-flex w-full flex-row gap-2 items-start">
+                  <div>
+                    <InfoIcon size={16} />
+                  </div>
+                  <span>
+                    {
+                      providers.find(
+                        (provider) =>
+                          provider.name === selectedLlmProvider?.value
+                      )?.description
+                    }
+                  </span>
+                </div>
+              )} */}
+              {isLlmProviderSelected && providerParametersSchema && (
+                // <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
+                <>
+                  {Object.keys(providerParametersSchema.properties).map(
+                    (key) => {
+                      const property = providerParametersSchema.properties[key];
+                      return (
+                        <div
+                          className="flex flex-col justify-between gap-1 w-full"
+                          key={`property_${key}`}
+                        >
+                          <p className="text-md font-semibold">
+                            {property.title}{" "}
+                            {providerFormValues[key] !== undefined &&
+                            property.type !== "string" &&
+                            providerFormValues[key] !== ""
+                              ? "(" + providerFormValues[key] + ")"
+                              : ""}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {property.description}
+                          </p>
+                          {property.type === "number" && (
+                            <input
+                              type="range"
+                              disabled={modelsLoaded}
+                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                              data-testid={`property_${key}_input`}
+                              min={property.minimum}
+                              max={property.maximum}
+                              step={0.1}
+                              onChange={(e) => {
+                                setProviderFormValue((vals) => ({
+                                  ...vals,
+                                  [key]: e.target.value,
+                                }));
+                              }}
+                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                              // @ts-expect-error Ok
+                              value={providerFormValues[key]}
+                            />
+                          )}
+                          {property.type === "string" && (
+                            <input
+                              type="text"
+                              disabled={modelsLoaded}
+                              className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-0 bg-white accent-slate-800 text-xs"
+                              data-testid={`property_${key}_input`}
+                              onChange={(e) => {
+                                setProviderFormValue((vals) => ({
+                                  ...vals,
+                                  [key]: e.target.value,
+                                }));
+                              }}
+                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                              // @ts-expect-error Ok
+                              value={providerFormValues[key]}
+                            />
+                          )}
+                          {property.type === "integer" && (
+                            <input
+                              type="number"
+                              disabled={modelsLoaded}
+                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-0 border-2 accent-slate-800"
+                              data-testid={`property_${key}_input`}
+                              onChange={(e) => {
+                                setProviderFormValue((vals) => ({
+                                  ...vals,
+                                  [key]: e.target.value,
+                                }));
+                              }}
+                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                              // @ts-expect-error Ok
+                              value={modelFormValues[key]}
+                            />
+                          )}
+                        </div>
+                      );
+                    }
+                  )}
+                </>
+                // </div>
+              )}
+            </div>
+            {isLlmProviderSelected &&
+              configParameters &&
+              configParameters.map((param, i) => (
+                <ConfigKeyCheck
+                  key={`${param.key}_${i}`}
+                  config_key={param.key}
+                  should_show
+                  title={param.title}
+                />
+              ))}
+            {isLlmProviderSelected && <H4>Model</H4>}
+            {isLlmProviderSelected && !modelsLoaded && (
+              <button
+                className="text-sm font-bold hover:cursor-pointer bg-blue-600 text-white p-2 rounded-lg"
+                onClick={() => fetchModels()}
+              >
+                Load models
+              </button>
+            )}
+            {modelsLoaded && (
+              <div className="flex flex-col items-start gap-2 w-full">
                 <DropdownMenuText
-                  disabled={openrouterKey == null || fetchedFiles.length === 0}
-                  options={availableModels.map((m) => ({
-                    name: m.name,
-                    value: m.id,
-                  }))}
+                  disabled={!isLlmProviderSelected || fetchedFiles.length === 0}
+                  options={[
+                    ...availableModels.map((model) => ({
+                      name: model.id,
+                      value: model.id,
+                    })),
+                  ].sort((a, b) => a.name.localeCompare(b.name))}
                   selected={selectedLlm}
                   onSelect={setSelectedLlm}
-                  isLlmSelected={isLlmSelected}
-                  setIsLlmSelected={setIsLlmSelected}
+                  isSelected={isLlmSelected}
+                  setSelected={setIsLlmSelected}
                 />
               </div>
-              {!openrouterKeyLoading && openrouterKey == null && (
-                <div>
-                  <div
-                    className="flex bg-red-300 rounded-md p-4 items-center"
-                    data-testid="error-missing-openrouter-api-key"
-                  >
-                    <span className="font-bold text-sm text-red-900 select-none">
-                      OpenRouter API key is not set
-                      <br />
-                      <Link className="text-blue-800" to="/settings">
-                        Go to settings
-                      </Link>
-                    </span>
-                  </div>
-                </div>
-              )}
-              <Hr />
-              <p className="text-md font-bold">LLM configuration</p>
-              <div className="flex justify-between">
-                <p className="text-md font-semibold">
-                  Temperature ({temperature})
-                </p>
-                <input
-                  type="range"
-                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                  data-testid="temperature-input"
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  value={temperature}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setTemperature(e.target.valueAsNumber)}
-                />
+            )}
+            {isLlmSelected && modelParametersSchema && (
+              <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
+                {Object.keys(modelParametersSchema.properties).map((key) => {
+                  const property = modelParametersSchema.properties[key];
+                  return (
+                    <div
+                      className="flex flex-col justify-between gap-1"
+                      key={`property_${key}`}
+                    >
+                      <p className="text-md font-semibold">
+                        {property.title}{" "}
+                        {modelFormValues[key] !== undefined &&
+                        modelFormValues[key] !== ""
+                          ? "(" + modelFormValues[key] + ")"
+                          : ""}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {property.description}
+                      </p>
+                      {property.type === "number" && (
+                        <input
+                          type="range"
+                          className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                          data-testid={`property_${key}_input`}
+                          min={property.minimum}
+                          max={property.maximum}
+                          step={0.1}
+                          onChange={(e) => {
+                            setModelFormValue((vals) => ({
+                              ...vals,
+                              [key]: e.target.value,
+                            }));
+                          }}
+                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                          // @ts-expect-error Ok
+                          value={modelFormValues[key]}
+                        />
+                      )}
+                      {property.type === "integer" && (
+                        <input
+                          type="number"
+                          className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
+                          data-testid={`property_${key}_input`}
+                          onChange={(e) => {
+                            setModelFormValue((vals) => ({
+                              ...vals,
+                              [key]: e.target.value,
+                            }));
+                          }}
+                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                          // @ts-expect-error Ok
+                          value={modelFormValues[key]}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-md font-semibold">Seed</p>
-                <input
-                  type="number"
-                  className="p-1 rounded-xl text-center border-gray-300 border-2 not-disabled:hover:bg-gray-100 cursor-pointer disabled:cursor-not-allowed"
-                  data-testid="seed-input"
-                  value={seed}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setSeed(e.target.valueAsNumber)}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <p className="text-md font-semibold">top_p ({top_p})</p>
-                <input
-                  type="range"
-                  className="pl-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                  data-testid="top_p-input"
-                  min={0.1}
-                  max={1}
-                  step={0.1}
-                  value={top_p}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  onChange={(e) => setTop_p(e.target.valueAsNumber)}
-                />
-              </div>
-              <Hr />
-              <div className="flex justify-start">
-                <Button
-                  variant="purple"
-                  onClick={() => createZeroShotJob()}
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  title="Create zero-shot task"
-                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
-                >
-                  <Sparkles />
-                  <Badge text="ZS" />
-                  <span>Create Zero-shot</span>
-                </Button>
-              </div>
-              <div className="flex justify-start">
-                <LinkButton
-                  href={`/project/${projectUuid}/few_shot`}
-                  variant="purple"
-                  disabled={
-                    openrouterKey == null ||
-                    fetchedFiles.length === 0 ||
-                    selectedLlm === undefined
-                  }
-                  title="Create few-shot task"
-                  className="w-full rounded-lg font-bold text-sm items-center justify-center"
-                >
-                  <Sparkles />
-                  <Badge text="FS" />
-                  <span>Create Few-shot</span>
-                </LinkButton>
-              </div>
-            </>
+            )}
+            <div className="flex justify-start">
+              <Button
+                variant="purple"
+                onClick={() => createZeroShotJob()}
+                disabled={
+                  fetchedFiles.length === 0 || selectedLlm === undefined
+                }
+                title="Create zero-shot task"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <Badge text="ZS" />
+                <span>Create Zero-shot</span>
+              </Button>
+            </div>
+            <div className="flex justify-start">
+              <LinkButton
+                href={`/project/${projectUuid}/few_shot`}
+                variant="purple"
+                disabled={
+                  fetchedFiles.length === 0 || selectedLlm === undefined
+                }
+                title="Create few-shot task"
+                className="w-full rounded-lg font-bold text-sm items-center justify-center"
+              >
+                <Sparkles />
+                <Badge text="FS" />
+                <span>Create Few-shot</span>
+              </LinkButton>
+            </div>
           </Card>
         </div>
       </div>
@@ -771,10 +975,10 @@ export const ProjectPage = () => {
       {fewShotViewMatch && (
         <FewShotModal
           llmConfig={{
+            provider_name: selectedLlmProvider!.value,
             model_name: selectedLlm!.value,
-            seed,
-            temperature,
-            top_p,
+            model_parameters: modelFormValues,
+            provider_parameters: {},
           }}
           onClose={() => {
             loadProjects();

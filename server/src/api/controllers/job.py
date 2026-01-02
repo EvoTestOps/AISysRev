@@ -8,7 +8,6 @@ from src.services.project_service import (
     get_project_service,
 )
 from src.event_queue import EventName, QueueItem, push_event
-from src.services.setting_service import SettingService, get_setting_service_fastapi
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.services.job_service import JobService, get_job_service
 
@@ -20,7 +19,7 @@ async def get_jobs(
     project: Optional[UUID] = None, jobs: JobService = Depends(get_job_service)
 ):
     try:
-        if project:
+        if project is not None:
             return await jobs.fetch_by_project(project)
         else:
             return await jobs.fetch_all()
@@ -28,7 +27,7 @@ async def get_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch jobs: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead)
@@ -53,17 +52,9 @@ async def get_single_job(uuid: UUID, jobs: JobService = Depends(get_job_service)
 async def create_job(
     job_data: JobCreate,
     jobs: JobService = Depends(get_job_service),
-    settings: SettingService = Depends(get_setting_service_fastapi),
     projects: ProjectService = Depends(get_project_service),
 ):
     try:
-        # openrouter_secret = await settings.get_setting("openrouter_api_key")
-        # if openrouter_secret is None:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="OpenRouter API key is not set, cannot continue",
-        #     )
-
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):
             # If the user wants to remember their choice:

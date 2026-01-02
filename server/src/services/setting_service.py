@@ -33,10 +33,8 @@ class SettingService:
         return uuid
 
 
-def get_setting_service() -> SettingService:
-    db = get_db()
-    # TODO: Fix
-    return SettingService(db, SettingCrud(db))  # type: ignore
+def get_setting_service(db: AsyncSession) -> SettingService:
+    return SettingService(db, SettingCrud(db))
 
 
 def get_setting_service_fastapi(db=Depends(get_db)) -> SettingService:

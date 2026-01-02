@@ -2,6 +2,7 @@ import asyncio
 from enum import Enum
 from pydantic import BaseModel
 
+
 # Remember to keep the client-side file in sync (client/src/components/EventStream.tsx)
 class EventName(Enum):
     # Events for JobTask-related things

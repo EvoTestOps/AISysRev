@@ -2,7 +2,6 @@ import pytest
 import pytest_asyncio
 import asyncio
 from io import BytesIO
-from random import random
 from fastapi import UploadFile
 from fastapi.testclient import TestClient
 from starlette.datastructures import Headers
@@ -14,7 +13,6 @@ from src.crud.project_crud import ProjectCrud
 from src.schemas.project import ProjectCreate, Criteria
 from src.schemas.job import (
     JobCreate,
-    JobPromptingType,
     LLMModelConfig,
     ZeroShotPromptingConfig,
 )
@@ -46,13 +44,11 @@ def test_job_data(test_project_uuid):
         project_uuid=test_project_uuid,
         llm_config=LLMModelConfig(
             model_name="test-model",
-            temperature=round(random(), 1),
-            seed=42,
-            top_p=round(random(), 1),
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
 

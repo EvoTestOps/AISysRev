@@ -9,7 +9,7 @@ router = APIRouter()
 async def get_setting(
     name: str, setting_service: SettingService = Depends(get_setting_service_fastapi)
 ):
-    data = await setting_service.get_setting(name)
+    data = await setting_service.get_setting(name, mask_secret=True)
 
     if not data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")

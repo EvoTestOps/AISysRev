@@ -66,7 +66,7 @@ export const H5: React.FC<
   >
 > = ({ children, className = "", ...props }: HeadingProps) => (
   <h5
-    className={twMerge("text-xl font-semibold tracking-normal", className)}
+    className={twMerge("text-md font-semibold tracking-normal", className)}
     {...props}
   >
     {children}

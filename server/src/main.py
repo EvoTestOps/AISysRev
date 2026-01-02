@@ -10,7 +10,7 @@ from src.api.controllers.health_check import router as health_check_router
 from src.api.controllers.project import router as project_router
 from src.api.controllers.file import router as file_router
 from src.api.controllers.job import router as job_router
-from src.api.controllers.openrouter import router as openrouter_router
+from src.api.controllers.llm import router as llm_router
 from src.api.controllers.jobtask import router as jobtask_router
 from src.api.controllers.paper import router as paper_router
 from src.api.controllers.setting import router as setting_router
@@ -67,7 +67,7 @@ v1_router.include_router(jobtask_router)
 v1_router.include_router(paper_router)
 v1_router.include_router(setting_router)
 v1_router.include_router(celery_test_router)
-v1_router.include_router(openrouter_router)
+v1_router.include_router(llm_router)
 v1_router.include_router(result_router)
 v1_router.include_router(event_queue_router)
 
