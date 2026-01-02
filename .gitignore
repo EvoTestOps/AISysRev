@@ -3,3 +3,4 @@
 .env
 .vscode
 .coverage
+.vscode/settings.json
