@@ -1,18 +1,17 @@
-from src.schemas.paper import PaperHumanResult, PaperRead
-from src.services.paper_service import create_paper_service
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.schemas.project import Criteria
+from src.core.llm import (
+    StructuredResponse,
+)
+from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt
+from src.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
     ZeroShotPromptingConfig,
 )
-from src.models.jobtask import JobTask
-from src.core.llm import (
-    StructuredResponse,
-)
-from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
-from src.services.openrouter_service import create_openrouter_service
+from src.schemas.paper import PaperHumanResult, PaperRead
+from src.schemas.project import Criteria
+from src.services.openrouter_service import OpenRouterService
+from src.services.paper_service import PaperService
 
 
 def _create_few_shot_examples(papers: list[PaperRead]):
@@ -42,13 +41,12 @@ def _create_criteria(
 
 
 async def get_structured_response(
-    db: AsyncSession,
+    openrouter_service: OpenRouterService,
+    paper_service: PaperService,
     job_task_data: JobTask,
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
 ) -> StructuredResponse:
-    openrouter_service = create_openrouter_service(db)
-    paper_service = create_paper_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
     llm_model = job_data.llm_config.model_name

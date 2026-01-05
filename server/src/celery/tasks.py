@@ -1,12 +1,15 @@
 import asyncio
 import logging
-from src.worker import celery_app
-from src.db.session import AsyncSessionLocal
-from src.schemas.job import JobCreate, JobRead
-from src.schemas.jobtask import JobTaskStatus
-from src.crud.project_crud import ProjectCrud
+
 from src.crud.jobtask_crud import JobTaskCrud
+from src.crud.project_crud import ProjectCrud
+from src.db.db_context import DBContext
+from src.schemas.job import JobCreate
+from src.schemas.jobtask import JobTaskStatus
+from src.services.openrouter_service import create_openrouter_service
+from src.services.paper_service import create_paper_service
 from src.tools.llm_decision_creator import get_structured_response
+from src.worker import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +51,14 @@ async def async_process_job(
     celery_task: asyncio.Task, job_id: int, job_data: JobCreate
 ):
     logger.info("async_process_job: Starting to process job %s", job_id)
-    async with AsyncSessionLocal() as db:
-        project_crud = ProjectCrud(db)
-        jobtask_crud = JobTaskCrud(db)
+    # TODO: Does not currently show statuses in realtime to front since results are commited
+    #   only once in the end.
+    async with DBContext() as db_ctx:
+
+        project_crud = db_ctx.crud(ProjectCrud)
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        openrouter_service = create_openrouter_service(db_ctx)
+        paper_service = create_paper_service(db_ctx)
 
         logger.info("Fetching project by UUID %s", job_data.project_uuid)
         project = await project_crud.fetch_project_by_uuid(job_data.project_uuid)
@@ -70,7 +78,11 @@ async def async_process_job(
                 )
                 llm_result = await _async_retry_job_task(
                     lambda: get_structured_response(
-                        db, job_task, job_data, project.criteria
+                        openrouter_service,
+                        paper_service,
+                        job_task,
+                        job_data,
+                        project.criteria,
                     )
                 )
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
@@ -88,5 +100,7 @@ async def async_process_job(
 
                 logger.error(e)
                 continue
+
+        await db_ctx.commit()
 
         return {"result": "all job tasks processed"}
