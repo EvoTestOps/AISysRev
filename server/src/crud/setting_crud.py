@@ -44,5 +44,4 @@ class SettingCrud:
 
         result = await self.db.execute(stmt)
 
-        await self.db.commit()
         return 1, result.scalar_one()

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from src.services.setting_service import SettingService, get_setting_service_fastapi
+from src.services.setting_service import create_setting_service
+from src.db.db_context import DBContext, get_db_ctx
 
 router = APIRouter()
 
 
 @router.get("/setting", status_code=status.HTTP_200_OK)
-async def get_setting(
-    name: str, setting_service: SettingService = Depends(get_setting_service_fastapi)
-):
+async def get_setting(name: str, db_ctx: DBContext = Depends(get_db_ctx)):
+    setting_service = create_setting_service(db_ctx)
     data = await setting_service.get_setting(name)
 
     if not data:
@@ -20,11 +20,15 @@ class UpsertData(BaseModel):
     name: str
     value: str
 
+
 @router.post("/setting", status_code=status.HTTP_201_CREATED)
 async def upsert_setting(
     data: UpsertData,
-    setting_service: SettingService = Depends(get_setting_service_fastapi),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
+
+    setting_service = create_setting_service(db_ctx)
     uuid = await setting_service.upsert_setting(data.name, data.value, True)
+    await db_ctx.commit()
 
     return {"uuid": uuid}

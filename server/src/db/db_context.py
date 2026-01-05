@@ -1,9 +1,9 @@
-from typing import Type
+from typing import Type, AsyncGenerator
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from .session import AsyncSessionLocal
 
 
-class UnitOfWork:
+class DBContext:
     def __init__(
         self, session_factory: async_sessionmaker[AsyncSession] = AsyncSessionLocal
     ):
@@ -29,3 +29,11 @@ class UnitOfWork:
 
     def crud(self, crud_cls: Type):
         return crud_cls(self.session)
+
+    def nested(self):
+        return self.session.begin_nested()
+
+
+async def get_db_ctx() -> AsyncGenerator[DBContext, None]:
+    async with DBContext() as db_ctx:
+        yield db_ctx
