@@ -53,12 +53,12 @@ class JobTaskCrud:
     async def update_job_task_status(self, job_task_id: int, status: str):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(status=status)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_tasks_status(self, job_id: int, status: str):
         stmt = update(JobTask).where(JobTask.job_id == job_id).values(status=status)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_task_result(
         self, job_task_id: int, result: StructuredResponse
@@ -69,12 +69,12 @@ class JobTaskCrud:
             .values(result=result.model_dump(mode="json"))
         )
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_task_error(self, job_task_id: int, error: str):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(error=error)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def add_jobtask_human_result(
         self, job_task_uuid: UUID, human_result: JobTaskHumanResult
@@ -85,4 +85,3 @@ class JobTaskCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
-        await self.db.commit()

@@ -1,9 +1,8 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
-from fastapi import Depends
-from src.core.config import settings
+from src.db.db_context import DBContext, get_db_ctx
 from src.models.openrouter import OpenrouterModelResponse
-from src.services.openrouter_service import OpenRouterService, get_openrouter_service_fastapi
+from src.services.openrouter_service import create_openrouter_service
 
 router = APIRouter()
 
@@ -14,8 +13,10 @@ router = APIRouter()
     response_model=OpenrouterModelResponse,
 )
 async def get_available_models(
-    openrouter: OpenRouterService = Depends(get_openrouter_service_fastapi),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
+    openrouter = create_openrouter_service(db_ctx)
+
     required_parameters = [
         "structured_outputs",
         "response_format",
@@ -80,11 +81,17 @@ async def get_available_models(
         models = openrouter.get_available_models()
         data = models["data"]
         models["data"] = [
-            model for model in data
+            model
+            for model in data
             if model.get("name") in valid_model_names
-            and all(param in (model.get("supported_parameters") or []) for param in required_parameters)
+            and all(
+                param in (model.get("supported_parameters") or [])
+                for param in required_parameters
+            )
         ]
-        models["data"] = sorted(models["data"], key=lambda model: model.get("name", "").lower())
+        models["data"] = sorted(
+            models["data"], key=lambda model: model.get("name", "").lower()
+        )
         return models
     except HTTPException:
         raise

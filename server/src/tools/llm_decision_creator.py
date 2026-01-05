@@ -1,8 +1,7 @@
 from src.schemas.paper import PaperHumanResult, PaperRead
-from src.services.paper_service import get_paper_service
+from src.services.paper_service import create_paper_service
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.project import Criteria
-from src.services.openrouter_service import get_openrouter_service
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
@@ -13,6 +12,7 @@ from src.core.llm import (
     StructuredResponse,
 )
 from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
+from src.services.openrouter_service import create_openrouter_service
 
 
 def _create_few_shot_examples(papers: list[PaperRead]):
@@ -47,8 +47,8 @@ async def get_structured_response(
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
 ) -> StructuredResponse:
-    openrouter_service = get_openrouter_service(db)
-    paper_service = get_paper_service(db)
+    openrouter_service = create_openrouter_service(db)
+    paper_service = create_paper_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
     llm_model = job_data.llm_config.model_name

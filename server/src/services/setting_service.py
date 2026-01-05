@@ -1,9 +1,6 @@
 from typing import Optional
 from src.db.db_context import DBContext
-from fastapi import Depends
-from src.db.session import get_db
 from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
-from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,7 +31,3 @@ class SettingService:
 
 def create_setting_service(db_ctx: DBContext) -> SettingService:
     return SettingService(db_ctx.crud(SettingCrud))
-
-
-def get_setting_service(db: AsyncSession = Depends(get_db)) -> SettingService:
-    return SettingService(SettingCrud(db))

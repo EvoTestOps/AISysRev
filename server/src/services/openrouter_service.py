@@ -3,8 +3,9 @@ from typing import TypeVar
 from fastapi import Depends
 from pydantic import BaseModel
 from src.crud.setting_crud import SettingCrud
-from src.services.setting_service import SettingService
+from src.services.setting_service import SettingService, create_setting_service
 from src.db.session import AsyncSessionLocal, get_db
+from src.db.db_context import DBContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.schemas.llm import LLMConfiguration
 from src.core.llm import MockLLM, OpenRouterLLM
@@ -51,13 +52,6 @@ class OpenRouterService:
         return response_formatted
 
 
-def get_openrouter_service(db: AsyncSession) -> OpenRouterService:
-    setting_crud = SettingCrud(db)
-    setting_service = SettingService(db, setting_crud)
-    return OpenRouterService(setting_service)
-
-
-def get_openrouter_service_fastapi(db: AsyncSession = Depends(get_db)) -> OpenRouterService:
-    setting_crud = SettingCrud(db)
-    setting_service = SettingService(db, setting_crud)
+def create_openrouter_service(db_ctx: DBContext) -> OpenRouterService:
+    setting_service = create_setting_service(db_ctx)
     return OpenRouterService(setting_service)

@@ -42,7 +42,6 @@ class ProjectCrud:
             .values(preferences=preferences.model_dump())
         )
         result = await self.db.execute(stmt)
-        await self.db.commit()
         return result.rowcount > 0
 
     async def fetch_project_by_uuid(self, uuid: UUID) -> ProjectRead:
@@ -53,8 +52,7 @@ class ProjectCrud:
     async def create_project(self, project_data: ProjectCreate) -> Tuple[int, UUID]:
         new_project = Project(**project_data.model_dump(exclude_none=True))
         self.db.add(new_project)
-        await self.db.commit()
-        await self.db.refresh(new_project)
+        await self.db.flush()
         return new_project.id, new_project.uuid
 
     async def delete_project(self, uuid: UUID) -> bool:
@@ -64,6 +62,5 @@ class ProjectCrud:
 
         if project:
             await self.db.delete(project)
-            await self.db.commit()
             return True
         return False

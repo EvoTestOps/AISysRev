@@ -3,7 +3,7 @@ from uuid import UUID
 from src.crud.paper_crud import PaperCrud
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.session import get_db
+from src.db.db_context import DBContext
 from src.schemas.paper import (
     PaperCreate,
     PaperHumanResult,
@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class PaperService:
-    def __init__(self, db: AsyncSession, paper_crud: PaperCrud):
-        self.db = db
+    def __init__(self, paper_crud: PaperCrud):
         self.paper_crud = paper_crud
 
     async def fetch_papers(self, project_uuid: UUID):
@@ -66,6 +65,5 @@ class PaperService:
         await self.paper_crud.add_paper_human_result(uuid, human_result)
 
 
-def get_paper_service(db: AsyncSession = Depends(get_db)) -> PaperService:
-    paper_crud = PaperCrud(db)
-    return PaperService(db, paper_crud)
+def create_paper_service(db_ctx: DBContext) -> PaperService:
+    return PaperService(db_ctx.crud(PaperCrud))

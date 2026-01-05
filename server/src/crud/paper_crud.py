@@ -17,7 +17,6 @@ class PaperCrud:
     async def bulk_create_papers(self, papers: List[PaperCreate]):
         db_objs = [Paper(**paper.model_dump()) for paper in papers]
         self.db.add_all(db_objs)
-        await self.db.commit()
         await self.db.flush()
         return db_objs
 
@@ -67,4 +66,4 @@ class PaperCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
-        await self.db.commit()
+        # Flush ?

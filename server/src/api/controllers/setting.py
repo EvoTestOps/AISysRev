@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from src.services.setting_service import create_setting_service
 from src.db.db_context import DBContext, get_db_ctx
+from src.services.setting_service import create_setting_service
 
 router = APIRouter()
 
