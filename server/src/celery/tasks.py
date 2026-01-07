@@ -51,10 +51,7 @@ async def async_process_job(
     celery_task: asyncio.Task, job_id: int, job_data: JobCreate
 ):
     logger.info("async_process_job: Starting to process job %s", job_id)
-    # TODO: Does not currently show statuses in realtime to front since results are commited
-    #   only once in the end.
     async with DBContext() as db_ctx:
-
         project_crud = db_ctx.crud(ProjectCrud)
         jobtask_crud = db_ctx.crud(JobTaskCrud)
         openrouter_service = create_openrouter_service(db_ctx)
@@ -65,6 +62,8 @@ async def async_process_job(
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
+        await db_ctx.commit()
+
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
 
         for i, job_task in enumerate(job_tasks):
@@ -72,6 +71,8 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
+                await db_ctx.commit()
+
                 celery_task.update_state(
                     state="PROGRESS",
                     meta={"current": i + 1, "total": len(job_tasks)},
@@ -85,22 +86,22 @@ async def async_process_job(
                         project.criteria,
                     )
                 )
-                await jobtask_crud.update_job_task_result(job_task.id, llm_result)
 
+                await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 logger.info("Updating job task status to %s", JobTaskStatus.DONE)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
+                await db_ctx.commit()
             except Exception as e:
                 logger.info("Updating job task status to %s", JobTaskStatus.ERROR)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.ERROR
                 )
                 await jobtask_crud.update_job_task_error(job_task.id, str(e))
-
                 logger.error(e)
-                continue
+                await db_ctx.commit()
 
-        await db_ctx.commit()
+                continue
 
         return {"result": "all job tasks processed"}
