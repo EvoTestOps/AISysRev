@@ -1,8 +1,8 @@
+import logging
 from typing import List
 from uuid import UUID
+
 from src.crud.paper_crud import PaperCrud
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.db_context import DBContext
 from src.schemas.paper import (
     PaperCreate,
@@ -10,7 +10,6 @@ from src.schemas.paper import (
     PaperRead,
     PaperReadWithAvgProbability,
 )
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
 from typing import List
 from uuid import UUID
-from src.models.paper import Paper
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.file import File
+from src.models.paper import Paper
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 
 

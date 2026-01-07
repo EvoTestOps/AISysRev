@@ -1,7 +1,8 @@
-from typing import Optional
-from src.db.db_context import DBContext
-from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
 import logging
+from typing import Optional
+
+from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
+from src.db.db_context import DBContext
 
 logger = logging.getLogger(__name__)
 

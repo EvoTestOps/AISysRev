@@ -1,6 +1,6 @@
-import json
-from uuid import UUID
 from typing import List
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job

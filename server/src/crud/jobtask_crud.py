@@ -1,13 +1,14 @@
-from uuid import UUID
 from typing import List, Tuple
-from src.schemas.llm import StructuredResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
 from sqlalchemy import select, update
-from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
-from src.schemas.paper import PaperCreate
-from src.models.paper import Paper
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.job import Job
 from src.models.jobtask import JobTask
+from src.models.paper import Paper
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
+from src.schemas.llm import StructuredResponse
+from src.schemas.paper import PaperCreate
 
 
 class JobTaskCrud:

@@ -1,10 +1,11 @@
+import logging
 from uuid import UUID
+
+from src.crud.job_crud import JobCrud
+from src.db.db_context import DBContext
 from src.schemas.job import JobCreate, JobRead
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
-from src.db.db_context import DBContext
-from src.crud.job_crud import JobCrud
-import logging
 
 logger = logging.getLogger(__name__)
 

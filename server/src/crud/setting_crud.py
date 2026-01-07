@@ -1,8 +1,9 @@
 from typing import List, Optional, Tuple
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.setting import Setting
 from src.schemas.setting import SettingCreate, SettingRead
 

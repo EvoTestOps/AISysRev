@@ -1,16 +1,12 @@
 from typing import TypeVar
 
-from fastapi import Depends
 from pydantic import BaseModel
-from src.crud.setting_crud import SettingCrud
-from src.services.setting_service import SettingService, create_setting_service
-from src.db.session import AsyncSessionLocal, get_db
-from src.db.db_context import DBContext
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.schemas.llm import LLMConfiguration
-from src.core.llm import MockLLM, OpenRouterLLM
 from src.core.config import settings
+from src.core.llm import MockLLM, OpenRouterLLM
+from src.db.db_context import DBContext
 from src.models.openrouter import OpenrouterModelResponse
+from src.schemas.llm import LLMConfiguration
+from src.services.setting_service import SettingService, create_setting_service
 
 T = TypeVar("T", bound=BaseModel)
 

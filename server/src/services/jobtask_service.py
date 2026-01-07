@@ -1,14 +1,15 @@
 from uuid import UUID
-from src.db.db_context import DBContext
-from src.services.paper_service import PaperService, create_paper_service
+
 from src.celery.tasks import process_job_task
+from src.crud.jobtask_crud import JobTaskCrud
+from src.db.db_context import DBContext
 from src.schemas.jobtask import (
     JobTaskCreate,
     JobTaskHumanResult,
     JobTaskRead,
     JobTaskReadWithLLMConfig,
 )
-from src.crud.jobtask_crud import JobTaskCrud
+from src.services.paper_service import PaperService, create_paper_service
 
 
 class JobTaskService:

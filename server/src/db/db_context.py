@@ -1,5 +1,7 @@
-from typing import Type, AsyncGenerator
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from typing import AsyncGenerator, Type
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from .session import AsyncSessionLocal
 
 

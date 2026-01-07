@@ -1,10 +1,8 @@
 from uuid import UUID
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.session import get_db
-from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+
 from src.crud.project_crud import ProjectCrud
-from src.db.db_context import DBContext, get_db_ctx
+from src.db.db_context import DBContext
+from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
 
 
 class ProjectService:
