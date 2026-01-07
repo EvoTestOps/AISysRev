@@ -67,4 +67,4 @@ class PaperCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
-        # Flush ?
+        await self.db.flush()

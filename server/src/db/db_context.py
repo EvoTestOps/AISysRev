@@ -24,15 +24,23 @@ class DBContext:
             await self.session.close()
 
     async def commit(self):
+        if not self.session:
+            raise RuntimeError("Session not initialized.")
         await self.session.commit()
 
     async def rollback(self):
+        if not self.session:
+            raise RuntimeError("Session not initialized.")
         await self.session.rollback()
 
     def crud(self, crud_cls: Type):
+        if not self.session:
+            raise RuntimeError("Session not initialized.")
         return crud_cls(self.session)
 
     def nested(self):
+        if not self.session:
+            raise RuntimeError("Session not initialized.")
         return self.session.begin_nested()
 
 

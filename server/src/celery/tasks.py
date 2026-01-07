@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import nullcontext
 
 from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.project_crud import ProjectCrud
@@ -48,10 +49,18 @@ async def _async_retry_job_task(func, max_retries=3, base_delay=1):
 
 
 async def async_process_job(
-    celery_task: asyncio.Task, job_id: int, job_data: JobCreate
+    celery_task: asyncio.Task,
+    job_id: int,
+    job_data: JobCreate,
+    db_ctx: DBContext | None = None,
 ):
     logger.info("async_process_job: Starting to process job %s", job_id)
-    async with DBContext() as db_ctx:
+    close_session = False
+    if db_ctx is None:
+        db_ctx = DBContext()
+        close_session = True
+
+    async with db_ctx if close_session else nullcontext(db_ctx):
         project_crud = db_ctx.crud(ProjectCrud)
         jobtask_crud = db_ctx.crud(JobTaskCrud)
         openrouter_service = create_openrouter_service(db_ctx)
@@ -62,7 +71,7 @@ async def async_process_job(
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
-        await db_ctx.commit()
+        await db_ctx.commit() if close_session else await db_ctx.session.flush()
 
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
 
@@ -71,7 +80,7 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
-                await db_ctx.commit()
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
 
                 celery_task.update_state(
                     state="PROGRESS",
@@ -92,7 +101,7 @@ async def async_process_job(
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
-                await db_ctx.commit()
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
             except Exception as e:
                 logger.info("Updating job task status to %s", JobTaskStatus.ERROR)
                 await jobtask_crud.update_job_task_status(
@@ -100,7 +109,7 @@ async def async_process_job(
                 )
                 await jobtask_crud.update_job_task_error(job_task.id, str(e))
                 logger.error(e)
-                await db_ctx.commit()
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
 
                 continue
 
