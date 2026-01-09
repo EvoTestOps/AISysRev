@@ -25,11 +25,11 @@ class JobTaskStatus(str, Enum):
 
 class JobTaskCreate(BaseModel):
     job_id: int
-    doi: Optional[str]
+    doi: str | None
     title: str
     abstract: str
     paper_uuid: UUID
-    status: JobTaskStatus = JobTaskStatus.NOT_STARTED
+    status: Optional[JobTaskStatus] = JobTaskStatus.NOT_STARTED
 
 
 class JobTaskRead(BaseModel):
@@ -40,8 +40,8 @@ class JobTaskRead(BaseModel):
     abstract: str
     paper_uuid: UUID
     status: JobTaskStatus
-    result: Optional[Dict[str, Any]] = None
-    human_result: Optional[JobTaskHumanResult] = None
+    result: Optional[Dict[str, Any]]
+    human_result: JobTaskHumanResult | None = None
     status_metadata: Optional[Dict[str, Any]] = None
 
     @field_validator("result", mode="before")

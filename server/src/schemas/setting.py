@@ -1,6 +1,7 @@
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
+
 class Setting(BaseModel):
     id: int
     uuid: str
@@ -21,6 +22,7 @@ class SettingCreate(BaseModel):
         if not v.strip():
             raise ValueError(f"{field.field_name} must be a non-empty string")
         return v
+
 
 class SettingRead(BaseModel):
     uuid: UUID | None = None

@@ -1,3 +1,6 @@
+from typing import Optional
+from uuid import UUID
+from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
 import logging
 from typing import Optional
 
@@ -22,7 +25,7 @@ class SettingService:
 
         return setting_model
 
-    async def upsert_setting(self, name: str, value: str, secret=True) -> str:
+    async def upsert_setting(self, name: str, value: str, secret=True) -> UUID:
         affected_rows, uuid = await self.setting_crud.upsert_setting(
             SettingCreate(name=name, value=value, secret=secret)
         )

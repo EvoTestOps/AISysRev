@@ -1,7 +1,9 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from src.db.db_context import DBContext, get_db_ctx
+from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.project import ProjectCreate, ProjectRead
 from src.services.project_service import create_project_service
 
@@ -51,12 +53,11 @@ async def create_new_project(
     try:
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()
+        await push_event(
+            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid})
+        )
         return {"id": new_id, "uuid": str(new_uuid)}
     except Exception as e:
-        from src.logger import get_logger
-
-        l = get_logger("what")
-        l.warning(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Project creation failed: {str(e)}",

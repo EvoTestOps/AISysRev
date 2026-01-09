@@ -3,9 +3,10 @@ from uuid import UUID
 
 import pandas as pd
 from pydantic import TypeAdapter
+
 from src.crud.result_crud import ResultCrud
 from src.db.db_context import DBContext
-from src.models.paper import HumanResult
+from src.db.models.paper import HumanResult
 from src.schemas.llm import Criterion
 
 criteria_adapter = TypeAdapter(List[Criterion])
@@ -162,17 +163,17 @@ class ResultService:
 
     async def generate_result_csv(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_csv(index=False)
 
     async def generate_html(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_html(index=False)
 
     async def fetch_result(self, project_uuid: UUID) -> list[dict]:
         rows = await self.result_crud.create_result(project_uuid)
-        df = create_dataframe(rows)
+        df = create_dataframe(rows)  # type: ignore
         return df.to_dict("records")
 
 

@@ -1,9 +1,10 @@
+from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class FileCreate(BaseModel):
-    uuid: UUID | None = None
+    uuid: Optional[UUID] = None
     project_uuid: UUID
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
@@ -19,6 +20,7 @@ class FileCreate(BaseModel):
 class FileRead(BaseModel):
     uuid: UUID
     project_uuid: UUID
+
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
 

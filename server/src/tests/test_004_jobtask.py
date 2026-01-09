@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
+
 from src.celery.tasks import async_process_job
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
@@ -9,9 +10,8 @@ from src.crud.paper_crud import PaperCrud
 from src.schemas.file import FileCreate
 from src.schemas.job import (
     JobCreate,
-    JobPromptingType,
     JobRead,
-    ModelConfig,
+    LLMModelConfig,
     ZeroShotPromptingConfig,
 )
 from src.schemas.jobtask import JobTaskCreate, JobTaskStatus
@@ -30,12 +30,13 @@ async def test_create_jobtask(db_ctx, test_project_uuid, test_files_working):
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
-            model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+        llm_config=LLMModelConfig(
+            model_name="test-model",
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
     new_job = await job_service.create(job_data)
@@ -66,12 +67,13 @@ async def test_create_job_transaction_rollback(
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
-            model_name="test-model", temperature=0.2, seed=42, top_p=0.9
+        llm_config=LLMModelConfig(
+            model_name="test-model",
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
     with pytest.raises(Exception, match="Simulated failure"):

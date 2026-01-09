@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List, Literal, Union
+from typing import Annotated, Any, List, Literal, Union
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
@@ -11,22 +11,22 @@ class JobPromptingType(str, Enum):
     FEW_SHOT = "FEW_SHOT"
 
 
-class ModelConfig(BaseModel):
+class LLMModelConfig(BaseModel):
+    provider_name: str
     model_name: str
-    temperature: float = Field(ge=0, le=1)
-    seed: int
-    top_p: float = Field(ge=0.1, le=1)
+    provider_parameters: dict[str, Any]  # These will be type-checked run-time
+    model_parameters: dict[str, Any]  # These will be type-checked run-time
 
 
 # Define different configs for prompting strategies
 
 
 class ZeroShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.ZERO_SHOT]
+    screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
 
 
 class FewShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.FEW_SHOT]
+    screening_type: Literal[JobPromptingType.FEW_SHOT] = JobPromptingType.FEW_SHOT
     seed_paper_inc: List[str]
     seed_paper_exc: List[str]
     remember_selection: bool
@@ -41,7 +41,7 @@ PromptingConfig = Annotated[
 class JobCreate(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
-    llm_config: ModelConfig
+    llm_config: LLMModelConfig
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
@@ -50,7 +50,7 @@ class JobRead(BaseModel):
     uuid: UUID
     project_uuid: UUID
     prompting_config: PromptingConfig
-    llm_config: ModelConfig
+    llm_config: LLMModelConfig
     created_at: datetime
     updated_at: datetime
 

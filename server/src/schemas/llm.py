@@ -47,15 +47,8 @@ class StructuredResponse(BaseModel, extra="forbid"):
     exclusion_criteria: list[Criterion]
 
 
-class LLMConfiguration(BaseModel):
-    base_url: str
-    model: str
-    api_key: str
+class ProviderRuntimeParameters(BaseModel):
+    model: Optional[str] = None
+    api_key: Optional[str] = None
     # Defaults to "You are an expert research assistant."
     system_prompt: str = default_system_prompt
-    # Default seed: 128
-    seed: Optional[int] = 128
-    # Default temperature: 0
-    temperature: Optional[float] = 0
-    # Default top_p: 0.1
-    top_p: Optional[float] = 0.1

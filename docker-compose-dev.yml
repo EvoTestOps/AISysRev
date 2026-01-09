@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile-dev
       target: client
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
     develop:
       watch:
         - action: sync
@@ -28,9 +28,10 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
-    ports: ["5678:5678"]
+    ports: ["127.0.0.1:5678:5678"]
     environment:
       PYTHONPATH: /app
+      DEBUG: ${DEBUG:-false}
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
@@ -42,19 +43,25 @@ services:
       OPENROUTER_MOCK: y
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
     volumes:
-      - ./server:/app
+      - ./server/migrations:/app/migrations
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 10s
+      timeout: 20s
+      retries: 3
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: ./server
           target: /app
           ignore:
-            - node_modules/
-            - dist/
-            - migrations/
-            - server/migrations/
+            - ./migrations/
+            - ./server/migrations/
+            - ./.venv/
+            - ./server/.venv/
+            - ./client
         - action: rebuild
-          path: package.json
+          path: server/pyproject.toml
     depends_on:
       - postgres
       - minio
@@ -68,6 +75,8 @@ services:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database_dev
+    ports:
+      - 127.0.0.1:5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
@@ -87,8 +96,8 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -110,9 +119,10 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: celery
-    ports: ["5679:5679"]
+    ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
+      DEBUG: ${DEBUg:-false}
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
@@ -132,7 +142,7 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
-    command: celery -A src.worker flower --port=5555
+    command: uv run celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
@@ -143,8 +153,9 @@ services:
       MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
+      RUN_MIGRATIONS: false
     ports:
-      - ${FLOWER_PORT:-5555}:5555
+      - 127.0.0.1:${FLOWER_PORT:-5555}:5555
     depends_on:
       - redis
       - celery

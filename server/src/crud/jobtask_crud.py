@@ -1,11 +1,12 @@
-from typing import List, Tuple
+from typing import List, Sequence, Tuple
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import Row, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.job import Job
-from src.models.jobtask import JobTask
-from src.models.paper import Paper
+
+from src.db.models.job import Job
+from src.db.models.jobtask import JobTask
+from src.db.models.paper import Paper
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
 from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperCreate
@@ -27,12 +28,12 @@ class JobTaskCrud:
         await self.db.flush()
         return db_objs
 
-    async def fetch_job_tasks_by_job_id(self, job_id: int) -> List[JobTask]:
+    async def fetch_job_tasks_by_job_id(self, job_id: int) -> Sequence[JobTask]:
         stmt = select(JobTask).where(JobTask.job_id == job_id)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_job_tasks_by_job_uuid(self, job_uuid: UUID) -> List[JobTask]:
+    async def fetch_job_tasks_by_job_uuid(self, job_uuid: UUID) -> Sequence[JobTask]:
         stmt = (
             select(JobTask)
             .join(Job, JobTask.job_id == Job.id)
@@ -43,7 +44,7 @@ class JobTaskCrud:
 
     async def fetch_job_tasks_by_paper_uuid(
         self, paper_uuid: UUID
-    ) -> List[Tuple[JobTask, Job]]:
+    ) -> Sequence[Row[Tuple[JobTask, Job]]]:
         stmt = (
             select(JobTask, Job)
             .join(Job, JobTask.job_id == Job.id)

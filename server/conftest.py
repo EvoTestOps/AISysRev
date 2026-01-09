@@ -1,12 +1,12 @@
 import asyncio
-import os
 from io import BytesIO
-from random import random
 
 import pytest
 import pytest_asyncio
 from fastapi import UploadFile
 from fastapi.testclient import TestClient
+from starlette.datastructures import Headers
+
 from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
@@ -14,20 +14,11 @@ from src.db.session import Base, engine
 from src.main import app
 from src.schemas.job import (
     JobCreate,
-    JobPromptingType,
-    ModelConfig,
+    LLMModelConfig,
     ZeroShotPromptingConfig,
 )
 from src.schemas.project import Criteria, ProjectCreate
 from src.tools.diagnostics.db_check import run_migration
-from starlette.datastructures import Headers
-
-RUN_DB_MIGRATIONS = os.getenv("RUN_MIGRATIONS", "false").lower() in {
-    "1",
-    "true",
-    "yes",
-}
-
 
 # @pytest.fixture(scope="function")
 # def test_client():
@@ -56,15 +47,13 @@ async def test_project_uuid(db_ctx):
 def test_job_data(test_project_uuid):
     return JobCreate(
         project_uuid=test_project_uuid,
-        llm_config=ModelConfig(
+        llm_config=LLMModelConfig(
             model_name="test-model",
-            temperature=round(random(), 1),
-            seed=42,
-            top_p=round(random(), 1),
+            model_parameters={"temperature": 0, "top_p": 0.1},
+            provider_name="Test provider",
+            provider_parameters={},
         ),
-        prompting_config=ZeroShotPromptingConfig(
-            screening_type=JobPromptingType.ZERO_SHOT
-        ),
+        prompting_config=ZeroShotPromptingConfig(),
     )
 
 
@@ -105,7 +94,7 @@ async def test_files_invalid():
 
 @pytest.fixture(scope="session", autouse=True)
 def reset_db():
-    if settings.APP_ENV == "test" and RUN_DB_MIGRATIONS:
+    if settings.APP_ENV == "test" and settings.RUN_MIGRATIONS:
 
         async def drop_and_create():
             async with engine.begin() as conn:

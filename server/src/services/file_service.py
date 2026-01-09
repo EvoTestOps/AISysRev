@@ -5,31 +5,15 @@ from uuid import UUID
 import pandas as pd
 from fastapi import UploadFile
 from minio.error import S3Error
-from pydantic import BaseModel
+
 from src.crud.file_crud import FileCrud
-from src.crud.paper_crud import PaperCrud
 from src.db.db_context import DBContext
+from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
-from src.schemas.paper import PaperCreate
+from src.schemas.file_service import FileError, ProcessedFiles
+from src.services.paper_service import PaperCreate, PaperCrud
 from src.tools.csv_file_validation import validate_csv
 from src.tools.minio_file_uploader import upload_file_to_object_storage
-
-
-class FileError(BaseModel):
-    file: str
-    message: str
-
-
-class ProcessedFiles(BaseModel):
-    valid_filenames: List[str]
-    errors: List[FileError]
-
-
-class UploadedFilePaper(BaseModel):
-    title: str
-    abstract: str
-    doi: str
-    file_uuid: str
 
 
 class FileService:
@@ -43,7 +27,7 @@ class FileService:
 
     async def fetch_all(self, project_uuid: UUID):
         rows = await self.file_crud.fetch_files(project_uuid)
-        return [FileReadWithPaperCount(**row) for row in rows]
+        return [FileReadWithPaperCount(**row) for row in rows]  # type: ignore
 
     async def process_files(
         self, project_uuid: UUID, files: List[UploadFile]
@@ -108,23 +92,41 @@ class FileService:
                     if pd.isna(normalized.get("doi")):
                         normalized["doi"] = None
 
-                    papers.append(
-                        PaperCreate(
-                            paper_id=int(idx) + 1,  # type: ignore
-                            title=normalized.get("title") or "NO_TITLE",
-                            abstract=normalized.get("abstract") or "NO_ABSTRACT",
-                            doi=normalized.get("doi"),
-                            file_uuid=result.uuid,
-                            project_uuid=project_uuid,
+                    for idx, row in df.iterrows():
+                        normalized = {
+                            (
+                                (k or "").strip().lower()
+                                if isinstance(k, str)
+                                else str(k).strip().lower()
+                            ): v
+                            for k, v in row.items()
+                        }
+                        if pd.isna(normalized.get("doi")):
+                            normalized["doi"] = None
+
+                        papers.append(
+                            PaperCreate(
+                                paper_id=int(idx) + 1,  # type: ignore
+                                title=normalized.get("title") or "NO_TITLE",
+                                abstract=normalized.get("abstract") or "NO_ABSTRACT",
+                                doi=normalized.get("doi"),
+                                file_uuid=result.uuid,
+                                project_uuid=project_uuid,
+                            )
+                        )
+
+                    if papers:
+                        await self.paper_crud.bulk_create_papers(papers)
+
+                    upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
+                    await push_event(
+                        QueueItem(
+                            event_name=EventName.PROJECT_FILE_UPLOADED,
+                            value={"uuid": result.uuid},
                         )
                     )
 
-                if papers:
-                    await self.paper_crud.bulk_create_papers(papers)
-
-                upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
-
-                valid_filenames.append(f.filename)
+                    valid_filenames.append(f.filename)
             except S3Error as e:
                 errors.append(
                     FileError(
@@ -133,6 +135,7 @@ class FileService:
                         row="",
                     )
                 )
+
             except Exception as e:
                 raise e
 

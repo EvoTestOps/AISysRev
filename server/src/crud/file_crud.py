@@ -3,8 +3,9 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.file import File
-from src.models.paper import Paper
+
+from src.db.models.file import File
+from src.db.models.paper import Paper
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 
 
@@ -36,7 +37,8 @@ class FileCrud:
             )
         )
         result = await self.db.execute(stmt)
-        return result.mappings().all()
+        # TODO: Fix
+        return result.mappings().all()  # type: ignore
 
     async def create_file_record(self, file_data: FileCreate):
         new_file = File(**file_data.model_dump(exclude_none=True))

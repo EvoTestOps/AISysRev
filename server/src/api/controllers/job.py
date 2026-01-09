@@ -2,7 +2,9 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from src.db.db_context import DBContext, get_db_ctx
+from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
@@ -21,7 +23,7 @@ async def get_jobs(
 ):
     try:
         job_service = create_job_service(db_ctx)
-        if project:
+        if project is not None:
             return await job_service.fetch_by_project(project)
         else:
             return await job_service.fetch_all()
@@ -29,7 +31,7 @@ async def get_jobs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch jobs: {str(e)}",
-        )
+        ) from e
 
 
 @router.get("/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead)
@@ -58,17 +60,9 @@ async def create_job(
 ):
 
     job_service = create_job_service(db_ctx)
-    setting_service = create_setting_service(db_ctx)
     project_service = create_project_service(db_ctx)
 
     try:
-        openrouter_secret = setting_service.get_setting("openrouter_api_key")
-        if openrouter_secret is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="OpenRouter API key is not set, cannot continue",
-            )
-
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):
             # If the user wants to remember their choice:
@@ -91,6 +85,9 @@ async def create_job(
                 )
         create_job = await job_service.create(job_data)
         await db_ctx.commit()
+        await push_event(
+            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid})
+        )
         return create_job
     except HTTPException:
         raise

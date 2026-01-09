@@ -62,4 +62,3 @@ async def test_delete_project_crud(db_ctx):
 
     project = await crud.fetch_project_by_uuid(uuid)
     assert project is None
-

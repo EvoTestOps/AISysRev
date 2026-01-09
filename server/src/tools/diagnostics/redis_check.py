@@ -1,9 +1,10 @@
 import redis.asyncio as redis
 from src.core.config import settings
 
+
 async def check_redis_connection():
     redis_url = settings.REDIS_URL
-    client = redis.from_url(redis_url)
+    client = redis.from_url(redis_url, decode_responses=True)
     try:
         pong = await client.ping()
         if pong:

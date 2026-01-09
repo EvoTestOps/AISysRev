@@ -22,6 +22,9 @@ function App() {
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
   );
+  const fetchProviders = useTypedStoreActions(
+    (actions) => actions.fetchProviders
+  );
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
@@ -33,6 +36,7 @@ function App() {
 
   // Initialization hook
   useEffect(() => {
+    fetchProviders();
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -40,14 +44,17 @@ function App() {
   if (!checkedTerms) return null;
 
   return (
-    <div className="flex flex-col bg-gray-200 font-roboto">
+    <div className="flex flex-col bg-gray-200 font-roboto pb-32">
       <ToastContainer autoClose={4000} />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:projectUuid" component={ProjectPage} />
-        <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
+        <Route
+          path="/project/:projectUuid/papers/page/:page"
+          component={PapersPage}
+        />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />

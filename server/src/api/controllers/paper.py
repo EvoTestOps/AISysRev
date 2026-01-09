@@ -26,7 +26,7 @@ async def get_papers(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
 @router.get(
     "/paper/{project_uuid}/with_model_evaluations", status_code=status.HTTP_200_OK
 )
-async def get_papers_with_model_evals(
+async def get_project_papers_with_model_evals(
     project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
 ):
     papers = create_paper_service(db_ctx)
@@ -58,4 +58,3 @@ async def add_paper_human_result(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to add human result to paper: {str(e)}",
         )
-

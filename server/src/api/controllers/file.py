@@ -10,6 +10,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+
 from src.db.db_context import DBContext, get_db_ctx
 from src.schemas.file import FileReadWithPaperCount
 from src.services.file_service import create_file_service
@@ -50,7 +51,6 @@ async def process_csv(
         result = await file_service.process_files(project_uuid, files)
         await db_ctx.commit()
         return result.__dict__
-
     except HTTPException as e:
         raise e
     except Exception as e:

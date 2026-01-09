@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 export type Criteria = {
   inclusion_criteria: string[];
   exclusion_criteria: string[];
@@ -28,10 +30,10 @@ export type FetchedFile = {
 };
 
 export type LlmConfig = {
+  provider_name: string;
   model_name: string;
-  temperature: number;
-  seed: number;
-  top_p: number;
+  provider_parameters: Record<string, unknown>;
+  model_parameters: Record<string, unknown>;
 };
 
 export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;
@@ -142,3 +144,28 @@ export type Result = {
   human_result: string;
   [modelName: string]: string;
 };
+
+// Keep this up-to-date with server/src/core/llm_providers.py
+const ConfigParameterSchema = z.object({
+  key: z.string(),
+  title: z.string(),
+  type: z.enum(["string", "number", "boolean"]).default("string"),
+  defaultValue: z
+    .union([z.string(), z.number(), z.boolean()])
+    .nullable()
+    .optional(),
+  secret: z.boolean(),
+});
+
+export const ProviderSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  description: z.string(),
+  model_parameters_json_schema: z.object({}).catchall(z.any()),
+  provider_parameters_json_schema: z.object({}).catchall(z.any()).nullable(),
+  config_parameters: z.array(ConfigParameterSchema),
+});
+
+export const ProviderResponse = z.array(ProviderSchema);
+
+export type Provider = z.infer<typeof ProviderSchema>;

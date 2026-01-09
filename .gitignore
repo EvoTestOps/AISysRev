@@ -1,3 +1,6 @@
 .DS_Store
 *.crt
 .env
+.vscode
+.coverage
+.vscode/settings.json

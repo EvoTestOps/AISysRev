@@ -1,16 +1,15 @@
-from src.core.llm import (
-    StructuredResponse,
-)
 from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt
-from src.models.jobtask import JobTask
+from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
     ZeroShotPromptingConfig,
 )
+from src.schemas.llm import ProviderRuntimeParameters, StructuredResponse
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import Criteria
-from src.services.openrouter_service import OpenRouterService
+from src.schemas.setting import SettingRead
+from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
 
 
@@ -33,15 +32,15 @@ def _create_criteria(
 ) -> str:
     criteria = "\nInclusion criteria:\n\n"
     for i, criterion in enumerate(inclusion_criteria):
-        criteria += f"- IC{i+1}: {criterion}\n"
+        criteria += f"- IC{i + 1}: {criterion}\n"
     criteria += "\nExclusion criteria:\n\n"
     for i, criterion in enumerate(exclusion_criteria):
-        criteria += f"- EC{i+1}: {criterion}\n"
+        criteria += f"- EC{i + 1}: {criterion}\n"
     return criteria
 
 
 async def get_structured_response(
-    openrouter_service: OpenRouterService,
+    llm_service: LLMService,
     paper_service: PaperService,
     job_task_data: JobTask,
     job_data: JobCreate,
@@ -49,22 +48,42 @@ async def get_structured_response(
 ) -> StructuredResponse:
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
-    llm_model = job_data.llm_config.model_name
 
     criteria = _create_criteria(
-        inc_exc_criteria["inclusion_criteria"], inc_exc_criteria["exclusion_criteria"]
+        # TODO: Fix
+        inc_exc_criteria["inclusion_criteria"],  # type: ignore
+        inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
-    cfg = job_data.prompting_config
-    if isinstance(cfg, ZeroShotPromptingConfig):
 
+    api_key: SettingRead | None = None
+    cfg = job_data.prompting_config
+    llm = llm_service.get_llm(job_data.llm_config.provider_name)
+    if llm.api_key_config_parameter is not None:
+        api_key = await llm_service.setting_service.get_setting(
+            llm.api_key_config_parameter.key, mask_secret=False
+        )
+        if api_key is None:
+            raise RuntimeError(
+                f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
+            )
+
+    if isinstance(cfg, ZeroShotPromptingConfig):
         prompt_text = zero_shot_task_prompt.format(
             job_task_data.title,
             job_task_data.abstract,
             criteria,
             additional_instructions,
         )
-        result = await openrouter_service.call_llm(
-            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        result = await llm_service.call_llm(
+            llm,
+            provider_parameters=job_data.llm_config.provider_parameters,
+            model_parameters=job_data.llm_config.model_parameters,
+            runtime_parameters=ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            response_schema=StructuredResponse,
+            user_prompt=prompt_text,
         )
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
@@ -78,8 +97,16 @@ async def get_structured_response(
             additional_instructions,
             seed_paper_txt,
         )
-        result = await openrouter_service.call_llm(
-            schema=StructuredResponse, model=llm_model, prompt=prompt_text
+        result = await llm_service.call_llm(
+            llm,
+            provider_parameters=job_data.llm_config.provider_parameters,
+            model_parameters=job_data.llm_config.model_parameters,
+            runtime_parameters=ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            response_schema=StructuredResponse,
+            user_prompt=prompt_text,
         )
         return result
     else:

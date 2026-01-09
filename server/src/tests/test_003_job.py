@@ -1,13 +1,11 @@
 import pytest
+
 from src.crud.job_crud import JobCrud
-from src.schemas.job import (
-    JobCreate,
-    JobRead,
-    ModelConfig,
-    ZeroShotPromptingConfig,
-    JobPromptingType,
+from src.schemas.job import JobCreate, JobRead, ZeroShotPromptingConfig, LLMModelConfig
+from src.services.job_service import (
+    JobService,
+    create_job_service,
 )
-from src.services.job_service import JobService, create_job_service
 
 
 @pytest.mark.asyncio
@@ -28,17 +26,20 @@ async def test_create_and_fetch_job_crud(db_ctx, test_job_data):
     crud = db_ctx.crud(JobCrud)
 
     created_job = await crud.create_job(test_job_data)
-
     fetched_job = await crud.fetch_job_by_uuid(created_job.uuid)
-    job = JobRead(**fetched_job)
+    job = await crud.fetch_job_by_uuid(created_job.uuid)
 
     assert fetched_job is not None
+    assert job is not None
     assert isinstance(job, JobRead)
     assert job.project_uuid == test_job_data.project_uuid
     assert job.llm_config.model_name == test_job_data.llm_config.model_name
-    assert job.llm_config.temperature == test_job_data.llm_config.temperature
-    assert job.llm_config.seed == test_job_data.llm_config.seed
-    assert job.llm_config.top_p == test_job_data.llm_config.top_p
+    assert (
+        job.llm_config.model_parameters["temperature"]
+        == test_job_data.llm_config.temperature
+    )
+    assert job.llm_config.model_parameters["seed"] == test_job_data.llm_config.seed
+    assert job.llm_config.model_parameters["top_p"] == test_job_data.llm_config.top_p
 
 
 @pytest.mark.asyncio
@@ -47,14 +48,15 @@ async def test_fetch_jobs_by_project(db_ctx, test_project_uuid):
     for i in range(1, 11):
         job_data = JobCreate(
             project_uuid=test_project_uuid,
-            llm_config=ModelConfig(
+            prompting_config=ZeroShotPromptingConfig(),
+            llm_config=LLMModelConfig(
                 model_name=f"project-test-model {i}",
-                temperature=0.5,
-                seed=42,
-                top_p=0.9,
-            ),
-            prompting_config=ZeroShotPromptingConfig(
-                screening_type=JobPromptingType.ZERO_SHOT
+                provider_name="Test provider",
+                provider_parameters={},
+                model_parameters={
+                    "temperature": 0.5,
+                    "top_p": 0.9,
+                },
             ),
         )
         await crud.create_job(job_data)
