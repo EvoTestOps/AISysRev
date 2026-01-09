@@ -92,41 +92,29 @@ class FileService:
                     if pd.isna(normalized.get("doi")):
                         normalized["doi"] = None
 
-                    for idx, row in df.iterrows():
-                        normalized = {
-                            (
-                                (k or "").strip().lower()
-                                if isinstance(k, str)
-                                else str(k).strip().lower()
-                            ): v
-                            for k, v in row.items()
-                        }
-                        if pd.isna(normalized.get("doi")):
-                            normalized["doi"] = None
-
-                        papers.append(
-                            PaperCreate(
-                                paper_id=int(idx) + 1,  # type: ignore
-                                title=normalized.get("title") or "NO_TITLE",
-                                abstract=normalized.get("abstract") or "NO_ABSTRACT",
-                                doi=normalized.get("doi"),
-                                file_uuid=result.uuid,
-                                project_uuid=project_uuid,
-                            )
-                        )
-
-                    if papers:
-                        await self.paper_crud.bulk_create_papers(papers)
-
-                    upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
-                    await push_event(
-                        QueueItem(
-                            event_name=EventName.PROJECT_FILE_UPLOADED,
-                            value={"uuid": result.uuid},
+                    papers.append(
+                        PaperCreate(
+                            paper_id=int(idx) + 1,  # type: ignore
+                            title=normalized.get("title") or "NO_TITLE",
+                            abstract=normalized.get("abstract") or "NO_ABSTRACT",
+                            doi=normalized.get("doi"),
+                            file_uuid=result.uuid,
+                            project_uuid=project_uuid,
                         )
                     )
 
-                    valid_filenames.append(f.filename)
+                if papers:
+                    await self.paper_crud.bulk_create_papers(papers)
+
+                upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
+                await push_event(
+                    QueueItem(
+                        event_name=EventName.PROJECT_FILE_UPLOADED,
+                        value={"uuid": result.uuid},
+                    )
+                )
+
+                valid_filenames.append(f.filename)
             except S3Error as e:
                 errors.append(
                     FileError(

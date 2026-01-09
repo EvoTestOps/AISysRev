@@ -1,8 +1,6 @@
-from typing import Optional
-from uuid import UUID
-from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
 import logging
 from typing import Optional
+from uuid import UUID
 
 from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
 from src.db.db_context import DBContext

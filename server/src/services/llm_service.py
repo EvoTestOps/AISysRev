@@ -1,12 +1,8 @@
 from typing import Any, TypeVar
 
-from fastapi import Depends
 from pydantic import BaseModel
 from src.core.llm.providers.provider import LLMProvider
-from src.crud.setting_crud import SettingCrud
-from src.services.setting_service import SettingService
-from src.db.session import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
+from src.services.setting_service import SettingService, create_setting_service
 from src.schemas.llm import ProviderRuntimeParameters
 from src.core.llm.providers import llm_providers
 
@@ -44,4 +40,5 @@ class LLMService:
 
 
 def create_llm_service(db_ctx: DBContext) -> LLMService:
-    return LLMService(db_ctx.crud(SettingService))
+    setting_service = create_setting_service(db_ctx)
+    return LLMService(setting_service)

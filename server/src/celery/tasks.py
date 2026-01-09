@@ -52,7 +52,7 @@ async def _async_retry_job_task(func, max_retries=3, base_delay=1):
 
 
 async def async_process_job(
-    celery_task: asyncio.Task,
+    celery_task: Task,
     job_id: int,
     job_data: JobCreate,
     db_ctx: DBContext | None = None,
