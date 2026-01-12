@@ -82,11 +82,11 @@ services:
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
 
   adminer:
-      container_name: adminer_${APP_ENV:-dev}
-      image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
-      restart: always
-      ports:
-        - ${ADMINER_PORT:-8080}:8080
+    container_name: adminer_${APP_ENV:-dev}
+    image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
+    restart: always
+    ports:
+      - ${ADMINER_PORT:-8080}:8080
 
   minio:
     image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
@@ -110,7 +110,7 @@ services:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: redis_${APP_ENV:-dev}
     privileged: true
-    volumes: 
+    volumes:
       - redis_data:/data
 
   celery:
@@ -133,8 +133,6 @@ services:
       MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
       - redis
-    volumes:
-      - ./server:/app
 
   flower:
     container_name: flower_${APP_ENV:-dev}
