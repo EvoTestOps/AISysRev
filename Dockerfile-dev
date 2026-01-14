@@ -54,7 +54,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
 WORKDIR /app
-COPY --from=server-builder --chown=celeryuser:celeryuser /app/.venv /app/.venv
+COPY --from=server-builder --chown=celeryuser:celerygroup /app/.venv /app/.venv
 
 COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
