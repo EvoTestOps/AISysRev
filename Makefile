@@ -41,8 +41,9 @@ m-current:
 
 # Run unit tests
 backend-unit:
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test build backend
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d postgres redis celery
-	APP_ENV=test RUN_DB_MIGRATIONS=false docker compose -f docker-compose-dev.yml -p test run --rm --no-deps backend uv run pytest -m unit -v -s --cov=src
+	APP_ENV=test RUN_MIGRATIONS=false docker compose -f docker-compose-dev.yml -p test run --rm --no-deps backend uv run pytest -m unit -v -s --cov=src
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
 
 # Run all tests in the backend
