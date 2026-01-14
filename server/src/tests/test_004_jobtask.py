@@ -216,10 +216,10 @@ async def test_async_process_job_failure(
 
     await async_process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
 
-    calls = [
-        call(state="PROGRESS", meta={"current": 1, "total": 2}),
-        call(state="PROGRESS", meta={"current": 2, "total": 2}),
-    ]
+    # calls = [
+    #     call(state="PROGRESS", meta={"current": 1, "total": 2}),
+    #     call(state="PROGRESS", meta={"current": 2, "total": 2}),
+    # ]
 
     # celery_task.update_state.assert_has_calls(calls, any_order=False)
     # assert mock_update_result.call_count == 2

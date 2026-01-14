@@ -4,14 +4,12 @@ from io import BytesIO
 import pytest
 import pytest_asyncio
 from fastapi import UploadFile
-from fastapi.testclient import TestClient
 from starlette.datastructures import Headers
 
 from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
-from src.main import app
 from src.schemas.job import (
     JobCreate,
     LLMModelConfig,

@@ -12,7 +12,6 @@ from src.services.project_service import (
     ProjectPreferences,
     create_project_service,
 )
-from src.services.setting_service import create_setting_service
 
 router = APIRouter()
 
