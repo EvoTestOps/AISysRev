@@ -1,15 +1,19 @@
 import asyncio
 import logging
+from contextlib import nullcontext
+
 from celery import Task
+from src.crud.jobtask_crud import JobTaskCrud
+from src.crud.project_crud import ProjectCrud
+from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem
-from src.redis_client.client import get_redis_client, REDIS_CHANNEL
-from src.worker import celery_app
-from src.db.session import AsyncSessionLocal
+from src.redis_client.client import REDIS_CHANNEL, get_redis_client
 from src.schemas.job import JobCreate
 from src.schemas.jobtask import JobTaskStatus
-from src.crud.project_crud import ProjectCrud
-from src.crud.jobtask_crud import JobTaskCrud
+from src.services.llm_service import create_llm_service
+from src.services.paper_service import create_paper_service
 from src.tools.llm_decision_creator import get_structured_response
+from src.worker import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -47,13 +51,28 @@ async def _async_retry_job_task(func, max_retries=3, base_delay=1):
             await asyncio.sleep(delay)
 
 
-async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate):
+async def async_process_job(
+    celery_task: Task,
+    job_id: int,
+    job_data: JobCreate,
+    db_ctx: DBContext | None = None,
+):
     logger.info("async_process_job: Starting to process job %s", job_id)
     redis = get_redis_client()
 
-    async with AsyncSessionLocal() as db:
-        project_crud = ProjectCrud(db)
-        jobtask_crud = JobTaskCrud(db)
+    # Check that who owns the session
+    close_session = False
+    if db_ctx is None:
+        db_ctx = DBContext()
+        close_session = True
+
+    async with (
+        db_ctx if close_session else nullcontext(db_ctx)
+    ):  # Use nullcontext if session has been created
+        project_crud = db_ctx.crud(ProjectCrud)
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        llm_service = create_llm_service(db_ctx)
+        paper_service = create_paper_service(db_ctx)
 
         logger.info("Fetching project by UUID %s", job_data.project_uuid)
         project = await project_crud.fetch_project_by_uuid(job_data.project_uuid)
@@ -62,6 +81,8 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
+        await db_ctx.commit() if close_session else await db_ctx.session.flush()
+
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
 
         for i, job_task in enumerate(job_tasks):
@@ -69,6 +90,7 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
                 )
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
                 await redis.publish(
                     REDIS_CHANNEL,
                     QueueItem(
@@ -87,15 +109,20 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                 )
                 llm_result = await _async_retry_job_task(
                     lambda: get_structured_response(
-                        db, job_task, job_data, project.criteria
+                        llm_service,
+                        paper_service,
+                        job_task,
+                        job_data,
+                        project.criteria,
                     )
                 )
-                await jobtask_crud.update_job_task_result(job_task.id, llm_result)
 
+                await jobtask_crud.update_job_task_result(job_task.id, llm_result)
                 logger.info("Updating job task status to %s", JobTaskStatus.DONE)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
                 await redis.publish(
                     REDIS_CHANNEL,
                     QueueItem(
@@ -131,6 +158,8 @@ async def async_process_job(celery_task: Task, job_id: int, job_data: JobCreate)
                     meta={"error": str(e)},
                 )
                 logger.error(e)
+                await db_ctx.commit() if close_session else await db_ctx.session.flush()
+
                 continue
 
         return {"result": "all job tasks processed"}

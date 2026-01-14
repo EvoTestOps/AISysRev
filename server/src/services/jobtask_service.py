@@ -1,24 +1,19 @@
 from uuid import UUID
 
-from src.services.paper_service import PaperService, get_paper_service
 from src.celery.tasks import process_job_task
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.session import get_db
+from src.crud.jobtask_crud import JobTaskCrud
+from src.db.db_context import DBContext
 from src.schemas.jobtask import (
     JobTaskCreate,
     JobTaskHumanResult,
     JobTaskRead,
     JobTaskReadWithLLMConfig,
 )
-from src.crud.jobtask_crud import JobTaskCrud
+from src.services.paper_service import PaperService, create_paper_service
 
 
 class JobTaskService:
-    def __init__(
-        self, db: AsyncSession, jobtask_crud: JobTaskCrud, paper_service: PaperService
-    ):
-        self.db = db
+    def __init__(self, jobtask_crud: JobTaskCrud, paper_service: PaperService):
         self.jobtask_crud = jobtask_crud
         self.paper_service = paper_service
 
@@ -89,7 +84,7 @@ class JobTaskService:
         return process_job_task.delay(job_id, job_data)
 
 
-def get_jobtask_service(db: AsyncSession = Depends(get_db)) -> JobTaskService:
-    jobtask_crud = JobTaskCrud(db)
-    paper_service = get_paper_service(db)
-    return JobTaskService(db, jobtask_crud, paper_service)
+def create_jobtask_service(db_ctx: DBContext) -> JobTaskService:
+    jobtask_crud = db_ctx.crud(JobTaskCrud)
+    paper_service = create_paper_service(db_ctx)
+    return JobTaskService(jobtask_crud, paper_service)

@@ -1,13 +1,13 @@
 from typing import List
-import pandas as pd
 from uuid import UUID
-from fastapi import Depends
+
+import pandas as pd
 from pydantic import TypeAdapter
-from src.schemas.llm import Criterion
-from src.db.models.paper import HumanResult
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.crud.result_crud import ResultCrud
-from src.db.session import get_db
+from src.db.db_context import DBContext
+from src.db.models.paper import HumanResult
+from src.schemas.llm import Criterion
 
 criteria_adapter = TypeAdapter(List[Criterion])
 
@@ -96,9 +96,7 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         lambda v: (
             "INCLUDE"
             if str(v).lower() in ("true", "1")
-            else "EXCLUDE"
-            if str(v).lower() in ("false", "0")
-            else ""
+            else "EXCLUDE" if str(v).lower() in ("false", "0") else ""
         )
     )
 
@@ -160,9 +158,8 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
 
 
 class ResultService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.result_crud = ResultCrud(db)
+    def __init__(self, result_crud: ResultCrud):
+        self.result_crud = result_crud
 
     async def generate_result_csv(self, project_uuid: UUID) -> str:
         rows = await self.result_crud.create_result(project_uuid)
@@ -180,5 +177,5 @@ class ResultService:
         return df.to_dict("records")
 
 
-def get_result_service(db: AsyncSession = Depends(get_db)) -> ResultService:
-    return ResultService(db)
+def create_result_service(db_ctx: DBContext) -> ResultService:
+    return ResultService(db_ctx.crud(ResultCrud))

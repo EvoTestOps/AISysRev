@@ -1,8 +1,19 @@
-from uuid import UUID
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form, status
 from typing import List
-from src.services.file_service import FileService, get_file_service
+from uuid import UUID
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
+
+from src.db.db_context import DBContext, get_db_ctx
 from src.schemas.file import FileReadWithPaperCount
+from src.services.file_service import create_file_service
 
 router = APIRouter()
 
@@ -12,11 +23,10 @@ router = APIRouter()
     status_code=status.HTTP_200_OK,
     response_model=list[FileReadWithPaperCount],
 )
-async def list_files(
-    project_uuid: UUID, files: FileService = Depends(get_file_service)
-):
+async def list_files(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     try:
-        return await files.fetch_all(project_uuid)
+        file_service = create_file_service(db_ctx)
+        return await file_service.fetch_all(project_uuid)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -28,18 +38,19 @@ async def list_files(
 async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),
-    file_service: FileService = Depends(get_file_service),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
     try:
+        file_service = create_file_service(db_ctx)
         existing_files = await file_service.fetch_all(project_uuid=project_uuid)
         if len(existing_files) != 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        data = await file_service.process_files(project_uuid, files)
-        return data.__dict__
-
+        result = await file_service.process_files(project_uuid, files)
+        await db_ctx.commit()
+        return result.__dict__
     except HTTPException as e:
         raise e
     except Exception as e:

@@ -2,8 +2,9 @@ from uuid import UUID
 
 from fastapi.responses import HTMLResponse
 from fastapi import APIRouter, Depends, HTTPException, status, Response
-from src.services.project_service import ProjectService, get_project_service
-from src.services.result_service import ResultService, get_result_service
+from src.services.project_service import create_project_service
+from src.services.result_service import create_result_service
+from src.db.db_context import DBContext, get_db_ctx
 
 
 router = APIRouter()
@@ -12,9 +13,11 @@ router = APIRouter()
 @router.get("/result/download_result_csv", status_code=200)
 async def download_result_csv(
     project_uuid: UUID,
-    project_service: ProjectService = Depends(get_project_service),
-    result_service: ResultService = Depends(get_result_service),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
+    project_service = create_project_service(db_ctx)
+    result_service = create_result_service(db_ctx)
+
     project = await project_service.fetch_by_uuid(project_uuid)
     if project is None:
         raise HTTPException(
@@ -39,9 +42,11 @@ async def download_result_csv(
 @router.get("/result/html", status_code=200)
 async def download_result_html(
     project_uuid: UUID,
-    project_service: ProjectService = Depends(get_project_service),
-    result_service: ResultService = Depends(get_result_service),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
+    project_service = create_project_service(db_ctx)
+    result_service = create_result_service(db_ctx)
+
     project = await project_service.fetch_by_uuid(project_uuid)
     if project is None:
         raise HTTPException(
@@ -76,9 +81,11 @@ async def download_result_html(
 @router.get("/result/", status_code=200)
 async def get_result(
     project_uuid: UUID,
-    project_service: ProjectService = Depends(get_project_service),
-    result_service: ResultService = Depends(get_result_service),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
+    project_service = create_project_service(db_ctx)
+    result_service = create_result_service(db_ctx)
+
     project = await project_service.fetch_by_uuid(project_uuid)
     if project is None:
         raise HTTPException(

@@ -1,16 +1,11 @@
+import logging
 from uuid import UUID
-from fastapi import Depends
-from src.services.paper_service import PaperCrud, get_paper_service
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.session import get_db
+
+from src.crud.job_crud import JobCrud
+from src.db.db_context import DBContext
 from src.schemas.job import JobCreate, JobRead
 from src.schemas.jobtask import JobTaskRead
-from src.services.jobtask_service import JobTaskService
-from src.services.file_service import FileService
-from src.crud.job_crud import JobCrud
-from src.crud.file_crud import FileCrud
-from src.crud.jobtask_crud import JobTaskCrud
-import logging
+from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +13,10 @@ logger = logging.getLogger(__name__)
 class JobService:
     def __init__(
         self,
-        db: AsyncSession,
-        file_service: FileService,
         jobtask_service: JobTaskService,
         job_crud: JobCrud,
     ):
-        self.db = db
         self.job_crud = job_crud
-        self.file_service = file_service
         self.jobtask_service = jobtask_service
 
     async def fetch_all(self) -> list[JobRead]:
@@ -79,13 +70,10 @@ class JobService:
         ]
 
     async def create(self, job_data: JobCreate):
-        logger.info("Begin transaction")
-        async with (
-            self.db.begin_nested() if self.db.in_transaction() else self.db.begin()
-        ):
-            logger.info("Creating new job", job_data)
-            new_job = await self.job_crud.create_job(job_data)
-            await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid)
+        logger.info("Creating new job", job_data)
+
+        new_job = await self.job_crud.create_job(job_data)
+        await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid)
 
         job_read = JobRead(
             uuid=new_job.uuid,
@@ -100,14 +88,7 @@ class JobService:
         return job_read
 
 
-def get_job_service(db: AsyncSession = Depends(get_db)) -> JobService:
-    job_crud = JobCrud(db)
-    file_crud = FileCrud(db)
-    jobtask_crud = JobTaskCrud(db)
-    paper_crud = PaperCrud(db)
-    paper_service = get_paper_service(db)
-
-    file_service = FileService(db, file_crud, paper_crud, job_crud)
-    jobtask_service = JobTaskService(db, jobtask_crud, paper_service)
-
-    return JobService(db, file_service, jobtask_service, job_crud)
+def create_job_service(db_ctx: DBContext) -> JobService:
+    jobtask_service = create_jobtask_service(db_ctx)
+    job_crud = db_ctx.crud(JobCrud)
+    return JobService(jobtask_service, job_crud)

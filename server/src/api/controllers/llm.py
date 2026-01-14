@@ -5,11 +5,9 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 from src.core.llm.providers.provider import ConfigParameter, LLMProvider, Provider
 from src.schemas.llm import ProviderRuntimeParameters
-from src.services.llm_service import LLMService, get_llm_service_fastapi
-from src.services.setting_service import (
-    SettingService,
-    get_setting_service_fastapi,
-)
+from src.services.llm_service import create_llm_service
+
+from src.db.db_context import DBContext, get_db_ctx
 
 router = APIRouter()
 
@@ -56,14 +54,16 @@ async def get_provider_config_params():
 @router.post("/llm/{provider}/models", status_code=status.HTTP_200_OK)
 async def get_available_models(
     provider: str,
-    llmservice: LLMService = Depends(get_llm_service_fastapi),
-    setting_service: SettingService = Depends(get_setting_service_fastapi),
     provider_parameters: Optional[Dict[str, Any]] = Body(None),
+    db_ctx: DBContext = Depends(get_db_ctx),
 ):
-    llm_class: type[LLMProvider] = llmservice.get_llm(provider)
+    llm_service = create_llm_service(db_ctx)
+
+    llm_class: type[LLMProvider] = llm_service.get_llm(provider)
     api_key = None
+
     if llm_class.api_key_config_parameter is not None:
-        setting = await setting_service.get_setting(
+        setting = await llm_service.setting_service.get_setting(
             llm_class.api_key_config_parameter.key, mask_secret=False
         )
         if setting is None:

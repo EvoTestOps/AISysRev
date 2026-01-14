@@ -1,8 +1,11 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
+
+from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.project import ProjectCreate, ProjectRead
-from src.services.project_service import ProjectService, get_project_service
+from src.services.project_service import create_project_service
 
 router = APIRouter()
 
@@ -10,7 +13,8 @@ router = APIRouter()
 @router.get(
     "/project", status_code=status.HTTP_200_OK, response_model=list[ProjectRead]
 )
-async def list_projects(projects: ProjectService = Depends(get_project_service)):
+async def list_projects(db_ctx: DBContext = Depends(get_db_ctx)):
+    projects = create_project_service(db_ctx)
     try:
         return await projects.fetch_all()
     except Exception as e:
@@ -23,9 +27,8 @@ async def list_projects(projects: ProjectService = Depends(get_project_service))
 @router.get(
     "/project/{uuid}", status_code=status.HTTP_200_OK, response_model=ProjectRead
 )
-async def get_project(
-    uuid: UUID, projects: ProjectService = Depends(get_project_service)
-):
+async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+    projects = create_project_service(db_ctx)
     try:
         project = await projects.fetch_by_uuid(uuid)
         if not project:
@@ -44,10 +47,12 @@ async def get_project(
 
 @router.post("/project", status_code=status.HTTP_201_CREATED)
 async def create_new_project(
-    project_data: ProjectCreate, projects: ProjectService = Depends(get_project_service)
+    project_data: ProjectCreate, db_ctx: DBContext = Depends(get_db_ctx)
 ):
+    projects = create_project_service(db_ctx)
     try:
         new_id, new_uuid = await projects.create(project_data)
+        await db_ctx.commit()
         await push_event(
             QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid})
         )
@@ -60,15 +65,15 @@ async def create_new_project(
 
 
 @router.delete("/project/{uuid}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(
-    uuid: UUID, projects: ProjectService = Depends(get_project_service)
-):
+async def delete_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+    projects = create_project_service(db_ctx)
     try:
         deleted = await projects.delete(uuid)
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Project not found"
             )
+        await db_ctx.commit()
         return {"detail": "Project deleted successfully"}
     except HTTPException:
         raise

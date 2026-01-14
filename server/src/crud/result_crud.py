@@ -1,10 +1,12 @@
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.db.models.job import Job
+from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
-from src.db.models.jobtask import JobTask
 
 
 class ResultCrud:

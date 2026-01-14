@@ -1,19 +1,16 @@
-from src.schemas.llm import ProviderRuntimeParameters
-from src.schemas.paper import PaperHumanResult, PaperRead
-from src.schemas.setting import SettingRead
-from src.services.paper_service import get_paper_service
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.schemas.project import Criteria
-from src.services.llm_service import get_llm_service
+from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt
+from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
     ZeroShotPromptingConfig,
 )
-from src.db.models.jobtask import JobTask
-from src.schemas.llm import StructuredResponse
-from src.core.prompts import zero_shot_task_prompt, few_shot_task_prompt
-from src.services.setting_service import get_setting_service
+from src.schemas.llm import ProviderRuntimeParameters, StructuredResponse
+from src.schemas.paper import PaperHumanResult, PaperRead
+from src.schemas.project import Criteria
+from src.schemas.setting import SettingRead
+from src.services.llm_service import LLMService
+from src.services.paper_service import PaperService
 
 
 def _create_few_shot_examples(papers: list[PaperRead]):
@@ -43,14 +40,12 @@ def _create_criteria(
 
 
 async def get_structured_response(
-    db: AsyncSession,
+    llm_service: LLMService,
+    paper_service: PaperService,
     job_task_data: JobTask,
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
 ) -> StructuredResponse:
-    llm_service = get_llm_service(db)
-    paper_service = get_paper_service(db)
-    setting_service = get_setting_service(db)
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
 
@@ -64,7 +59,7 @@ async def get_structured_response(
     cfg = job_data.prompting_config
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
-        api_key = await setting_service.get_setting(
+        api_key = await llm_service.setting_service.get_setting(
             llm.api_key_config_parameter.key, mask_secret=False
         )
         if api_key is None:

@@ -1,17 +1,15 @@
+import logging
 from typing import Optional
 from uuid import UUID
-from fastapi import Depends
-from src.db.session import get_db
+
 from src.crud.setting_crud import SettingCreate, SettingCrud, SettingRead
-from sqlalchemy.ext.asyncio import AsyncSession
-import logging
+from src.db.db_context import DBContext
 
 logger = logging.getLogger(__name__)
 
 
 class SettingService:
-    def __init__(self, db: AsyncSession, setting_crud: SettingCrud):
-        self.db = db
+    def __init__(self, setting_crud: SettingCrud):
         self.setting_crud = setting_crud
 
     async def get_setting(self, name: str, mask_secret=True) -> Optional[SettingRead]:
@@ -33,9 +31,5 @@ class SettingService:
         return uuid
 
 
-def get_setting_service(db: AsyncSession) -> SettingService:
-    return SettingService(db, SettingCrud(db))
-
-
-def get_setting_service_fastapi(db=Depends(get_db)) -> SettingService:
-    return SettingService(db, SettingCrud(db))
+def create_setting_service(db_ctx: DBContext) -> SettingService:
+    return SettingService(db_ctx.crud(SettingCrud))

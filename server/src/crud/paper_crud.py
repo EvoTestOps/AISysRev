@@ -1,12 +1,14 @@
-from uuid import UUID
 from typing import List, Sequence
-from src.db.models.jobtask import JobTask
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
 from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
-from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
+
+from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
+from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
 
 
 class PaperCrud:
@@ -16,7 +18,6 @@ class PaperCrud:
     async def bulk_create_papers(self, papers: List[PaperCreate]):
         db_objs = [Paper(**paper.model_dump()) for paper in papers]
         self.db.add_all(db_objs)
-        await self.db.commit()
         await self.db.flush()
         return db_objs
 
@@ -65,4 +66,4 @@ class PaperCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()

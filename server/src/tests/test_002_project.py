@@ -1,11 +1,11 @@
 import pytest
 from src.crud.project_crud import ProjectCrud
-from src.schemas.project import ProjectCreate, ProjectRead, Criteria
+from src.schemas.project import Criteria, ProjectCreate, ProjectRead
 
 
 @pytest.mark.asyncio
-async def test_fetch_projects_crud(db_session):
-    crud = ProjectCrud(db_session)
+async def test_fetch_projects_crud(db_ctx):
+    crud = db_ctx.crud(ProjectCrud)
     for i in range(1, 6):
         project_data = ProjectCreate(
             name=f"Test Project {i}",
@@ -21,13 +21,14 @@ async def test_fetch_projects_crud(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_project_crud(db_session):
-    crud = ProjectCrud(db_session)
+async def test_create_and_fetch_project_crud(db_ctx):
+    crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Test",
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
     )
     id, uuid = await crud.create_project(project_data)
+
     assert uuid
     assert id
 
@@ -48,8 +49,8 @@ async def test_create_and_fetch_project_crud(db_session):
 
 
 @pytest.mark.asyncio
-async def test_delete_project_crud(db_session):
-    crud = ProjectCrud(db_session)
+async def test_delete_project_crud(db_ctx):
+    crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="To Be Deleted",
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),

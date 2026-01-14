@@ -1,7 +1,9 @@
-from uuid import UUID
 from typing import List
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.db.models.job import Job
 from src.db.models.project import Project
 from src.schemas.job import JobCreate, JobRead

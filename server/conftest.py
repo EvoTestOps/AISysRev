@@ -1,32 +1,32 @@
-import pytest
-import pytest_asyncio
 import asyncio
 from io import BytesIO
+
+import pytest
+import pytest_asyncio
 from fastapi import UploadFile
-from fastapi.testclient import TestClient
 from starlette.datastructures import Headers
-from src.main import app
+
 from src.core.config import settings
-from src.db.session import AsyncSessionLocal, Base, engine
-from src.tools.diagnostics.db_check import run_migration
 from src.crud.project_crud import ProjectCrud
-from src.schemas.project import ProjectCreate, Criteria
+from src.db.db_context import DBContext
+from src.db.session import Base, engine
 from src.schemas.job import (
     JobCreate,
     LLMModelConfig,
     ZeroShotPromptingConfig,
 )
+from src.schemas.project import Criteria, ProjectCreate
+from src.tools.diagnostics.db_check import run_migration
 
-
-@pytest.fixture(scope="function")
-def test_client():
-    with TestClient(app) as client:
-        yield client
+# @pytest.fixture(scope="function")
+# def test_client():
+#     with TestClient(app) as client:
+#         yield client
 
 
 @pytest_asyncio.fixture
-async def test_project_uuid(db_session):
-    crud = ProjectCrud(db_session)
+async def test_project_uuid(db_ctx):
+    crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Project for Job Test",
         criteria=Criteria(
@@ -35,6 +35,9 @@ async def test_project_uuid(db_session):
     )
     id, project_uuid = await crud.create_project(project_data)
     assert project_uuid
+
+    await db_ctx.commit()
+
     return project_uuid
 
 
@@ -102,6 +105,11 @@ def reset_db():
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session():
-    async_session = AsyncSessionLocal()
-    async with async_session as session:
-        yield session
+    raise NotImplementedError
+
+
+@pytest_asyncio.fixture(scope="function")
+async def db_ctx():
+    async with DBContext() as ctx:
+        yield ctx
+        await ctx.rollback()

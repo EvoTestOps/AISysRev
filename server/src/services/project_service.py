@@ -1,14 +1,12 @@
 from uuid import UUID
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.db.session import get_db
-from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+
 from src.crud.project_crud import ProjectCrud
+from src.db.db_context import DBContext
+from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
 
 
 class ProjectService:
-    def __init__(self, db: AsyncSession, project_crud: ProjectCrud):
-        self.db = db
+    def __init__(self, project_crud: ProjectCrud):
         self.project_crud = project_crud
 
     async def fetch_all(self) -> list[ProjectRead]:
@@ -52,5 +50,5 @@ class ProjectService:
         return await self.project_crud.delete_project(uuid)
 
 
-def get_project_service(db: AsyncSession = Depends(get_db)) -> ProjectService:
-    return ProjectService(db, ProjectCrud(db))
+def create_project_service(db_ctx: DBContext) -> ProjectService:
+    return ProjectService(db_ctx.crud(ProjectCrud))

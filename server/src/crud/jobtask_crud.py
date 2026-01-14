@@ -1,13 +1,15 @@
-from uuid import UUID
 from typing import List, Sequence, Tuple
-from src.schemas.llm import StructuredResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
 from sqlalchemy import Row, select, update
-from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
-from src.schemas.paper import PaperCreate
-from src.db.models.paper import Paper
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.db.models.job import Job
 from src.db.models.jobtask import JobTask
+from src.db.models.paper import Paper
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
+from src.schemas.llm import StructuredResponse
+from src.schemas.paper import PaperCreate
 
 
 class JobTaskCrud:
@@ -53,12 +55,12 @@ class JobTaskCrud:
     async def update_job_task_status(self, job_task_id: int, status: str):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(status=status)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_tasks_status(self, job_id: int, status: str):
         stmt = update(JobTask).where(JobTask.job_id == job_id).values(status=status)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_task_result(
         self, job_task_id: int, result: StructuredResponse
@@ -69,12 +71,12 @@ class JobTaskCrud:
             .values(result=result.model_dump(mode="json"))
         )
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def update_job_task_error(self, job_task_id: int, error: str):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(error=error)
         await self.db.execute(stmt)
-        await self.db.commit()
+        await self.db.flush()
 
     async def add_jobtask_human_result(
         self, job_task_uuid: UUID, human_result: JobTaskHumanResult
@@ -85,4 +87,3 @@ class JobTaskCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
-        await self.db.commit()
