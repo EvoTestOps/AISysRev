@@ -48,7 +48,8 @@ backend-unit:
 
 # Run all tests in the backend
 backend-test:
-	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d backend postgres redis celery
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test build backend
+	APP_ENV=test docker compose -f docker-compose-dev.yml -p test up -d postgres redis celery
 	APP_ENV=test RUN_MIGRATIONS=true docker compose -f docker-compose-dev.yml -p test run --rm backend uv run pytest -m asyncio -v -s --cov=src $(REPORT)
 	APP_ENV=test docker compose -f docker-compose-dev.yml -p test down
 

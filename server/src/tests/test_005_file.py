@@ -15,8 +15,8 @@ async def test_create_and_fetch_file_record(db_ctx, test_project_uuid):
     new_file = await crud.create_file_record(file_data)
 
     assert new_file is not None
-    assert new_file.filename.__str__ == file_data.filename
-    assert new_file.mime_type.__str__ == file_data.mime_type
+    assert new_file.filename == file_data.filename
+    assert new_file.mime_type == file_data.mime_type
 
     fetched_files = await crud.fetch_files(test_project_uuid)
     assert len(fetched_files) == 1
