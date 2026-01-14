@@ -1,9 +1,14 @@
+import json
+
 import pytest
-from src.api.controllers.health_check import health_check
+
+from src.api.controllers.health_check import health_check, startup_complete
 
 
 @pytest.mark.asyncio
 async def test_health_check_logic(monkeypatch):
+    startup_complete.set()
+
     async def ok():
         return None
 
@@ -13,8 +18,11 @@ async def test_health_check_logic(monkeypatch):
     monkeypatch.setattr("src.api.controllers.health_check.check_redis_connection", ok)
     monkeypatch.setattr("src.api.controllers.health_check.check_celery_worker", ok)
 
-    result = await health_check()
-    assert result["status"] == "ok"
-    assert result["db"] == "ok"
-    assert result["redis"] == "ok"
-    assert result["celery"] == "ok"
+    response = await health_check()
+
+    payload = json.loads(response.body)
+
+    assert payload["status"] == "ok"
+    assert payload["db"] == "ok"
+    assert payload["redis"] == "ok"
+    assert payload["celery"] == "ok"
