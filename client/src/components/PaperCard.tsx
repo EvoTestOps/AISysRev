@@ -59,7 +59,7 @@ export const PaperCard: React.FC<
             "text-gray-400": paper.avg_probability_decision == null,
           })}
         >
-          {paper.avg_probability_decision
+          {paper.avg_probability_decision != null
             ? paper.avg_probability_decision.toFixed(3)
             : hasErrors
               ? "ERROR"

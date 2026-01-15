@@ -42,6 +42,11 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def fetch_job_task_by_id(self, job_task_id: int) -> JobTask:
+        stmt = select(JobTask).where(JobTask.id == job_task_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def fetch_job_tasks_by_paper_uuid(
         self, paper_uuid: UUID
     ) -> Sequence[Row[Tuple[JobTask, Job]]]:
