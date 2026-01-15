@@ -562,7 +562,7 @@ export const ProjectPage = () => {
 
   const inclusionCriteria = project?.criteria.inclusion_criteria;
   const exclusionCriteria = project?.criteria.exclusion_criteria;
-
+  console.log(providerFormValues);
   return (
     <Layout
       title={project?.name || ""}
@@ -760,16 +760,22 @@ export const ProjectPage = () => {
                             <input
                               type="range"
                               disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-gray-200 accent-slate-800"
                               data-testid={`property_${key}_input`}
                               min={property.minimum}
                               max={property.maximum}
                               step={0.1}
                               onChange={(e) => {
-                                setProviderFormValue((vals) => ({
-                                  ...vals,
-                                  [key]: e.target.value,
-                                }));
+                                const val =
+                                  e.target.value === ""
+                                    ? ""
+                                    : parseFloat(e.target.value);
+                                if (!Number.isNaN(val)) {
+                                  setProviderFormValue((vals) => ({
+                                    ...vals,
+                                    [key]: val,
+                                  }));
+                                }
                               }}
                               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                               // @ts-expect-error Ok
@@ -780,7 +786,7 @@ export const ProjectPage = () => {
                             <input
                               type="text"
                               disabled={modelsLoaded}
-                              className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-0 bg-white accent-slate-800 text-xs"
+                              className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800 text-xs"
                               data-testid={`property_${key}_input`}
                               onChange={(e) => {
                                 setProviderFormValue((vals) => ({
@@ -797,17 +803,23 @@ export const ProjectPage = () => {
                             <input
                               type="number"
                               disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-0 border-2 accent-slate-800"
+                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-gray-200 disabled:text-gray-400 border-2 accent-slate-800"
                               data-testid={`property_${key}_input`}
                               onChange={(e) => {
-                                setProviderFormValue((vals) => ({
-                                  ...vals,
-                                  [key]: e.target.value,
-                                }));
+                                const val =
+                                  e.target.value === ""
+                                    ? ""
+                                    : parseInt(e.target.value, 10);
+                                if (!Number.isNaN(val)) {
+                                  setProviderFormValue((vals) => ({
+                                    ...vals,
+                                    [key]: val,
+                                  }));
+                                }
                               }}
                               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                               // @ts-expect-error Ok
-                              value={modelFormValues[key]}
+                              value={providerFormValues[key]}
                             />
                           )}
                         </div>

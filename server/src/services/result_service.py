@@ -96,7 +96,9 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
         lambda v: (
             "INCLUDE"
             if str(v).lower() in ("true", "1")
-            else "EXCLUDE" if str(v).lower() in ("false", "0") else ""
+            else "EXCLUDE"
+            if str(v).lower() in ("false", "0")
+            else ""
         )
     )
 

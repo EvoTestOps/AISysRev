@@ -57,7 +57,6 @@ async def create_job(
     job_data: JobCreate,
     db_ctx: DBContext = Depends(get_db_ctx),
 ):
-
     job_service = create_job_service(db_ctx)
     project_service = create_project_service(db_ctx)
 

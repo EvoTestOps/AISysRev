@@ -33,7 +33,6 @@ services:
       MINIO_ENDPOINT: minio:9000
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
-      OPENROUTER_MOCK: y
       RUN_MIGRATIONS: true
     depends_on:
       - postgres
