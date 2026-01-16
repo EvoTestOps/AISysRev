@@ -42,8 +42,10 @@ async def test_create_and_fetch_job_crud(db_ctx, test_job_data):
         == test_job_data.llm_config.model_parameters["temperature"]
     )
     # assert job.llm_config["model_parameters"]["seed"] == test_job_data.llm_config.model_parameters["seed"]
-    assert job.llm_config["model_parameters"]["top_p"] == test_job_data.llm_config.model_parameters["top_p"]
-
+    assert (
+        job.llm_config["model_parameters"]["top_p"]
+        == test_job_data.llm_config.model_parameters["top_p"]
+    )
 
 
 @pytest.mark.asyncio

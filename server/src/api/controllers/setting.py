@@ -27,7 +27,6 @@ async def upsert_setting(
     data: UpsertData,
     db_ctx: DBContext = Depends(get_db_ctx),
 ):
-
     setting_service = create_setting_service(db_ctx)
     uuid = await setting_service.upsert_setting(data.name, data.value, True)
     await db_ctx.commit()
