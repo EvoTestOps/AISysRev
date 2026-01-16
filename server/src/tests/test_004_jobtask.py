@@ -1,12 +1,13 @@
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.celery.tasks import async_process_job
+from src.celery.tasks import process_job
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
 from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.paper_crud import PaperCrud
+from src.db.db_context import DBContext
 from src.schemas.file import FileCreate
 from src.schemas.job import (
     JobCreate,
@@ -86,120 +87,132 @@ async def test_create_job_transaction_rollback(
     assert len(jobs) == 0
 
 
+# TODO: Run seperately or refactor test setup (and teardown) for tests that deal with task running.
+# The functions tested commit to db which leads to inconsistent db state for other tests.
 @pytest.mark.asyncio
-@patch("src.celery.tasks.JobTaskCrud.update_job_task_result", new_callable=AsyncMock)
 @patch("src.celery.tasks.get_structured_response", new_callable=AsyncMock)
+@pytest.mark.skip(reason="Should be moved to somewhere else since commits to db")
 async def test_async_process_job(
-    mock_get_structured_response, mock_update_result, db_ctx, test_job_data
+    mock_get_structured_response, test_job_data, test_structured_response
 ):
-    job_crud = db_ctx.crud(JobCrud)
-    jobtask_crud = db_ctx.crud(JobTaskCrud)
-    paper_crud = db_ctx.crud(PaperCrud)
-    file_crud = db_ctx.crud(FileCrud)
 
-    mock_get_structured_response.return_value = {"result": "mock"}
+    async with DBContext() as db_ctx:
+        job_crud = db_ctx.crud(JobCrud)
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        paper_crud = db_ctx.crud(PaperCrud)
+        file_crud = db_ctx.crud(FileCrud)
 
-    file_obj = await file_crud.create_file_record(
-        FileCreate(
-            project_uuid=test_job_data.project_uuid,
-            filename="mock.csv",
-            mime_type="text/csv",
-        )
-    )
+        mock_get_structured_response.return_value = test_structured_response
 
-    papers = await paper_crud.bulk_create_papers(
-        [
-            PaperCreate(
+        file_obj = await file_crud.create_file_record(
+            FileCreate(
                 project_uuid=test_job_data.project_uuid,
-                file_uuid=file_obj.uuid,
-                title=f"Mock Paper {i}",
-                abstract=f"Mock Abstract {i}",
-                doi=f"10.1234/mock{i}",
-                paper_id=i,
+                filename="mock.csv",
+                mime_type="text/csv",
             )
-            for i in range(1, 3)
-        ]
-    )
-
-    job = await job_crud.create_job(test_job_data)
-
-    jobtasks = [
-        JobTaskCreate(
-            job_id=job.id,
-            doi=paper.doi,
-            title=paper.title,
-            abstract=paper.abstract,
-            status=JobTaskStatus.NOT_STARTED,
-            paper_uuid=paper.uuid,
         )
-        for paper in papers
-    ]
 
-    await jobtask_crud.bulk_create_jobtasks(jobtasks)
+        papers = await paper_crud.bulk_create_papers(
+            [
+                PaperCreate(
+                    project_uuid=test_job_data.project_uuid,
+                    file_uuid=file_obj.uuid,
+                    title=f"Mock Paper {i}",
+                    abstract=f"Mock Abstract {i}",
+                    doi=f"10.1234/mock{i}",
+                    paper_id=i,
+                )
+                for i in range(1, 3)
+            ]
+        )
+
+        job = await job_crud.create_job(test_job_data)
+
+        jobtasks = [
+            JobTaskCreate(
+                job_id=job.id,
+                doi=paper.doi,
+                title=paper.title,
+                abstract=paper.abstract,
+                status=JobTaskStatus.NOT_STARTED,
+                paper_uuid=paper.uuid,
+            )
+            for paper in papers
+        ]
+
+        await jobtask_crud.bulk_create_jobtasks(jobtasks)
+        await db_ctx.commit()
 
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
 
-    await async_process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
+    await process_job(celery_task, job.id, test_job_data)
 
-    calls = [
-        call(state="PROGRESS", meta={"current": 1, "total": 2}),
-        call(state="PROGRESS", meta={"current": 2, "total": 2}),
-    ]
+    calls = celery_task.update_state.call_args_list
+    progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]
 
-    celery_task.update_state.assert_has_calls(calls, any_order=True)
-    assert mock_update_result.call_count == 2
+    assert len(progress_calls) == 2
+
+    async with DBContext() as db_ctx:
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job.id)
+        for t in tasks:
+            assert t.status.value == JobTaskStatus.DONE.value
+            assert t.result is not None
 
 
 @pytest.mark.asyncio
-@patch("src.celery.tasks.JobTaskCrud.update_job_task_result", new_callable=AsyncMock)
+@pytest.mark.skip(reason="Should be moved to somewhere else since commits to db")
 @patch("src.celery.tasks.get_structured_response", new_callable=AsyncMock)
 async def test_async_process_job_failure(
-    mock_get_structured_response, mock_update_result, db_ctx, test_job_data
+    mock_get_structured_response, test_job_data, test_structured_response
 ):
-    job_crud = db_ctx.crud(JobCrud)
-    jobtask_crud = db_ctx.crud(JobTaskCrud)
-    paper_crud = db_ctx.crud(PaperCrud)
-    file_crud = db_ctx.crud(FileCrud)
+    async with DBContext() as db_ctx:
+        job_crud = db_ctx.crud(JobCrud)
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        paper_crud = db_ctx.crud(PaperCrud)
+        file_crud = db_ctx.crud(FileCrud)
 
-    mock_get_structured_response.return_value = {"result": "mock"}
+        mock_get_structured_response.return_value = test_structured_response
 
-    file_obj = await file_crud.create_file_record(
-        FileCreate(
-            project_uuid=test_job_data.project_uuid,
-            filename="mock.csv",
-            mime_type="text/csv",
-        )
-    )
-
-    papers = await paper_crud.bulk_create_papers(
-        [
-            PaperCreate(
+        file_obj = await file_crud.create_file_record(
+            FileCreate(
                 project_uuid=test_job_data.project_uuid,
-                file_uuid=file_obj.uuid,
-                title=f"Mock Paper {i}",
-                abstract=f"Mock Abstract {i}",
-                doi=f"10.1234/mock{i}",
-                paper_id=i,
+                filename="mock.csv",
+                mime_type="text/csv",
             )
-            for i in range(1, 3)
-        ]
-    )
-
-    job = await job_crud.create_job(test_job_data)
-
-    jobtasks = [
-        JobTaskCreate(
-            job_id=job.id,
-            doi=paper.doi,
-            title=paper.title,
-            abstract=paper.abstract,
-            status=JobTaskStatus.NOT_STARTED,
-            paper_uuid=paper.uuid,
         )
-        for paper in papers
-    ]
-    await jobtask_crud.bulk_create_jobtasks(jobtasks)
+
+        papers = await paper_crud.bulk_create_papers(
+            [
+                PaperCreate(
+                    project_uuid=test_job_data.project_uuid,
+                    file_uuid=file_obj.uuid,
+                    title=f"Mock Paper {i}",
+                    abstract=f"Mock Abstract {i}",
+                    doi=f"10.1234/mock{i}",
+                    paper_id=i,
+                )
+                for i in range(1, 3)
+            ]
+        )
+
+        job = await job_crud.create_job(test_job_data)
+
+        jobtasks = [
+            JobTaskCreate(
+                job_id=job.id,
+                doi=paper.doi,
+                title=paper.title,
+                abstract=paper.abstract,
+                status=JobTaskStatus.NOT_STARTED,
+                paper_uuid=paper.uuid,
+            )
+            for paper in papers
+        ]
+
+        await jobtask_crud.bulk_create_jobtasks(jobtasks)
+        await db_ctx.commit()
 
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
@@ -210,19 +223,28 @@ async def test_async_process_job_failure(
         call_count["count"] += 1
         if call_count["count"] == 2:
             raise Exception("Simulated failure")
-        return None
+        return test_structured_response
 
-    mock_update_result.side_effect = fail_on_second_call
+    mock_get_structured_response.side_effect = fail_on_second_call
 
-    await async_process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
+    # Would retry task if max_retries=0 wasn't set
+    await process_job(celery_task, job.id, test_job_data, max_retries=0)
 
-    # calls = [
-    #     call(state="PROGRESS", meta={"current": 1, "total": 2}),
-    #     call(state="PROGRESS", meta={"current": 2, "total": 2}),
-    # ]
+    calls = celery_task.update_state.call_args_list
+    progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]
 
-    # celery_task.update_state.assert_has_calls(calls, any_order=False)
-    # assert mock_update_result.call_count == 2
+    assert len(progress_calls) == 2
 
-    job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job.id)
-    assert job_tasks[1].status == JobTaskStatus.ERROR
+    async with DBContext() as db_ctx:
+        jobtask_crud = db_ctx.crud(JobTaskCrud)
+        tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job.id)
+
+        print(tasks[0].error)
+        print(tasks[1].error)
+        done_count = sum(1 for t in tasks if t.status.value == JobTaskStatus.DONE.value)
+        error_count = sum(
+            1 for t in tasks if t.status.value == JobTaskStatus.ERROR.value
+        )
+
+        assert done_count == 1
+        assert error_count == 1

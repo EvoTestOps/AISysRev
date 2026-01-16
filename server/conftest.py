@@ -16,6 +16,7 @@ from src.schemas.job import (
     ZeroShotPromptingConfig,
 )
 from src.schemas.project import Criteria, ProjectCreate
+from src.schemas.llm import StructuredResponse, Criterion, Decision, LikertDecision
 from src.tools.diagnostics.db_check import run_migration
 
 # @pytest.fixture(scope="function")
@@ -52,6 +53,40 @@ def test_job_data(test_project_uuid):
             provider_parameters={},
         ),
         prompting_config=ZeroShotPromptingConfig(),
+    )
+
+
+@pytest.fixture
+def test_structured_response():
+    return StructuredResponse(
+        overall_decision=Decision(
+            binary_decision=True,
+            probability_decision=0.85,
+            likert_decision=LikertDecision.agree,
+            reason="Mock reason",
+        ),
+        inclusion_criteria=[
+            Criterion(
+                name="A",
+                decision=Decision(
+                    binary_decision=True,
+                    probability_decision=0.9,
+                    likert_decision=LikertDecision.agree,
+                    reason="Included",
+                ),
+            )
+        ],
+        exclusion_criteria=[
+            Criterion(
+                name="D",
+                decision=Decision(
+                    binary_decision=False,
+                    probability_decision=0.1,
+                    likert_decision=LikertDecision.disagree,
+                    reason="Excluded",
+                ),
+            )
+        ],
     )
 
 
