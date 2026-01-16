@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 
-from src.celery.tasks import async_process_job
+from src.celery.tasks import process_job
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
 from src.crud.jobtask_crud import JobTaskCrud
@@ -140,7 +140,7 @@ async def test_async_process_job(
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
 
-    await async_process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
+    await process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
 
     calls = [
         call(state="PROGRESS", meta={"current": 1, "total": 2}),
@@ -214,7 +214,7 @@ async def test_async_process_job_failure(
 
     mock_update_result.side_effect = fail_on_second_call
 
-    await async_process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
+    await process_job(celery_task, job.id, test_job_data, db_ctx=db_ctx)
 
     # calls = [
     #     call(state="PROGRESS", meta={"current": 1, "total": 2}),

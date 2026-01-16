@@ -180,7 +180,7 @@ async def process_job(
     max_concurrent_tasks: int = 20,
     max_retries: int = 3,
 ):
-    logger.info("async_process_job: Starting to process job %s", job_id)
+    logger.info("process_job: Starting to process job %s", job_id)
     redis = get_redis_client()
 
     # Check that who owns the session
