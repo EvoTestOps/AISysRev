@@ -543,7 +543,7 @@ export const ProjectPage = () => {
 
   const inclusionCriteria = project?.criteria.inclusion_criteria;
   const exclusionCriteria = project?.criteria.exclusion_criteria;
-  console.log(providerFormValues);
+
   return (
     <Layout
       title={project?.name || ""}
