@@ -1,10 +1,7 @@
 import asyncio
 import logging
 import random
-from contextlib import nullcontext
 from typing import Dict
-
-from tqdm.asyncio import tqdm_asyncio
 
 from celery import Task
 from src.crud.jobtask_crud import JobTaskCrud
