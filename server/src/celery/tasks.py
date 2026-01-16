@@ -176,22 +176,13 @@ async def process_job(
     celery_task: Task,
     job_id: int,
     job_data: JobCreate,
-    db_ctx: DBContext | None = None,
     max_concurrent_tasks: int = 20,
     max_retries: int = 3,
 ):
     logger.info("process_job: Starting to process job %s", job_id)
     redis = get_redis_client()
 
-    # Check that who owns the session
-    close_session = False
-    if db_ctx is None:
-        db_ctx = DBContext()
-        close_session = True
-
-    async with (
-        db_ctx if close_session else nullcontext(db_ctx)
-    ):  # Use nullcontext if session has been created
+    async with DBContext() as db_ctx:
         project_crud = db_ctx.crud(ProjectCrud)
         jobtask_crud = db_ctx.crud(JobTaskCrud)
 
@@ -204,7 +195,7 @@ async def process_job(
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
-        await db_ctx.commit() if close_session else await db_ctx.session.flush()
+        await db_ctx.commit()
 
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
         job_task_ids = [jt.id for jt in job_tasks]
@@ -228,6 +219,6 @@ async def process_job(
         for jt_id in job_task_ids
     ]
 
-    await tqdm_asyncio.gather(*tasks, desc=f"Processing job {job_id}")  # tqdm for dev
+    await asyncio.gather(*tasks)
 
     return {"result": "all job tasks processed"}

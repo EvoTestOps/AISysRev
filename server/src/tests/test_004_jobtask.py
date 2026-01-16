@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -146,7 +146,7 @@ async def test_async_process_job(
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
 
-    await process_job(celery_task, job.id, test_job_data, db_ctx=None)
+    await process_job(celery_task, job.id, test_job_data)
 
     calls = celery_task.update_state.call_args_list
     progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]
@@ -228,7 +228,7 @@ async def test_async_process_job_failure(
     mock_get_structured_response.side_effect = fail_on_second_call
 
     # Would retry task if max_retries=0 wasn't set
-    await process_job(celery_task, job.id, test_job_data, db_ctx=None, max_retries=0)
+    await process_job(celery_task, job.id, test_job_data, max_retries=0)
 
     calls = celery_task.update_state.call_args_list
     progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]
