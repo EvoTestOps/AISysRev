@@ -1,5 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "/api/v1",
+  baseURL:
+    process.env.VITEST === "true" ? "http://localhost-vitest/api/v1" : "/api/v1",
 });
