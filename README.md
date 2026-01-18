@@ -36,11 +36,12 @@ The tool has been tested with CSV data exported from [Scopus](https://www.scopus
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
 
-### LLMs Access and LLM screening speed
+### LLMs Access
 The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
-Note: Paper screening speed is about 4,5s per paper. We are working on parallelizing this after which it should go down to about 0.2s/paper. 
+### LLM screening speed
+LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter.
 
 
 ### System and software requirements
