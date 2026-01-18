@@ -7,11 +7,11 @@ import { CriteriaInput } from "../components/CriteriaInput";
 import { CriteriaList } from "../components/CriteriaList";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { RotateCcw } from "lucide-react";
-import { Criteria } from "../state/types";
 import { create_project } from "../services/projectService";
 import { Card } from "../components/Card";
 import { useTypedStoreActions } from "../state/store";
 import { Button } from "../components/Button";
+import type { Criteria } from "../state/types/project";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -45,7 +45,7 @@ export const NewProject = () => {
   }, []);
 
   const refreshProjects = useTypedStoreActions(
-    (actions) => actions.refreshProjects
+    (actions) => actions.refreshProjects,
   );
 
   const handleCreate = useCallback(async () => {
@@ -101,7 +101,7 @@ export const NewProject = () => {
         } catch (parseError) {
           console.error("JSON parsing failed:", parseError);
           toast.error(
-            `Project creation failed: ${error.message || "Unknown error"}`
+            `Project creation failed: ${error.message || "Unknown error"}`,
           );
         }
       }

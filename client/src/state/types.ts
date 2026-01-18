@@ -1,26 +1,5 @@
 import * as z from "zod";
 
-export type Criteria = {
-  inclusion_criteria: string[];
-  exclusion_criteria: string[];
-};
-
-type FewShotPreferences = {
-  inc_seed_papers: string[];
-  exc_seed_papers: string[];
-};
-
-type ProjectPreferences = {
-  few_shot?: FewShotPreferences;
-};
-
-export type Project = {
-  uuid: string;
-  name: string;
-  criteria: Criteria;
-  preferences: ProjectPreferences | null;
-};
-
 export type FetchedFile = {
   uuid: string;
   project_uuid: string;
@@ -56,7 +35,7 @@ export type FewShotPromptingConfig = {
 export const createFewShotPromptingConfig = (
   include_seeds: string[],
   exclude_seeds: string[],
-  remember_selection = true
+  remember_selection = true,
 ): FewShotPromptingConfig => ({
   screening_type: JobPromptingType.FEW_SHOT,
   seed_paper_exc: exclude_seeds,

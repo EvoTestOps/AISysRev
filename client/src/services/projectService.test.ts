@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, it, expect } from "vitest";
 import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import * as projectService from "./projectService";
-import { Project } from "../state/types";
+import type { Project } from "../state/types/project";
 
 describe("Project service", () => {
   it("Fetches projects successfully", async () => {

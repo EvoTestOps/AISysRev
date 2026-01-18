@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Project } from "./types";
+import type { Project } from "./types/project";
 import { createStore } from "easy-peasy";
 import { model } from "./store";
 
@@ -7,7 +7,7 @@ const createProject = (uuid: string, name = "Project"): Project => ({
   uuid,
   name,
   criteria: { inclusion_criteria: [], exclusion_criteria: [] },
-  preferences: null,
+  preferences: undefined,
 });
 
 describe("ProjectModel", () => {

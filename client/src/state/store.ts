@@ -11,12 +11,8 @@ import {
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
-import {
-  JobTaskHumanResult,
-  PaperWithModelEval,
-  Project,
-  Provider,
-} from "./types";
+import type { JobTaskHumanResult, PaperWithModelEval, Provider } from "./types";
+import type { Project } from "./types/project";
 
 const injections = {
   projectsService,
