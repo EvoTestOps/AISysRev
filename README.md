@@ -1,7 +1,9 @@
 # AISysRev
-Project Status: Minimum viable product with core functionality working, but many features are missing and bugs remain. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
 
-This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), and data for screening can be imported from [Scopus](https://www.scopus.com/). 
+> [!IMPORTANT]
+> AiSysRev is a Minimum Viable Product (MVP) with core functionality working. Some features are missing and there might be bugs. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
+
+This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported as a CSV from [Scopus](https://www.scopus.com/). 
 The application allows you to:
 - Import a CSV file with paper titles and abstracts. You can also use our [Demo CSV file](data/Demo_TimePressure_5_papers.csv)
 - Specify include/exclude criteria for paper screening
@@ -173,7 +175,7 @@ The project includes a `Makefile` for common development and database operations
 
 ## Supported LLMs
 
-Currently, we support models provided via Openrouter.
+Currently, we support models provided via Openrouter, OpenAI or via a local provider (OpenAI SDK).
 
 ## License
 
