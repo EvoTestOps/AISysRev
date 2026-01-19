@@ -33,7 +33,9 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
 
     model_parameters_schema = OpenAIModelParams
     api_key_config_parameter = ConfigParameter(
-        key="openai_api_key", title="OpenAI API key"
+        key="openai_api_key",
+        title="OpenAI API key",
+        description="The OpenAI API requires an API key for model access.",
     )
     config_parameters = [api_key_config_parameter]
 

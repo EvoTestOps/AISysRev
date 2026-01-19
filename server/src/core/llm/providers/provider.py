@@ -36,6 +36,7 @@ class ConfigParameter(BaseModel):
 
     key: str
     title: str
+    description: Optional[str] = None
     type: Literal["string", "number", "boolean"] = "string"
     defaultValue: Optional[Union[str, int, float, bool]] = None
     secret: bool = True

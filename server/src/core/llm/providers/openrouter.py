@@ -38,7 +38,9 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
     model_parameters_schema = OpenRouterModelParams
 
     api_key_config_parameter = ConfigParameter(
-        key="openrouter_api_key", title="OpenRouter API key"
+        key="openrouter_api_key",
+        title="OpenRouter API key",
+        description="OpenRouter API key is used to authenticate requests to the OpenRouter API.",
     )
     config_parameters = [api_key_config_parameter]
 

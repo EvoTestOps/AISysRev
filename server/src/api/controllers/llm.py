@@ -33,6 +33,7 @@ async def get_providers() -> list[Provider]:
 
 class ProviderConfigParamsResponse(BaseModel):
     title: str
+    description: str
     config_parameters: List[ConfigParameter]
 
 
@@ -45,6 +46,7 @@ async def get_provider_config_params():
     return {
         provider.provider_name: ProviderConfigParamsResponse(
             title=provider.provider_title,
+            description=provider.provider_description,
             config_parameters=provider.config_parameters,
         )
         for provider in llm_providers
