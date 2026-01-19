@@ -143,11 +143,19 @@ Mock data is located in `data/mock` -folder.
 
 ## Tests
 
-Run in [client/](./client/) `npm test` for e2e tests
+### Client
 
-Run in root `make backend-test` (`./backend-test.bat` for Windows non-WSL) for backend tests
+Run in [client/](./client/):
 
-Run in root `make backend-test-html` (`./backend-test-html.bat` for Windows non-WSL) for backend tests and HTML coverage report
+- `npm test` for unit and component tests
+- `npm run test:e2e` for e2e tests
+
+### Server
+
+Run in repository root: 
+
+- `make backend-test` (`./backend-test.bat` for Windows non-WSL) for backend tests
+- `make backend-test-html` (`./backend-test-html.bat` for Windows non-WSL) for backend tests and HTML coverage report
 
 ## Makefile Commands
 
