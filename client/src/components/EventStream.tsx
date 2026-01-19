@@ -90,7 +90,7 @@ export const EventStream = () => {
     const { data } = event;
     if (typeof data === "string") {
       const dataJson = JSON.parse(data);
-      console.log(dataJson);
+      // console.log(dataJson);
       const parsedData = EventData.safeParse(dataJson);
       if (!parsedData.error) {
         setLogs((logs) => [...logs, parsedData.data]);
@@ -103,7 +103,7 @@ export const EventStream = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eventSource.onopen = (_ev) => {
-      console.log("SSE connected to " + event_url);
+      // console.log("SSE connected to " + event_url);
       setConnected(true);
     };
 

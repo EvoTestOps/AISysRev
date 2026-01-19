@@ -16,7 +16,7 @@ describe("Project service", () => {
 // https://vitest.dev/guide/mocking/requests.html
 export const handlers = [
   // Get all projects
-  http.get("http://localhost-vitest/api/v1/project", () => {
+  http.get(`${process.env.VITE_API_BASE_URL}/api/v1/project`, () => {
     return HttpResponse.json(
       [
         {

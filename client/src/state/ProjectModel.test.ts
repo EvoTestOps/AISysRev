@@ -7,7 +7,7 @@ const createProject = (uuid: string, name = "Project"): Project => ({
   uuid,
   name,
   criteria: { inclusion_criteria: [], exclusion_criteria: [] },
-  preferences: undefined,
+  preferences: null,
 });
 
 describe("ProjectModel", () => {

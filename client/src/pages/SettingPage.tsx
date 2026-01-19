@@ -124,9 +124,6 @@ const SettingEntry: React.FC<SettingEntryProps> = ({ title, config_key }) => {
   );
 };
 
-/**
- * Matches ConfigParameter from the backend
- */
 const ConfigParameterSchema = z.object({
   key: z.string(),
   title: z.string(),
@@ -138,20 +135,14 @@ const ConfigParameterSchema = z.object({
   secret: z.boolean(),
 });
 
-/**
- * Matches ProviderConfigParamsResponse
- */
 const ProviderConfigParamsResponseSchema = z.object({
   title: z.string(),
   config_parameters: z.array(ConfigParameterSchema),
 });
 
-/**
- * dict[str, ProviderConfigParamsResponse]
- */
 const ProviderConfigParamsMapSchema = z.record(
   z.string(),
-  ProviderConfigParamsResponseSchema
+  ProviderConfigParamsResponseSchema,
 );
 
 type ProviderConfigParamsMap = z.infer<typeof ProviderConfigParamsMapSchema>;
@@ -162,7 +153,6 @@ export const SettingsPage = () => {
     fetch("/api/v1/llm/provider_config_params")
       .then((res) => {
         return res.json().then((jsonData) => {
-          console.log("json", jsonData);
           const contents = ProviderConfigParamsMapSchema.parse(jsonData);
           setEntries(contents);
         });

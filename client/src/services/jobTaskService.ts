@@ -1,13 +1,13 @@
-import { api } from '../services/api';
-import { JobTaskHumanResult, JobTask } from '../state/types';
+import { api } from "../services/api";
+import { JobTaskHumanResult, JobTask } from "../state/types";
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/paper/${projectUuid}`);
+    const res = await api.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any
+    const e = error as any;
     if (e.response?.status === 404) {
       return [];
     }
@@ -15,9 +15,12 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
   }
 };
 
-export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) => {
+export const fetchJobTasksFromBackend = async (
+  jobUuid: string,
+  jobId?: number,
+) => {
   try {
-    const res = await api.get(`/jobtask/${jobUuid}`);
+    const res = await api.get(`/api/v1/jobtask/${jobUuid}`);
     let id = jobId;
     if (!id && res.data.length > 0) {
       id = res.data[0].job_id;
@@ -34,7 +37,7 @@ export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) 
 
 export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   try {
-    const res = await api.get(`/jobtask/${jobTaskUuid}`);
+    const res = await api.get(`/api/v1/jobtask/${jobTaskUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching job task by UUID:", error);
@@ -42,10 +45,15 @@ export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   }
 };
 
-export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
+export const addJobTaskResult = async (
+  jobTaskUuid: string,
+  result: JobTaskHumanResult,
+) => {
   try {
-  const res = await api.patch(`/jobtask/${jobTaskUuid}`, { human_result: result });
-  return res.data;
+    const res = await api.patch(`/api/v1/jobtask/${jobTaskUuid}`, {
+      human_result: result,
+    });
+    return res.data;
   } catch (error) {
     console.error("Error adding job task result:", error);
     throw error;

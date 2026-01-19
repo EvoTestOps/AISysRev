@@ -13,12 +13,14 @@ export default defineConfig({
           include: ["src/**/*.test.ts"],
           name: "unit",
           environment: "node",
+          setupFiles: ["./vitest.setup.ts"],
         },
       },
       {
         test: {
           include: ["src/**/*.test.tsx"],
           name: "browser",
+          setupFiles: ["./vitest.setup.ts"],
           browser: {
             enabled: true,
             provider: playwright(),

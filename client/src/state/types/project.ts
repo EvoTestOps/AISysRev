@@ -24,7 +24,7 @@ export const ProjectModel = z.object({
   uuid: z.string(),
   name: z.string(),
   criteria: CriteriaModel,
-  preferences: ProjectPreferences.optional(),
+  preferences: ProjectPreferences.nullable(),
 });
 
 export const CreatedProjectModel = z.object({

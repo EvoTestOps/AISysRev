@@ -47,6 +47,8 @@ services:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
       POSTGRES_DB: your_database_prod
+    ports:
+      - 127.0.0.1:5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -82,6 +84,8 @@ services:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: redis_prod
     privileged: true
+    ports:
+      - "127.0.0.1:6379:6379"
     volumes: 
       - redis_data:/data
 

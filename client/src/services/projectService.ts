@@ -14,7 +14,7 @@ import {
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
-    const res = await api.get("/project");
+    const res = await api.get("/api/v1/project");
     return z.array(ProjectModel).parse(res.data);
   } catch (error) {
     console.error("Fetching projects unsuccessful", error);
@@ -24,7 +24,7 @@ export const fetch_projects = async (): Promise<Project[]> => {
 
 export const fetch_project_by_uuid = async (uuid: string): Promise<Project> => {
   try {
-    const res = await api.get(`/project/${uuid}`);
+    const res = await api.get(`/api/v1/project/${uuid}`);
     return ProjectModel.parse(res.data);
   } catch (error) {
     console.error("Fetching project by UUID unsuccessful", error);
@@ -37,7 +37,7 @@ export const create_project = async (
   criteria: Criteria,
 ): Promise<CreatedProject> => {
   try {
-    const res = await api.post("/project", {
+    const res = await api.post("/api/v1/project", {
       name: title,
       criteria: criteria,
     });
@@ -50,7 +50,7 @@ export const create_project = async (
 
 export const delete_project = async (uuid: string): Promise<DeletedProject> => {
   try {
-    const res = await api.delete(`/project/${uuid}`);
+    const res = await api.delete(`/api/v1/project/${uuid}`);
     return DeletedProjectModel.parse(res.data);
   } catch (error) {
     console.error("Deleting project unsuccessful", error);
