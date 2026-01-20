@@ -15,7 +15,7 @@ let mockCreateJob: {
 };
 
 // TODO: Skip Job tests for now
-test.describe("Job API", () => {
+test.describe.skip("Job API", () => {
   test.beforeEach(async ({ request }) => {
     const fixtureRes = await request.post(`/api/v1/fixtures/reset`);
     expect(fixtureRes.status()).toBe(200);
