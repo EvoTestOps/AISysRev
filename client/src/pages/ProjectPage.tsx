@@ -2,7 +2,7 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H3, H4, H6 } from "../components/Typography";
+import { H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
@@ -23,6 +23,7 @@ import {
   LlmConfig,
   createZeroShotPromptingConfig,
   JobPromptingType,
+  Provider,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -45,7 +46,6 @@ import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
 import { AlertMessage } from "../components/AlertMessage";
-import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
@@ -56,6 +56,79 @@ type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+};
+
+type ModelConfigurationProps = {
+  isLlmSelected: boolean;
+  modelParametersSchema?: Provider["model_parameters_json_schema"];
+  modelFormValues: Record<string, unknown>;
+  setModelFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+};
+
+const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
+  isLlmSelected,
+  modelParametersSchema,
+  modelFormValues,
+  setModelFormValue,
+}) => {
+  return isLlmSelected && modelParametersSchema ? (
+    <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
+      {Object.keys(modelParametersSchema.properties).map((key) => {
+        const property = modelParametersSchema.properties[key];
+        return (
+          <div
+            className="flex flex-col justify-between gap-1"
+            key={`property_${key}`}
+          >
+            <p className="text-md font-semibold">
+              {property.title}{" "}
+              {modelFormValues[key] !== undefined && modelFormValues[key] !== ""
+                ? "(" + modelFormValues[key] + ")"
+                : ""}
+            </p>
+            <p className="text-xs text-gray-500">{property.description}</p>
+            {property.type === "number" && (
+              <input
+                type="range"
+                className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                data-testid={`property_${key}_input`}
+                min={property.minimum}
+                max={property.maximum}
+                step={0.1}
+                onChange={(e) => {
+                  setModelFormValue((vals) => ({
+                    ...vals,
+                    [key]: e.target.value,
+                  }));
+                }}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error Ok
+                value={modelFormValues[key]}
+              />
+            )}
+            {property.type === "integer" && (
+              <input
+                type="number"
+                className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
+                data-testid={`property_${key}_input`}
+                onChange={(e) => {
+                  setModelFormValue((vals) => ({
+                    ...vals,
+                    [key]: e.target.value,
+                  }));
+                }}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error Ok
+                value={modelFormValues[key]}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
 };
 
 const ActionComponent: React.FC<ActionComponentProps> = ({
@@ -77,7 +150,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
       {hasPapers && (
         <a
           className={twMerge(
-            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700"
+            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700",
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
@@ -105,8 +178,8 @@ const SectionHeader: React.FC<{
         "h-16 grid grid-cols-[1fr_30px] items-center content-center p-4 bg-slate-800 text-white rounded-lg",
         {
           "bg-gray-700 opacity-45": disabled,
-        }
-      )
+        },
+      ),
     )}
   >
     <H6 className="select-none">{title}</H6>
@@ -160,6 +233,7 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
+  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS">("ZS");
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
@@ -173,7 +247,7 @@ export const ProjectPage = () => {
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
-    (state) => state.getProjectByUuid
+    (state) => state.getProjectByUuid,
   );
   const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
@@ -185,7 +259,7 @@ export const ProjectPage = () => {
       fetchPapers(projectUuid);
     }
     fetchModels();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, projectUuid]);
 
   const paperUuid = useMemo(() => {
@@ -198,7 +272,7 @@ export const ProjectPage = () => {
   >(undefined);
 
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
-    undefined
+    undefined,
   );
   const provider = providers.find((p) => p.name === selectedLlmProvider?.value);
 
@@ -217,7 +291,7 @@ export const ProjectPage = () => {
           [curr]: defaultVal === undefined ? undefined : defaultVal,
         };
       },
-      {}
+      {},
     );
   }, [providerParametersSchema]);
   const defaultModelValues = useMemo(() => {
@@ -232,7 +306,7 @@ export const ProjectPage = () => {
           [curr]: defaultVal === undefined ? undefined : defaultVal,
         };
       },
-      {}
+      {},
     );
   }, [modelParametersSchema]);
 
@@ -252,7 +326,7 @@ export const ProjectPage = () => {
 
   const pendingTasks = useMemo(
     () => papers.filter((paper) => paper.human_result == null),
-    [papers]
+    [papers],
   );
 
   const evaluationFinished = jobTasks.length > 0 && pendingTasks.length === 0;
@@ -280,7 +354,7 @@ export const ProjectPage = () => {
           setModelsLoaded(false);
           const models = await retrieve_models(
             selectedLlmProvider.value,
-            providerFormValues
+            providerFormValues,
           );
           setAvailableModels(models);
           setModelsLoaded(true);
@@ -288,7 +362,7 @@ export const ProjectPage = () => {
           console.error(
             "Failed to fetch available models for provider " +
               selectedLlmProvider.value,
-            error
+            error,
           );
         }
       }
@@ -359,7 +433,13 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [selectedLlm, selectedLlmProvider, modelFormValues, providerFormValues, projectUuid]);
+  }, [
+    selectedLlm,
+    selectedLlmProvider,
+    modelFormValues,
+    providerFormValues,
+    projectUuid,
+  ]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -382,7 +462,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid]
+    [projectUuid],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -410,7 +490,7 @@ export const ProjectPage = () => {
       uploadFilesToBackend,
       fetchFiles,
       // loadPapers
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -432,7 +512,7 @@ export const ProjectPage = () => {
           // console.log("job.uuid", job.uuid);
           // @ts-expect-error Expected
           return fetchJobTasksFromBackend(job.uuid, job.id);
-        })
+        }),
       )
         .then((results) => {
           setJobTasks(results.flat());
@@ -468,7 +548,7 @@ export const ProjectPage = () => {
         const candidate = papers[i];
         if (jobTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
           navigate(
-            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`
+            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`,
           );
           return;
         }
@@ -517,7 +597,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
-        }).toString()}`
+        }).toString()}`,
       );
       if (!response.ok) {
         return;
@@ -536,6 +616,12 @@ export const ProjectPage = () => {
   }, [projectUuid]);
 
   const hasPapers = papers && papers.length > 0;
+
+  useEffect(() => {
+    if (isLlmProviderSelected && !modelsLoaded) {
+      fetchModels();
+    }
+  }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
 
   if (!project) {
     return <NotFoundPage />;
@@ -571,10 +657,10 @@ export const ProjectPage = () => {
           {createdJobs.map((job) => {
             const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE
+              (task) => task.status === JobTaskStatus.DONE,
             ).length;
             const errorCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.ERROR
+              (task) => task.status === JobTaskStatus.ERROR,
             ).length;
             const totalCount = tasks.length;
             const completedCount = doneCount + errorCount;
@@ -614,7 +700,7 @@ export const ProjectPage = () => {
                                 progress < 100,
                               "[&::-webkit-progress-value]:bg-green-400":
                                 progress === 100,
-                            }
+                            },
                           )}
                         />
                       )}
@@ -682,7 +768,9 @@ export const ProjectPage = () => {
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
-              <H3>Provider</H3>
+              <label className="text-sm font-medium text-slate-700">
+                Provider
+              </label>
               <DropdownMenuText
                 disabled={false}
                 options={providers.map((provider) => ({
@@ -701,7 +789,7 @@ export const ProjectPage = () => {
                 setSelected={setIsLlmProviderSelected}
               />
               {/* {isLlmProviderSelected && (
-                <div className="text-xs bg-slate-600 p-2 rounded-lg text-white inline-flex w-full flex-row gap-2 items-start">
+                <div className="text-xs p-2 rounded-lg text-slate-700 inline-flex w-full flex-row gap-2 items-start">
                   <div>
                     <InfoIcon size={16} />
                   </div>
@@ -716,7 +804,6 @@ export const ProjectPage = () => {
                 </div>
               )} */}
               {isLlmProviderSelected && providerParametersSchema && (
-                // <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
                 <>
                   {Object.keys(providerParametersSchema.properties).map(
                     (key) => {
@@ -805,10 +892,9 @@ export const ProjectPage = () => {
                           )}
                         </div>
                       );
-                    }
+                    },
                   )}
                 </>
-                // </div>
               )}
             </div>
             {isLlmProviderSelected &&
@@ -821,17 +907,12 @@ export const ProjectPage = () => {
                   title={param.title}
                 />
               ))}
-            {isLlmProviderSelected && <H4>Model</H4>}
-            {isLlmProviderSelected && !modelsLoaded && (
-              <button
-                className="text-sm font-bold hover:cursor-pointer bg-blue-600 text-white p-2 rounded-lg"
-                onClick={() => fetchModels()}
-              >
-                Load models
-              </button>
+            <label className="text-sm font-medium text-slate-700">Model</label>
+            {!modelsLoaded && (
+              <div className="w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm bg-gray-100 focus:outline-none focus:ring-0 opacity-80 select-none text-sm" />
             )}
             {modelsLoaded && (
-              <div className="flex flex-col items-start gap-2 w-full">
+              <div className="flex flex-col items-start gap-1 w-full">
                 <DropdownMenuText
                   disabled={!isLlmProviderSelected || fetchedFiles.length === 0}
                   options={[
@@ -847,94 +928,79 @@ export const ProjectPage = () => {
                 />
               </div>
             )}
-            {isLlmSelected && modelParametersSchema && (
-              <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
-                {Object.keys(modelParametersSchema.properties).map((key) => {
-                  const property = modelParametersSchema.properties[key];
-                  return (
-                    <div
-                      className="flex flex-col justify-between gap-1"
-                      key={`property_${key}`}
-                    >
-                      <p className="text-md font-semibold">
-                        {property.title}{" "}
-                        {modelFormValues[key] !== undefined &&
-                        modelFormValues[key] !== ""
-                          ? "(" + modelFormValues[key] + ")"
-                          : ""}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {property.description}
-                      </p>
-                      {property.type === "number" && (
-                        <input
-                          type="range"
-                          className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                          data-testid={`property_${key}_input`}
-                          min={property.minimum}
-                          max={property.maximum}
-                          step={0.1}
-                          onChange={(e) => {
-                            setModelFormValue((vals) => ({
-                              ...vals,
-                              [key]: e.target.value,
-                            }));
-                          }}
-                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                          // @ts-expect-error Ok
-                          value={modelFormValues[key]}
-                        />
-                      )}
-                      {property.type === "integer" && (
-                        <input
-                          type="number"
-                          className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
-                          data-testid={`property_${key}_input`}
-                          onChange={(e) => {
-                            setModelFormValue((vals) => ({
-                              ...vals,
-                              [key]: e.target.value,
-                            }));
-                          }}
-                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                          // @ts-expect-error Ok
-                          value={modelFormValues[key]}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <ModelConfiguration
+              isLlmSelected={isLlmSelected}
+              modelFormValues={modelFormValues}
+              modelParametersSchema={modelParametersSchema}
+              setModelFormValue={setModelFormValue}
+            />
+            <div className="inline-flex rounded-xl bg-slate-100 p-1 ring-1 gap-1 ring-slate-200">
+              <button
+                type="button"
+                className={twMerge(
+                  classNames(
+                    "rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:cursor-pointer",
+                    {
+                      "bg-blue-600 text-white shadow-sm hover:cursor-default":
+                        promptingStrategy === "ZS",
+                      "opacity-20 hover:cursor-default":
+                        !isLlmProviderSelected || !isLlmSelected,
+                    },
+                  ),
+                )}
+                onClick={() => {
+                  if (isLlmProviderSelected && isLlmSelected) {
+                    setPromptingStrategy("ZS");
+                  }
+                }}
+                aria-pressed={promptingStrategy === "ZS"}
+              >
+                Zero-shot
+              </button>
+              <button
+                type="button"
+                className={twMerge(
+                  classNames(
+                    "rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:cursor-pointer",
+                    {
+                      "bg-blue-600 text-white shadow-sm hover:cursor-default":
+                        promptingStrategy === "FS",
+                      "opacity-20 hover:cursor-default":
+                        !isLlmProviderSelected || !isLlmSelected,
+                    },
+                  ),
+                )}
+                onClick={() => {
+                  if (isLlmProviderSelected && isLlmSelected) {
+                    setPromptingStrategy("FS");
+                  }
+                }}
+                aria-pressed={promptingStrategy === "FS"}
+              >
+                Few-shot
+              </button>
+            </div>
             <div className="flex justify-start">
               <Button
                 variant="purple"
-                onClick={() => createZeroShotJob()}
+                onClick={() => {
+                  if (promptingStrategy === "ZS") {
+                    createZeroShotJob();
+                  } else {
+                    navigate(`/project/${projectUuid}/few_shot`);
+                  }
+                }}
                 disabled={
-                  fetchedFiles.length === 0 || selectedLlm === undefined
+                  fetchedFiles.length === 0 ||
+                  !isLlmProviderSelected ||
+                  !isLlmSelected
                 }
                 title="Create zero-shot task"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
                 <Sparkles />
-                <Badge text="ZS" />
-                <span>Create Zero-shot</span>
+                <span>Create task</span>
               </Button>
-            </div>
-            <div className="flex justify-start">
-              <LinkButton
-                href={`/project/${projectUuid}/few_shot`}
-                variant="purple"
-                disabled={
-                  fetchedFiles.length === 0 || selectedLlm === undefined
-                }
-                title="Create few-shot task"
-                className="w-full rounded-lg font-bold text-sm items-center justify-center"
-              >
-                <Sparkles />
-                <Badge text="FS" />
-                <span>Create Few-shot</span>
-              </LinkButton>
             </div>
           </Card>
         </div>
