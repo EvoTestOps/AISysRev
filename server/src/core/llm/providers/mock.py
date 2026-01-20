@@ -21,8 +21,16 @@ from src.schemas.llm import (
 
 
 class MockProviderParams(BaseModel):
-    delay: int = Field(title="Request duration (ms)", default=1000)
-    delay_jitter: int = Field(title="Request jitter (ms)", default=500)
+    delay: int = Field(
+        title="Request duration (ms)",
+        description="Duration of the request in milliseconds.",
+        default=1000,
+    )
+    delay_jitter: int = Field(
+        title="Request jitter (ms)",
+        description="Jitter of the request duration, randomly sampled for each LLM request (duration +- jitter)",
+        default=500,
+    )
 
 
 class MockModelParams(BaseLLMParams):
