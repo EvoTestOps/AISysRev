@@ -131,6 +131,108 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   ) : null;
 };
 
+type ProviderConfigurationProps = {
+  modelsLoaded: boolean;
+  providerParametersSchema?: Provider["provider_parameters_json_schema"];
+  providerFormValues: Record<string, unknown>;
+  setProviderFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+};
+
+const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
+  modelsLoaded,
+  providerParametersSchema,
+  providerFormValues,
+  setProviderFormValue,
+}) => {
+  return providerParametersSchema ? (
+    <div className="border border-gray-300 rounded-lg p-3 w-full flex flex-col gap-2 bg-white shadow-md">
+      {Object.keys(providerParametersSchema.properties).map((key) => {
+        const property = providerParametersSchema.properties[key];
+        return (
+          <div
+            className="flex flex-col justify-between gap-1 w-full"
+            key={`property_${key}`}
+          >
+            <p className="text-md font-semibold">
+              {property.title}{" "}
+              {providerFormValues[key] !== undefined &&
+              property.type !== "string" &&
+              providerFormValues[key] !== ""
+                ? "(" + providerFormValues[key] + ")"
+                : ""}
+            </p>
+            <p className="text-xs text-gray-500">{property.description}</p>
+            {property.type === "number" && (
+              <input
+                type="range"
+                disabled={modelsLoaded}
+                className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-gray-200 accent-slate-800"
+                data-testid={`property_${key}_input`}
+                min={property.minimum}
+                max={property.maximum}
+                step={0.1}
+                onChange={(e) => {
+                  const val =
+                    e.target.value === "" ? "" : parseFloat(e.target.value);
+                  if (!Number.isNaN(val)) {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: val,
+                    }));
+                  }
+                }}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error Ok
+                value={providerFormValues[key]}
+              />
+            )}
+            {property.type === "string" && (
+              <input
+                type="text"
+                disabled={modelsLoaded}
+                className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800 text-xs"
+                data-testid={`property_${key}_input`}
+                onChange={(e) => {
+                  setProviderFormValue((vals) => ({
+                    ...vals,
+                    [key]: e.target.value,
+                  }));
+                }}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error Ok
+                value={providerFormValues[key]}
+              />
+            )}
+            {property.type === "integer" && (
+              <input
+                type="number"
+                disabled={modelsLoaded}
+                className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-gray-200 disabled:text-gray-400 border-2 accent-slate-800"
+                data-testid={`property_${key}_input`}
+                onChange={(e) => {
+                  const val =
+                    e.target.value === "" ? "" : parseInt(e.target.value, 10);
+                  if (!Number.isNaN(val)) {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: val,
+                    }));
+                  }
+                }}
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error Ok
+                value={providerFormValues[key]}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : null;
+};
+
 const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
@@ -804,97 +906,12 @@ export const ProjectPage = () => {
                 </div>
               )} */}
               {isLlmProviderSelected && providerParametersSchema && (
-                <>
-                  {Object.keys(providerParametersSchema.properties).map(
-                    (key) => {
-                      const property = providerParametersSchema.properties[key];
-                      return (
-                        <div
-                          className="flex flex-col justify-between gap-1 w-full"
-                          key={`property_${key}`}
-                        >
-                          <p className="text-md font-semibold">
-                            {property.title}{" "}
-                            {providerFormValues[key] !== undefined &&
-                            property.type !== "string" &&
-                            providerFormValues[key] !== ""
-                              ? "(" + providerFormValues[key] + ")"
-                              : ""}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {property.description}
-                          </p>
-                          {property.type === "number" && (
-                            <input
-                              type="range"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-gray-200 accent-slate-800"
-                              data-testid={`property_${key}_input`}
-                              min={property.minimum}
-                              max={property.maximum}
-                              step={0.1}
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? ""
-                                    : parseFloat(e.target.value);
-                                if (!Number.isNaN(val)) {
-                                  setProviderFormValue((vals) => ({
-                                    ...vals,
-                                    [key]: val,
-                                  }));
-                                }
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                          {property.type === "string" && (
-                            <input
-                              type="text"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800 text-xs"
-                              data-testid={`property_${key}_input`}
-                              onChange={(e) => {
-                                setProviderFormValue((vals) => ({
-                                  ...vals,
-                                  [key]: e.target.value,
-                                }));
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                          {property.type === "integer" && (
-                            <input
-                              type="number"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-gray-200 disabled:text-gray-400 border-2 accent-slate-800"
-                              data-testid={`property_${key}_input`}
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? ""
-                                    : parseInt(e.target.value, 10);
-                                if (!Number.isNaN(val)) {
-                                  setProviderFormValue((vals) => ({
-                                    ...vals,
-                                    [key]: val,
-                                  }));
-                                }
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                        </div>
-                      );
-                    },
-                  )}
-                </>
+                <ProviderConfiguration
+                  modelsLoaded={modelsLoaded}
+                  providerFormValues={providerFormValues}
+                  setProviderFormValue={setProviderFormValue}
+                  providerParametersSchema={providerParametersSchema}
+                />
               )}
             </div>
             {isLlmProviderSelected &&
