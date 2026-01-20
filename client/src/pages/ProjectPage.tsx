@@ -201,95 +201,117 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
     "rounded-lg p-2 h-8 bg-whitecursor-pointer text-sm border-1 border-slate-400 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800",
   );
   return providerParametersSchema ? (
-    <div className="border border-slate-200 rounded-lg p-3 w-full flex flex-col gap-2 bg-slate-50 shadow-md">
-      {Object.keys(providerParametersSchema.properties).map((key) => {
-        const property = providerParametersSchema.properties[key];
-        return (
-          <div
-            className="flex flex-col justify-between gap-1 w-full"
-            key={`property_${key}`}
-          >
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700">
-                {property.title}
-              </label>
-              <span className="text-sm font-medium text-slate-600">
-                {providerFormValues[key] !== undefined &&
-                property.type !== "string" &&
-                providerFormValues[key] !== "" ? (
-                  <>{providerFormValues[key]}</>
-                ) : (
-                  ""
-                )}
-              </span>
-            </div>
-            {property.type === "number" && (
-              <input
-                type="range"
-                disabled={modelSelected}
-                className={cx}
-                data-testid={`property_${key}_input`}
-                min={property.minimum}
-                max={property.maximum}
-                step={0.1}
-                onChange={(e) => {
-                  const val =
-                    e.target.value === "" ? "" : parseFloat(e.target.value);
-                  if (!Number.isNaN(val)) {
-                    setProviderFormValue((vals) => ({
-                      ...vals,
-                      [key]: val,
-                    }));
-                  }
-                }}
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error Ok
-                value={providerFormValues[key]}
-              />
-            )}
-            {property.type === "string" && (
-              <input
-                type="text"
-                disabled={modelSelected}
-                className={cx}
-                data-testid={`property_${key}_input`}
-                onChange={(e) => {
-                  setProviderFormValue((vals) => ({
-                    ...vals,
-                    [key]: e.target.value,
-                  }));
-                }}
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error Ok
-                value={providerFormValues[key]}
-              />
-            )}
-            {property.type === "integer" && (
-              <input
-                type="number"
-                disabled={modelSelected}
-                className={cx}
-                data-testid={`property_${key}_input`}
-                onChange={(e) => {
-                  const val =
-                    e.target.value === "" ? "" : parseInt(e.target.value, 10);
-                  if (!Number.isNaN(val)) {
-                    setProviderFormValue((vals) => ({
-                      ...vals,
-                      [key]: val,
-                    }));
-                  }
-                }}
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error Ok
-                value={providerFormValues[key]}
-              />
-            )}
-            <p className="text-xs text-gray-500">{property.description}</p>
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md w-full">
+      <summary className="flex cursor-pointer list-none items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-slate-900">Advanced</div>
+          <div className="mt-0.5 text-xs text-slate-500 flex gap-2">
+            Provider configuration.
           </div>
-        );
-      })}
-    </div>
+        </div>
+        <svg
+          className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </summary>
+      <div className="mt-4">
+        {Object.keys(providerParametersSchema.properties).map((key) => {
+          const property = providerParametersSchema.properties[key];
+          return (
+            <div
+              className="flex flex-col justify-between gap-1 w-full"
+              key={`property_${key}`}
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  {property.title}
+                </label>
+                <span className="text-sm font-medium text-slate-600">
+                  {providerFormValues[key] !== undefined &&
+                  property.type !== "string" &&
+                  providerFormValues[key] !== "" ? (
+                    <>{providerFormValues[key]}</>
+                  ) : (
+                    ""
+                  )}
+                </span>
+              </div>
+              {property.type === "number" && (
+                <input
+                  type="range"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  min={property.minimum}
+                  max={property.maximum}
+                  step={0.1}
+                  onChange={(e) => {
+                    const val =
+                      e.target.value === "" ? "" : parseFloat(e.target.value);
+                    if (!Number.isNaN(val)) {
+                      setProviderFormValue((vals) => ({
+                        ...vals,
+                        [key]: val,
+                      }));
+                    }
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              {property.type === "string" && (
+                <input
+                  type="text"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  onChange={(e) => {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.value,
+                    }));
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              {property.type === "integer" && (
+                <input
+                  type="number"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  onChange={(e) => {
+                    const val =
+                      e.target.value === "" ? "" : parseInt(e.target.value, 10);
+                    if (!Number.isNaN(val)) {
+                      setProviderFormValue((vals) => ({
+                        ...vals,
+                        [key]: val,
+                      }));
+                    }
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              <p className="text-xs text-gray-500">{property.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </details>
   ) : null;
 };
 
@@ -1011,14 +1033,14 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 ring-1 gap-1 ring-slate-200">
+            <div className="inline-flex rounded-xl bg-slate-50 p-1 ring-1 gap-1 ring-slate-200">
               <button
                 type="button"
                 className={twMerge(
                   classNames(
-                    "rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:cursor-pointer",
+                    "rounded-lg px-3 py-2 text-sm  text-slate-900 hover:cursor-pointer",
                     {
-                      "bg-blue-600 text-white shadow-sm hover:cursor-default":
+                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
                         promptingStrategy === "ZS",
                       "opacity-20 hover:cursor-default":
                         !isLlmProviderSelected || !isLlmSelected,
@@ -1038,9 +1060,9 @@ export const ProjectPage = () => {
                 type="button"
                 className={twMerge(
                   classNames(
-                    "rounded-lg px-3 py-2 text-sm font-medium text-slate-900 hover:cursor-pointer",
+                    "rounded-lg px-3 py-2 text-sm text-slate-900 hover:cursor-pointer",
                     {
-                      "bg-blue-600 text-white shadow-sm hover:cursor-default":
+                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
                         promptingStrategy === "FS",
                       "opacity-20 hover:cursor-default":
                         !isLlmProviderSelected || !isLlmSelected,
