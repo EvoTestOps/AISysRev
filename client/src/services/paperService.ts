@@ -3,7 +3,7 @@ import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/paper/${projectUuid}`);
+    const res = await api.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -17,10 +17,12 @@ export const fetchPapersForProject = async (projectUuid: string) => {
 };
 
 export const fetchPapersWithModelEvalsForProject = async (
-  projectUuid: string
+  projectUuid: string,
 ) => {
   try {
-    const res = await api.get(`/paper/${projectUuid}/with_model_evaluations`);
+    const res = await api.get(
+      `/api/v1/paper/${projectUuid}/with_model_evaluations`,
+    );
     return res.data;
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,10 +37,10 @@ export const fetchPapersWithModelEvalsForProject = async (
 
 export const addPaperHumanResult = async (
   paperUuid: string,
-  result: JobTaskHumanResult
+  result: JobTaskHumanResult,
 ) => {
   try {
-    const res = await api.patch(`/paper/${paperUuid}`, {
+    const res = await api.patch(`/api/v1/paper/${paperUuid}`, {
       human_result: result,
     });
     return res.data;

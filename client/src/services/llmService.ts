@@ -1,7 +1,5 @@
 import { z } from "zod";
-import axios from "axios";
-
-const prefix = "/api/v1";
+import { api } from "./api";
 
 // OpenRouter API model listing response schema
 // Backend filters this list to show only the ones that support JSON, temperature, seed and top_p.
@@ -54,12 +52,12 @@ export type ModelResponse = z.TypeOf<typeof schema>;
 
 export const retrieve_models = async (
   provider: string,
-  provider_parameters: Record<string, unknown> = {}
+  provider_parameters: Record<string, unknown> = {},
 ): Promise<
   Array<{ id: string; created: number; object: "model"; owned_by: string }>
 > => {
   try {
-    const res = await axios.post(`${prefix}/llm/${provider}/models`, {
+    const res = await api.post(`/api/v1/llm/${provider}/models`, {
       provider_parameters,
     });
     // TODO: Data validation

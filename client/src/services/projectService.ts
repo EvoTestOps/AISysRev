@@ -1,46 +1,57 @@
+import z from "zod";
 import { api } from "../services/api";
-import { Criteria, Project } from "../state/types";
+import type {
+  CreatedProject,
+  Criteria,
+  DeletedProject,
+  Project,
+} from "../state/types/project";
+import {
+  CreatedProjectModel,
+  DeletedProjectModel,
+  ProjectModel,
+} from "../state/types/project";
 
-// TODO: Zod type guard
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
-    const res = await api.get("/project");
-    // console.log("Fetching projects successful", res.data);
-    return res.data;
+    const res = await api.get("/api/v1/project");
+    return z.array(ProjectModel).parse(res.data);
   } catch (error) {
     console.error("Fetching projects unsuccessful", error);
     throw error;
   }
 };
 
-export const fetch_project_by_uuid = async (uuid: string) => {
+export const fetch_project_by_uuid = async (uuid: string): Promise<Project> => {
   try {
-    const res = await api.get(`/project/${uuid}`);
-    return res.data;
+    const res = await api.get(`/api/v1/project/${uuid}`);
+    return ProjectModel.parse(res.data);
   } catch (error) {
     console.error("Fetching project by UUID unsuccessful", error);
     throw error;
   }
 };
 
-export const create_project = async (title: string, criteria: Criteria) => {
+export const create_project = async (
+  title: string,
+  criteria: Criteria,
+): Promise<CreatedProject> => {
   try {
-    // console.log("Creating project with title:", title);
-    const res = await api.post("/project", {
+    const res = await api.post("/api/v1/project", {
       name: title,
       criteria: criteria,
     });
-    return res.data;
+    return CreatedProjectModel.parse(res.data);
   } catch (error) {
     console.error("Creating project unsuccessful", error);
     throw error;
   }
 };
 
-export const delete_project = async (uuid: string) => {
+export const delete_project = async (uuid: string): Promise<DeletedProject> => {
   try {
-    const res = await api.delete(`/project/${uuid}`);
-    return res.data;
+    const res = await api.delete(`/api/v1/project/${uuid}`);
+    return DeletedProjectModel.parse(res.data);
   } catch (error) {
     console.error("Deleting project unsuccessful", error);
     throw error;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import * as z from "zod";
+import classNames from "classnames";
 
 const EventName = {
   // Events for JobTask-related things
@@ -39,7 +40,14 @@ type EventData = z.infer<typeof EventData>;
 const EventDataList: React.FC<{ logs: Array<EventData> }> = ({ logs }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className="fixed bottom-2 left-2 z-50 bg-slate-800/90 p-2 pl-3 pr-3 text-xs text-white rounded-lg flex flex-col items-start gap-2 overflow-y-scroll">
+    <div
+      className={classNames(
+        "fixed bottom-0 left-0 z-50 bg-slate-800/90 m-2 p-3 text-xs text-white rounded-lg flex flex-col items-start gap-2 overflow-y-scroll max-h-[50vh]",
+        {
+          "w-[70vw]": open,
+        },
+      )}
+    >
       {!open && (
         <button className="hover:cursor-pointer" onClick={() => setOpen(true)}>
           View logs ({logs.length})
@@ -82,7 +90,7 @@ export const EventStream = () => {
     const { data } = event;
     if (typeof data === "string") {
       const dataJson = JSON.parse(data);
-      console.log(dataJson);
+      // console.log(dataJson);
       const parsedData = EventData.safeParse(dataJson);
       if (!parsedData.error) {
         setLogs((logs) => [...logs, parsedData.data]);
@@ -95,7 +103,7 @@ export const EventStream = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eventSource.onopen = (_ev) => {
-      console.log("SSE connected to " + event_url);
+      // console.log("SSE connected to " + event_url);
       setConnected(true);
     };
 

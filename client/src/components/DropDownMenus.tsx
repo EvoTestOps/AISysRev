@@ -70,19 +70,18 @@ export const DropdownMenuText: React.FC<TextProps> = ({
       <MenuButton
         disabled={disabled}
         className={classNames(
-          "w-full p-1 bg-natural-100 border-2 rounded-xl not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed select-none text-sm",
+          "w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed select-none text-sm",
           {
             "border-gray-300": isSelected,
-            // "border-red-500 animate-pulse": !isSelected,
-          }
+          },
         )}
       >
         {selected?.name || "-"}
       </MenuButton>
 
       <MenuItems
-        anchor="bottom end"
-        className="block border-spacing-0.5 border-gray-300 w-48 rounded-md bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
+        anchor="bottom start"
+        className="block border-spacing-0.5 border-gray-300 w-48 rounded-lg bg-white shadow-lg ring-1 ring-black/10 focus:outline-none"
       >
         {options.map((option) => (
           <MenuItem

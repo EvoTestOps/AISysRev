@@ -2,15 +2,12 @@ import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
-import { H3, H4, H6 } from "../components/Typography";
+import { H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import {
-  fetchJobTasksFromBackend,
-  fetchPapersFromBackend,
-} from "../services/jobTaskService";
+import { fetchJobTasksFromBackend } from "../services/jobTaskService";
 import { createJob, fetchJobsForProject } from "../services/jobService";
 import {
   fileUploadToBackend,
@@ -22,11 +19,11 @@ import {
   FetchedFile,
   JobTask,
   JobTaskStatus,
-  Paper,
   CreatedJob,
   LlmConfig,
   createZeroShotPromptingConfig,
   JobPromptingType,
+  Provider,
 } from "../state/types";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -49,7 +46,6 @@ import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import Skeleton from "react-loading-skeleton";
 import { NotFoundPage } from "./NotFound";
 import { AlertMessage } from "../components/AlertMessage";
-import { LinkButton } from "../components/LinkButton";
 import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
@@ -60,6 +56,263 @@ type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+};
+
+type ModelConfigurationProps = {
+  isLlmSelected: boolean;
+  modelParametersSchema?: Provider["model_parameters_json_schema"];
+  modelFormValues: Record<string, unknown>;
+  setModelFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+};
+
+const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
+  isLlmSelected,
+  modelParametersSchema,
+  modelFormValues,
+  setModelFormValue,
+}) => {
+  if (
+    modelParametersSchema === undefined ||
+    Object.keys(modelParametersSchema.properties).length === 0
+  ) {
+    return null;
+  }
+  return isLlmSelected && modelParametersSchema ? (
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md">
+      <summary className="flex cursor-pointer list-none items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-slate-900">Advanced</div>
+          <div className="mt-0.5 text-xs text-slate-500 flex gap-2">
+            {Object.keys(modelParametersSchema.properties).map((key) => {
+              const property = modelParametersSchema.properties[key];
+              return (
+                <span key={`property_${property.title}`}>{`${property.title}: ${
+                  modelFormValues[key] !== undefined &&
+                  modelFormValues[key] !== "" &&
+                  modelFormValues[key]
+                }`}</span>
+              );
+            })}
+          </div>
+        </div>
+        <svg
+          className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </summary>
+      <div className="mt-4">
+        {Object.keys(modelParametersSchema.properties).map((key) => {
+          const property = modelParametersSchema.properties[key];
+          return (
+            <div
+              className="flex flex-col justify-between gap-1"
+              key={`property_${key}`}
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  {property.title}
+                </label>
+                <span className="text-sm font-medium text-slate-600">
+                  {modelFormValues[key] !== undefined &&
+                  modelFormValues[key] !== "" ? (
+                    <>{modelFormValues[key]}</>
+                  ) : (
+                    ""
+                  )}
+                </span>
+              </div>
+              {property.type === "number" && (
+                <input
+                  type="range"
+                  className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
+                  data-testid={`property_${key}_input`}
+                  min={property.minimum}
+                  max={property.maximum}
+                  step={0.1}
+                  onChange={(e) => {
+                    setModelFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.value,
+                    }));
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={modelFormValues[key]}
+                />
+              )}
+              {property.type === "integer" && (
+                <input
+                  type="number"
+                  className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
+                  data-testid={`property_${key}_input`}
+                  onChange={(e) => {
+                    setModelFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.value,
+                    }));
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={modelFormValues[key]}
+                />
+              )}
+              <p className="text-xs text-gray-500">{property.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  ) : null;
+};
+
+type ProviderConfigurationProps = {
+  modelSelected: boolean;
+  providerParametersSchema?: Provider["provider_parameters_json_schema"];
+  providerFormValues: Record<string, unknown>;
+  setProviderFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+};
+
+const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
+  modelSelected,
+  providerParametersSchema,
+  providerFormValues,
+  setProviderFormValue,
+}) => {
+  if (
+    providerParametersSchema === null ||
+    providerParametersSchema === undefined ||
+    Object.keys(providerParametersSchema.properties).length === 0
+  ) {
+    return null;
+  }
+  const cx = classNames(
+    "rounded-lg p-2 h-8 bg-whitecursor-pointer text-sm border-1 border-slate-400 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800",
+  );
+  return providerParametersSchema ? (
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md w-full">
+      <summary className="flex cursor-pointer list-none items-center justify-between">
+        <div>
+          <div className="text-sm font-medium text-slate-900">Advanced</div>
+          <div className="mt-0.5 text-xs text-slate-500 flex gap-2">
+            Provider configuration.
+          </div>
+        </div>
+        <svg
+          className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </summary>
+      <div className="mt-4">
+        {Object.keys(providerParametersSchema.properties).map((key) => {
+          const property = providerParametersSchema.properties[key];
+          return (
+            <div
+              className="flex flex-col justify-between gap-1 w-full"
+              key={`property_${key}`}
+            >
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-slate-700">
+                  {property.title}
+                </label>
+                <span className="text-sm font-medium text-slate-600">
+                  {providerFormValues[key] !== undefined &&
+                  property.type !== "string" &&
+                  providerFormValues[key] !== "" ? (
+                    <>{providerFormValues[key]}</>
+                  ) : (
+                    ""
+                  )}
+                </span>
+              </div>
+              {property.type === "number" && (
+                <input
+                  type="range"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  min={property.minimum}
+                  max={property.maximum}
+                  step={0.1}
+                  onChange={(e) => {
+                    const val =
+                      e.target.value === "" ? "" : parseFloat(e.target.value);
+                    if (!Number.isNaN(val)) {
+                      setProviderFormValue((vals) => ({
+                        ...vals,
+                        [key]: val,
+                      }));
+                    }
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              {property.type === "string" && (
+                <input
+                  type="text"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  onChange={(e) => {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.value,
+                    }));
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              {property.type === "integer" && (
+                <input
+                  type="number"
+                  disabled={modelSelected}
+                  className={cx}
+                  data-testid={`property_${key}_input`}
+                  onChange={(e) => {
+                    const val =
+                      e.target.value === "" ? "" : parseInt(e.target.value, 10);
+                    if (!Number.isNaN(val)) {
+                      setProviderFormValue((vals) => ({
+                        ...vals,
+                        [key]: val,
+                      }));
+                    }
+                  }}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error Ok
+                  value={providerFormValues[key]}
+                />
+              )}
+              <p className="text-xs text-gray-500">{property.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  ) : null;
 };
 
 const ActionComponent: React.FC<ActionComponentProps> = ({
@@ -81,7 +334,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
       {hasPapers && (
         <a
           className={twMerge(
-            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700"
+            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700",
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
@@ -109,8 +362,8 @@ const SectionHeader: React.FC<{
         "h-16 grid grid-cols-[1fr_30px] items-center content-center p-4 bg-slate-800 text-white rounded-lg",
         {
           "bg-gray-700 opacity-45": disabled,
-        }
-      )
+        },
+      ),
     )}
   >
     <H6 className="select-none">{title}</H6>
@@ -164,8 +417,11 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
-  const [papersLoading, setPapersLoading] = useState(false);
-  const [papers, setPapers] = useState<Paper[]>([]);
+  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS">("ZS");
+
+  const getPapers = useTypedStoreState((state) => state.getPapersForProject);
+  const papers = getPapers(projectUuid);
+
   const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
@@ -175,7 +431,7 @@ export const ProjectPage = () => {
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
-    (state) => state.getProjectByUuid
+    (state) => state.getProjectByUuid,
   );
   const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
@@ -186,7 +442,9 @@ export const ProjectPage = () => {
     if (project !== undefined) {
       fetchPapers(projectUuid);
     }
-  }, [fetchPapers, project, projectUuid]);
+    fetchModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, projectUuid]);
 
   const paperUuid = useMemo(() => {
     if (!search) return null;
@@ -196,8 +454,9 @@ export const ProjectPage = () => {
   const [selectedLlmProvider, setSelectedLlmProvider] = useState<
     DropdownOption | undefined
   >(undefined);
+
   const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
-    undefined
+    undefined,
   );
   const provider = providers.find((p) => p.name === selectedLlmProvider?.value);
 
@@ -216,7 +475,7 @@ export const ProjectPage = () => {
           [curr]: defaultVal === undefined ? undefined : defaultVal,
         };
       },
-      {}
+      {},
     );
   }, [providerParametersSchema]);
   const defaultModelValues = useMemo(() => {
@@ -231,7 +490,7 @@ export const ProjectPage = () => {
           [curr]: defaultVal === undefined ? undefined : defaultVal,
         };
       },
-      {}
+      {},
     );
   }, [modelParametersSchema]);
 
@@ -251,7 +510,7 @@ export const ProjectPage = () => {
 
   const pendingTasks = useMemo(
     () => papers.filter((paper) => paper.human_result == null),
-    [papers]
+    [papers],
   );
 
   const evaluationFinished = jobTasks.length > 0 && pendingTasks.length === 0;
@@ -279,7 +538,7 @@ export const ProjectPage = () => {
           setModelsLoaded(false);
           const models = await retrieve_models(
             selectedLlmProvider.value,
-            providerFormValues
+            providerFormValues,
           );
           setAvailableModels(models);
           setModelsLoaded(true);
@@ -287,7 +546,7 @@ export const ProjectPage = () => {
           console.error(
             "Failed to fetch available models for provider " +
               selectedLlmProvider.value,
-            error
+            error,
           );
         }
       }
@@ -324,23 +583,6 @@ export const ProjectPage = () => {
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
-  const loadPapers = useCallback(async () => {
-    setPapersLoading(true);
-    try {
-      const fetched = await fetchPapersFromBackend(projectUuid);
-      // console.log("Fetched papers", fetched);
-      setPapers(fetched);
-    } catch (e) {
-      console.error("Failed to fetch papers", e);
-    } finally {
-      setPapersLoading(false);
-    }
-  }, [projectUuid]);
-
-  useEffect(() => {
-    loadPapers();
-  }, [loadPapers]);
-
   const createZeroShotJob = useCallback(async () => {
     if (!selectedLlm) {
       toast.error("Please select a model before creating a task.");
@@ -370,7 +612,7 @@ export const ProjectPage = () => {
         updated_at: res.updated_at,
       };
       setCreatedJobs((prev) => [...prev, createdJob]);
-      await loadPapers();
+      // await loadPapers();
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
@@ -381,7 +623,6 @@ export const ProjectPage = () => {
     modelFormValues,
     providerFormValues,
     projectUuid,
-    loadPapers,
   ]);
 
   const uploadFilesToBackend = useCallback(
@@ -405,7 +646,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid]
+    [projectUuid],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -424,12 +665,16 @@ export const ProjectPage = () => {
       try {
         await uploadFilesToBackend(files);
         await fetchFiles();
-        await loadPapers();
+        // await loadPapers();
       } catch (error) {
         console.error("Problem uploading the files", error);
       }
     },
-    [uploadFilesToBackend, fetchFiles, loadPapers]
+    [
+      uploadFilesToBackend,
+      fetchFiles,
+      // loadPapers
+    ],
   );
 
   useEffect(() => {
@@ -451,7 +696,7 @@ export const ProjectPage = () => {
           // console.log("job.uuid", job.uuid);
           // @ts-expect-error Expected
           return fetchJobTasksFromBackend(job.uuid, job.id);
-        })
+        }),
       )
         .then((results) => {
           setJobTasks(results.flat());
@@ -487,13 +732,13 @@ export const ProjectPage = () => {
         const candidate = papers[i];
         if (jobTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
           navigate(
-            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`
+            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`,
           );
           return;
         }
       }
     }
-    await loadPapers();
+    // await loadPapers();
     navigate(`/project/${projectUuid}`);
     toast.success("Manual evaluation finished.");
   }, [
@@ -503,7 +748,7 @@ export const ProjectPage = () => {
     paperToTaskMap,
     navigate,
     projectUuid,
-    loadPapers,
+    // loadPapers,
   ]);
 
   useEffect(() => {
@@ -536,7 +781,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
-        }).toString()}`
+        }).toString()}`,
       );
       if (!response.ok) {
         return;
@@ -556,13 +801,19 @@ export const ProjectPage = () => {
 
   const hasPapers = papers && papers.length > 0;
 
+  useEffect(() => {
+    if (isLlmProviderSelected && !modelsLoaded) {
+      fetchModels();
+    }
+  }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
+
   if (!project) {
     return <NotFoundPage />;
   }
 
   const inclusionCriteria = project?.criteria.inclusion_criteria;
   const exclusionCriteria = project?.criteria.exclusion_criteria;
-  console.log(providerFormValues);
+
   return (
     <Layout
       title={project?.name || ""}
@@ -590,10 +841,10 @@ export const ProjectPage = () => {
           {createdJobs.map((job) => {
             const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
             const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE
+              (task) => task.status === JobTaskStatus.DONE,
             ).length;
             const errorCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.ERROR
+              (task) => task.status === JobTaskStatus.ERROR,
             ).length;
             const totalCount = tasks.length;
             const completedCount = doneCount + errorCount;
@@ -633,7 +884,7 @@ export const ProjectPage = () => {
                                 progress < 100,
                               "[&::-webkit-progress-value]:bg-green-400":
                                 progress === 100,
-                            }
+                            },
                           )}
                         />
                       )}
@@ -701,7 +952,9 @@ export const ProjectPage = () => {
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
-              <H3>Provider</H3>
+              <label className="text-sm font-medium text-slate-700">
+                Provider
+              </label>
               <DropdownMenuText
                 disabled={false}
                 options={providers.map((provider) => ({
@@ -720,7 +973,7 @@ export const ProjectPage = () => {
                 setSelected={setIsLlmProviderSelected}
               />
               {/* {isLlmProviderSelected && (
-                <div className="text-xs bg-slate-600 p-2 rounded-lg text-white inline-flex w-full flex-row gap-2 items-start">
+                <div className="text-xs p-2 rounded-lg text-slate-700 inline-flex w-full flex-row gap-2 items-start">
                   <div>
                     <InfoIcon size={16} />
                   </div>
@@ -735,99 +988,12 @@ export const ProjectPage = () => {
                 </div>
               )} */}
               {isLlmProviderSelected && providerParametersSchema && (
-                // <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
-                <>
-                  {Object.keys(providerParametersSchema.properties).map(
-                    (key) => {
-                      const property = providerParametersSchema.properties[key];
-                      return (
-                        <div
-                          className="flex flex-col justify-between gap-1 w-full"
-                          key={`property_${key}`}
-                        >
-                          <p className="text-md font-semibold">
-                            {property.title}{" "}
-                            {providerFormValues[key] !== undefined &&
-                            property.type !== "string" &&
-                            providerFormValues[key] !== ""
-                              ? "(" + providerFormValues[key] + ")"
-                              : ""}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {property.description}
-                          </p>
-                          {property.type === "number" && (
-                            <input
-                              type="range"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-gray-200 accent-slate-800"
-                              data-testid={`property_${key}_input`}
-                              min={property.minimum}
-                              max={property.maximum}
-                              step={0.1}
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? ""
-                                    : parseFloat(e.target.value);
-                                if (!Number.isNaN(val)) {
-                                  setProviderFormValue((vals) => ({
-                                    ...vals,
-                                    [key]: val,
-                                  }));
-                                }
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                          {property.type === "string" && (
-                            <input
-                              type="text"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 disabled:cursor-not-allowed border-2 border-gray-200 disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800 text-xs"
-                              data-testid={`property_${key}_input`}
-                              onChange={(e) => {
-                                setProviderFormValue((vals) => ({
-                                  ...vals,
-                                  [key]: e.target.value,
-                                }));
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                          {property.type === "integer" && (
-                            <input
-                              type="number"
-                              disabled={modelsLoaded}
-                              className="rounded-lg p-2 cursor-pointer disabled:cursor-not-allowed border-gray-400 disabled:border-gray-200 disabled:text-gray-400 border-2 accent-slate-800"
-                              data-testid={`property_${key}_input`}
-                              onChange={(e) => {
-                                const val =
-                                  e.target.value === ""
-                                    ? ""
-                                    : parseInt(e.target.value, 10);
-                                if (!Number.isNaN(val)) {
-                                  setProviderFormValue((vals) => ({
-                                    ...vals,
-                                    [key]: val,
-                                  }));
-                                }
-                              }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-expect-error Ok
-                              value={providerFormValues[key]}
-                            />
-                          )}
-                        </div>
-                      );
-                    }
-                  )}
-                </>
-                // </div>
+                <ProviderConfiguration
+                  modelSelected={isLlmSelected}
+                  providerFormValues={providerFormValues}
+                  setProviderFormValue={setProviderFormValue}
+                  providerParametersSchema={providerParametersSchema}
+                />
               )}
             </div>
             {isLlmProviderSelected &&
@@ -840,17 +1006,12 @@ export const ProjectPage = () => {
                   title={param.title}
                 />
               ))}
-            {isLlmProviderSelected && <H4>Model</H4>}
-            {isLlmProviderSelected && !modelsLoaded && (
-              <button
-                className="text-sm font-bold hover:cursor-pointer bg-blue-600 text-white p-2 rounded-lg"
-                onClick={() => fetchModels()}
-              >
-                Load models
-              </button>
+            <label className="text-sm font-medium text-slate-700">Model</label>
+            {!modelsLoaded && (
+              <div className="w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm bg-gray-100 focus:outline-none focus:ring-0 opacity-80 select-none text-sm" />
             )}
             {modelsLoaded && (
-              <div className="flex flex-col items-start gap-2 w-full">
+              <div className="flex flex-col items-start gap-1 w-full">
                 <DropdownMenuText
                   disabled={!isLlmProviderSelected || fetchedFiles.length === 0}
                   options={[
@@ -866,94 +1027,79 @@ export const ProjectPage = () => {
                 />
               </div>
             )}
-            {isLlmSelected && modelParametersSchema && (
-              <div className="border border-gray-300 rounded-lg p-3 flex flex-col gap-2 bg-white shadow-md">
-                {Object.keys(modelParametersSchema.properties).map((key) => {
-                  const property = modelParametersSchema.properties[key];
-                  return (
-                    <div
-                      className="flex flex-col justify-between gap-1"
-                      key={`property_${key}`}
-                    >
-                      <p className="text-md font-semibold">
-                        {property.title}{" "}
-                        {modelFormValues[key] !== undefined &&
-                        modelFormValues[key] !== ""
-                          ? "(" + modelFormValues[key] + ")"
-                          : ""}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {property.description}
-                      </p>
-                      {property.type === "number" && (
-                        <input
-                          type="range"
-                          className="p-2 cursor-pointer disabled:cursor-not-allowed bg-gray-200 accent-slate-800"
-                          data-testid={`property_${key}_input`}
-                          min={property.minimum}
-                          max={property.maximum}
-                          step={0.1}
-                          onChange={(e) => {
-                            setModelFormValue((vals) => ({
-                              ...vals,
-                              [key]: e.target.value,
-                            }));
-                          }}
-                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                          // @ts-expect-error Ok
-                          value={modelFormValues[key]}
-                        />
-                      )}
-                      {property.type === "integer" && (
-                        <input
-                          type="number"
-                          className="p-2 rounded-lg cursor-pointer disabled:cursor-not-allowed border-gray-400 border-2 accent-slate-800"
-                          data-testid={`property_${key}_input`}
-                          onChange={(e) => {
-                            setModelFormValue((vals) => ({
-                              ...vals,
-                              [key]: e.target.value,
-                            }));
-                          }}
-                          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                          // @ts-expect-error Ok
-                          value={modelFormValues[key]}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <ModelConfiguration
+              isLlmSelected={isLlmSelected}
+              modelFormValues={modelFormValues}
+              modelParametersSchema={modelParametersSchema}
+              setModelFormValue={setModelFormValue}
+            />
+            <div className="inline-flex rounded-xl bg-slate-50 p-1 ring-1 gap-1 ring-slate-200">
+              <button
+                type="button"
+                className={twMerge(
+                  classNames(
+                    "rounded-lg px-3 py-2 text-sm  text-slate-900 hover:cursor-pointer",
+                    {
+                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
+                        promptingStrategy === "ZS",
+                      "opacity-20 hover:cursor-default":
+                        !isLlmProviderSelected || !isLlmSelected,
+                    },
+                  ),
+                )}
+                onClick={() => {
+                  if (isLlmProviderSelected && isLlmSelected) {
+                    setPromptingStrategy("ZS");
+                  }
+                }}
+                aria-pressed={promptingStrategy === "ZS"}
+              >
+                Zero-shot
+              </button>
+              <button
+                type="button"
+                className={twMerge(
+                  classNames(
+                    "rounded-lg px-3 py-2 text-sm text-slate-900 hover:cursor-pointer",
+                    {
+                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
+                        promptingStrategy === "FS",
+                      "opacity-20 hover:cursor-default":
+                        !isLlmProviderSelected || !isLlmSelected,
+                    },
+                  ),
+                )}
+                onClick={() => {
+                  if (isLlmProviderSelected && isLlmSelected) {
+                    setPromptingStrategy("FS");
+                  }
+                }}
+                aria-pressed={promptingStrategy === "FS"}
+              >
+                Few-shot
+              </button>
+            </div>
             <div className="flex justify-start">
               <Button
                 variant="purple"
-                onClick={() => createZeroShotJob()}
+                onClick={() => {
+                  if (promptingStrategy === "ZS") {
+                    createZeroShotJob();
+                  } else {
+                    navigate(`/project/${projectUuid}/few_shot`);
+                  }
+                }}
                 disabled={
-                  fetchedFiles.length === 0 || selectedLlm === undefined
+                  fetchedFiles.length === 0 ||
+                  !isLlmProviderSelected ||
+                  !isLlmSelected
                 }
                 title="Create zero-shot task"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
                 <Sparkles />
-                <Badge text="ZS" />
-                <span>Create Zero-shot</span>
+                <span>Create task</span>
               </Button>
-            </div>
-            <div className="flex justify-start">
-              <LinkButton
-                href={`/project/${projectUuid}/few_shot`}
-                variant="purple"
-                disabled={
-                  fetchedFiles.length === 0 || selectedLlm === undefined
-                }
-                title="Create few-shot task"
-                className="w-full rounded-lg font-bold text-sm items-center justify-center"
-              >
-                <Sparkles />
-                <Badge text="FS" />
-                <span>Create Few-shot</span>
-              </LinkButton>
             </div>
           </Card>
         </div>
@@ -974,7 +1120,7 @@ export const ProjectPage = () => {
               variant="green"
               className="px-6 text-md font-bold rounded-lg "
               onClick={openManualEvaluation}
-              disabled={papersLoading || !canStartManualEvaluation}
+              disabled={!canStartManualEvaluation}
             >
               <div className="flex flex-row gap-2">
                 <ChartCandlestick />

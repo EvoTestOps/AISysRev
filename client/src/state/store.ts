@@ -11,12 +11,8 @@ import {
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
-import {
-  JobTaskHumanResult,
-  PaperWithModelEval,
-  Project,
-  Provider
-} from "./types";
+import type { JobTaskHumanResult, PaperWithModelEval, Provider } from "./types";
+import type { Project } from "./types/project";
 
 const injections = {
   projectsService,
@@ -36,7 +32,6 @@ type ProjectUUID = string;
 
 // Defines state, actions and thunks for project-related things.
 interface ProjectModel {
-  // Projects
   projects: Array<Project>;
   setProjects: Action<StoreModel, Array<Project>>;
   setLoadingProjects: Action<StoreModel, boolean>;
@@ -108,143 +103,141 @@ type StoreModel = {} & LoadingModel & ProjectModel & PaperModel & ProviderModel;
 
 export type Injections = typeof injections;
 
-export const store = createStore<StoreModel>(
-  {
-    // Projects
-    projects: [],
-    setProjects: action((state, payload) => {
-      state.projects = payload;
-    }),
-    setPapers: action((state, payload) => {
-      state.papers[payload.projectUuid] = payload.papers;
-    }),
-    setLoadingProjects: action((state, payload) => {
-      state.loading.projects = payload;
-    }),
-    setPaperPending: action((state, payload) => {
-      state.loading.papers[payload.projectUuid] = payload.state;
-    }),
-    // This should be only called on-demand, as one project might contain tens of thousands of papers
-    fetchPapers: thunk(async (actions, projectUuid, { injections }) => {
-      actions.setPaperPending({ projectUuid, state: true });
-      const { paperService } = injections;
-      return paperService
-        .fetchPapersWithModelEvalsForProject(projectUuid)
-        .then((papers) => {
-          actions.setPapers({ projectUuid, papers });
-          actions.setPaperPending({ projectUuid, state: false });
-        })
-        .catch(console.error)
-        .finally(() => actions.setPaperPending({ projectUuid, state: false }));
-    }),
-    setPaperPendingState: action((state, payload) => {
-      state.papersPendingState[payload.paperUuid] = payload.pending;
-    }),
-    fetchProjects: thunk(async (actions, _, { injections }) => {
-      actions.setLoadingProjects(true);
-      const { projectsService } = injections;
-      return projectsService
-        .fetch_projects()
-        .then((p) => {
-          actions.setProjects(p);
-          actions.setLoadingProjects(false);
-        })
-        .catch(console.error)
-        .finally(() => actions.setLoadingProjects(false));
-    }),
-    refreshProjects: thunk(async (actions) => {
-      actions.setProjects([]);
-      return actions.fetchProjects();
-    }),
-    getProjectByUuid: computed((state) => {
-      return (uuid: string) => state.projects.find((p) => p.uuid === uuid);
-    }),
-    addHumanResult: thunk(async (actions, params, { injections }) => {
-      actions.setPaperPendingState({
-        paperUuid: params.paperUuid,
-        pending: true,
-      });
-      const { paperService } = injections;
-      await paperService.addPaperHumanResult(
-        params.paperUuid,
-        params.humanResult
-      );
-      actions.setPaperHumanResult({
-        projectUuid: params.projectUuid,
-        paperUuid: params.paperUuid,
-        humanResult: params.humanResult,
-      });
-      actions.setPaperPendingState({
-        paperUuid: params.paperUuid,
-        pending: false,
-      });
-    }),
-    setPaperHumanResult: action((state, payload) => {
-      const { projectUuid, paperUuid, humanResult } = payload;
-      const projectPapers = state.papers[projectUuid];
-      if (!projectPapers) return;
-      const paperIndex = projectPapers.findIndex((p) => p.uuid === paperUuid);
-      if (paperIndex === -1) return;
-      projectPapers[paperIndex] = {
-        ...projectPapers[paperIndex],
-        human_result: humanResult,
-      };
-    }),
-    // Loading state
-    loading: {
-      projects: false,
-      providers: false,
-      papers: {},
-    },
+export const model = {
+  // Projects
+  projects: [],
+  setProjects: action((state, payload) => {
+    state.projects = payload;
+  }),
+  setPapers: action((state, payload) => {
+    state.papers[payload.projectUuid] = payload.papers;
+  }),
+  setLoadingProjects: action((state, payload) => {
+    state.loading.projects = payload;
+  }),
+  setPaperPending: action((state, payload) => {
+    state.loading.papers[payload.projectUuid] = payload.state;
+  }),
+  // This should be only called on-demand, as one project might contain tens of thousands of papers
+  fetchPapers: thunk(async (actions, projectUuid, { injections }) => {
+    actions.setPaperPending({ projectUuid, state: true });
+    const { paperService } = injections;
+    return paperService
+      .fetchPapersWithModelEvalsForProject(projectUuid)
+      .then((papers) => {
+        actions.setPapers({ projectUuid, papers });
+        actions.setPaperPending({ projectUuid, state: false });
+      })
+      .catch(console.error)
+      .finally(() => actions.setPaperPending({ projectUuid, state: false }));
+  }),
+  setPaperPendingState: action((state, payload) => {
+    state.papersPendingState[payload.paperUuid] = payload.pending;
+  }),
+  fetchProjects: thunk(async (actions, _, { injections }) => {
+    actions.setLoadingProjects(true);
+    const { projectsService } = injections;
+    return projectsService
+      .fetch_projects()
+      .then((p) => {
+        actions.setProjects(p);
+        actions.setLoadingProjects(false);
+      })
+      .catch(console.error)
+      .finally(() => actions.setLoadingProjects(false));
+  }),
+  refreshProjects: thunk(async (actions) => {
+    actions.setProjects([]);
+    return actions.fetchProjects();
+  }),
+  getProjectByUuid: computed((state) => {
+    return (uuid: string) => state.projects.find((p) => p.uuid === uuid);
+  }),
+  addHumanResult: thunk(async (actions, params, { injections }) => {
+    actions.setPaperPendingState({
+      paperUuid: params.paperUuid,
+      pending: true,
+    });
+    const { paperService } = injections;
+    await paperService.addPaperHumanResult(
+      params.paperUuid,
+      params.humanResult,
+    );
+    actions.setPaperHumanResult({
+      projectUuid: params.projectUuid,
+      paperUuid: params.paperUuid,
+      humanResult: params.humanResult,
+    });
+    actions.setPaperPendingState({
+      paperUuid: params.paperUuid,
+      pending: false,
+    });
+  }),
+  setPaperHumanResult: action((state, payload) => {
+    const { projectUuid, paperUuid, humanResult } = payload;
+    const projectPapers = state.papers[projectUuid];
+    if (!projectPapers) return;
+    const paperIndex = projectPapers.findIndex((p) => p.uuid === paperUuid);
+    if (paperIndex === -1) return;
+    projectPapers[paperIndex] = {
+      ...projectPapers[paperIndex],
+      human_result: humanResult,
+    };
+  }),
+  // Loading state
+  loading: {
+    projects: false,
+    providers: false,
     papers: {},
-    papersPendingState: {},
-    getPapersForProject: computed((state) => {
-      return (uuid: string) =>
-        state.papers[uuid] === undefined ? [] : state.papers[uuid];
-    }),
-    getPaperPendingState: computed((state) => {
-      return (paperUuid: string) =>
-        state.papersPendingState[paperUuid] || false;
-    }),
-    getPaperByUuid: computed((state) => {
-      return (projectUuid: string, paperUuid: string) =>
-        (state.papers[projectUuid] || []).find(
-          (paper) => paper.uuid === paperUuid
-        );
-    }),
-    providers: [],
-    fetchProviders: thunk(async (actions, _, { injections }) => {
-      actions.setLoadingProviders(true);
-      const { providerService } = injections;
-      return providerService
-        .fetchProviders()
-        .then((p) => {
-          actions.setProviders(p);
-          actions.setLoadingProviders(false);
-        })
-        .catch(console.error)
-        .finally(() => actions.setLoadingProviders(false));
-    }),
-    refreshProviders: thunk(async (actions) => {
-      actions.setProviders([]);
-      return actions.fetchProviders();
-    }),
-    setProviders: action((state, payload) => {
-      state.providers = payload;
-    }),
-    setLoadingProviders: action((state, payload) => {
-      state.loading.providers = payload;
-    }),
-    getProviderByName: computed((state) => {
-      return (name: string) =>
-        (state.providers || []).find((provider) => provider.name === name);
-    }),
   },
-  {
-    injections,
-    devTools: process.env.NODE_ENV !== "production",
-  }
-);
+  papers: {},
+  papersPendingState: {},
+  getPapersForProject: computed((state) => {
+    return (uuid: string) =>
+      state.papers[uuid] === undefined ? [] : state.papers[uuid];
+  }),
+  getPaperPendingState: computed((state) => {
+    return (paperUuid: string) => state.papersPendingState[paperUuid] || false;
+  }),
+  getPaperByUuid: computed((state) => {
+    return (projectUuid: string, paperUuid: string) =>
+      (state.papers[projectUuid] || []).find(
+        (paper) => paper.uuid === paperUuid,
+      );
+  }),
+  providers: [],
+  fetchProviders: thunk(async (actions, _, { injections }) => {
+    actions.setLoadingProviders(true);
+    const { providerService } = injections;
+    return providerService
+      .fetchProviders()
+      .then((p) => {
+        actions.setProviders(p);
+        actions.setLoadingProviders(false);
+      })
+      .catch(console.error)
+      .finally(() => actions.setLoadingProviders(false));
+  }),
+  refreshProviders: thunk(async (actions) => {
+    actions.setProviders([]);
+    return actions.fetchProviders();
+  }),
+  setProviders: action((state, payload) => {
+    state.providers = payload;
+  }),
+  setLoadingProviders: action((state, payload) => {
+    state.loading.providers = payload;
+  }),
+  getProviderByName: computed((state) => {
+    return (name: string) =>
+      (state.providers || []).find((provider) => provider.name === name);
+  }),
+} satisfies StoreModel;
+
+export const store = createStore<StoreModel>(model, {
+  injections,
+  devTools: process.env.NODE_ENV !== "production",
+});
 
 const typedHooks = createTypedHooks<StoreModel>();
 

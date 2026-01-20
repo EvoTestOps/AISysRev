@@ -89,7 +89,7 @@ After startup, open the application:
 
 If you ran `start-prod`, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
 
-If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
+If you used `make start-dev`, navigate to [http://localhost:3000](http://localhost:3000)
 
 
 #### Windows (non-WSL)

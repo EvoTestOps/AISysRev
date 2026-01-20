@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-const prefix = "/api/v1";
-
 let mockProject: {
   uuid: string;
   name: string;
@@ -19,9 +17,9 @@ let mockCreateJob: {
 // TODO: Skip Job tests for now
 test.describe.skip("Job API", () => {
   test.beforeEach(async ({ request }) => {
-    const fixtureRes = await request.post(`${prefix}/fixtures/reset`);
+    const fixtureRes = await request.post(`/api/v1/fixtures/reset`);
     expect(fixtureRes.status()).toBe(200);
-    const createRes = await request.post(`${prefix}/project`, {
+    const createRes = await request.post(`/api/v1/project`, {
       data: {
         name: "Test Project for Job",
         criteria: {
@@ -34,20 +32,20 @@ test.describe.skip("Job API", () => {
 
     const createdProject = await createRes.json();
     const projectRes = await request.get(
-      `${prefix}/project/${createdProject.uuid}`
+      `/api/v1/project/${createdProject.uuid}`,
     );
     expect(projectRes.status()).toBe(200);
 
     mockProject = await projectRes.json();
 
-    const createJobRes = await request.post(`${prefix}/job`, {
+    const createJobRes = await request.post(`/api/v1/job`, {
       data: {
         project_uuid: mockProject.uuid,
         llm_config: {
-          model_name: "gpt-4",
-          temperature: 0.7,
-          seed: 42,
-          top_p: 0.9,
+          provider_name: "mock",
+          model_name: "mock_001",
+          temperature: 0.0,
+          top_p: 0.1,
         },
         prompting_config: {
           screening_type: "ZERO_SHOT",
@@ -64,7 +62,7 @@ test.describe.skip("Job API", () => {
   test("Fetch all jobs returns 200 and an array with the mock job", async ({
     request,
   }) => {
-    const res = await request.get(`${prefix}/job`);
+    const res = await request.get(`/api/v1/job`);
     expect(res.status()).toBe(200);
 
     const data: Array<{
@@ -74,14 +72,14 @@ test.describe.skip("Job API", () => {
     expect(data.length).toBe(1);
     expect(Array.isArray(data)).toBe(true);
     expect(data.some((job) => job.project_uuid === mockProject.uuid)).toBe(
-      true
+      true,
     );
   });
 
   test("Fetch jobs by project returns array with jobs for the given project", async ({
     request,
   }) => {
-    const res = await request.get(`${prefix}/job?project=${mockProject.uuid}`);
+    const res = await request.get(`/api/v1/job?project=${mockProject.uuid}`);
     expect(res.status()).toBe(200);
 
     const data: Array<{
@@ -94,7 +92,7 @@ test.describe.skip("Job API", () => {
     expect(data.length).toBe(1);
     expect(data[0].prompting_config.screening_type).toBe("ZERO_SHOT");
     expect(data.every((job) => job.project_uuid === mockProject.uuid)).toBe(
-      true
+      true,
     );
     expect(data.some((job) => job.uuid === mockCreateJob.uuid)).toBe(true);
   });
@@ -102,7 +100,7 @@ test.describe.skip("Job API", () => {
   test("Fetch single job by UUID returns the correct job", async ({
     request,
   }) => {
-    const res = await request.get(`${prefix}/job/${mockCreateJob.uuid}`);
+    const res = await request.get(`/api/v1/job/${mockCreateJob.uuid}`);
     expect(res.status()).toBe(200);
 
     const job: {
@@ -123,14 +121,14 @@ test.describe.skip("Job API", () => {
   test("Creating a job with invalid project UUID returns 400", async ({
     request,
   }) => {
-    const res = await request.post(`${prefix}/job`, {
+    const res = await request.post(`/api/v1/job`, {
       data: {
         project_uuid: "00000000-0000-0000-0000-000000000000",
         llm_config: {
-          model_name: "gpt-4",
-          temperature: 0.7,
-          seed: 42,
-          top_p: 0.9,
+          provider_name: "mock",
+          model_name: "mock_001",
+          temperature: 0.0,
+          top_p: 0.1,
         },
       },
     });

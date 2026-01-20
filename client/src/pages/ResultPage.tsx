@@ -38,7 +38,7 @@ function Row({
         <TableCell>
           {paper.doi && (
             <a
-              href={paper.doi}
+              href={`https://doi.org/${paper.doi}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#1976d2", textDecoration: "underline" }}
@@ -58,11 +58,13 @@ function Row({
               <Typography variant="body1" fontWeight="bold" gutterBottom>
                 Model Results
               </Typography>
-              {modelColumns.map((model) => (
-                <Typography key={model} variant="body2">
-                  {model}: <b>{paper[model]}</b>
-                </Typography>
-              ))}
+              {modelColumns
+                .filter((c) => c !== "notes")
+                .map((model) => (
+                  <Typography key={model} variant="body2">
+                    {model}: <b>{paper[model]}</b>
+                  </Typography>
+                ))}
               <Typography
                 variant="body1"
                 fontWeight="bold"
@@ -83,17 +85,17 @@ function Row({
 }
 
 export const ResultPage = () => {
-  const params = useParams<{ projectUuid: string }>();
-  const { projectUuid } = params;
+  const params = useParams<{ uuid: string }>();
+  const { uuid } = params;
   const [result, setResult] = useState<Result[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res: Result[] = await fetchResultFromBackend(projectUuid);
+      const res: Result[] = await fetchResultFromBackend(uuid);
       setResult(res);
     };
     fetchData();
-  }, [projectUuid]);
+  }, [uuid]);
 
   const fixedColumns = ["title", "abstract", "doi", "human_result"];
   const modelColumns =

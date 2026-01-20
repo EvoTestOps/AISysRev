@@ -3,7 +3,7 @@ import { api } from "./api";
 
 export const fetchProviders = async () => {
   try {
-    const res = await api.get(`/llm/providers`);
+    const res = await api.get(`/api/v1/llm/providers`);
     const parsed = ProviderResponse.parse(res.data);
     return parsed;
   } catch (error: unknown) {
