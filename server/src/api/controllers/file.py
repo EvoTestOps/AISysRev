@@ -22,6 +22,7 @@ router = APIRouter()
     "/files/{project_uuid}",
     status_code=status.HTTP_200_OK,
     response_model=list[FileReadWithPaperCount],
+    tags=["File"],
 )
 async def list_files(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     try:
@@ -34,7 +35,7 @@ async def list_files(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
         )
 
 
-@router.post("/files/upload", status_code=200, response_model=dict)
+@router.post("/files/upload", status_code=200, response_model=dict, tags=["File"])
 async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),

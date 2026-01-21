@@ -7,7 +7,7 @@ from src.db.session import Base
 router = APIRouter()
 
 
-@router.post("/fixtures/reset")
+@router.post("/fixtures/reset", tags=["Fixture"])
 async def reset_fixtures():
     try:
         if settings.APP_ENV != "test":

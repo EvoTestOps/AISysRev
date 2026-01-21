@@ -8,7 +8,7 @@ from src.tools.diagnostics.celery_check import check_celery_worker
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", tags=["Health check"])
 async def health_check():
     if not startup_complete.is_set():
         return JSONResponse(
@@ -48,8 +48,8 @@ async def health_check():
     }
 
     return JSONResponse(
-        status_code=status.HTTP_200_OK
-        if is_healthy
-        else status.HTTP_503_SERVICE_UNAVAILABLE,
+        status_code=(
+            status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        ),
         content=payload,
     )

@@ -95,7 +95,6 @@ async def test_create_job_transaction_rollback(
 async def test_async_process_job(
     mock_get_structured_response, test_job_data, test_structured_response
 ):
-
     async with DBContext() as db_ctx:
         job_crud = db_ctx.crud(JobCrud)
         jobtask_crud = db_ctx.crud(JobTaskCrud)

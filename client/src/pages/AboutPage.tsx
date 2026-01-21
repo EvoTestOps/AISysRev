@@ -25,13 +25,13 @@ export const AboutPage = () => (
           className="text-blue-600 hover:underline flex flex-row gap-2 justify-start items-center w-fit"
         >
           <SquareArrowOutUpRight />
-          <span>OpenAPI JSON</span>
+          <span>/openapi.json</span>
         </a>
       </p>
       <p>
         <strong>AISysRev</strong> demonstrates the capabilities of AI-automated
         title-abstract screening of systematic reviews (SRs), which is subject
-        to further research and improvements. This PoC is based on the following
+        to further research and improvements. This tool is based on the following
         scientific contributions:
         <ul className="list-disc ml-4">
           <li>
@@ -78,7 +78,7 @@ export const AboutPage = () => (
       </p>
       <H3>Supported LLMs</H3>
       <p>
-        We support all LLMs hosted by Openrouter,{" "}
+        We support models from Openrouter, OpenAI and local OpenAI SDK{" "}
         <strong>
           that support structured JSON response, along with configuring
           temperature, seed and top_p parameters.

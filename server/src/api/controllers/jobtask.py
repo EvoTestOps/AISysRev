@@ -9,7 +9,7 @@ from src.services.jobtask_service import create_jobtask_service
 router = APIRouter()
 
 
-@router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
+@router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK, tags=["Job task"])
 async def get_job_tasks(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     try:
         jobtask_service = create_jobtask_service(db_ctx)
@@ -32,9 +32,10 @@ async def get_job_tasks(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     "/jobtask",
     status_code=status.HTTP_200_OK,
     response_model=list[JobTaskReadWithLLMConfig],
+    tags=["Job task"],
 )
 async def get_job_tasks_by_paper(
-    paper_uuid: str, db_ctx: DBContext = Depends(get_db_ctx)
+    paper_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
 ):
     try:
         jobtask_service = create_jobtask_service(db_ctx)
@@ -54,7 +55,7 @@ async def get_job_tasks_by_paper(
         )
 
 
-@router.patch("/jobtask/{uuid}", status_code=status.HTTP_200_OK)
+@router.patch("/jobtask/{uuid}", status_code=status.HTTP_200_OK, tags=["Job task"])
 async def add_job_task_human_result(
     uuid: UUID,
     result: JobTaskHumanResultUpdate,

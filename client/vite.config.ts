@@ -15,10 +15,8 @@ export default defineConfig({
       // This proxies API requests to the backend container
       "/api": `http://backend_${appEnv}:8080`,
       // Proxying documentation
-      "/documentation": {
+      "/docs": {
         target: `http://backend_${appEnv}:8080`,
-        changeOrigin: true,
-        rewrite: (path) => path.replace("/documentation", "/docs"),
       },
       "/openapi.json": `http://backend_${appEnv}:8080`,
     },

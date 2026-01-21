@@ -7,7 +7,7 @@ from src.services.setting_service import create_setting_service
 router = APIRouter()
 
 
-@router.get("/setting", status_code=status.HTTP_200_OK)
+@router.get("/setting", status_code=status.HTTP_200_OK, tags=["Settings"])
 async def get_setting(name: str, db_ctx: DBContext = Depends(get_db_ctx)):
     setting_service = create_setting_service(db_ctx)
     data = await setting_service.get_setting(name, mask_secret=True)
@@ -22,7 +22,7 @@ class UpsertData(BaseModel):
     value: str
 
 
-@router.post("/setting", status_code=status.HTTP_201_CREATED)
+@router.post("/setting", status_code=status.HTTP_201_CREATED, tags=["Settings"])
 async def upsert_setting(
     data: UpsertData,
     db_ctx: DBContext = Depends(get_db_ctx),

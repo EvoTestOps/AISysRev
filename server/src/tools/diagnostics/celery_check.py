@@ -18,13 +18,13 @@ async def check_celery_worker():
         raise
 
 
-@router.post("/run-test-task")
+@router.post("/run-test-task", tags=["Celery"])
 async def run_test_task():
     task = test_task.delay("This is FastAPI")
     return {"task_id": task.id}
 
 
-@router.get("/task-status/{task_id}")
+@router.get("/task-status/{task_id}", tags=["Celery"])
 async def get_task_status(task_id: str):
     task_result: AsyncResult = AsyncResult(task_id, app=test_task.app)
     if not task_result:
