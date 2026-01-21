@@ -8,7 +8,7 @@ from src.services.paper_service import create_paper_service
 router = APIRouter()
 
 
-@router.get("/paper/{project_uuid}", status_code=status.HTTP_200_OK)
+@router.get("/paper/{project_uuid}", status_code=status.HTTP_200_OK, tags=["Paper"])
 async def get_papers(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     papers = create_paper_service(db_ctx)
     try:
@@ -24,7 +24,9 @@ async def get_papers(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
 
 
 @router.get(
-    "/paper/{project_uuid}/with_model_evaluations", status_code=status.HTTP_200_OK
+    "/paper/{project_uuid}/with_model_evaluations",
+    status_code=status.HTTP_200_OK,
+    tags=["Paper"],
 )
 async def get_project_papers_with_model_evals(
     project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
@@ -42,7 +44,7 @@ async def get_project_papers_with_model_evals(
         ) from e
 
 
-@router.patch("/paper/{uuid}", status_code=status.HTTP_200_OK)
+@router.patch("/paper/{uuid}", status_code=status.HTTP_200_OK, tags=["Paper"])
 async def add_paper_human_result(
     uuid: UUID, result: PaperHumanResultUpdate, db_ctx: DBContext = Depends(get_db_ctx)
 ):

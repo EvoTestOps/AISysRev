@@ -52,7 +52,18 @@ async def lifespan(app: FastAPI):
         redis_task.cancel()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="AiSysRev",
+    summary="Research-based title-abstract screening tool.",
+    version="1.0.0",
+    terms_of_service="/terms-and-conditions",
+    license_info={
+        "name": "MIT License",
+        "url": "https://github.com/EvoTestOps/AISysRev/blob/main/LICENSE",
+    },
+    contact={"name": "EvoTestOps", "url": "https://github.com/EvoTestOps"},
+)
 
 v1_router = APIRouter(prefix="/api/v1")
 

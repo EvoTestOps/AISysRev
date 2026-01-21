@@ -11,7 +11,10 @@ router = APIRouter()
 
 
 @router.get(
-    "/project", status_code=status.HTTP_200_OK, response_model=list[ProjectRead]
+    "/project",
+    status_code=status.HTTP_200_OK,
+    response_model=list[ProjectRead],
+    tags=["Project"],
 )
 async def list_projects(db_ctx: DBContext = Depends(get_db_ctx)):
     projects = create_project_service(db_ctx)
@@ -25,7 +28,10 @@ async def list_projects(db_ctx: DBContext = Depends(get_db_ctx)):
 
 
 @router.get(
-    "/project/{uuid}", status_code=status.HTTP_200_OK, response_model=ProjectRead
+    "/project/{uuid}",
+    status_code=status.HTTP_200_OK,
+    response_model=ProjectRead,
+    tags=["Project"],
 )
 async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     projects = create_project_service(db_ctx)
@@ -45,7 +51,7 @@ async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
-@router.post("/project", status_code=status.HTTP_201_CREATED)
+@router.post("/project", status_code=status.HTTP_201_CREATED, tags=["Project"])
 async def create_new_project(
     project_data: ProjectCreate, db_ctx: DBContext = Depends(get_db_ctx)
 ):
@@ -64,7 +70,9 @@ async def create_new_project(
         )
 
 
-@router.delete("/project/{uuid}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/project/{uuid}", status_code=status.HTTP_204_NO_CONTENT, tags=["Project"]
+)
 async def delete_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     projects = create_project_service(db_ctx)
     try:

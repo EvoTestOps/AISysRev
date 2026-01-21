@@ -12,7 +12,7 @@ from src.db.db_context import DBContext, get_db_ctx
 router = APIRouter()
 
 
-@router.get("/llm/providers", status_code=status.HTTP_200_OK)
+@router.get("/llm/providers", status_code=status.HTTP_200_OK, tags=["LLM"])
 async def get_providers() -> list[Provider]:
     return [
         Provider(
@@ -41,6 +41,7 @@ class ProviderConfigParamsResponse(BaseModel):
     "/llm/provider_config_params",
     status_code=status.HTTP_200_OK,
     response_model=dict[str, ProviderConfigParamsResponse],
+    tags=["LLM"],
 )
 async def get_provider_config_params():
     return {
@@ -53,7 +54,7 @@ async def get_provider_config_params():
     }
 
 
-@router.post("/llm/{provider}/models", status_code=status.HTTP_200_OK)
+@router.post("/llm/{provider}/models", status_code=status.HTTP_200_OK, tags=["LLM"])
 async def get_available_models(
     provider: str,
     provider_parameters: Optional[Dict[str, Any]] = Body(None),

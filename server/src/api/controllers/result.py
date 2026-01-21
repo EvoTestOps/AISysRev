@@ -10,7 +10,7 @@ from src.db.db_context import DBContext, get_db_ctx
 router = APIRouter()
 
 
-@router.get("/result/download_result_csv", status_code=200)
+@router.get("/result/download_result_csv", status_code=200, tags=["Results"])
 async def download_result_csv(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
@@ -39,7 +39,7 @@ async def download_result_csv(
         )
 
 
-@router.get("/result/html", status_code=200)
+@router.get("/result/html", status_code=200, tags=["Results"])
 async def download_result_html(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
@@ -78,7 +78,7 @@ async def download_result_html(
         )
 
 
-@router.get("/result/", status_code=200)
+@router.get("/result/", status_code=200, tags=["Results"])
 async def get_result(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),

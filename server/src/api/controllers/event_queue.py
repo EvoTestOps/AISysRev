@@ -8,7 +8,7 @@ router = APIRouter()
 KEEPALIVE_INTERVAL = 10
 
 
-@router.get("/event-queue")
+@router.get("/event-queue", tags=["Event queue"])
 async def event_bus(request: Request):
     async def stream():
         yield ": connected\n\n"

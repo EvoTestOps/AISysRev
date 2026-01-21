@@ -16,7 +16,9 @@ from src.services.project_service import (
 router = APIRouter()
 
 
-@router.get("/job", status_code=status.HTTP_200_OK, response_model=list[JobRead])
+@router.get(
+    "/job", status_code=status.HTTP_200_OK, response_model=list[JobRead], tags=["Job"]
+)
 async def get_jobs(
     project: Optional[UUID] = None, db_ctx: DBContext = Depends(get_db_ctx)
 ):
@@ -33,7 +35,9 @@ async def get_jobs(
         ) from e
 
 
-@router.get("/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead)
+@router.get(
+    "/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead, tags=["Job"]
+)
 async def get_single_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     try:
         job_service = create_job_service(db_ctx)
@@ -52,7 +56,7 @@ async def get_single_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
-@router.post("/job", status_code=status.HTTP_201_CREATED)
+@router.post("/job", status_code=status.HTTP_201_CREATED, tags=["Job"])
 async def create_job(
     job_data: JobCreate,
     db_ctx: DBContext = Depends(get_db_ctx),
