@@ -1,7 +1,7 @@
 [project]
 name = "server"
 version = "1.0.0"
-description = "AiSysRev server"
+description = "AISysRev server"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

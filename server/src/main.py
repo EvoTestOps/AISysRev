@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title="AiSysRev",
+    title="AISysRev",
     summary="Research-based title-abstract screening tool.",
     version="1.0.0",
     terms_of_service="/terms-and-conditions",

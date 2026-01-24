@@ -14,8 +14,9 @@ async def check_database_connection():
     try:
         async with engine.connect() as conn:
             result = await conn.execute(text("SELECT 1"))
-            result.fetchall()
+            res = result.fetchall()
             print("Database check successful.")
+            return res
     except SQLAlchemyError as e:
         print(f"Database connection failed: {e}")
 

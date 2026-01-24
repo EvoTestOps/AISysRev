@@ -1,3 +1,3 @@
-# AiSysRev server
+# AISysRev server
 
 See main README.md

@@ -226,7 +226,7 @@ export const SettingsPage = () => {
         <div className="border-b border-slate-200 bg-white px-6 py-5">
           <h1 className="text-xl font-semibold text-slate-900">Settings</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Manage settings related to AiSysRev or LLM providers.
+            Manage settings related to AISysRev or LLM providers.
           </p>
         </div>
         <div className="space-y-4 bg-slate-50 px-6 py-6">

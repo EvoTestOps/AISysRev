@@ -31,7 +31,7 @@ class BaseLLMParams(BaseModel):
 
 class ConfigParameter(BaseModel):
     """
-    Config parameter is something that the provider needs (e.g. API key or certain config) that must be provided via the AiSysRev UI.
+    Config parameter is something that the provider needs (e.g. API key or certain config) that must be provided via the AISysRev UI.
     """
 
     key: str

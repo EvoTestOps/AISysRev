@@ -7,6 +7,6 @@ export const NotFoundPage: React.FC = () => (
     <Helmet>
       <title>Page not found</title>
     </Helmet>
-    <AlertMessage message="The page cannot be found. If you believe this is an error, please open a pull request on the AiSysRev GitHub repository." />
+    <AlertMessage message="The page cannot be found. If you believe this is an error, please open a pull request on the AISysRev GitHub repository." />
   </Layout>
 );

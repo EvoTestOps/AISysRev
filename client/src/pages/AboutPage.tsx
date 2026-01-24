@@ -90,12 +90,12 @@ export const AboutPage = () => (
       <p>
         Available at{" "}
         <a
-          href="https://github.com/EvoTestOps/AiSysRev"
+          href="https://github.com/EvoTestOps/AISysRev"
           target="__blank"
           rel="noopener noreferrer"
           className="text-blue-700"
         >
-          https://github.com/EvoTestOps/AiSysRev
+          https://github.com/EvoTestOps/AISysRev
         </a>
       </p>
       <H3>Contributors</H3>
