@@ -1,5 +1,6 @@
 from typing import Any, TypeVar
 
+from httpx import AsyncClient
 from pydantic import BaseModel
 
 from src.core.llm.providers import llm_providers
@@ -30,13 +31,15 @@ class LLMService:
         runtime_parameters: ProviderRuntimeParameters,
         model_parameters: dict[str, Any],
         user_prompt: str,
+        client: AsyncClient,
     ) -> T:
-        response_formatted, response_raw = await llm(
+        response_formatted = await llm(
             provider_parameters, runtime_parameters
         ).generate_answer_async(
             model_parameters=model_parameters,
             prompt=user_prompt,
             schema=response_schema,
+            client=client,
         )
         return response_formatted
 

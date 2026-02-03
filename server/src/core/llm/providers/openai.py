@@ -1,5 +1,6 @@
 from typing import Any, List
 
+from httpx import AsyncClient
 from openai.types.model import Model
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -43,7 +44,11 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
     config_parameters = [api_key_config_parameter]
 
     async def generate_answer_async(
-        self, model_parameters: dict[str, Any], schema: type[T], prompt
+        self,
+        model_parameters: dict[str, Any],
+        schema: type[T],
+        prompt,
+        client: AsyncClient,
     ) -> T:
         model_cfg = self.parse_model_parameters(model_parameters)
 
@@ -64,7 +69,9 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
 
         model = OpenAIResponsesModel(
             str(self.runtime_parameters.model),
-            provider=PAI_OpenAIProvider(api_key=self.runtime_parameters.api_key),
+            provider=PAI_OpenAIProvider(
+                api_key=self.runtime_parameters.api_key, http_client=client
+            ),
             settings=settings,
         )
 

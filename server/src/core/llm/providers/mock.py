@@ -2,6 +2,7 @@ import asyncio
 import random
 from typing import Any, List
 
+from httpx import AsyncClient
 from pydantic import BaseModel, Field
 
 from src.core.llm.providers.provider import (
@@ -55,7 +56,11 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
     config_parameters = []
 
     async def generate_answer_async(
-        self, model_parameters: dict[str, Any], schema: type[T], prompt
+        self,
+        model_parameters: dict[str, Any],
+        schema: type[T],
+        prompt,
+        client: AsyncClient,
     ) -> StructuredResponse:
         if self.provider_parameters is None:
             raise RuntimeError("Provider parameters needs to be defined")

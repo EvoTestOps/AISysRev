@@ -1,5 +1,6 @@
 from typing import Any, List, Type
 
+from httpx import AsyncClient
 from openai.types.model import Model
 from pydantic import BaseModel
 from pydantic_ai import Agent
@@ -55,6 +56,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         model_parameters: dict[str, Any],
         schema: Type[T],
         prompt: str,
+        client: AsyncClient,
     ) -> T:
         import logging
 
@@ -82,14 +84,16 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
 
         model = OpenRouterModel(
             str(self.runtime_parameters.model),
-            provider=PAI_OpenRouterProvider(api_key=self.runtime_parameters.api_key),
+            provider=PAI_OpenRouterProvider(
+                api_key=self.runtime_parameters.api_key, http_client=client
+            ),
             settings=settings,
         )
 
         agent = Agent(
             model,
             system_prompt=self.runtime_parameters.system_prompt,
-            retries=3,
+            retries=3,  # TODO: Maybe should be configurable
             output_retries=5,
             output_type=ToolOutput(schema, name=schema.__name__.lower()),
         )
