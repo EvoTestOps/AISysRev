@@ -97,7 +97,7 @@ class LLMProvider(Generic[P, M], ABC):
         model_parameters: dict[str, Any],
         schema: Type[T],
         prompt: str,
-    ) -> tuple[T, str]:
+    ) -> T:
         pass
 
 

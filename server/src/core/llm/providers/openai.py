@@ -1,15 +1,18 @@
 from typing import Any, List
 
+from openai.types.model import Model
 from pydantic import BaseModel
+from pydantic_ai import Agent
+from pydantic_ai.models.openai import OpenAIResponsesModel, OpenAIResponsesModelSettings
+from pydantic_ai.output import ToolOutput
+from pydantic_ai.providers.openai import OpenAIProvider as PAI_OpenAIProvider
 
 from src.core.llm.providers.provider import (
-    T,
     BaseLLMParams,
     ConfigParameter,
     LLMProvider,
+    T,
 )
-from openai.types.model import Model
-
 from src.schemas.llm import ProviderRuntimeParameters
 
 
@@ -41,11 +44,8 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
 
     async def generate_answer_async(
         self, model_parameters: dict[str, Any], schema: type[T], prompt
-    ) -> tuple[T, str]:
+    ) -> T:
         model_cfg = self.parse_model_parameters(model_parameters)
-
-        from openai import AsyncOpenAI
-        import openai
 
         if self.runtime_parameters.model is None:
             raise RuntimeError("Model needs to be defined")
@@ -53,43 +53,32 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
         if self.runtime_parameters.api_key is None:
             raise RuntimeError("API Key is not defined")
 
-        async with AsyncOpenAI(api_key=self.runtime_parameters.api_key) as client:
-            try:
-                response = await client.responses.parse(
-                    model=self.runtime_parameters.model,
-                    input=[
-                        {
-                            "role": "system",
-                            "content": self.runtime_parameters.system_prompt,
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    top_p=model_cfg.top_p,
-                    temperature=model_cfg.temperature,
-                    text_format=schema,
-                )
-                if response.output_parsed is None:
-                    raise RuntimeError("LLM response was empty")
+        settings = OpenAIResponsesModelSettings(
+            extra_headers={
+                "X-Title": "AISysRev",
+                "HTTP-Referer": "https://github.com/EvoTestOps/AISysRev",
+            },
+            temperature=model_cfg.temperature,
+            top_p=model_cfg.top_p,
+        )
 
-                return response.output_parsed, ""
-            except openai.APIConnectionError as e:
-                print("The server could not be reached")
-                print(e.__cause__)
-                raise e
-            except openai.RateLimitError as e:
-                print("HTTP 429 status code was received; we should back off a bit.")
-                print(e.status_code)
-                print(e.response)
-                raise e
-            except openai.APIStatusError as e:
-                print("Another non-200-range status code was received")
-                print(e.status_code)
-                print(e.response)
-                raise e
-            except Exception as e:
-                raise RuntimeError("LLM call failed") from e
+        model = OpenAIResponsesModel(
+            str(self.runtime_parameters.model),
+            provider=PAI_OpenAIProvider(api_key=self.runtime_parameters.api_key),
+            settings=settings,
+        )
 
-        raise RuntimeError("Failed to call LLM")
+        agent = Agent(
+            model,
+            system_prompt=self.runtime_parameters.system_prompt,
+            retries=3,
+            output_retries=5,
+            output_type=ToolOutput(schema, name=schema.__name__.lower()),
+        )
+
+        result = await agent.run(prompt)
+
+        return result.output
 
     async def get_available_models(self) -> List[Model]:
         from openai import AsyncOpenAI

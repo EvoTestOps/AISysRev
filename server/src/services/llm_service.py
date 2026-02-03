@@ -30,7 +30,7 @@ class LLMService:
         runtime_parameters: ProviderRuntimeParameters,
         model_parameters: dict[str, Any],
         user_prompt: str,
-    ):
+    ) -> T:
         response_formatted, response_raw = await llm(
             provider_parameters, runtime_parameters
         ).generate_answer_async(

@@ -56,7 +56,7 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
 
     async def generate_answer_async(
         self, model_parameters: dict[str, Any], schema: type[T], prompt
-    ) -> tuple[StructuredResponse, str]:
+    ) -> StructuredResponse:
         if self.provider_parameters is None:
             raise RuntimeError("Provider parameters needs to be defined")
 
@@ -67,38 +67,35 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         delay_ms = max(0.0, self.provider_parameters.delay + jitter_ms)
         await asyncio.sleep(delay_ms / 1000.0)
 
-        return (
-            StructuredResponse(
-                overall_decision=Decision(
-                    binary_decision=True,
-                    probability_decision=1.0,
-                    likert_decision=LikertDecision.stronglyAgree,
-                    reason="The paper completely meets the inclusion criteria.",
-                ),
-                inclusion_criteria=[
-                    Criterion(
-                        name="Example criteria",
-                        decision=Decision(
-                            binary_decision=True,
-                            probability_decision=1.0,
-                            likert_decision=LikertDecision.stronglyAgree,
-                            reason="The criteria is met.",
-                        ),
-                    )
-                ],
-                exclusion_criteria=[
-                    Criterion(
-                        name="Example criteria",
-                        decision=Decision(
-                            binary_decision=False,
-                            probability_decision=0.0,
-                            likert_decision=LikertDecision.stronglyDisagree,
-                            reason="The criteria is not met.",
-                        ),
-                    )
-                ],
+        return StructuredResponse(
+            overall_decision=Decision(
+                binary_decision=True,
+                probability_decision=1.0,
+                likert_decision=LikertDecision.stronglyAgree,
+                reason="The paper completely meets the inclusion criteria.",
             ),
-            "",
+            inclusion_criteria=[
+                Criterion(
+                    name="Example criteria",
+                    decision=Decision(
+                        binary_decision=True,
+                        probability_decision=1.0,
+                        likert_decision=LikertDecision.stronglyAgree,
+                        reason="The criteria is met.",
+                    ),
+                )
+            ],
+            exclusion_criteria=[
+                Criterion(
+                    name="Example criteria",
+                    decision=Decision(
+                        binary_decision=False,
+                        probability_decision=0.0,
+                        likert_decision=LikertDecision.stronglyDisagree,
+                        reason="The criteria is not met.",
+                    ),
+                )
+            ],
         )
 
     async def get_available_models(self) -> List[Model]:
