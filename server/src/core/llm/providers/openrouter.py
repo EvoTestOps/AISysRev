@@ -53,10 +53,10 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
 
     async def generate_answer_async(
         self,
+        client: AsyncClient,
         model_parameters: dict[str, Any],
         schema: Type[T],
         prompt: str,
-        client: AsyncClient,
     ) -> T:
         import logging
 

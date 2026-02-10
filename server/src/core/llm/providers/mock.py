@@ -57,10 +57,10 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
 
     async def generate_answer_async(
         self,
+        client: AsyncClient,
         model_parameters: dict[str, Any],
         schema: type[T],
         prompt,
-        client: AsyncClient,
     ) -> StructuredResponse:
         if self.provider_parameters is None:
             raise RuntimeError("Provider parameters needs to be defined")
