@@ -6,6 +6,7 @@ from src.db.db_context import DBContext
 from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStatus
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
+from src.helpers.resolve_job_status import resolve_job_status
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class JobService:
             success = stats["success_count"] if stats else 0
             failed = stats["failed_count"] if stats else 0
 
-            job_status = self._compute_job_status(total, success, failed)
+            job_status = resolve_job_status(total, success, failed)
             result.append(
                 JobReadWithStats(
                     **job,
@@ -110,24 +111,6 @@ class JobService:
         await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
 
         return job_read
-
-    def _compute_job_status(self, total: int, success: int, failed: int) -> JobStatus:
-        if total == 0:
-            return JobStatus.NOT_STARTED
-
-        finished = success + failed
-
-        if finished < total:
-            return JobStatus.RUNNING
-
-        if failed == 0:
-            return JobStatus.SUCCESS
-
-        if success == 0:
-            return JobStatus.FAILED
-
-        return JobStatus.PARTIAL_SUCCESS
-
 
 def create_job_service(db_ctx: DBContext) -> JobService:
     jobtask_service = create_jobtask_service(db_ctx)
