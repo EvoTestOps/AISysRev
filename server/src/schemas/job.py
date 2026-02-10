@@ -11,6 +11,14 @@ class JobPromptingType(str, Enum):
     FEW_SHOT = "FEW_SHOT"
 
 
+class JobStatus(str, Enum):
+    NOT_STARTED = "NOT_STARTED"
+    RUNNING = "RUNNING"
+    PARTIAL_SUCCESS = "PARTIAL_SUCCESS"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
 class LLMModelConfig(BaseModel):
     provider_name: str
     model_name: str
@@ -53,5 +61,20 @@ class JobRead(BaseModel):
     llm_config: LLMModelConfig
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class JobReadWithStats(BaseModel):
+    uuid: UUID
+    project_uuid: UUID
+    prompting_config: PromptingConfig
+    llm_config: LLMModelConfig
+    created_at: datetime
+    updated_at: datetime
+
+    total_tasks: int = 0
+    success_tasks: int = 0
+    failed_tasks: int = 0
+    status: JobStatus = JobStatus.NOT_STARTED
 
     model_config = ConfigDict(from_attributes=True)

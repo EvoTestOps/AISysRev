@@ -3,7 +3,7 @@ from uuid import UUID
 
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStatus
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
@@ -33,9 +33,33 @@ class JobService:
             for row in rows
         ]
 
-    async def fetch_by_project(self, project_uuid: UUID) -> list[JobRead]:
-        rows = await self.job_crud.fetch_jobs_by_project(project_uuid)
-        return [JobRead(**row) for row in rows]
+    async def fetch_by_project(self, project_uuid: UUID) -> list[JobReadWithStats]:
+        jobs = await self.job_crud.fetch_jobs_by_project(project_uuid)
+        stats_rows = await self.jobtask_service.fetch_task_stats_by_project(
+            project_uuid
+        )
+
+        stats_map = {row["job_uuid"]: row for row in stats_rows}
+
+        result = []
+        for job in jobs:
+            stats = stats_map.get(job["uuid"])
+            total = stats["total_count"] if stats else 0
+            success = stats["success_count"] if stats else 0
+            failed = stats["failed_count"] if stats else 0
+
+            job_status = self._compute_job_status(total, success, failed)
+            result.append(
+                JobReadWithStats(
+                    **job,
+                    total_tasks=total,
+                    success_tasks=success,
+                    failed_tasks=failed,
+                    status=job_status,
+                )
+            )
+
+        return result
 
     async def fetch_by_uuid(self, uuid: UUID) -> JobRead:
         job = await self.job_crud.fetch_job_by_uuid(uuid)
@@ -86,6 +110,23 @@ class JobService:
         await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
 
         return job_read
+
+    def _compute_job_status(self, total: int, success: int, failed: int) -> JobStatus:
+        if total == 0:
+            return JobStatus.NOT_STARTED
+
+        finished = success + failed
+
+        if finished < total:
+            return JobStatus.RUNNING
+
+        if failed == 0:
+            return JobStatus.SUCCESS
+
+        if success == 0:
+            return JobStatus.FAILED
+
+        return JobStatus.PARTIAL_SUCCESS
 
 
 def create_job_service(db_ctx: DBContext) -> JobService:
