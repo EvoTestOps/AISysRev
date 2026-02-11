@@ -180,10 +180,12 @@ async def _process_job_task(
                     EventName.JOB_PROGRESS,
                     {
                         "job_id": job_id,
-                        "total_tasks": total,
-                        "success_tasks": success,
-                        "failed_tasks": failed,
-                        "status": status,
+                        "stats": {
+                            "total": total,
+                            "success": success,
+                            "failed": failed,
+                            "status": status,
+                        },
                     },
                 )
 

@@ -3,10 +3,10 @@ from uuid import UUID
 
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
-from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStatus
+from src.helpers.resolve_job_status import resolve_job_status
+from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStats
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
-from src.helpers.resolve_job_status import resolve_job_status
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +53,9 @@ class JobService:
             result.append(
                 JobReadWithStats(
                     **job,
-                    total_tasks=total,
-                    success_tasks=success,
-                    failed_tasks=failed,
-                    status=job_status,
+                    stats=JobStats(
+                        total=total, success=success, failed=failed, status=job_status
+                    ),
                 )
             )
 
@@ -111,6 +110,7 @@ class JobService:
         await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
 
         return job_read
+
 
 def create_job_service(db_ctx: DBContext) -> JobService:
     jobtask_service = create_jobtask_service(db_ctx)

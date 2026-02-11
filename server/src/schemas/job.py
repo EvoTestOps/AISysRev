@@ -1,7 +1,8 @@
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Any, List, Literal, Union
 from uuid import UUID
-from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -17,6 +18,13 @@ class JobStatus(str, Enum):
     PARTIAL_SUCCESS = "PARTIAL_SUCCESS"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
+
+
+class JobStats(BaseModel):
+    total: int
+    success: int
+    failed: int
+    status: JobStatus
 
 
 class LLMModelConfig(BaseModel):
@@ -64,6 +72,7 @@ class JobRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class JobReadWithStats(BaseModel):
     uuid: UUID
     project_uuid: UUID
@@ -72,9 +81,10 @@ class JobReadWithStats(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    total_tasks: int = 0
-    success_tasks: int = 0
-    failed_tasks: int = 0
-    status: JobStatus = JobStatus.NOT_STARTED
+    stats: JobStats
+    # total_tasks: int = 0
+    # success_tasks: int = 0
+    # failed_tasks: int = 0
+    # status: JobStatus = JobStatus.NOT_STARTED
 
     model_config = ConfigDict(from_attributes=True)

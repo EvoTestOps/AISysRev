@@ -11,13 +11,21 @@ import {
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
-import type { JobTaskHumanResult, PaperWithModelEval, Provider } from "./types";
+import * as jobService from "../services/jobService";
+import type {
+  JobTaskHumanResult,
+  PaperWithModelEval,
+  Provider,
+  JobWithStats,
+  JobStats,
+} from "./types";
 import type { Project } from "./types/project";
 
 const injections = {
   projectsService,
   paperService,
   providerService,
+  jobService,
 };
 
 type LoadingModel = {
@@ -42,6 +50,20 @@ interface ProjectModel {
     StoreModel
   >;
   refreshProjects: Thunk<StoreModel, undefined, Injections>;
+}
+
+interface JobModel {
+  jobsByProject: Record<string, JobWithStats[]>;
+  jobsByUuid: Record<string, JobWithStats>;
+
+  setJobsForProject: Action<
+    StoreModel,
+    { projectUuid: string; jobs: JobWithStats[] }
+  >;
+
+  updateJobTaskStats: Action<StoreModel, { jobUuid: string; stats: JobStats }>;
+
+  fetchJobsForProject: Thunk<StoreModel, string, Injections>;
 }
 
 interface PaperModel {
@@ -99,7 +121,11 @@ interface ProviderModel {
   refreshProviders: Thunk<StoreModel, undefined, Injections>;
 }
 
-type StoreModel = {} & LoadingModel & ProjectModel & PaperModel & ProviderModel;
+type StoreModel = {} & LoadingModel &
+  ProjectModel &
+  JobModel &
+  PaperModel &
+  ProviderModel;
 
 export type Injections = typeof injections;
 
@@ -231,6 +257,37 @@ export const model = {
   getProviderByName: computed((state) => {
     return (name: string) =>
       (state.providers || []).find((provider) => provider.name === name);
+  }),
+
+  jobsByProject: {},
+  jobsByUuid: {},
+  setJobsForProject: action((state, payload) => {
+    const { projectUuid, jobs } = payload;
+
+    state.jobsByProject[projectUuid] = jobs;
+
+    jobs.forEach((job) => {
+      state.jobsByUuid[job.uuid] = job;
+    });
+  }),
+
+  updateJobTaskStats: action((state, payload) => {
+    const { jobUuid, stats } = payload;
+    const job = state.jobsByUuid[jobUuid];
+    if (!job) return;
+
+    job.stats = stats;
+  }),
+
+  fetchJobsForProject: thunk(async (actions, projectUuid, { injections }) => {
+    const { jobService } = injections;
+
+    const jobs = await jobService.fetchJobsForProject(projectUuid);
+
+    actions.setJobsForProject({
+      projectUuid,
+      jobs,
+    });
   }),
 } satisfies StoreModel;
 
