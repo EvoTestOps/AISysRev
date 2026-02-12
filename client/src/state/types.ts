@@ -104,6 +104,7 @@ export type JobStats = {
 
 export type JobWithStats = {
     uuid: string;
+    id: string;
     project_uuid: string;
     prompting_config: PromptingConfig;
     llm_config: LlmConfig;

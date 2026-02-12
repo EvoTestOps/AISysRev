@@ -75,6 +75,7 @@ class JobRead(BaseModel):
 
 class JobReadWithStats(BaseModel):
     uuid: UUID
+    id: int
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig

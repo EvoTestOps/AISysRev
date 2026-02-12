@@ -175,6 +175,7 @@ async def _process_job_task(
 
                 status = resolve_job_status(total, success, failed)
 
+                # TODO: maybe buffer to avoid spamming
                 await _publish_redis_event(
                     redis,
                     EventName.JOB_PROGRESS,

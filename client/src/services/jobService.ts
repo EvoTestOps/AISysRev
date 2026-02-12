@@ -23,7 +23,6 @@ export const createJob = async (
 export const fetchJobsForProject = async (projectUuid: string) => {
   try {
     const res = await api.get(`/api/v1/job?project=${projectUuid}`);
-    console.log(res.data);
     return res.data;
   } catch (error) {
     console.error("Error fetching jobs:", error);

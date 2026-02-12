@@ -54,14 +54,14 @@ interface ProjectModel {
 
 interface JobModel {
   jobsByProject: Record<string, JobWithStats[]>;
-  jobsByUuid: Record<string, JobWithStats>;
+  jobsById: Record<string, JobWithStats>;
 
   setJobsForProject: Action<
     StoreModel,
     { projectUuid: string; jobs: JobWithStats[] }
   >;
 
-  updateJobTaskStats: Action<StoreModel, { jobUuid: string; stats: JobStats }>;
+  updateJobStats: Action<StoreModel, { jobId: string; stats: JobStats }>;
 
   fetchJobsForProject: Thunk<StoreModel, string, Injections>;
 }
@@ -260,23 +260,31 @@ export const model = {
   }),
 
   jobsByProject: {},
-  jobsByUuid: {},
+  jobsById: {},
+
   setJobsForProject: action((state, payload) => {
     const { projectUuid, jobs } = payload;
 
     state.jobsByProject[projectUuid] = jobs;
 
     jobs.forEach((job) => {
-      state.jobsByUuid[job.uuid] = job;
+      state.jobsById[job.id] = job;
     });
   }),
 
-  updateJobTaskStats: action((state, payload) => {
-    const { jobUuid, stats } = payload;
-    const job = state.jobsByUuid[jobUuid];
+  updateJobStats: action((state, payload) => {
+    const { jobId, stats } = payload;
+    const job = state.jobsById[jobId];
     if (!job) return;
 
-    job.stats = stats;
+    const updatedJob = { ...job, stats };
+    state.jobsById[jobId] = updatedJob;
+
+    for (const projectUuid in state.jobsByProject) {
+      state.jobsByProject[projectUuid] = state.jobsByProject[projectUuid].map(
+        (j) => (j.id === jobId ? updatedJob : j),
+      );
+    }
   }),
 
   fetchJobsForProject: thunk(async (actions, projectUuid, { injections }) => {
