@@ -1,7 +1,7 @@
 import enum
 import uuid
 from uuid import UUID as PyUUID
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from src.schemas.job import LLMModelConfig, PromptingConfig
@@ -27,3 +27,12 @@ class Job(Base, TimestampMixin):
     )
     llm_config: Mapped[LLMModelConfig] = mapped_column(JSONB, nullable=False)
     prompting_config: Mapped[PromptingConfig] = mapped_column(JSONB, nullable=False)
+    job_type: Mapped[str] = mapped_column(
+        String(50), nullable=False, server_default="screening"
+    )
+    classification_config_id: Mapped[int | None] = mapped_column(
+        ForeignKey("classification_config.id"), nullable=True
+    )
+    embedding_config_id: Mapped[int | None] = mapped_column(
+        ForeignKey("embedding_config.id"), nullable=True
+    )

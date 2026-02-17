@@ -5,5 +5,19 @@ from .jobtask import JobTask
 from .paper import Paper
 from .mixins import TimestampMixin
 from .setting import Setting
+from .classification_config import ClassificationConfig
+from .embedding_config import EmbeddingConfig
+from .visualization import Visualization
 
-__all__ = ["Project", "File", "Job", "JobTask", "Paper", "TimestampMixin", "Setting"]
+__all__ = [
+    "Project",
+    "File",
+    "Job",
+    "JobTask",
+    "Paper",
+    "TimestampMixin",
+    "Setting",
+    "ClassificationConfig",
+    "EmbeddingConfig",
+    "Visualization",
+]

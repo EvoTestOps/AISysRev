@@ -7,7 +7,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Enum as SAEnum,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.session import Base
@@ -56,6 +56,10 @@ class Paper(Base, TimestampMixin):
         SAEnum(HumanResult, name="human_result"),
         nullable=True,
     )
+
+    embedding_vector: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+
+    classification_cache: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     __table_args__ = (
         UniqueConstraint("project_uuid", "paper_id", name="uq_project_paper_id"),
