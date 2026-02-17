@@ -16,6 +16,7 @@ from src.api.controllers.paper import router as paper_router
 from src.api.controllers.setting import router as setting_router
 from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
+from src.api.controllers.classification import router as classification_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.redis_client.client import redis_subscribe
 from src.tools.minio_client import check_and_create_s3_bucket
@@ -81,6 +82,7 @@ v1_router.include_router(celery_test_router)
 v1_router.include_router(llm_router)
 v1_router.include_router(result_router)
 v1_router.include_router(event_queue_router)
+v1_router.include_router(classification_router)
 
 app.include_router(v1_router)
 
