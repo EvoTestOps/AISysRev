@@ -12,6 +12,7 @@ import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
+import { ClassificationConfigPage } from "./pages/ClassificationConfigPage";
 import { useTypedStoreActions } from "./state/store";
 
 function App() {
@@ -56,6 +57,10 @@ function App() {
         />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
+        <Route
+          path="/project/:projectUuid/classification/new"
+          component={ClassificationConfigPage}
+        />
         <Route path="/about" component={AboutPage} />
         <Route
           path="/terms-and-conditions"
