@@ -99,6 +99,9 @@ export const PapersPage = () => {
           <TabButton href={`/project/${projectUuid}/papers/page/1`} active>
             List of papers
           </TabButton>
+          <TabButton href={`/project/${projectUuid}/classifications`}>
+            Classifications
+          </TabButton>
         </div>
         <div className="p-4 flex flex-row gap-2">
           <input

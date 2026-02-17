@@ -13,7 +13,7 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-celery_app.autodiscover_tasks(["src.celery.tasks"], force=True)
+celery_app.autodiscover_tasks(["src.celery.tasks", "src.celery.tasks_classification"], force=True)
 
 
 def get_celery():

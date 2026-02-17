@@ -832,6 +832,9 @@ export const ProjectPage = () => {
         <TabButton href={`/project/${projectUuid}/papers/page/1`}>
           List of papers
         </TabButton>
+        <TabButton href={`/project/${projectUuid}/classifications`}>
+          Classifications
+        </TabButton>
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
