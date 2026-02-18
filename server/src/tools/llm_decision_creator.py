@@ -1,3 +1,5 @@
+from httpx import AsyncClient
+
 from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt
 from src.db.models.jobtask import JobTask
 from src.schemas.job import (
@@ -17,12 +19,10 @@ def _create_few_shot_examples(papers: list[PaperRead]):
     txt_parts = []
 
     for paper in papers:
-        txt_parts.append(
-            f"""Title: {paper.title}
+        txt_parts.append(f"""Title: {paper.title}
 Abstract: \"{paper.abstract}\"
 Decision: {"Include" if paper.human_result == PaperHumanResult.INCLUDE else "Exclude"}
-"""
-        )
+""")
 
     return "\n\n".join(txt_parts)
 
@@ -45,6 +45,7 @@ async def get_structured_response(
     job_task_data: JobTask,
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
+    client: AsyncClient,
 ) -> StructuredResponse:
     # TODO: Move to another place
     additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
@@ -84,6 +85,7 @@ async def get_structured_response(
             ),
             response_schema=StructuredResponse,
             user_prompt=prompt_text,
+            client=client,
         )
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
@@ -107,6 +109,7 @@ async def get_structured_response(
             ),
             response_schema=StructuredResponse,
             user_prompt=prompt_text,
+            client=client,
         )
         return result
     else:

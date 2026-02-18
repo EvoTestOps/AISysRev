@@ -1,7 +1,10 @@
 import asyncio
 import logging
-import random
 from typing import Dict
+
+from httpx import AsyncClient, HTTPStatusError
+from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_after
+from tenacity import retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from celery import Task
 from src.crud.jobtask_crud import JobTaskCrud
@@ -43,28 +46,24 @@ async def _publish_redis_event(redis, event_name, value):
     )
 
 
-async def _run_with_retry(
-    func, max_retries: int = 3, base_delay: float = 1.0, jitter: float = 0.3
-):
-    retries = 0
-    while True:
-        try:
-            return await func()
-        except Exception as e:
-            retries += 1
-            if retries > max_retries:
-                raise
+def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> AsyncClient:
+    def should_retry_status(response):
+        if response.status_code in (429, 502, 503, 504):
+            response.raise_for_status()
 
-            delay = base_delay * (2 ** (retries - 1))
-
-            jitter_amount = delay * jitter
-            delay = delay + random.uniform(-jitter_amount, jitter_amount)
-
-            logger.warning(
-                f"Retrying job task (attempt {retries}/{max_retries}) - Error: {e}"
-            )
-
-            await asyncio.sleep(delay)
+    transport = AsyncTenacityTransport(
+        config=RetryConfig(
+            retry=retry_if_exception_type((HTTPStatusError, ConnectionError)),
+            wait=wait_retry_after(
+                fallback_strategy=wait_exponential(multiplier=1, max=60),
+                max_wait=max_wait_seconds,
+            ),
+            stop=stop_after_attempt(max_attempts),
+            reraise=True,
+        ),
+        validate_response=should_retry_status,
+    )
+    return AsyncClient(transport=transport)
 
 
 async def _process_job_task(
@@ -76,7 +75,7 @@ async def _process_job_task(
     redis,
     counter: Dict[str, int],
     counter_lock: asyncio.Lock,
-    max_retries: int,
+    client: AsyncClient,
 ):
     async with semaphore:
         try:
@@ -98,15 +97,13 @@ async def _process_job_task(
                     {"job_task_id": job_task.id, "status": JobTaskStatus.RUNNING},
                 )
 
-                llm_result = await _run_with_retry(
-                    lambda: get_structured_response(
-                        llm_service,
-                        paper_service,
-                        job_task,
-                        job_data,
-                        project_criteria,
-                    ),
-                    max_retries=max_retries,
+                llm_result = await get_structured_response(
+                    llm_service,
+                    paper_service,
+                    job_task,
+                    job_data,
+                    project_criteria,
+                    client,
                 )
 
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
@@ -179,6 +176,8 @@ async def process_job(
     logger.info("process_job: Starting to process job %s", job_id)
     redis = get_redis_client()
 
+    client = _create_retrying_client(max_attempts=max_retries)
+
     async with DBContext() as db_ctx:
         project_crud = db_ctx.crud(ProjectCrud)
         jobtask_crud = db_ctx.crud(JobTaskCrud)
@@ -211,7 +210,7 @@ async def process_job(
             redis=redis,
             counter=counter,
             counter_lock=counter_lock,
-            max_retries=max_retries,
+            client=client,
         )
         for jt_id in job_task_ids
     ]
