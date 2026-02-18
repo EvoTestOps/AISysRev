@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar, Generic, List, Literal, Optional, Type, TypeVar, Union
+from httpx import AsyncClient
 from pydantic import BaseModel, Field
 
 from src.schemas.llm import ProviderRuntimeParameters
@@ -94,10 +95,11 @@ class LLMProvider(Generic[P, M], ABC):
     @abstractmethod
     async def generate_answer_async(
         self,
+        client: AsyncClient,
         model_parameters: dict[str, Any],
         schema: Type[T],
         prompt: str,
-    ) -> tuple[T, str]:
+    ) -> T:
         pass
 
 
