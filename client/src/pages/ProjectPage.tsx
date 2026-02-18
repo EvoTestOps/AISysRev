@@ -794,10 +794,10 @@ export const ProjectPage = () => {
             <AlertMessage message="No screening tasks." />
           )}
           {jobs.map((job) => {
-            const doneCount = job.stats.success;
+            const successCount = job.stats.success;
             const errorCount = job.stats.failed;
             const totalCount = job.stats.total;
-            const completedCount = doneCount + errorCount;
+            const completedCount = successCount + errorCount;
             const progress =
               totalCount === 0
                 ? 0
