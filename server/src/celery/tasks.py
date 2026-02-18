@@ -159,12 +159,12 @@ async def _process_job_task(
             except Exception:
                 logger.exception("Failed to publish error %s", job_task_id)
 
-            try:
-                celery_task.update_state(state="FAILURE", meta={"error": str(e)})
-            except Exception:
-                logger.exception(
-                    "Failed to update celery state for job_task %s", job_task_id
-                )
+            # try:
+            #     celery_task.update_state(state="FAILURE", meta={"error": str(e)})
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update celery state for job_task %s", job_task_id
+            #     )
         finally:
             async with counter_lock:
                 counter["completed"] += 1
@@ -173,29 +173,29 @@ async def _process_job_task(
                 success = counter["success"]
                 failed = counter["failed"]
 
-                status = resolve_job_status(total, success, failed)
+            status = resolve_job_status(total, success, failed)
 
-                # TODO: maybe buffer to avoid spamming
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_PROGRESS,
-                    {
-                        "job_id": job_id,
-                        "stats": {
-                            "total": total,
-                            "success": success,
-                            "failed": failed,
-                            "status": status,
-                        },
+            # TODO: maybe buffer to avoid spamming
+            await _publish_redis_event(
+                redis,
+                EventName.JOB_PROGRESS,
+                {
+                    "job_id": job_id,
+                    "stats": {
+                        "total": total,
+                        "success": success,
+                        "failed": failed,
+                        "status": status,
                     },
-                )
+                },
+            )
 
-                try:
-                    celery_task.update_state(
-                        state="PROGRESS", meta={"current": completed, "total": total}
-                    )
-                except Exception:
-                    logger.exception("Failed to update celery progress counter")
+            try:
+                celery_task.update_state(
+                    state="PROGRESS", meta={"current": completed, "total": total}
+                )
+            except Exception:
+                logger.exception("Failed to update celery progress counter")
 
 
 async def process_job(
