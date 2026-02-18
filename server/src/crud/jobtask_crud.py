@@ -3,7 +3,6 @@ from uuid import UUID
 
 from sqlalchemy import Row, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.functions import coalesce
 
 from src.db.models.job import Job
 from src.db.models.jobtask import JobTask

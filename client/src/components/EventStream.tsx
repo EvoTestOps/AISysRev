@@ -3,7 +3,7 @@ import { CircleAlert } from "lucide-react";
 import * as z from "zod";
 import classNames from "classnames";
 import { useTypedStoreActions } from "../state/store";
-import type { JobWithStats, JobStats } from "../state/types";
+import type { JobStats } from "../state/types";
 
 const EventName = {
   // Events for JobTask-related things
