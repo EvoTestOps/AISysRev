@@ -632,6 +632,9 @@ export const ProjectPage = () => {
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
+        if ((res.empty_abstract_count ?? 0) > 0) {
+          toast.warn(`${res.empty_abstract_count} abstracts are empty - results will not be optimal`, { autoClose: 8000 })
+        }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
           console.error("File upload errors:", res.errors);

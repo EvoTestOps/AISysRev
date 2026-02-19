@@ -48,18 +48,25 @@ class FileService:
         """
         errors: List[FileError] = []
         valid_filenames: List[str] = []
+        empty_abstract_count_total = 0
 
         for f in files:
-            validation_errors = validate_csv(f.file, f.filename or "NONE")
+            validation_errors, file_empty_abstracts = validate_csv(
+                f.file, f.filename or "NONE"
+            )
             if validation_errors:
                 errors.extend(validation_errors)
                 continue
+
             if f.filename is None:
                 continue
             if f.file is None:
                 continue
             if f.content_type is None:
                 continue
+
+            empty_abstract_count_total += file_empty_abstracts
+
             try:
                 file_data = FileCreate(
                     project_uuid=project_uuid,
@@ -91,6 +98,8 @@ class FileService:
                     }
                     if pd.isna(normalized.get("doi")):
                         normalized["doi"] = None
+                    if pd.isna(normalized.get("abstract")):
+                        normalized["abstract"] = None
 
                     papers.append(
                         PaperCreate(
@@ -127,7 +136,11 @@ class FileService:
             except Exception as e:
                 raise e
 
-        return ProcessedFiles(valid_filenames=valid_filenames, errors=errors)
+        return ProcessedFiles(
+            valid_filenames=valid_filenames,
+            errors=errors,
+            empty_abstract_count=empty_abstract_count_total,
+        )
 
 
 def create_file_service(db_ctx: DBContext) -> FileService:
