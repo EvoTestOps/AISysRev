@@ -1,17 +1,24 @@
 from typing import Any, List, Type
 
-from pydantic import BaseModel, ValidationError
+from httpx import AsyncClient
+from openai.types.model import Model
+from pydantic import BaseModel
+from pydantic_ai import Agent
+from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettings
+from pydantic_ai.output import ToolOutput
+from pydantic_ai.providers.openrouter import (
+    OpenRouterProvider as PAI_OpenRouterProvider,
+)
+
 from src.core.llm.providers.provider import (
-    T,
     BaseLLMParams,
     ConfigParameter,
     LLMProvider,
+    T,
 )
-
 from src.schemas.llm import (
     ProviderRuntimeParameters,
 )
-from openai.types.model import Model
 
 
 class OpenRouterProviderParams(BaseModel):
@@ -46,96 +53,61 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
 
     async def generate_answer_async(
         self,
+        client: AsyncClient,
         model_parameters: dict[str, Any],
         schema: Type[T],
         prompt: str,
-    ) -> tuple[T, str]:
-        cfg = self.parse_model_parameters(model_parameters)
-
-        import aiohttp
-        from openai.lib._pydantic import to_strict_json_schema
-        import json
+    ) -> T:
         import logging
 
         logger = logging.getLogger(__name__)
 
+        model_cfg = self.parse_model_parameters(model_parameters)
+
         if self.runtime_parameters.api_key is None:
             raise RuntimeError("API Key is not defined")
-
         if self.provider_parameters is None:
             raise RuntimeError("Provider parameters needs to be defined")
 
-        content = None
-        data = None
-        async with aiohttp.ClientSession() as session:
-            data = {
-                "model": self.runtime_parameters.model,
-                "messages": [
-                    {
-                        "role": "system",
-                        # "content": system_prompt + "\r\n" + json_instruct_prompt, <-- Test if JSON responses work without this
-                        "content": self.runtime_parameters.system_prompt,
-                    },
-                    {"role": "user", "content": prompt},
-                ],
-                "provider": {"require_parameters": True, "data_collection": "deny"},
-                "max_tokens": 8193,
-                "response_format": {
-                    "type": "json_schema",
-                    "json_schema": {
-                        "name": "structured_response",
-                        "strict": True,
-                        "schema": to_strict_json_schema(schema),
-                    },
-                },
-                "temperature": cfg.temperature,
-                "top_p": cfg.top_p,
-            }
+        settings = OpenRouterModelSettings(
+            openrouter_provider={
+                "require_parameters": True,
+                "data_collection": "deny",
+            },
+            extra_headers={
+                "X-Title": "AISysRev",
+                "HTTP-Referer": "https://github.com/EvoTestOps/AISysRev",
+            },
+            temperature=model_cfg.temperature,
+            top_p=model_cfg.top_p,
+        )
 
-            async with session.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.runtime_parameters.api_key}",
-                    "Content-type": "application/json",
-                },
-                json=data,
-            ) as response:
-                logger.info("Status: %s", response.status)
-                logger.info("Content-type: %s", response.headers["content-type"])
+        model = OpenRouterModel(
+            str(self.runtime_parameters.model),
+            provider=PAI_OpenRouterProvider(
+                api_key=self.runtime_parameters.api_key, http_client=client
+            ),
+            settings=settings,
+        )
 
-                if response.status != 200:
-                    text = await response.text()
-                    logger.error(
-                        "LLM request failed with response status %s", response.status
-                    )
-                    logger.error("Response: %s", text)
-                    raise RuntimeError(text)
+        agent = Agent(
+            model,
+            system_prompt=self.runtime_parameters.system_prompt,
+            retries=3,  # TODO: Maybe should be configurable
+            output_retries=5,
+            output_type=ToolOutput(schema, name=schema.__name__.lower()),
+        )
 
-                completion = await response.json()
-                data = json.dumps(completion)
+        logger.debug(
+            "Sending prompt to OpenRouter model %s", self.runtime_parameters.model
+        )
+        logger.debug("Prompt: %s", prompt)
+        logger.debug("Model parameters: %s", model_cfg.model_dump())
 
-                # For type-safety, validate the response JSON
-                # Things might have gotten better in OpenRouter's infrastructure, so JSON is properly outputted from the OpenRouter interface.
-                import re
+        result = await agent.run(prompt)
 
-                json_match = re.search(
-                    r"json\s*(\{.*\})",
-                    completion["choices"][0]["message"]["content"],
-                    re.DOTALL,
-                )
-                json_str = (
-                    # First, check if the response starts with "json"
-                    json_match.group(1).strip()
-                    if json_match
-                    # Assume that the content is valid JSON
-                    else completion["choices"][0]["message"]["content"].strip()
-                )
-                try:
-                    content = schema.model_validate_json(json_str)
-                except ValidationError as e:
-                    logger.error(e)
-                    raise e
-        return content, data
+        logger.debug("Received structured response: %s", result.output)
+        return result.output
 
     async def get_available_models(self) -> List[Model]:
         if self.provider_parameters is None:
