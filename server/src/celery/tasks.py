@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Dict
+from uuid import UUID
 
 from httpx import AsyncClient, HTTPStatusError
 from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_after
@@ -218,3 +219,7 @@ async def process_job(
     await asyncio.gather(*tasks)
 
     return {"result": "all job tasks processed"}
+
+
+def cancel_task(task_id: UUID):
+    celery_app.control.revoke(str(task_id), terminate=True)

@@ -1,6 +1,7 @@
 import logging
 from uuid import UUID
 
+from src.celery.tasks import cancel_task
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.schemas.job import JobCreate, JobRead
@@ -83,11 +84,23 @@ class JobService:
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )
-        task = await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
+        task = await self.jobtask_service.start_job_tasks(
+            new_job.id, job_read.model_dump()
+        )
 
         await self.job_crud.update_celery_task_id(new_job.uuid, UUID(task.id))
 
         return job_read
+
+    async def cancel_job(self, job_uuid: UUID):
+        task_id = await self.job_crud.fetch_celery_task_id(job_uuid)
+
+        if task_id is None:
+            raise RuntimeError(f"No task associated with job {job_uuid}")
+
+        cancel_task(task_id)
+
+        return {f"task {task_id} cancelled"}
 
 
 def create_job_service(db_ctx: DBContext) -> JobService:

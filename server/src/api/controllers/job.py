@@ -8,10 +8,7 @@ from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
-from src.services.project_service import (
-    ProjectPreferences,
-    create_project_service,
-)
+from src.services.project_service import ProjectPreferences, create_project_service
 
 router = APIRouter()
 
@@ -100,3 +97,16 @@ async def create_job(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Job creation failed: {str(e)}",
         )
+
+
+@router.post("/job/{uuid}/cancel", status_code=status.HTTP_200_OK, tags=["Job"])
+async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+    job_service = create_job_service(db_ctx)
+    try:
+        res = await job_service.cancel_job(uuid)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cancel job: {str(e)}",
+        ) from e

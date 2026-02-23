@@ -63,6 +63,11 @@ class JobCrud:
         # TODO: Fix
         return job  # type: ignore
 
+    async def fetch_celery_task_id(self, job_uuid: UUID) -> UUID | None:
+        stmt = select(Job.celery_task_id).where(Job.uuid == job_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def update_celery_task_id(self, job_uuid: UUID, celery_task_id: UUID):
         stmt = (
             update(Job)
