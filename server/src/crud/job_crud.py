@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.job import Job
@@ -62,6 +62,15 @@ class JobCrud:
             raise ValueError(f"Job with uuid {uuid} not found")
         # TODO: Fix
         return job  # type: ignore
+
+    async def update_celery_task_id(self, job_uuid: UUID, celery_task_id: UUID):
+        stmt = (
+            update(Job)
+            .where(Job.uuid == job_uuid)
+            .values(celery_task_id=celery_task_id)
+        )
+        await self.db.execute(stmt)
+        await self.db.flush()
 
     async def create_job(self, job_data: JobCreate):
         stmt = select(Project).where(Project.uuid == job_data.project_uuid)
