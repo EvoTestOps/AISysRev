@@ -3,12 +3,12 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
-import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
+import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { fetchJobTasksFromBackend } from "../services/jobTaskService";
-import { createJob, fetchJobsForProject } from "../services/jobService";
+import { createJob, fetchJobsForProject, cancelJob } from "../services/jobService";
 import {
   fileUploadToBackend,
   fileFetchFromBackend,
@@ -39,6 +39,7 @@ import {
   Square,
   SquareCheckBig,
   TriangleAlert,
+  XCircle
 } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
@@ -531,6 +532,20 @@ export const ProjectPage = () => {
     fetchJobs();
   }, [fetchJobs, projectUuid]);
 
+  const handleJobCancel = useCallback(
+    async (jobUuid: string) => {
+      try {
+        await cancelJob(jobUuid);
+        fetchJobs();
+        toast.success("Task canceled successfully", { autoClose: 1500 });
+      } catch (error) {
+        console.error("Error canceling job:", error);
+        toast.error(`Error canceling job: ${error}`);
+      }
+    },
+    [fetchJobs]
+  );
+
   const fetchModels = useCallback(() => {
     async function fetch_models() {
       if (selectedLlmProvider && selectedLlmProvider.value) {
@@ -855,7 +870,7 @@ export const ProjectPage = () => {
 
             return (
               <Card key={job.uuid} className="flex-row justify-between">
-                <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
+                <div className="grid grid-cols-[50px_1fr_auto_auto] gap-4 w-full">
                   <>
                     {job.prompting_config.screening_type ==
                       JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
@@ -920,6 +935,22 @@ export const ProjectPage = () => {
                         )}
                       </div>
                     </div>
+                  </div>
+                  <div>
+                    <DropdownMenuEllipsis
+                      items={[
+                        {
+                          label: () => (
+                            <div className="text-red-700 flex flex-row gap-3 items-center">
+                              <XCircle />
+                              <span>Cancel</span>
+                            </div>
+                          ),
+                          onClick: () => handleJobCancel(job.uuid),
+                          disabled: progress === 100,
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               </Card>

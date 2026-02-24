@@ -103,8 +103,8 @@ async def create_job(
 async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     job_service = create_job_service(db_ctx)
     try:
-        res = await job_service.cancel_job(uuid)
-        return res
+        await job_service.cancel_job(uuid)
+        return {"detail": "Task cancelled successfully"}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

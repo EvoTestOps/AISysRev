@@ -4,6 +4,7 @@ import { Ellipsis } from "lucide-react";
 
 type EllipsisItem = {
   label: React.ElementType;
+  disabled: boolean;
   onClick: () => void;
 };
 
@@ -47,6 +48,7 @@ export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
               as="button"
               onClick={item.onClick}
               className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-focus:bg-gray-100 focus:outline-none cursor-pointer data-disabled:opacity-50"
+              disabled={item.disabled}
             >
               <Label />
             </MenuItem>
