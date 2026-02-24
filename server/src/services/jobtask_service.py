@@ -78,6 +78,9 @@ class JobTaskService:
         ]
         return await self.jobtask_crud.bulk_create_jobtasks(jobtasks)
 
+    async def set_unfinished_to_cancelled(self, job_id: int):
+        await self.jobtask_crud.update_job_tasks_status_to_cancelled(job_id)
+
     async def start_job_tasks(self, job_id: int, job_data: dict):
         # job_data is of type JobCreate
         print(f"start_job_tasks: Processing job {job_id}")

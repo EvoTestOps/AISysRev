@@ -100,10 +100,13 @@ async def create_job(
 
 
 @router.post("/job/{uuid}/cancel", status_code=status.HTTP_200_OK, tags=["Job"])
-async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def cancel_job(
+    uuid: UUID, delete_data: bool = False, db_ctx: DBContext = Depends(get_db_ctx)
+):
     job_service = create_job_service(db_ctx)
     try:
-        await job_service.cancel_job(uuid)
+        await job_service.cancel_job(uuid, delete_data=delete_data)
+        await db_ctx.commit()
         return {"detail": "Task cancelled successfully"}
     except Exception as e:
         raise HTTPException(

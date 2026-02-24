@@ -92,13 +92,20 @@ class JobService:
 
         return job_read
 
-    async def cancel_job(self, job_uuid: UUID):
-        task_id = await self.job_crud.fetch_celery_task_id(job_uuid)
+    async def cancel_job(self, job_uuid: UUID, delete_data: bool = False):
+        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
 
+        # FIX: fetch_job_by_uuid() and JobRead
+        task_id = job.get("celery_task_id")
         if task_id is None:
             raise RuntimeError(f"No task associated with job {job_uuid}")
 
         cancel_task(task_id)
+
+        if delete_data:
+            await self.job_crud.delete_job(job_uuid)
+        else:
+            await self.jobtask_service.set_unfinished_to_cancelled(job.get("id")) # type: ignore
 
         return {f"task {task_id} cancelled"}
 

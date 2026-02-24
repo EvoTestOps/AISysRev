@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.models.job import Job
 from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
-from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult
+from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskStatus
 from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperCreate
 
@@ -66,6 +66,21 @@ class JobTaskCrud:
         stmt = update(JobTask).where(JobTask.job_id == job_id).values(status=status)
         await self.db.execute(stmt)
         await self.db.flush()
+
+    """
+    Sets status to CANCELLED for all unfinished job tasks.
+    Should be called after canceling the job.
+    """
+    async def update_job_tasks_status_to_cancelled(self, job_id: int):
+        stmt = (
+                update(JobTask)
+                .where(
+                    JobTask.job_id == job_id,
+                    JobTask.status.in_([JobTaskStatus.NOT_STARTED, JobTaskStatus.PENDING, JobTaskStatus.RUNNING])
+                    )
+                    .values(status=JobTaskStatus.CANCELLED)
+                )
+        await self.db.execute(stmt)
 
     async def update_job_task_result(
         self, job_task_id: int, result: StructuredResponse
