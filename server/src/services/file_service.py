@@ -1,4 +1,3 @@
-import io
 from typing import List
 from uuid import UUID
 
@@ -12,6 +11,7 @@ from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 from src.schemas.file_service import FileError, ProcessedFiles
 from src.services.paper_service import PaperCreate, PaperCrud
+from src.tools.csv_file_reader import read_csv_resilient
 from src.tools.csv_file_validation import validate_csv
 from src.tools.minio_file_uploader import upload_file_to_object_storage
 
@@ -77,7 +77,9 @@ class FileService:
                 raw_bytes = f.file.read()
                 papers = []
 
-                df = pd.read_csv(io.BytesIO(raw_bytes), encoding="utf-8-sig")
+                # TODO: dataframe is already read in validate_csv(). Should only be read once
+                df = read_csv_resilient(raw_bytes)
+
                 df.columns = [str(c).strip().lower() for c in df.columns]
 
                 for idx, row in df.iterrows():
