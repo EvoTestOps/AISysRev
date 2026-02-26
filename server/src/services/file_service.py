@@ -1,8 +1,6 @@
-import io
 from typing import List
 from uuid import UUID
 
-import pandas as pd
 from fastapi import UploadFile
 from minio.error import S3Error
 
