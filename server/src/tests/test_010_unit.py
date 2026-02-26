@@ -10,7 +10,7 @@ from src.tools.csv_file_validation import validate_csv
 def test_validate_csv_success():
     csv_content = "title,abstract,doi\nTest Title,Test Abstract,10.1234/test"
     file_obj = io.BytesIO(csv_content.encode("utf-8"))
-    errors, _ = validate_csv(file_obj, "test.csv")
+    _, errors, _ = validate_csv(file_obj, "test.csv")
     assert errors == []
 
 
@@ -18,7 +18,7 @@ def test_validate_csv_success():
 def test_validate_csv_missing_title_field():
     csv_content = "abstract,doi\nTest Abstract,10.1234/test"
     file_obj = io.BytesIO(csv_content.encode("utf-8"))
-    errors, _ = validate_csv(file_obj, "test.csv")
+    _, errors, _ = validate_csv(file_obj, "test.csv")
     assert errors == [
         FileError(
             file="test.csv",
@@ -32,7 +32,7 @@ def test_validate_csv_missing_title_field():
 def test_validate_csv_missing_abstract_field():
     csv_content = "title,doi\nTest Title,10.1234/test"
     file_obj = io.BytesIO(csv_content.encode("utf-8"))
-    errors, _ = validate_csv(file_obj, "test.csv")
+    _, errors, _ = validate_csv(file_obj, "test.csv")
     assert errors == [
         FileError(
             file="test.csv",
@@ -46,7 +46,7 @@ def test_validate_csv_missing_abstract_field():
 def test_validate_csv_missing_doi_field():
     csv_content = "title,abstract\nTest Title,Test Abstract"
     file_obj = io.BytesIO(csv_content.encode("utf-8"))
-    errors, _ = validate_csv(file_obj, "test.csv")
+    _, errors, _ = validate_csv(file_obj, "test.csv")
     assert errors == [
         FileError(
             file="test.csv",
