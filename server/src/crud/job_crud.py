@@ -31,6 +31,7 @@ class JobCrud:
         stmt = (
             select(
                 Job.uuid,
+                Job.id,
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,

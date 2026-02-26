@@ -17,6 +17,7 @@ class EventName(Enum):
     # Events for Job-related things
     JOB_COMPLETE = 3001
     JOB_CREATED = 3002
+    JOB_PROGRESS = 3003
     # Events for Project-related things
     PROJECT_CREATED = 4001
     PROJECT_FILE_UPLOADED = 4002

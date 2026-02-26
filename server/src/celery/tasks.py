@@ -11,6 +11,7 @@ from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem
+from src.helpers.resolve_job_status import resolve_job_status
 from src.redis_client.client import REDIS_CHANNEL, get_redis_client
 from src.schemas.job import JobCreate
 from src.schemas.jobtask import JobTaskStatus
@@ -69,6 +70,7 @@ def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> Async
 async def _process_job_task(
     celery_task: Task,
     job_task_id: int,
+    job_id: int,
     job_data: JobCreate,
     project_criteria: Criteria,
     semaphore: asyncio.Semaphore,
@@ -112,6 +114,9 @@ async def _process_job_task(
                 )
                 await task_db_ctx.commit()
 
+                async with counter_lock:
+                    counter["success"] += 1
+
                 await _publish_redis_event(
                     redis,
                     EventName.JOB_TASK_DONE,
@@ -127,6 +132,10 @@ async def _process_job_task(
                     )
                     await err_jobtask_crud.update_job_task_error(job_task_id, str(e))
                     await task_err_db_ctx.commit()
+
+                    async with counter_lock:
+                        counter["failed"] += 1
+
             except Exception as err_db_exc:
                 logger.exception(
                     "Failed to write error to database for job_task %s: %s",
@@ -147,23 +156,43 @@ async def _process_job_task(
             except Exception:
                 logger.exception("Failed to publish error %s", job_task_id)
 
-            try:
-                celery_task.update_state(state="FAILURE", meta={"error": str(e)})
-            except Exception:
-                logger.exception(
-                    "Failed to update celery state for job_task %s", job_task_id
-                )
+            # try:
+            #     celery_task.update_state(state="FAILURE", meta={"error": str(e)})
+            # except Exception:
+            #     logger.exception(
+            #         "Failed to update celery state for job_task %s", job_task_id
+            #     )
         finally:
             async with counter_lock:
                 counter["completed"] += 1
                 completed = counter["completed"]
                 total = counter["total"]
-                try:
-                    celery_task.update_state(
-                        state="PROGRESS", meta={"current": completed, "total": total}
-                    )
-                except Exception:
-                    logger.exception("Failed to update celery progress counter")
+                success = counter["success"]
+                failed = counter["failed"]
+
+            status = resolve_job_status(total, success, failed)
+
+            # TODO: maybe buffer to avoid spamming
+            await _publish_redis_event(
+                redis,
+                EventName.JOB_PROGRESS,
+                {
+                    "job_id": job_id,
+                    "stats": {
+                        "total": total,
+                        "success": success,
+                        "failed": failed,
+                        "status": status,
+                    },
+                },
+            )
+
+            try:
+                celery_task.update_state(
+                    state="PROGRESS", meta={"current": completed, "total": total}
+                )
+            except Exception:
+                logger.exception("Failed to update celery progress counter")
 
 
 async def process_job(
@@ -198,12 +227,13 @@ async def process_job(
 
     semaphore = asyncio.Semaphore(max_concurrent_tasks)
     counter_lock = asyncio.Lock()
-    counter = {"completed": 0, "total": len(job_task_ids)}
+    counter = {"completed": 0, "success": 0, "failed": 0, "total": len(job_task_ids)}
 
     tasks = [
         _process_job_task(
             celery_task=celery_task,
             job_task_id=jt_id,
+            job_id=job_id,
             job_data=job_data,
             project_criteria=project_criteria,
             semaphore=semaphore,

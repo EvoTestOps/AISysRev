@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { CircleAlert } from "lucide-react";
 import * as z from "zod";
 import classNames from "classnames";
+import { useTypedStoreActions } from "../state/store";
+import type { JobStats } from "../state/types";
 
 const EventName = {
   // Events for JobTask-related things
@@ -16,6 +18,7 @@ const EventName = {
   // Events for Job-related things
   JOB_COMPLETE: 3001,
   JOB_CREATED: 3002,
+  JOB_PROGRESS: 3003,
   // Events for Project-related things
   PROJECT_CREATED: 4001,
   PROJECT_FILE_UPLOADED: 4002,
@@ -84,19 +87,37 @@ export const EventStream = () => {
   const [connected, setConnected] = useState(false);
   const [logs, setLogs] = useState<Array<EventData>>([]);
 
-  // TODO: Integrate into state management to update job task status in real time
+  // const setJobsForProject = useTypedStoreActions(
+  //   (actions) => actions.setJobsForProject
+  // );
+  const updateJobStats = useTypedStoreActions(
+    (actions) => actions.updateJobStats
+  );
+
 
   const _onMessage = useCallback((event: MessageEvent<unknown>) => {
     const { data } = event;
     if (typeof data === "string") {
       const dataJson = JSON.parse(data);
-      // console.log(dataJson);
       const parsedData = EventData.safeParse(dataJson);
       if (!parsedData.error) {
-        setLogs((logs) => [...logs, parsedData.data]);
+        const eventData = parsedData.data;
+        setLogs((logs) => [...logs, eventData]);
+
+        switch (eventData.event_name) {
+          case EventName.JOB_PROGRESS:
+            {
+              const jobId = eventData.value.job_id;
+              const stats: JobStats = eventData.value.stats;
+              updateJobStats({ jobId, stats });
+            }
+            break;
+          default:
+            break;
+        }
       }
     }
-  }, []);
+  }, [updateJobStats]);
 
   const startLogStream = useCallback(() => {
     const eventSource = new EventSource(event_url);
