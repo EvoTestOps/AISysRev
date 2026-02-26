@@ -73,18 +73,17 @@ class FileService:
                 )
                 result = await self.file_crud.create_file_record(file_data)
 
-                papers = []
-                for idx, row in df.iterrows():
-                    papers.append(
-                        PaperCreate(
-                            paper_id=int(idx) + 1,  # type: ignore
-                            title=row.get("title"),  # type: ignore
-                            abstract=row.get("abstract") or "NO_ABSTRACT",
-                            doi=row.get("doi"),
-                            file_uuid=result.uuid,
-                            project_uuid=project_uuid,
-                        )
+                papers = [
+                    PaperCreate(
+                        paper_id=int(idx) + 1,  # type: ignore
+                        title=record.get("title"),  # type: ignore
+                        abstract=record.get("abstract") or "NO_ABSTRACT",
+                        doi=record.get("doi"),
+                        file_uuid=result.uuid,
+                        project_uuid=project_uuid,
                     )
+                    for idx, record in enumerate(df.to_dict("records"))
+                ]
 
                 if papers:
                     await self.paper_crud.bulk_create_papers(papers)
