@@ -7,7 +7,8 @@ import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../compo
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { createJob, cancelJob } from "../services/jobService";
+import { CancelJobModal } from "../components/CancelJobModal";
+import { createJob } from "../services/jobService";
 import {
   fileUploadToBackend,
   fileFetchFromBackend,
@@ -417,6 +418,14 @@ export const ProjectPage = () => {
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
+
+  const [jobToCancel, setJobToCancel] = useState<{
+    jobUuid: string,
+    completedCount: number;
+    totalCount: number;
+  } | null>(null);
+
+  const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
 
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [availableModels, setAvailableModels] = useState<
@@ -896,7 +905,7 @@ export const ProjectPage = () => {
                               <span>Cancel</span>
                             </div>
                           ),
-                          onClick: () => handleJobCancel(job.uuid),
+                          onClick: () => setJobToCancel({jobUuid: job.uuid, completedCount, totalCount}),
                           disabled: progress === 100,
                         },
                       ]}
@@ -1136,6 +1145,30 @@ export const ProjectPage = () => {
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
+        />
+      )}
+      {jobToCancel && (
+        <CancelJobModal
+          open={true}
+          completedCount={jobToCancel.completedCount}
+          totalCount={jobToCancel.totalCount}
+          onClose={() => setJobToCancel(null)}
+          onKeepData={async () => {
+            await cancelJob({
+              jobUuid: jobToCancel.jobUuid,
+              deleteData: false,
+              projectUuid: projectUuid,
+            });
+            setJobToCancel(null);
+          }}
+          onDeleteData={async () => {
+            await cancelJob({
+              jobUuid: jobToCancel.jobUuid,
+              deleteData: true,
+              projectUuid: projectUuid,
+            });
+            setJobToCancel(null);
+          }}
         />
       )}
     </Layout>

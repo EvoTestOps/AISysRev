@@ -8,6 +8,7 @@ import {
   Computed,
   computed,
 } from "easy-peasy";
+import { toast } from "react-toastify";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
@@ -60,10 +61,13 @@ interface JobModel {
     StoreModel,
     { projectUuid: string; jobs: JobWithStats[] }
   >;
-
   updateJobStats: Action<StoreModel, { jobId: string; stats: JobStats }>;
-
   fetchJobsForProject: Thunk<StoreModel, string, Injections>;
+  cancelJob: Thunk<
+    StoreModel,
+    { jobUuid: string; deleteData: boolean; projectUuid: string },
+    Injections
+  >;
 }
 
 interface PaperModel {
@@ -297,6 +301,23 @@ export const model = {
       jobs,
     });
   }),
+  cancelJob: thunk(
+    async (actions, { jobUuid, deleteData, projectUuid }, { injections }) => {
+      const { jobService } = injections;
+
+      try {
+        await jobService.cancelJob(jobUuid, deleteData);
+        await actions.fetchJobsForProject(projectUuid);
+
+        toast.success("Task canceled successfully", {
+          autoClose: 1500,
+        });
+      } catch (error: any) {
+        toast.error(`Error canceling job: ${error?.message ?? error}`);
+        throw error;
+      }
+    },
+  ),
 } satisfies StoreModel;
 
 export const store = createStore<StoreModel>(model, {

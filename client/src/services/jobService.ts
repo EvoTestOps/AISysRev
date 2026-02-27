@@ -30,10 +30,10 @@ export const fetchJobsForProject = async (projectUuid: string) => {
   }
 };
 
-export const cancelJob = async (jobUuid: string) => {
+export const cancelJob = async (jobUuid: string, deleteData: boolean) => {
   try {
-    const res = await api.post(`/api/v1/job/${jobUuid}/cancel`);
-    return res.data
+    const res = await api.post(`/api/v1/job/${jobUuid}/cancel?delete_data=${deleteData}`);
+    return res.data;
   } catch (error) {
     console.error("Canceling task unsuccessful:", error);
     throw error;
