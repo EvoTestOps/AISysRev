@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
-from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead
+from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead, JobReadWithStats
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
 from src.services.project_service import ProjectPreferences, create_project_service
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/job", status_code=status.HTTP_200_OK, response_model=list[JobRead], tags=["Job"]
+    "/job", status_code=status.HTTP_200_OK, response_model=list[JobReadWithStats], tags=["Job"]
 )
 async def get_jobs(
     project: Optional[UUID] = None, db_ctx: DBContext = Depends(get_db_ctx)

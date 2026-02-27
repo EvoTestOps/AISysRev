@@ -44,6 +44,7 @@ class JobTaskRead(BaseModel):
     result: Optional[Dict[str, Any]]
     human_result: JobTaskHumanResult | None = None
     status_metadata: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
 
     @field_validator("result", mode="before")
     @classmethod
@@ -66,6 +67,7 @@ class JobTaskReadWithLLMConfig(BaseModel):
     result: Optional[Dict[str, Any]] = None
     human_result: Optional[JobTaskHumanResult] = None
     status_metadata: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
     llm_config: Optional[Dict[str, Any]] = None
     prompting_config: Optional[Dict[str, Any]] = None
 

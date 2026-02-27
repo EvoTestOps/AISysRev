@@ -1,12 +1,13 @@
 from typing import List, Sequence, Tuple
 from uuid import UUID
 
-from sqlalchemy import Row, select, update
+from sqlalchemy import Row, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.job import Job
 from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
+from src.db.models.project import Project
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskStatus
 from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperCreate
@@ -57,6 +58,26 @@ class JobTaskCrud:
         )
         return (await self.db.execute(stmt)).all()
 
+    async def fetch_tasks_stats_by_project(self, project_uuid):
+        stmt = (
+            select(
+                Job.uuid.label("job_uuid"),
+                func.count(JobTask.id).label("total_count"),
+                func.coalesce(
+                    func.sum(case((JobTask.status == JobTaskStatus.DONE, 1), else_=0))
+                ).label("success_count"),
+                func.coalesce(
+                    func.sum(case((JobTask.status == JobTaskStatus.ERROR, 1), else_=0))
+                ).label("failed_count"),
+            )
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Project.id == Job.project_id)
+            .where(Project.uuid == project_uuid)
+            .group_by(Job.uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
     async def update_job_task_status(self, job_task_id: int, status: str):
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(status=status)
         await self.db.execute(stmt)
@@ -71,15 +92,22 @@ class JobTaskCrud:
     Sets status to CANCELLED for all unfinished job tasks.
     Should be called after canceling the job.
     """
+
     async def update_job_tasks_status_to_cancelled(self, job_id: int):
         stmt = (
-                update(JobTask)
-                .where(
-                    JobTask.job_id == job_id,
-                    JobTask.status.in_([JobTaskStatus.NOT_STARTED, JobTaskStatus.PENDING, JobTaskStatus.RUNNING])
-                    )
-                    .values(status=JobTaskStatus.CANCELLED)
-                )
+            update(JobTask)
+            .where(
+                JobTask.job_id == job_id,
+                JobTask.status.in_(
+                    [
+                        JobTaskStatus.NOT_STARTED,
+                        JobTaskStatus.PENDING,
+                        JobTaskStatus.RUNNING,
+                    ]
+                ),
+            )
+            .values(status=JobTaskStatus.CANCELLED)
+        )
         await self.db.execute(stmt)
 
     async def update_job_task_result(

@@ -7,8 +7,7 @@ import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../compo
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { fetchJobTasksFromBackend } from "../services/jobTaskService";
-import { createJob, fetchJobsForProject, cancelJob } from "../services/jobService";
+import { createJob, cancelJob } from "../services/jobService";
 import {
   fileUploadToBackend,
   fileFetchFromBackend,
@@ -17,9 +16,6 @@ import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
 import {
   FetchedFile,
-  JobTask,
-  JobTaskStatus,
-  CreatedJob,
   LlmConfig,
   createZeroShotPromptingConfig,
   JobPromptingType,
@@ -89,11 +85,10 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
             {Object.keys(modelParametersSchema.properties).map((key) => {
               const property = modelParametersSchema.properties[key];
               return (
-                <span key={`property_${property.title}`}>{`${property.title}: ${
-                  modelFormValues[key] !== undefined &&
+                <span key={`property_${property.title}`}>{`${property.title}: ${modelFormValues[key] !== undefined &&
                   modelFormValues[key] !== "" &&
                   modelFormValues[key]
-                }`}</span>
+                  }`}</span>
               );
             })}
           </div>
@@ -125,7 +120,7 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
                 </label>
                 <span className="text-sm font-medium text-slate-600">
                   {modelFormValues[key] !== undefined &&
-                  modelFormValues[key] !== "" ? (
+                    modelFormValues[key] !== "" ? (
                     <>{modelFormValues[key]}</>
                   ) : (
                     ""
@@ -237,8 +232,8 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                 </label>
                 <span className="text-sm font-medium text-slate-600">
                   {providerFormValues[key] !== undefined &&
-                  property.type !== "string" &&
-                  providerFormValues[key] !== "" ? (
+                    property.type !== "string" &&
+                    providerFormValues[key] !== "" ? (
                     <>{providerFormValues[key]}</>
                   ) : (
                     ""
@@ -414,7 +409,7 @@ export const ProjectPage = () => {
   const [evaluateViewMatch] = useRoute("/project/:projectUuid/evaluate");
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
-  const jobTaskRefetchIntervalMs = 5000;
+
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
@@ -423,12 +418,11 @@ export const ProjectPage = () => {
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
 
-  const [createdJobs, setCreatedJobs] = useState<CreatedJob[]>([]);
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
-  const [jobTasks, setJobTasks] = useState<JobTask[]>([]);
   const [availableModels, setAvailableModels] = useState<
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
   >([]);
+
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
@@ -436,6 +430,13 @@ export const ProjectPage = () => {
   );
   const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
+
+  const fetchJobsForProject = useTypedStoreActions(
+    (actions) => actions.fetchJobsForProject,
+  );
+  const jobs = useTypedStoreState(
+    (state) => state.jobsByProject[projectUuid] || [],
+  );
 
   const project = getProjectByUuid(projectUuid);
 
@@ -446,6 +447,12 @@ export const ProjectPage = () => {
     fetchModels();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, projectUuid]);
+
+  useEffect(() => {
+    if (projectUuid) {
+      fetchJobsForProject(projectUuid);
+    }
+  }, [projectUuid, fetchJobsForProject]);
 
   const paperUuid = useMemo(() => {
     if (!search) return null;
@@ -514,36 +521,20 @@ export const ProjectPage = () => {
     [papers],
   );
 
-  const evaluationFinished = jobTasks.length > 0 && pendingTasks.length === 0;
-
-  const fetchJobs = useCallback(() => {
-    async function doFetch() {
-      try {
-        const jobs = await fetchJobsForProject(projectUuid);
-        setCreatedJobs(jobs);
-      } catch (e) {
-        console.error("Failed to fetch jobs for project", e);
-      }
-    }
-    doFetch().catch(console.error);
-  }, [projectUuid]);
-
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs, projectUuid]);
+  const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
 
   const handleJobCancel = useCallback(
     async (jobUuid: string) => {
       try {
         await cancelJob(jobUuid);
-        fetchJobs();
+        fetchJobsForProject(projectUuid);
         toast.success("Task canceled successfully", { autoClose: 1500 });
       } catch (error) {
         console.error("Error canceling job:", error);
         toast.error(`Error canceling job: ${error}`);
       }
     },
-    [fetchJobs]
+    [fetchJobsForProject]
   );
 
   const fetchModels = useCallback(() => {
@@ -560,7 +551,7 @@ export const ProjectPage = () => {
         } catch (error) {
           console.error(
             "Failed to fetch available models for provider " +
-              selectedLlmProvider.value,
+            selectedLlmProvider.value,
             error,
           );
         }
@@ -572,7 +563,7 @@ export const ProjectPage = () => {
   const paperToTaskMap = useMemo(() => {
     if (
       papers.length === 0 ||
-      jobTasks.length === 0 ||
+      jobs.length === 0 ||
       pendingTasks.length === 0
     ) {
       return {};
@@ -594,7 +585,7 @@ export const ProjectPage = () => {
       }
     });
     return map;
-  }, [papers, jobTasks, pendingTasks]);
+  }, [papers, jobs, pendingTasks]);
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
@@ -617,17 +608,8 @@ export const ProjectPage = () => {
     const promptingConfig = createZeroShotPromptingConfig();
 
     try {
-      const res = await createJob(projectUuid, llmConfig, promptingConfig);
-      const createdJob: CreatedJob = {
-        uuid: res.uuid,
-        project_uuid: res.project_uuid,
-        llm_config: res.llm_config,
-        prompting_config: res.prompting_config,
-        created_at: res.created_at,
-        updated_at: res.updated_at,
-      };
-      setCreatedJobs((prev) => [...prev, createdJob]);
-      // await loadPapers();
+      await createJob(projectUuid, llmConfig, promptingConfig);
+      fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
@@ -638,6 +620,7 @@ export const ProjectPage = () => {
     modelFormValues,
     providerFormValues,
     projectUuid,
+    fetchJobsForProject,
   ]);
 
   const uploadFilesToBackend = useCallback(
@@ -680,7 +663,6 @@ export const ProjectPage = () => {
       try {
         await uploadFilesToBackend(files);
         await fetchFiles();
-        // await loadPapers();
       } catch (error) {
         console.error("Problem uploading the files", error);
       }
@@ -702,31 +684,6 @@ export const ProjectPage = () => {
     })();
   }, [fetchFiles]);
 
-  useEffect(() => {
-    if (createdJobs.length === 0) return;
-
-    const fetchAll = () => {
-      Promise.all(
-        createdJobs.map((job) => {
-          // console.log("job.uuid", job.uuid);
-          // @ts-expect-error Expected
-          return fetchJobTasksFromBackend(job.uuid, job.id);
-        }),
-      )
-        .then((results) => {
-          setJobTasks(results.flat());
-          // console.log("results: ", results.flat());
-        })
-        .catch((error) => {
-          console.error("Error fetching job tasks:", error);
-        });
-    };
-
-    fetchAll();
-    const interval = setInterval(fetchAll, jobTaskRefetchIntervalMs);
-    return () => clearInterval(interval);
-  }, [createdJobs, jobTaskRefetchIntervalMs]);
-
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
     if (papers.length === 0) {
@@ -745,7 +702,7 @@ export const ProjectPage = () => {
     if (idx !== -1) {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
-        if (jobTasks.length === 0 || paperToTaskMap[candidate.uuid]) {
+        if (jobs.length === 0 || paperToTaskMap[candidate.uuid]) {
           navigate(
             `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`,
           );
@@ -753,17 +710,15 @@ export const ProjectPage = () => {
         }
       }
     }
-    // await loadPapers();
     navigate(`/project/${projectUuid}`);
     toast.success("Manual evaluation finished.");
   }, [
     paperUuid,
     papers,
-    jobTasks.length,
+    jobs.length,
     paperToTaskMap,
     navigate,
     projectUuid,
-    // loadPapers,
   ]);
 
   useEffect(() => {
@@ -850,19 +805,14 @@ export const ProjectPage = () => {
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          {jobTasks.length === 0 && (
+          {jobs.length === 0 && (
             <AlertMessage message="No screening tasks." />
           )}
-          {createdJobs.map((job) => {
-            const tasks = jobTasks.filter((task) => task.job_uuid === job.uuid);
-            const doneCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.DONE,
-            ).length;
-            const errorCount = tasks.filter(
-              (task) => task.status === JobTaskStatus.ERROR,
-            ).length;
-            const totalCount = tasks.length;
-            const completedCount = doneCount + errorCount;
+          {jobs.map((job) => {
+            const successCount = job.stats.success;
+            const errorCount = job.stats.failed;
+            const totalCount = job.stats.total;
+            const completedCount = successCount + errorCount;
             const progress =
               totalCount === 0
                 ? 0
@@ -1171,7 +1121,7 @@ export const ProjectPage = () => {
           }}
           onClose={() => {
             loadProjects();
-            fetchJobs();
+            fetchJobsForProject(projectUuid);
             navigate(`/project/${projectUuid}`);
           }}
         />
