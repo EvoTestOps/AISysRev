@@ -1,7 +1,8 @@
+from datetime import datetime
 from enum import Enum
 from typing import Annotated, Any, List, Literal, Union
 from uuid import UUID
-from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -9,6 +10,21 @@ class JobPromptingType(str, Enum):
     ZERO_SHOT = "ZERO_SHOT"
     ONE_SHOT = "ONE_SHOT"
     FEW_SHOT = "FEW_SHOT"
+
+
+class JobStatus(str, Enum):
+    NOT_STARTED = "NOT_STARTED"
+    RUNNING = "RUNNING"
+    PARTIAL_SUCCESS = "PARTIAL_SUCCESS"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
+class JobStats(BaseModel):
+    total: int
+    success: int
+    failed: int
+    status: JobStatus
 
 
 class LLMModelConfig(BaseModel):
@@ -53,5 +69,23 @@ class JobRead(BaseModel):
     llm_config: LLMModelConfig
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class JobReadWithStats(BaseModel):
+    uuid: UUID
+    id: int
+    project_uuid: UUID
+    prompting_config: PromptingConfig
+    llm_config: LLMModelConfig
+    created_at: datetime
+    updated_at: datetime
+
+    stats: JobStats
+    # total_tasks: int = 0
+    # success_tasks: int = 0
+    # failed_tasks: int = 0
+    # status: JobStatus = JobStatus.NOT_STARTED
 
     model_config = ConfigDict(from_attributes=True)

@@ -72,6 +72,14 @@ export enum JobTaskStatus {
   ERROR = "ERROR",
 }
 
+export enum JobStatus {
+  NOT_STARTED = "NOT_STARTED",
+  RUNNING = "RUNNING",
+  PARTIAL_SUCCESS = "PARTIAL_SUCCESS",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+}
+
 export type JobTask = {
   uuid: string;
   job_uuid: string;
@@ -86,6 +94,24 @@ export type JobTask = {
   status_metadata: Record<string, unknown> | null;
   error: string | null;
 };
+
+export type JobStats = {
+  total: number;
+  success: number;
+  failed: number;
+  status: JobStatus;
+};
+
+export type JobWithStats = {
+    uuid: string;
+    id: string;
+    project_uuid: string;
+    prompting_config: PromptingConfig;
+    llm_config: LlmConfig;
+    created_at: Date | null;
+    updated_at: Date | null;
+    stats: JobStats;
+}
 
 export type Paper = {
   uuid: string;
