@@ -171,7 +171,7 @@ async def _process_job_task(
                 success = counter["success"]
                 failed = counter["failed"]
 
-            status = resolve_job_status(total, success, failed)
+            status = resolve_job_status(total, success, failed, cancelled=0)
 
             # TODO: maybe buffer to avoid spamming
             await _publish_redis_event(

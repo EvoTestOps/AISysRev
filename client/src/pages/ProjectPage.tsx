@@ -836,8 +836,8 @@ export const ProjectPage = () => {
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
-                      <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
-                        {status === JobStatus.CANCELLED && (
+                      {status === JobStatus.CANCELLED ? (
+                        <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
                           <>
                             <TriangleAlert
                               size={14}
@@ -847,55 +847,58 @@ export const ProjectPage = () => {
                               Task Cancelled ({completedCount}/{totalCount})
                             </span>
                           </>
-                        )}
-                      </div>
-                      {progress !== 100 && (
-                        <progress
-                          value={progress}
-                          max={100}
-                          className={classNames(
-                            "h-full w-full [&::-webkit-progress-bar]:rounded-xl [&::-webkit-progress-bar]:bg-gray-400 [&::-webkit-progress-value]:bg-blue-200 [&::-webkit-progress-value]:rounded-xl",
-                            {
-                              "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
-                                progress < 100,
-                              "[&::-webkit-progress-value]:bg-green-400":
-                                progress === 100,
-                            },
+                        </div>
+                      ) : (
+                        <>
+                          {progress !== 100 && (
+                            <progress
+                              value={progress}
+                              max={100}
+                              className={classNames(
+                                "h-full w-full [&::-webkit-progress-bar]:rounded-xl [&::-webkit-progress-bar]:bg-gray-400 [&::-webkit-progress-value]:bg-blue-200 [&::-webkit-progress-value]:rounded-xl",
+                                {
+                                  "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
+                                    progress < 100,
+                                  "[&::-webkit-progress-value]:bg-green-400":
+                                    progress === 100,
+                                },
+                              )}
+                            />
                           )}
-                        />
+                          <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                            {/* TODO: Change to use status */}
+                            {progress < 100 && (
+                              <>
+                                <Loader
+                                  className="animate-spin"
+                                  size={16}
+                                  strokeWidth={2}
+                                />
+                                <span>
+                                  Screening paper {completedCount} of {totalCount}
+                                </span>
+                              </>
+                            )}
+                            {progress === 100 && errorCount === 0 && (
+                              <>
+                                <CircleCheck size={14} className="text-green-600" />
+                                <span className="text-green-600">Done</span>
+                              </>
+                            )}
+                            {progress === 100 && errorCount > 0 && (
+                              <>
+                                <TriangleAlert
+                                  size={14}
+                                  className="text-orange-600"
+                                />
+                                <span className="text-orange-600">
+                                  Done with errors ({errorCount})
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </>
                       )}
-                      <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
-                        {/* TODO: Change to use status */}
-                        {progress < 100 && (
-                          <>
-                            <Loader
-                              className="animate-spin"
-                              size={16}
-                              strokeWidth={2}
-                            />
-                            <span>
-                              Screening paper {completedCount} of {totalCount}
-                            </span>
-                          </>
-                        )}
-                        {progress === 100 && errorCount === 0 && (
-                          <>
-                            <CircleCheck size={14} className="text-green-600" />
-                            <span className="text-green-600">Done</span>
-                          </>
-                        )}
-                        {progress === 100 && errorCount > 0 && (
-                          <>
-                            <TriangleAlert
-                              size={14}
-                              className="text-orange-600"
-                            />
-                            <span className="text-orange-600">
-                              Done with errors ({errorCount})
-                            </span>
-                          </>
-                        )}
-                      </div>
                     </div>
                   </div>
                   <div>
