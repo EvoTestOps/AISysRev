@@ -63,6 +63,10 @@ class JobTaskService:
         stats = await self.jobtask_crud.fetch_tasks_stats_by_project(project_uuid)
         return stats
 
+    async def fetch_task_stats_by_job(self, job_id: int):
+        job_stats = await self.jobtask_crud.fetch_task_stats_by_job(job_id)
+        return job_stats
+
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
 

@@ -119,6 +119,12 @@ class JobService:
 
     async def cancel_job(self, job_uuid: UUID, delete_data: bool = False):
         job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
+        job_id = job.get("id")
+
+        job_stats = await self.jobtask_service.fetch_task_stats_by_job(job_id)
+
+        if job_stats.get("cancelled_count") > 0:
+            raise RuntimeError("Task already cancelled")
 
         # FIX: fetch_job_by_uuid() and JobRead
         task_id = job.get("celery_task_id")
@@ -130,7 +136,7 @@ class JobService:
         if delete_data:
             await self.job_crud.delete_job(job_uuid)
         else:
-            await self.jobtask_service.set_unfinished_to_cancelled(job.get("id")) # type: ignore
+            await self.jobtask_service.set_unfinished_to_cancelled(job_id)
 
         return {f"task {task_id} cancelled"}
 
