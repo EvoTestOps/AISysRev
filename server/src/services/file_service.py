@@ -1,8 +1,6 @@
-import io
 from typing import List
 from uuid import UUID
 
-import pandas as pd
 from fastapi import UploadFile
 from minio.error import S3Error
 
@@ -48,18 +46,25 @@ class FileService:
         """
         errors: List[FileError] = []
         valid_filenames: List[str] = []
+        empty_abstract_count_total = 0
 
         for f in files:
-            validation_errors = validate_csv(f.file, f.filename or "NONE")
-            if validation_errors:
-                errors.extend(validation_errors)
-                continue
             if f.filename is None:
                 continue
             if f.file is None:
                 continue
             if f.content_type is None:
                 continue
+
+            df, validation_errors, file_empty_abstracts = validate_csv(
+                f.file, f.filename
+            )
+            if validation_errors or df is None:
+                errors.extend(validation_errors)
+                continue
+
+            empty_abstract_count_total += file_empty_abstracts
+
             try:
                 file_data = FileCreate(
                     project_uuid=project_uuid,
@@ -68,40 +73,17 @@ class FileService:
                 )
                 result = await self.file_crud.create_file_record(file_data)
 
-                # Seek to beginning of file
-                try:
-                    f.file.seek(0)
-                except Exception:
-                    pass
-
-                raw_bytes = f.file.read()
-                papers = []
-
-                df = pd.read_csv(io.BytesIO(raw_bytes), encoding="utf-8-sig")
-                df.columns = [str(c).strip().lower() for c in df.columns]
-
-                for idx, row in df.iterrows():
-                    normalized = {
-                        (
-                            (k or "").strip().lower()
-                            if isinstance(k, str)
-                            else str(k).strip().lower()
-                        ): v
-                        for k, v in row.items()
-                    }
-                    if pd.isna(normalized.get("doi")):
-                        normalized["doi"] = None
-
-                    papers.append(
-                        PaperCreate(
-                            paper_id=int(idx) + 1,  # type: ignore
-                            title=normalized.get("title") or "NO_TITLE",
-                            abstract=normalized.get("abstract") or "NO_ABSTRACT",
-                            doi=normalized.get("doi"),
-                            file_uuid=result.uuid,
-                            project_uuid=project_uuid,
-                        )
+                papers = [
+                    PaperCreate(
+                        paper_id=int(idx) + 1,  # type: ignore
+                        title=record.get("title"),  # type: ignore
+                        abstract=record.get("abstract") or "NO_ABSTRACT",
+                        doi=record.get("doi"),
+                        file_uuid=result.uuid,
+                        project_uuid=project_uuid,
                     )
+                    for idx, record in enumerate(df.to_dict("records"))
+                ]
 
                 if papers:
                     await self.paper_crud.bulk_create_papers(papers)
@@ -123,11 +105,14 @@ class FileService:
                         row="",
                     )
                 )
-
             except Exception as e:
                 raise e
 
-        return ProcessedFiles(valid_filenames=valid_filenames, errors=errors)
+        return ProcessedFiles(
+            valid_filenames=valid_filenames,
+            errors=errors,
+            empty_abstract_count=empty_abstract_count_total,
+        )
 
 
 def create_file_service(db_ctx: DBContext) -> FileService:

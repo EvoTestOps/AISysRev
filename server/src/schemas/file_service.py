@@ -11,7 +11,7 @@ class FileError(BaseModel):
 class ProcessedFiles(BaseModel):
     valid_filenames: List[str]
     errors: List[FileError]
-
+    empty_abstract_count: int = 0
 
 class UploadedFilePaper(BaseModel):
     title: str
