@@ -1,10 +1,10 @@
-import io
 from typing import BinaryIO, List, Optional
 
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
 
 from src.schemas.file_service import FileError
+from src.tools.csv_file_reader import read_csv_resilient
 from src.schemas.publication import PublicationRowData
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
@@ -15,10 +15,11 @@ def validate_csv(
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:
     errors: List[FileError] = []
     empty_abstract_count = 0
+    df = None
 
     try:
         raw = file_obj.read()
-        df = pd.read_csv(io.BytesIO(raw), encoding="utf-8-sig")
+        df = read_csv_resilient(raw)
         df.columns = [str(c).strip().lower() for c in df.columns]
 
         missing = REQUIRED_FIELDS - set(df.columns)
@@ -68,6 +69,17 @@ def validate_csv(
             ],
             0,
         )
+    except ValueError as e:
+        errors.append(
+            FileError(
+                **{
+                    "file": filename,
+                    "row": "unknown",
+                    "message": f"CSV decoding error: {e}",
+                }
+            )
+        )
+
     finally:
         try:
             file_obj.seek(0)
