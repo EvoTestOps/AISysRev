@@ -10,7 +10,6 @@ from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 from src.schemas.file_service import FileError, ProcessedFiles
 from src.services.paper_service import PaperCreate, PaperCrud
-from src.tools.csv_file_reader import read_csv_resilient
 from src.tools.csv_file_validation import validate_csv
 from src.tools.minio_file_uploader import upload_file_to_object_storage
 

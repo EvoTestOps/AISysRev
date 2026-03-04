@@ -15,6 +15,7 @@ def validate_csv(
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:
     errors: List[FileError] = []
     empty_abstract_count = 0
+    df = None
 
     try:
         raw = file_obj.read()
