@@ -49,8 +49,9 @@ class JobService:
             total = stats["total_count"] if stats else 0
             success = stats["success_count"] if stats else 0
             failed = stats["failed_count"] if stats else 0
+            cancelled = stats["cancelled_count"] if stats else 0
 
-            job_status = resolve_job_status(total, success, failed)
+            job_status = resolve_job_status(total, success, failed, cancelled)
             result.append(
                 JobReadWithStats(
                     **job,

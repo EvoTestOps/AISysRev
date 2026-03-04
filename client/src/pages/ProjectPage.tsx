@@ -13,6 +13,7 @@ import {
   fileUploadToBackend,
   fileFetchFromBackend,
 } from "../services/fileService";
+import { JobStatus } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
 import {
@@ -532,20 +533,6 @@ export const ProjectPage = () => {
 
   const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
 
-  const handleJobCancel = useCallback(
-    async (jobUuid: string) => {
-      try {
-        await cancelJob(jobUuid);
-        fetchJobsForProject(projectUuid);
-        toast.success("Task canceled successfully", { autoClose: 1500 });
-      } catch (error) {
-        console.error("Error canceling job:", error);
-        toast.error(`Error canceling job: ${error}`);
-      }
-    },
-    [fetchJobsForProject]
-  );
-
   const fetchModels = useCallback(() => {
     async function fetch_models() {
       if (selectedLlmProvider && selectedLlmProvider.value) {
@@ -826,6 +813,8 @@ export const ProjectPage = () => {
               totalCount === 0
                 ? 0
                 : Math.round((completedCount / totalCount) * 100);
+            const status = job.stats.status;
+            console.log(status);
 
             return (
               <Card key={job.uuid} className="flex-row justify-between">
@@ -847,6 +836,19 @@ export const ProjectPage = () => {
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
+                      <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                        {status === JobStatus.CANCELLED && (
+                          <>
+                            <TriangleAlert
+                              size={14}
+                              className="text-orange-600"
+                            />
+                            <span className="text-orange-600">
+                              Task Cancelled ({completedCount}/{totalCount})
+                            </span>
+                          </>
+                        )}
+                      </div>
                       {progress !== 100 && (
                         <progress
                           value={progress}
@@ -863,6 +865,7 @@ export const ProjectPage = () => {
                         />
                       )}
                       <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                        {/* TODO: Change to use status */}
                         {progress < 100 && (
                           <>
                             <Loader
@@ -905,8 +908,8 @@ export const ProjectPage = () => {
                               <span>Cancel</span>
                             </div>
                           ),
-                          onClick: () => setJobToCancel({jobUuid: job.uuid, completedCount, totalCount}),
-                          disabled: progress === 100,
+                          onClick: () => setJobToCancel({ jobUuid: job.uuid, completedCount, totalCount }),
+                          disabled: progress === 100 || status === JobStatus.CANCELLED,
                         },
                       ]}
                     />

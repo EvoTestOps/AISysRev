@@ -69,6 +69,9 @@ class JobTaskCrud:
                 func.coalesce(
                     func.sum(case((JobTask.status == JobTaskStatus.ERROR, 1), else_=0))
                 ).label("failed_count"),
+                func.coalesce(
+                    func.sum(case((JobTask.status == JobTaskStatus.CANCELLED, 1), else_=0))
+                ).label("cancelled_count"),
             )
             .join(Job, JobTask.job_id == Job.id)
             .join(Project, Project.id == Job.project_id)
