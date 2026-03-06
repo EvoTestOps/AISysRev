@@ -4,7 +4,7 @@ import { Ellipsis } from "lucide-react";
 
 type EllipsisItem = {
   label: React.ElementType;
-  disabled: boolean;
+  disabled?: boolean;
   onClick: () => void;
 };
 
