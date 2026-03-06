@@ -814,7 +814,6 @@ export const ProjectPage = () => {
                 ? 0
                 : Math.round((completedCount / totalCount) * 100);
             const status = job.stats.status;
-            console.log(status);
 
             return (
               <Card key={job.uuid} className="flex-row justify-between">
@@ -850,7 +849,7 @@ export const ProjectPage = () => {
                         </div>
                       ) : (
                         <>
-                          {progress !== 100 && (
+                          {status === JobStatus.RUNNING && (
                             <progress
                               value={progress}
                               max={100}
@@ -866,8 +865,7 @@ export const ProjectPage = () => {
                             />
                           )}
                           <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
-                            {/* TODO: Change to use status */}
-                            {progress < 100 && (
+                            {status === JobStatus.RUNNING && (
                               <>
                                 <Loader
                                   className="animate-spin"
@@ -879,13 +877,13 @@ export const ProjectPage = () => {
                                 </span>
                               </>
                             )}
-                            {progress === 100 && errorCount === 0 && (
+                            {status === JobStatus.SUCCESS && (
                               <>
                                 <CircleCheck size={14} className="text-green-600" />
                                 <span className="text-green-600">Done</span>
                               </>
                             )}
-                            {progress === 100 && errorCount > 0 && (
+                            {status === JobStatus.PARTIAL_SUCCESS && (
                               <>
                                 <TriangleAlert
                                   size={14}
