@@ -312,6 +312,7 @@ export const model = {
         toast.success("Task canceled successfully", {
           autoClose: 1500,
         });
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       } catch (error: any) {
         toast.error(`Error canceling job: ${error?.message ?? error}`);
         throw error;
