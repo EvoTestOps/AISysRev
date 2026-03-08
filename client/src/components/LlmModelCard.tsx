@@ -44,17 +44,34 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
       <div>
         <div className="whitespace-nowrap">
           <span className="text-sm font-semibold">Binary: </span>
-          <span className="text-sm">{binary}</span>
+          <span className="text-sm">
+            {binary ? (
+              binary
+            ) : (
+              <span className="text-red-700 font-semibold">Error</span>
+            )}
+          </span>
         </div>
-        <div className="break-words">
+        <div className="wrap-break-word">
           <span className="text-sm font-semibold">Likert (include): </span>
-          <span className="text-sm break-words">
-            {likertScale} ({likertMap[likertScale]})
+          <span className="text-sm wrap-break-word">
+            {likertScale ? (
+              likertScale
+            ) : (
+              <span className="text-red-700 font-semibold">Error</span>
+            )}{" "}
+            {likertScale && <>({likertMap[likertScale]})</>}
           </span>
         </div>
         <div className="whitespace-nowrap">
           <span className="text-sm font-semibold">Probability (include): </span>
-          <span className="text-sm">{probability * 100}%</span>
+          <span className="text-sm">
+            {probability ? (
+              <>{probability * 100} %</>
+            ) : (
+              <span className="text-red-700 font-semibold">Error</span>
+            )}
+          </span>
         </div>
       </div>
     </div>
