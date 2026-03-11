@@ -533,6 +533,29 @@ export const ProjectPage = () => {
 
   const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
 
+  const handleTaskCancel = useCallback((deleteData: boolean) => {
+    if (!jobToCancel) {
+      return;
+    }
+
+    cancelJob({
+      jobUuid: jobToCancel.jobUuid,
+      deleteData,
+      projectUuid: projectUuid,
+    })
+      .then(() => {
+        toast.success("Task cancelled successfully", { autoClose: 1500 });
+        setJobToCancel(null);
+      })
+      .catch((error: unknown) => {
+        toast.error(`Error canceling task: ${error instanceof Error ? error.message : String(error)}`);
+      })
+  }, [jobToCancel, projectUuid, cancelJob])
+
+  const handleCancelModalClose = useCallback(() => {
+    setJobToCancel(null);
+  }, [])
+
   const fetchModels = useCallback(() => {
     async function fetch_models() {
       if (selectedLlmProvider && selectedLlmProvider.value) {
@@ -1156,23 +1179,9 @@ export const ProjectPage = () => {
           open={true}
           completedCount={jobToCancel.completedCount}
           totalCount={jobToCancel.totalCount}
-          onClose={() => setJobToCancel(null)}
-          onKeepData={async () => {
-            await cancelJob({
-              jobUuid: jobToCancel.jobUuid,
-              deleteData: false,
-              projectUuid: projectUuid,
-            });
-            setJobToCancel(null);
-          }}
-          onDeleteData={async () => {
-            await cancelJob({
-              jobUuid: jobToCancel.jobUuid,
-              deleteData: true,
-              projectUuid: projectUuid,
-            });
-            setJobToCancel(null);
-          }}
+          onClose={handleCancelModalClose}
+          onKeepData={() => handleTaskCancel(false)}
+          onDeleteData={() => handleTaskCancel(true)}
         />
       )}
     </Layout>

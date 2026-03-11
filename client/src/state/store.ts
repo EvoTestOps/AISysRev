@@ -8,7 +8,6 @@ import {
   Computed,
   computed,
 } from "easy-peasy";
-import { toast } from "react-toastify";
 import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
@@ -304,19 +303,8 @@ export const model = {
   cancelJob: thunk(
     async (actions, { jobUuid, deleteData, projectUuid }, { injections }) => {
       const { jobService } = injections;
-
-      try {
-        await jobService.cancelJob(jobUuid, deleteData);
-        await actions.fetchJobsForProject(projectUuid);
-
-        toast.success("Task canceled successfully", {
-          autoClose: 1500,
-        });
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      } catch (error: any) {
-        toast.error(`Error canceling job: ${error?.message ?? error}`);
-        throw error;
-      }
+      await jobService.cancelJob(jobUuid, deleteData);
+      await actions.fetchJobsForProject(projectUuid);
     },
   ),
 } satisfies StoreModel;
