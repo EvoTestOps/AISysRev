@@ -64,7 +64,12 @@ interface JobModel {
   fetchJobsForProject: Thunk<StoreModel, string, Injections>;
   cancelJob: Thunk<
     StoreModel,
-    { jobUuid: string; deleteData: boolean; projectUuid: string },
+    { jobUuid: string; projectUuid: string },
+    Injections
+  >;
+  deleteJob: Thunk<
+    StoreModel,
+    { jobUuid: string; projectUuid: string },
     Injections
   >;
 }
@@ -301,10 +306,17 @@ export const model = {
     });
   }),
   cancelJob: thunk(
-    async (actions, { jobUuid, deleteData, projectUuid }, { injections }) => {
+    async (actions, { jobUuid, projectUuid }, { injections }) => {
       const { jobService } = injections;
-      await jobService.cancelJob(jobUuid, deleteData);
-      await actions.fetchJobsForProject(projectUuid);
+      await jobService.cancelJob(jobUuid);
+      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
+    },
+  ),
+  deleteJob: thunk(
+    async (actions, { jobUuid, projectUuid }, { injections }) => {
+      const { jobService } = injections;
+      await jobService.deleteJob(jobUuid);
+      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
     },
   ),
 } satisfies StoreModel;

@@ -14,7 +14,10 @@ router = APIRouter()
 
 
 @router.get(
-    "/job", status_code=status.HTTP_200_OK, response_model=list[JobReadWithStats], tags=["Job"]
+    "/job",
+    status_code=status.HTTP_200_OK,
+    response_model=list[JobReadWithStats],
+    tags=["Job"],
 )
 async def get_jobs(
     project: Optional[UUID] = None, db_ctx: DBContext = Depends(get_db_ctx)
@@ -100,16 +103,28 @@ async def create_job(
 
 
 @router.post("/job/{uuid}/cancel", status_code=status.HTTP_200_OK, tags=["Job"])
-async def cancel_job(
-    uuid: UUID, delete_data: bool = False, db_ctx: DBContext = Depends(get_db_ctx)
-):
+async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     job_service = create_job_service(db_ctx)
     try:
-        await job_service.cancel_job(uuid, delete_data=delete_data)
+        await job_service.cancel_job(uuid)
         await db_ctx.commit()
         return {"detail": "Task cancelled successfully"}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to cancel job: {str(e)}",
+            detail=f"Failed to cancel task: {str(e)}",
+        ) from e
+
+
+@router.delete("/job/{uuid}", status_code=status.HTTP_200_OK, tags=["Job"])
+async def delete_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+    job_service = create_job_service(db_ctx)
+    try:
+        await job_service.delete_job(uuid)
+        await db_ctx.commit()
+        return {"detail": "Job deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete job: {str(e)}",
         ) from e

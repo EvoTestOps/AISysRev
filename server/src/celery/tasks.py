@@ -94,11 +94,11 @@ async def _process_job_task(
                 )
                 await task_db_ctx.commit()
 
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_RUNNING,
-                    {"job_task_id": job_task.id, "status": JobTaskStatus.RUNNING},
-                )
+                # await _publish_redis_event(
+                #     redis,
+                #     EventName.JOB_TASK_RUNNING,
+                #     {"job_task_id": job_task.id, "status": JobTaskStatus.RUNNING},
+                # )
 
                 llm_result = await get_structured_response(
                     llm_service,
@@ -118,11 +118,11 @@ async def _process_job_task(
                 async with counter_lock:
                     counter["success"] += 1
 
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_DONE,
-                    {"job_task_id": job_task.id, "status": JobTaskStatus.DONE},
-                )
+                # await _publish_redis_event(
+                #     redis,
+                #     EventName.JOB_TASK_DONE,
+                #     {"job_task_id": job_task.id, "status": JobTaskStatus.DONE},
+                # )
 
         except Exception as e:
             try:

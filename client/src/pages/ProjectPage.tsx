@@ -30,6 +30,7 @@ import {
   ChartCandlestick,
   CircleAlert,
   CircleCheck,
+  CircleStop,
   Download,
   FileText,
   Loader,
@@ -426,7 +427,9 @@ export const ProjectPage = () => {
     totalCount: number;
   } | null>(null);
 
+
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
+  const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
 
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [availableModels, setAvailableModels] = useState<
@@ -533,14 +536,12 @@ export const ProjectPage = () => {
 
   const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
 
-  const handleTaskCancel = useCallback((deleteData: boolean) => {
+  const handleTaskCancel = useCallback(() => {
     if (!jobToCancel) {
       return;
     }
-
     cancelJob({
       jobUuid: jobToCancel.jobUuid,
-      deleteData,
       projectUuid: projectUuid,
     })
       .then(() => {
@@ -555,6 +556,16 @@ export const ProjectPage = () => {
   const handleCancelModalClose = useCallback(() => {
     setJobToCancel(null);
   }, [])
+
+  const handleTaskDelete = useCallback((jobUuid: string) => {
+    deleteJob({ jobUuid, projectUuid: projectUuid })
+      .then(() => {
+        toast.success("Task deleted successfully", { autoClose: 1500 });
+      })
+      .catch((error: unknown) => {
+        toast.error(`Error deleting task: ${error instanceof Error ? error.message : String(error)}`);
+      })
+  }, [deleteJob])
 
   const fetchModels = useCallback(() => {
     async function fetch_models() {
@@ -927,13 +938,22 @@ export const ProjectPage = () => {
                       items={[
                         {
                           label: () => (
-                            <div className="text-red-700 flex flex-row gap-3 items-center">
-                              <XCircle />
+                            <div className="text-yellow-700 flex flex-row gap-3 items-center">
+                              <CircleStop />
                               <span>Cancel</span>
                             </div>
                           ),
                           onClick: () => setJobToCancel({ jobUuid: job.uuid, completedCount, totalCount }),
                           disabled: progress === 100 || status === JobStatus.CANCELLED,
+                        },
+                        {
+                          label: () => (
+                            <div className="text-red-700 flex flex-row gap-3 items-center">
+                              <XCircle />
+                              <span>Delete</span>
+                            </div>
+                          ),
+                          onClick: () => handleTaskDelete(job.uuid),
                         },
                       ]}
                     />
@@ -1177,11 +1197,8 @@ export const ProjectPage = () => {
       {jobToCancel && (
         <CancelJobModal
           open={true}
-          completedCount={jobToCancel.completedCount}
-          totalCount={jobToCancel.totalCount}
           onClose={handleCancelModalClose}
-          onKeepData={() => handleTaskCancel(false)}
-          onDeleteData={() => handleTaskCancel(true)}
+          onCancel={handleTaskCancel}
         />
       )}
     </Layout>

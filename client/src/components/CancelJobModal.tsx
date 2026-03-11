@@ -4,25 +4,19 @@ import {
   DialogTitle,
   Description,
 } from "@headlessui/react";
-import { ArrowLeft, CircleStop, Trash2, X } from "lucide-react";
+import { CircleStop, X } from "lucide-react";
 import { Button } from "./Button";
 
 type CancelJobModalProps = {
   open: boolean;
-  completedCount: number;
-  totalCount: number;
   onClose: () => void;
-  onKeepData: () => void;
-  onDeleteData: () => void;
+  onCancel: () => void;
 };
 
 export const CancelJobModal: React.FC<CancelJobModalProps> = ({
   open,
-  completedCount,
-  totalCount,
   onClose,
-  onKeepData,
-  onDeleteData,
+  onCancel,
 }) => {
 
   return (
@@ -44,49 +38,51 @@ export const CancelJobModal: React.FC<CancelJobModalProps> = ({
         </DialogTitle>
 
         <Description className="text-sm text-gray-600 mb-6 leading-relaxed">
-          This will stop the job immediately.
-          <br />
-          <br />
-          <span className="font-medium">
-            {completedCount} of {totalCount} papers
-          </span>{" "}
-          have already been screened.
-          <br />
-          You can keep the completed results or delete all associated data.
+          This will cancel running and scheduled screening jobs.
         </Description>
 
-        <div className="flex flex-col gap-3">
-          <Button
-            variant="yellow"
-            onClick={onKeepData}
-          >
-            <div className="flex items-center justify-center gap-2 font-semibold">
-              <CircleStop size={16} />
-              <span>Keep screened data</span>
-            </div>
-          </Button>
+        <Button
+          variant="yellow"
+          onClick={onCancel}
+        >
+          <div className="flex items-center justify-center gap-2 font-semibold">
+            <CircleStop size={16} />
+            <span>Cancel task</span>
+          </div>
+        </Button>
 
-          <Button
-            variant="red"
-            onClick={onDeleteData}
-          >
-            <div className="flex items-center justify-center gap-2 font-semibold">
-              <Trash2 size={16} />
-              <span>Delete data</span>
-            </div>
-          </Button>
-
-          <Button
-            variant="gray"
-            onClick={onClose}
-          >
-            <div className="flex items-center justify-center gap-2 font-semibold">
-              <ArrowLeft size={16} />
-              <span>Go back</span>
-            </div>
-          </Button>
-        </div>
+        {/* <div className="flex flex-col gap-3"> */}
+        {/*   <Button */}
+        {/*     variant="yellow" */}
+        {/*     onClick={onKeepData} */}
+        {/*   > */}
+        {/*     <div className="flex items-center justify-center gap-2 font-semibold"> */}
+        {/*       <CircleStop size={16} /> */}
+        {/*       <span>Keep screened data</span> */}
+        {/*     </div> */}
+        {/*   </Button> */}
+        {/**/}
+        {/*   <Button */}
+        {/*     variant="red" */}
+        {/*     onClick={onDeleteData} */}
+        {/*   > */}
+        {/*     <div className="flex items-center justify-center gap-2 font-semibold"> */}
+        {/*       <Trash2 size={16} /> */}
+        {/*       <span>Delete data</span> */}
+        {/*     </div> */}
+        {/*   </Button> */}
+        {/**/}
+        {/* <Button */}
+        {/*   variant="gray" */}
+        {/*   onClick={onClose} */}
+        {/* > */}
+        {/*   <div className="flex items-center justify-center gap-2 font-semibold"> */}
+        {/*     <ArrowLeft size={16} /> */}
+        {/*     <span>Go back</span> */}
+        {/*   </div> */}
+        {/* </Button> */}
+        {/* </div> */}
       </DialogPanel>
-    </Dialog>
+    </Dialog >
   )
 }
