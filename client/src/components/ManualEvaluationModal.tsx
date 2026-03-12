@@ -136,8 +136,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
       getModelSuggestions(paperUuid).then((s) => {
         // console.log("Fetched suggestions", s);
 
-        // FIX: types break due to the pathing in getModelSuggestions()
-        // @ts-expect-error
+        // FIX: ModelSuggestion types
+        // @ts-expect-error - temp fix since types break due to the pathing in getModelSuggestions()
         setModelSuggestions(s);
       });
     }
