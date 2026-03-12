@@ -20,7 +20,7 @@ import {
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
 
-type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
+// type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
 
 type LLMResult = {
   overall_decision: {
@@ -135,6 +135,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     if (paperUuid != null) {
       getModelSuggestions(paperUuid).then((s) => {
         // console.log("Fetched suggestions", s);
+
+        // FIX: types break due to the pathing in getModelSuggestions()
+        // @ts-expect-error
         setModelSuggestions(s);
       });
     }
