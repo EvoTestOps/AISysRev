@@ -7,7 +7,7 @@ import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../compo
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { CancelJobModal } from "../components/CancelJobModal";
+import { ConrimationModal } from "../components/ConfirmationModal";
 import { createJob } from "../services/jobService";
 import {
   fileUploadToBackend,
@@ -37,6 +37,7 @@ import {
   Sparkles,
   Square,
   SquareCheckBig,
+  Trash2,
   TriangleAlert,
   XCircle
 } from "lucide-react";
@@ -421,12 +422,8 @@ export const ProjectPage = () => {
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
 
-  const [jobToCancel, setJobToCancel] = useState<{
-    jobUuid: string,
-    completedCount: number;
-    totalCount: number;
-  } | null>(null);
-
+  const [jobToCancel, setJobToCancel] = useState<string | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
@@ -541,7 +538,7 @@ export const ProjectPage = () => {
       return;
     }
     cancelJob({
-      jobUuid: jobToCancel.jobUuid,
+      jobUuid: jobToCancel,
       projectUuid: projectUuid,
     })
       .then(() => {
@@ -557,15 +554,24 @@ export const ProjectPage = () => {
     setJobToCancel(null);
   }, [])
 
-  const handleTaskDelete = useCallback((jobUuid: string) => {
-    deleteJob({ jobUuid, projectUuid: projectUuid })
+  const handleTaskDelete = useCallback(() => {
+    if (!jobToDelete) {
+      return;
+    }
+    deleteJob({ jobUuid: jobToDelete, projectUuid: projectUuid })
       .then(() => {
         toast.success("Task deleted successfully", { autoClose: 1500 });
+        setJobToDelete(null);
       })
       .catch((error: unknown) => {
         toast.error(`Error deleting task: ${error instanceof Error ? error.message : String(error)}`);
       })
-  }, [deleteJob])
+  }, [jobToDelete, projectUuid, deleteJob])
+
+  const handleDeleteModalClose = useCallback(() => {
+    setJobToDelete(null);
+  }, [])
+
 
   const fetchModels = useCallback(() => {
     async function fetch_models() {
@@ -943,7 +949,7 @@ export const ProjectPage = () => {
                               <span>Cancel</span>
                             </div>
                           ),
-                          onClick: () => setJobToCancel({ jobUuid: job.uuid, completedCount, totalCount }),
+                          onClick: () => setJobToCancel(job.uuid),
                           disabled: progress === 100 || status === JobStatus.CANCELLED,
                         },
                         {
@@ -953,7 +959,7 @@ export const ProjectPage = () => {
                               <span>Delete</span>
                             </div>
                           ),
-                          onClick: () => handleTaskDelete(job.uuid),
+                          onClick: () => setJobToDelete(job.uuid),
                         },
                       ]}
                     />
@@ -1195,10 +1201,27 @@ export const ProjectPage = () => {
         />
       )}
       {jobToCancel && (
-        <CancelJobModal
+        <ConrimationModal
           open={true}
           onClose={handleCancelModalClose}
-          onCancel={handleTaskCancel}
+          onConfirm={handleTaskCancel}
+          title="Cancel screening task?"
+          description="This will cancel running and scheduled screening jobs."
+          confirmButtonLabel="Cancel task"
+          confirmButtonVariant="yellow"
+          confirmButtonIcon={<CircleStop size={16} />}
+        />
+      )}
+      {jobToDelete && (
+        <ConrimationModal
+          open={true}
+          onClose={handleDeleteModalClose}
+          onConfirm={handleTaskDelete}
+          title="Delete screening task?"
+          description="This action cannot be undone. All data related to this task will be permanently deleted."
+          confirmButtonLabel="Delete"
+          confirmButtonVariant="red"
+          confirmButtonIcon={<Trash2 size={16} />}
         />
       )}
     </Layout>
