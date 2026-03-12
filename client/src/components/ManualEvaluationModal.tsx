@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Dialog,
   DialogPanel,
@@ -18,6 +19,40 @@ import {
 } from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
+
+type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
+
+type LLMResult = {
+  overall_decision: {
+    reason: string;
+    binary_decision: boolean;
+    likert_decision: string;
+    probability_decision: number;
+  };
+};
+
+// TODO: Create Zod schema
+type JobTaskReadWithLLMConfig = {
+  uuid: string;
+  job_id: number;
+  doi: string | null;
+  title: string;
+  abstract: string;
+  paper_uuid: string;
+  status:
+    | "NOT_STARTED"
+    | "PENDING"
+    | "RUNNING"
+    | "DONE"
+    | "ERROR"
+    | "CANCELLED";
+  result: LLMResult | null;
+  human_result: JobTaskHumanResult | null;
+  status_metadata?: Record<string, any> | null;
+  error: string | null;
+  llm_config: Record<string, any> | null;
+  prompting_config: Record<string, any> | null;
+};
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
@@ -69,18 +104,28 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
     const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    return response.data
-      .filter((entry: any) => entry.status !== JobTaskStatus.ERROR)
-      .map((entry: any) => {
+    const data = response.data as JobTaskReadWithLLMConfig[];
+
+    // TODO: Refactor with types and proper handling
+    return data
+      .filter((entry) => entry.status !== JobTaskStatus.ERROR)
+      .map((entry) => {
         return {
-          modelName: entry.llm_config.model_name,
-          binary: entry.result.overall_decision.binary_decision
-            ? "Include"
-            : "Exclude",
-          likertScale: entry.result.overall_decision.likert_decision,
-          probability: entry.result.overall_decision.probability_decision,
-          screeningType: entry.prompting_config.screening_type,
+          modelName: entry.llm_config ? entry.llm_config.model_name : "N/A",
+          binary: entry.result
+            ? entry.result.overall_decision.binary_decision
+              ? "Include"
+              : "Exclude"
+            : null,
+          likertScale: entry.result
+            ? entry.result.overall_decision.likert_decision
+            : null,
+          probability: entry.result
+            ? entry.result.overall_decision.probability_decision
+            : null,
+          screeningType: entry.prompting_config
+            ? entry.prompting_config.screening_type
+            : null,
         };
       });
     /* eslint-enable @typescript-eslint/no-explicit-any */
