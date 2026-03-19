@@ -133,9 +133,6 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     if (paperUuid != null) {
       getModelSuggestions(paperUuid).then((s) => {
         // console.log("Fetched suggestions", s);
-
-        // FIX: ModelSuggestion types
-        // @ts-expect-error - temp fix since types break due to the pathing in getModelSuggestions()
         setModelSuggestions(s);
       });
     }
