@@ -20,8 +20,6 @@ import {
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
 
-// type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
-
 type LLMResult = {
   overall_decision: {
     reason: string;
@@ -66,9 +64,9 @@ type ManualEvaluationProps = {
 
 type ModelSuggestion = {
   modelName: string;
-  binary: string;
-  likertScale: number;
-  probability: number;
+  binary: string | null;
+  likertScale: string | null;
+  probability: number | null;
   screeningType: PromptingConfig["screening_type"];
 };
 
@@ -126,7 +124,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           screeningType: entry.prompting_config
             ? entry.prompting_config.screening_type
             : null,
-        };
+        } satisfies ModelSuggestion;
       });
     /* eslint-enable @typescript-eslint/no-explicit-any */
   }, []);
