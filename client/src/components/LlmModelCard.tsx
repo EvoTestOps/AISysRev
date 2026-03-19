@@ -3,20 +3,20 @@ import { Badge } from "./Badge";
 
 type LlmModelCardProps = {
   modelName: string;
-  binary: string;
-  likertScale: number;
-  probability: number;
+  binary: string | null;
+  likertScale: string | null;
+  probability: number | null;
   screeningType: PromptingConfig["screening_type"];
 };
 
-const likertMap: Record<number, string> = {
-  1: "Strongly disagree",
-  2: "Disagree",
-  3: "Somewhat disagree",
-  4: "Neither agree nor disagree",
-  5: "Somewhat agree",
-  6: "Agree",
-  7: "Strongly agree",
+const likertMap: Record<string, string> = {
+  "1": "Strongly disagree",
+  "2": "Disagree",
+  "3": "Somewhat disagree",
+  "4": "Neither agree nor disagree",
+  "5": "Somewhat agree",
+  "6": "Agree",
+  "7": "Strongly agree",
 };
 
 export const LlmModelCard: React.FC<LlmModelCardProps> = ({
