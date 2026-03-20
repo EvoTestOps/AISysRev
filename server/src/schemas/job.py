@@ -84,9 +84,5 @@ class JobReadWithStats(BaseModel):
     updated_at: datetime
 
     stats: JobStats
-    # total_tasks: int = 0
-    # success_tasks: int = 0
-    # failed_tasks: int = 0
-    # status: JobStatus = JobStatus.NOT_STARTED
 
     model_config = ConfigDict(from_attributes=True)

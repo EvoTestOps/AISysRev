@@ -94,12 +94,6 @@ async def _process_job_task(
                 )
                 await task_db_ctx.commit()
 
-                # await _publish_redis_event(
-                #     redis,
-                #     EventName.JOB_TASK_RUNNING,
-                #     {"job_task_id": job_task.id, "status": JobTaskStatus.RUNNING},
-                # )
-
                 llm_result = await get_structured_response(
                     llm_service,
                     paper_service,
@@ -117,12 +111,6 @@ async def _process_job_task(
 
                 async with counter_lock:
                     counter["success"] += 1
-
-                # await _publish_redis_event(
-                #     redis,
-                #     EventName.JOB_TASK_DONE,
-                #     {"job_task_id": job_task.id, "status": JobTaskStatus.DONE},
-                # )
 
         except Exception as e:
             try:
@@ -156,13 +144,6 @@ async def _process_job_task(
                 )
             except Exception:
                 logger.exception("Failed to publish error %s", job_task_id)
-
-            # try:
-            #     celery_task.update_state(state="FAILURE", meta={"error": str(e)})
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update celery state for job_task %s", job_task_id
-            #     )
         finally:
             async with counter_lock:
                 counter["completed"] += 1

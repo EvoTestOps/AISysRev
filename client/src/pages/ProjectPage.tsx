@@ -7,7 +7,7 @@ import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../compo
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
-import { ConrimationModal } from "../components/ConfirmationModal";
+import { ConfirmationModal } from "../components/ConfirmationModal";
 import { createJob } from "../services/jobService";
 import {
   fileUploadToBackend,
@@ -1204,7 +1204,7 @@ export const ProjectPage = () => {
         />
       )}
       {jobToCancel && (
-        <ConrimationModal
+        <ConfirmationModal
           open={true}
           onClose={handleCancelModalClose}
           onConfirm={handleTaskCancel}
@@ -1216,7 +1216,7 @@ export const ProjectPage = () => {
         />
       )}
       {jobToDelete && (
-        <ConrimationModal
+        <ConfirmationModal
           open={true}
           onClose={handleDeleteModalClose}
           onConfirm={handleTaskDelete}

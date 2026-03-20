@@ -18,7 +18,7 @@ type ConfirmationModalProps = {
   confirmButtonIcon: React.ReactNode;
 };
 
-export const ConrimationModal: React.FC<ConfirmationModalProps> = ({
+export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   open,
   onClose,
   onConfirm,
