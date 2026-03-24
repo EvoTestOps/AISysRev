@@ -87,9 +87,9 @@ The startup of the app may a while due to the download of corresponding Docker i
 
 After startup, open the application:
 
-If you ran `start-prod`, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
+If you ran `start-prod`, navigate to [https://localhost:3000](https://localhost:3000) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning).
 
-If you used `make start-dev`, navigate to [http://localhost:3000](http://localhost:3000)
+If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
 
 
 #### Windows (non-WSL)
@@ -127,13 +127,13 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 ### Getting started with development
 
-Open up the client: [http://localhost:3000](http://localhost:3000)
+Open up the client: [http://localhost:3001](http://localhost:3001)
 
-`/api` is proxied to the backend container, e.g. `http://localhost:3000/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+`/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
-API docs: [http://localhost:3000/documentation](http://localhost:3000/docs)
+API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
 
-Server: [http://localhost:8080](http://localhost:3000)
+API docs: [http://localhost:3001/documentation](http://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 
