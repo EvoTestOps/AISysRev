@@ -8,8 +8,8 @@ services:
       dockerfile: Dockerfile
       target: client
     ports:
-      - "127.0.0.1:443:443"
-      - "127.0.0.1:80:80"
+      - "127.0.0.1:3000:9443"
+      - "127.0.0.1:3080:9080"
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: server
-    ports: ["127.0.0.1:5678:5678"]
+    ports: ["127.0.0.1:5678:5678"] # Debug port
     environment:
       PYTHONPATH: /app
       APP_ENV: prod
