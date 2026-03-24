@@ -29,3 +29,23 @@ export const fetchJobsForProject = async (projectUuid: string) => {
     throw error;
   }
 };
+
+export const cancelJob = async (jobUuid: string) => {
+  try {
+    const res = await api.post(`/api/v1/job/${jobUuid}/cancel`);
+    return res.data;
+  } catch (error) {
+    console.error("Canceling task unsuccessful:", error);
+    throw error;
+  }
+};
+
+export const deleteJob = async (jobUuid: string) => {
+  try {
+    const res = await api.delete(`/api/v1/job/${jobUuid}`);
+    return res.data;
+  } catch (error) {
+    console.error("Task deletion unsuccessful:", error);
+    throw error;
+  }
+}

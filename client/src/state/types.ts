@@ -78,6 +78,7 @@ export enum JobStatus {
   PARTIAL_SUCCESS = "PARTIAL_SUCCESS",
   SUCCESS = "SUCCESS",
   FAILED = "FAILED",
+  CANCELLED = "CANCELLED",
 }
 
 export type JobTask = {

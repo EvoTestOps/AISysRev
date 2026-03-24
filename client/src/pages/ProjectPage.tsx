@@ -3,15 +3,17 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
-import { DropdownMenuText, DropdownOption } from "../components/DropDownMenus";
+import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
+import { ConfirmationModal } from "../components/ConfirmationModal";
 import { createJob } from "../services/jobService";
 import {
   fileUploadToBackend,
   fileFetchFromBackend,
 } from "../services/fileService";
+import { JobStatus } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
 import {
@@ -28,13 +30,16 @@ import {
   ChartCandlestick,
   CircleAlert,
   CircleCheck,
+  CircleStop,
   Download,
   FileText,
   Loader,
   Sparkles,
   Square,
   SquareCheckBig,
+  Trash2,
   TriangleAlert,
+  XCircle
 } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
@@ -417,6 +422,12 @@ export const ProjectPage = () => {
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
 
+  const [jobToCancel, setJobToCancel] = useState<string | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+
+  const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
+  const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
+
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [availableModels, setAvailableModels] = useState<
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
@@ -521,6 +532,46 @@ export const ProjectPage = () => {
   );
 
   const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
+
+  const handleTaskCancel = useCallback(() => {
+    if (!jobToCancel) {
+      return;
+    }
+    cancelJob({
+      jobUuid: jobToCancel,
+      projectUuid: projectUuid,
+    })
+      .then(() => {
+        toast.success("Task cancelled successfully", { autoClose: 1500 });
+        setJobToCancel(null);
+      })
+      .catch((error: unknown) => {
+        toast.error(`Error canceling task: ${error instanceof Error ? error.message : String(error)}`);
+      })
+  }, [jobToCancel, projectUuid, cancelJob])
+
+  const handleCancelModalClose = useCallback(() => {
+    setJobToCancel(null);
+  }, [])
+
+  const handleTaskDelete = useCallback(() => {
+    if (!jobToDelete) {
+      return;
+    }
+    deleteJob({ jobUuid: jobToDelete, projectUuid: projectUuid })
+      .then(() => {
+        toast.success("Task deleted successfully", { autoClose: 1500 });
+        setJobToDelete(null);
+      })
+      .catch((error: unknown) => {
+        toast.error(`Error deleting task: ${error instanceof Error ? error.message : String(error)}`);
+      })
+  }, [jobToDelete, projectUuid, deleteJob])
+
+  const handleDeleteModalClose = useCallback(() => {
+    setJobToDelete(null);
+  }, [])
+
 
   const fetchModels = useCallback(() => {
     async function fetch_models() {
@@ -805,10 +856,11 @@ export const ProjectPage = () => {
               totalCount === 0
                 ? 0
                 : Math.round((completedCount / totalCount) * 100);
+            const status = job.stats.status;
 
             return (
               <Card key={job.uuid} className="flex-row justify-between">
-                <div className="grid grid-cols-[50px_1fr_auto] gap-4 w-full">
+                <div className="grid grid-cols-[50px_1fr_auto_auto] gap-4 w-full">
                   <>
                     {job.prompting_config.screening_type ==
                       JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
@@ -826,53 +878,94 @@ export const ProjectPage = () => {
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
-                      {progress !== 100 && (
-                        <progress
-                          value={progress}
-                          max={100}
-                          className={classNames(
-                            "h-full w-full [&::-webkit-progress-bar]:rounded-xl [&::-webkit-progress-bar]:bg-gray-400 [&::-webkit-progress-value]:bg-blue-200 [&::-webkit-progress-value]:rounded-xl",
-                            {
-                              "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
-                                progress < 100,
-                              "[&::-webkit-progress-value]:bg-green-400":
-                                progress === 100,
-                            },
-                          )}
-                        />
-                      )}
-                      <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
-                        {progress < 100 && (
-                          <>
-                            <Loader
-                              className="animate-spin"
-                              size={16}
-                              strokeWidth={2}
-                            />
-                            <span>
-                              Screening paper {completedCount} of {totalCount}
-                            </span>
-                          </>
-                        )}
-                        {progress === 100 && errorCount === 0 && (
-                          <>
-                            <CircleCheck size={14} className="text-green-600" />
-                            <span className="text-green-600">Done</span>
-                          </>
-                        )}
-                        {progress === 100 && errorCount > 0 && (
+                      {status === JobStatus.CANCELLED ? (
+                        <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
                           <>
                             <TriangleAlert
                               size={14}
                               className="text-orange-600"
                             />
                             <span className="text-orange-600">
-                              Done with errors ({errorCount})
+                              Task Cancelled ({completedCount}/{totalCount})
                             </span>
                           </>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <>
+                          {status === JobStatus.RUNNING && (
+                            <progress
+                              value={progress}
+                              max={100}
+                              className={classNames(
+                                "h-full w-full [&::-webkit-progress-bar]:rounded-xl [&::-webkit-progress-bar]:bg-gray-400 [&::-webkit-progress-value]:bg-blue-200 [&::-webkit-progress-value]:rounded-xl",
+                                {
+                                  "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
+                                    progress < 100,
+                                  "[&::-webkit-progress-value]:bg-green-400":
+                                    progress === 100,
+                                },
+                              )}
+                            />
+                          )}
+                          <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                            {status === JobStatus.RUNNING && (
+                              <>
+                                <Loader
+                                  className="animate-spin"
+                                  size={16}
+                                  strokeWidth={2}
+                                />
+                                <span>
+                                  Screening paper {completedCount} of {totalCount}
+                                </span>
+                              </>
+                            )}
+                            {status === JobStatus.SUCCESS && (
+                              <>
+                                <CircleCheck size={14} className="text-green-600" />
+                                <span className="text-green-600">Done</span>
+                              </>
+                            )}
+                            {status === JobStatus.PARTIAL_SUCCESS && (
+                              <>
+                                <TriangleAlert
+                                  size={14}
+                                  className="text-orange-600"
+                                />
+                                <span className="text-orange-600">
+                                  Done with errors ({errorCount})
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
+                  </div>
+                  <div>
+                    <DropdownMenuEllipsis
+                      items={[
+                        {
+                          label: () => (
+                            <div className="text-yellow-700 flex flex-row gap-3 items-center">
+                              <CircleStop />
+                              <span>Cancel</span>
+                            </div>
+                          ),
+                          onClick: () => setJobToCancel(job.uuid),
+                          disabled: progress === 100 || status === JobStatus.CANCELLED,
+                        },
+                        {
+                          label: () => (
+                            <div className="text-red-700 flex flex-row gap-3 items-center">
+                              <XCircle />
+                              <span>Delete</span>
+                            </div>
+                          ),
+                          onClick: () => setJobToDelete(job.uuid),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               </Card>
@@ -1108,6 +1201,30 @@ export const ProjectPage = () => {
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
+        />
+      )}
+      {jobToCancel && (
+        <ConfirmationModal
+          open={true}
+          onClose={handleCancelModalClose}
+          onConfirm={handleTaskCancel}
+          title="Cancel screening task?"
+          description="This will cancel running and scheduled screening jobs."
+          confirmButtonLabel="Cancel task"
+          confirmButtonVariant="yellow"
+          confirmButtonIcon={<CircleStop size={16} />}
+        />
+      )}
+      {jobToDelete && (
+        <ConfirmationModal
+          open={true}
+          onClose={handleDeleteModalClose}
+          onConfirm={handleTaskDelete}
+          title="Delete screening task?"
+          description="This action cannot be undone. All data related to this task will be permanently deleted."
+          confirmButtonLabel="Delete"
+          confirmButtonVariant="red"
+          confirmButtonIcon={<Trash2 size={16} />}
         />
       )}
     </Layout>

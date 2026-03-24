@@ -63,6 +63,10 @@ class JobTaskService:
         stats = await self.jobtask_crud.fetch_tasks_stats_by_project(project_uuid)
         return stats
 
+    async def fetch_task_stats_by_job(self, job_id: int):
+        job_stats = await self.jobtask_crud.fetch_task_stats_by_job(job_id)
+        return job_stats
+
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
 
@@ -81,6 +85,9 @@ class JobTaskService:
             for paper in papers
         ]
         return await self.jobtask_crud.bulk_create_jobtasks(jobtasks)
+
+    async def set_unfinished_to_cancelled(self, job_id: int):
+        await self.jobtask_crud.update_job_tasks_status_to_cancelled(job_id)
 
     async def start_job_tasks(self, job_id: int, job_data: dict):
         # job_data is of type JobCreate

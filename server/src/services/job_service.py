@@ -1,10 +1,11 @@
 import logging
 from uuid import UUID
 
+from src.celery.tasks import cancel_task
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
-from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStats
+from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStats, JobStatus
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
@@ -48,8 +49,9 @@ class JobService:
             total = stats["total_count"] if stats else 0
             success = stats["success_count"] if stats else 0
             failed = stats["failed_count"] if stats else 0
+            cancelled = stats["cancelled_count"] if stats else 0
 
-            job_status = resolve_job_status(total, success, failed)
+            job_status = resolve_job_status(total, success, failed, cancelled)
             result.append(
                 JobReadWithStats(
                     **job,
@@ -107,9 +109,57 @@ class JobService:
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )
-        await self.jobtask_service.start_job_tasks(new_job.id, job_read.model_dump())
+        task = await self.jobtask_service.start_job_tasks(
+            new_job.id, job_read.model_dump()
+        )
+
+        await self.job_crud.update_celery_task_id(new_job.uuid, UUID(task.id))
 
         return job_read
+
+    async def delete_job(self, job_uuid: UUID):
+        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
+        job_id = job.get("id")
+        task_id = job.get("celery_task_id")
+
+        try:
+            await self._cancel_running_job(job_id, task_id)
+        except RuntimeError:
+            pass
+
+        await self.job_crud.delete_job(job_uuid)
+
+    async def cancel_job(self, job_uuid: UUID):
+        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
+        job_id = job.get("id")
+        task_id = job.get("celery_task_id")
+
+        await self._cancel_running_job(job_id, task_id)
+        await self.jobtask_service.set_unfinished_to_cancelled(job_id)
+
+        return {f"task {task_id} cancelled"}
+
+    async def _cancel_running_job(self, job_id: int, celery_task_id: UUID):
+        job_stats = await self.jobtask_service.fetch_task_stats_by_job(job_id)
+
+        total = job_stats["total_count"] if job_stats else 0
+        success = job_stats["success_count"] if job_stats else 0
+        failed = job_stats["failed_count"] if job_stats else 0
+        cancelled = job_stats["cancelled_count"] if job_stats else 0
+
+        job_status = resolve_job_status(total, success, failed, cancelled)
+        completed_statuses = [
+            JobStatus.FAILED,
+            JobStatus.PARTIAL_SUCCESS,
+            JobStatus.SUCCESS,
+        ]
+
+        if job_status == JobStatus.CANCELLED:
+            raise RuntimeError("Task already cancelled")
+        elif job_status in completed_statuses:
+            raise RuntimeError(f"Task already completed with status: {job_status}")
+
+        cancel_task(celery_task_id)
 
 
 def create_job_service(db_ctx: DBContext) -> JobService:

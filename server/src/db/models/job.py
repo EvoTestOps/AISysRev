@@ -22,6 +22,7 @@ class Job(Base, TimestampMixin):
     uuid: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False
     )
+    celery_task_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), nullable=True)
     project_id: Mapped[int] = mapped_column(
         ForeignKey("project.id", ondelete="CASCADE"), nullable=False
     )

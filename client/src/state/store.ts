@@ -60,10 +60,18 @@ interface JobModel {
     StoreModel,
     { projectUuid: string; jobs: JobWithStats[] }
   >;
-
   updateJobStats: Action<StoreModel, { jobId: string; stats: JobStats }>;
-
   fetchJobsForProject: Thunk<StoreModel, string, Injections>;
+  cancelJob: Thunk<
+    StoreModel,
+    { jobUuid: string; projectUuid: string },
+    Injections
+  >;
+  deleteJob: Thunk<
+    StoreModel,
+    { jobUuid: string; projectUuid: string },
+    Injections
+  >;
 }
 
 interface PaperModel {
@@ -297,6 +305,20 @@ export const model = {
       jobs,
     });
   }),
+  cancelJob: thunk(
+    async (actions, { jobUuid, projectUuid }, { injections }) => {
+      const { jobService } = injections;
+      await jobService.cancelJob(jobUuid);
+      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
+    },
+  ),
+  deleteJob: thunk(
+    async (actions, { jobUuid, projectUuid }, { injections }) => {
+      const { jobService } = injections;
+      await jobService.deleteJob(jobUuid);
+      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
+    },
+  ),
 } satisfies StoreModel;
 
 export const store = createStore<StoreModel>(model, {

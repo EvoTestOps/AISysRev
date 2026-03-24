@@ -21,6 +21,7 @@ class JobTaskStatus(str, Enum):
     RUNNING = "RUNNING"
     DONE = "DONE"
     ERROR = "ERROR"
+    CANCELLED = "CANCELLED"
 
 
 class JobTaskCreate(BaseModel):

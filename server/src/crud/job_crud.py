@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.job import Job
@@ -63,6 +63,47 @@ class JobCrud:
             raise ValueError(f"Job with uuid {uuid} not found")
         # TODO: Fix
         return job  # type: ignore
+
+    # Quick fix to not mess with fetch_job_by_uuid()
+    async def fetch_job_by_uuid_with_ids(self, uuid: UUID):
+        stmt = (
+            select(
+                Job.id,
+                Job.uuid,
+                Project.uuid.label("project_uuid"),
+                Job.llm_config,
+                Job.prompting_config,
+                Job.created_at,
+                Job.updated_at,
+                Job.celery_task_id,
+            )
+            .join(Project, Project.id == Job.project_id)
+            .where(Job.uuid == uuid)
+        )
+        result = await self.db.execute(stmt)
+        job = result.mappings().one_or_none()
+
+        if not job:
+            raise ValueError(f"Job with uuid {uuid} not found")
+        return job
+
+    async def fetch_celery_task_id(self, job_uuid: UUID) -> UUID | None:
+        stmt = select(Job.celery_task_id).where(Job.uuid == job_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update_celery_task_id(self, job_uuid: UUID, celery_task_id: UUID):
+        stmt = (
+            update(Job)
+            .where(Job.uuid == job_uuid)
+            .values(celery_task_id=celery_task_id)
+        )
+        await self.db.execute(stmt)
+        await self.db.flush()
+
+    async def delete_job(self, job_uuid: UUID):
+        stmt = delete(Job).where(Job.uuid == job_uuid)
+        await self.db.execute(stmt)
 
     async def create_job(self, job_data: JobCreate):
         stmt = select(Project).where(Project.uuid == job_data.project_uuid)

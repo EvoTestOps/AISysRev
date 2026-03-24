@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Dict
+from uuid import UUID
 
 from httpx import AsyncClient, HTTPStatusError
 from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_after
@@ -93,12 +94,6 @@ async def _process_job_task(
                 )
                 await task_db_ctx.commit()
 
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_RUNNING,
-                    {"job_task_id": job_task.id, "status": JobTaskStatus.RUNNING},
-                )
-
                 llm_result = await get_structured_response(
                     llm_service,
                     paper_service,
@@ -116,12 +111,6 @@ async def _process_job_task(
 
                 async with counter_lock:
                     counter["success"] += 1
-
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_DONE,
-                    {"job_task_id": job_task.id, "status": JobTaskStatus.DONE},
-                )
 
         except Exception as e:
             try:
@@ -155,13 +144,6 @@ async def _process_job_task(
                 )
             except Exception:
                 logger.exception("Failed to publish error %s", job_task_id)
-
-            # try:
-            #     celery_task.update_state(state="FAILURE", meta={"error": str(e)})
-            # except Exception:
-            #     logger.exception(
-            #         "Failed to update celery state for job_task %s", job_task_id
-            #     )
         finally:
             async with counter_lock:
                 counter["completed"] += 1
@@ -170,7 +152,7 @@ async def _process_job_task(
                 success = counter["success"]
                 failed = counter["failed"]
 
-            status = resolve_job_status(total, success, failed)
+            status = resolve_job_status(total, success, failed, cancelled=0)
 
             # TODO: maybe buffer to avoid spamming
             await _publish_redis_event(
@@ -248,3 +230,7 @@ async def process_job(
     await asyncio.gather(*tasks)
 
     return {"result": "all job tasks processed"}
+
+
+def cancel_task(task_id: UUID):
+    celery_app.control.revoke(str(task_id), terminate=True)

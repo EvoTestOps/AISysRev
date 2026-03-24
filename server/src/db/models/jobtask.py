@@ -19,6 +19,7 @@ class Status(enum.Enum):
     RUNNING = "RUNNING"
     DONE = "DONE"
     ERROR = "ERROR"
+    CANCELLED = "CANCELLED"
 
 
 class HumanResult(enum.Enum):
