@@ -40,6 +40,7 @@ The tool has been tested with CSV data exported from [Scopus](https://www.scopus
 
 ### LLMs Access
 The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
+
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
 ### LLM screening speed
@@ -108,6 +109,10 @@ TypeScript, React, Tailwind CSS, Vite, Wouter, Zod, Redux
 ### Back-end
 
 Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
+
+### System design
+
+See [Architecture.md](docs/Architecture.md)
 
 ## Development requirements
 - Node.js v22 LTS
