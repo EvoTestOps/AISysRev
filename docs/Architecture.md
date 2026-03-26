@@ -31,8 +31,7 @@ graph TD
     Client -- "HTTPS :3000" --> Caddy
 
     Caddy -- "Serves" --> React
-    Client -- "/api/*" --> Caddy
-    Caddy -- "/api/*" --> FastAPI
+    Caddy -- "Proxies /api/*" --> FastAPI
 
     FastAPI --> Postgres
     FastAPI --> Redis
