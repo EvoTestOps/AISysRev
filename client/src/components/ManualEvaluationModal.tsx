@@ -10,7 +10,6 @@ import { Check, CircleQuestionMark, CircleX, X } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
-import { addPaperHumanResult } from "../services/paperService";
 import {
   JobTaskHumanResult,
   JobTaskStatus,
@@ -19,6 +18,7 @@ import {
 } from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
+import { useTypedStoreActions } from "../state/store";
 
 type LLMResult = {
   overall_decision: {
@@ -85,19 +85,18 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     [],
   );
 
-  // TODO: Refactor this to use redux
-  const addHumanResult = useCallback(
-    async (humanResult: JobTaskHumanResult) => {
-      if (!paperUuid) return;
-      try {
-        await addPaperHumanResult(paperUuid, humanResult);
-        onEvaluated();
-      } catch (error) {
-        console.error("Error adding human result:", error);
-      }
-    },
-    [paperUuid, onEvaluated],
-  );
+  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult)
+
+  const handleAddHumanResult = useCallback((humanResult: JobTaskHumanResult) => {
+    if (!paperUuid || !currentPaper) return;
+
+    try {
+      addHumanResult({projectUuid: currentPaper.project_uuid, paperUuid, humanResult});
+      onEvaluated();
+    } catch (error) {
+      console.error("Error adding human result:", error);
+    }
+  }, [paperUuid, currentPaper, onEvaluated, addHumanResult])
 
   // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
@@ -141,23 +140,23 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "y" || e.key === "Y" || e.key === "i" || e.key === "I") {
-        addHumanResult(JobTaskHumanResult.INCLUDE);
+        handleAddHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
-        addHumanResult(JobTaskHumanResult.UNSURE);
+        handleAddHumanResult(JobTaskHumanResult.UNSURE);
       } else if (
         e.key === "n" ||
         e.key === "N" ||
         e.key === "e" ||
         e.key === "E"
       ) {
-        addHumanResult(JobTaskHumanResult.EXCLUDE);
+        handleAddHumanResult(JobTaskHumanResult.EXCLUDE);
       } else if (e.key === "Escape") {
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [addHumanResult, onClose]);
+  }, [handleAddHumanResult, onClose]);
 
   if (!currentPaper) return null;
 
@@ -229,7 +228,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
               <div className="flex flex-wrap justify-center gap-6">
                 <Button
                   variant="red"
-                  onClick={() => addHumanResult(JobTaskHumanResult.EXCLUDE)}
+                  onClick={() => handleAddHumanResult(JobTaskHumanResult.EXCLUDE)}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <X />
@@ -238,7 +237,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 </Button>
                 <Button
                   variant="yellow"
-                  onClick={() => addHumanResult(JobTaskHumanResult.UNSURE)}
+                  onClick={() => handleAddHumanResult(JobTaskHumanResult.UNSURE)}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <CircleQuestionMark />
@@ -247,7 +246,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 </Button>
                 <Button
                   variant="green"
-                  onClick={() => addHumanResult(JobTaskHumanResult.INCLUDE)}
+                  onClick={() => handleAddHumanResult(JobTaskHumanResult.INCLUDE)}
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <Check />
