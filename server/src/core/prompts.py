@@ -2,6 +2,8 @@
 
 default_system_prompt = "You are an expert research assistant."
 
+additional_instructions = "The paper is included, if all inclusion criteria match. If the paper matches any exclusion criteria, it is excluded."
+
 # Openrouter recommends instructing the LLM to respond in JSON format.
 # Tested to be working with Fireworks.ai provided LLaMA 4 Maverick
 json_instruct_prompt = """Output **ONLY JSON**. You should include **EVERY FIELD** defined in the schema - every field in the schema is required. Respond strictly in valid JSON format, using the following schema:
