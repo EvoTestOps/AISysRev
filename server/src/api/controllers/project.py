@@ -5,7 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.project import ProjectCreate, ProjectRead
+from src.services.paper_service import create_paper_service
 from src.services.project_service import create_project_service
+from src.services.token_estimation_service import (
+    TokenEstimation,
+    create_token_estimation_service,
+)
 
 router = APIRouter()
 
@@ -51,6 +56,42 @@ async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
+@router.get(
+    "/project/{uuid}/estimate",
+    status_code=status.HTTP_200_OK,
+    response_model=TokenEstimation,
+    tags=["Project"],
+)
+async def estimate_tokens(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+    project_service = create_project_service(db_ctx)
+    paper_service = create_paper_service(db_ctx)
+    token_estimation_service = create_token_estimation_service()
+    try:
+        project = await project_service.fetch_by_uuid(uuid)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+            )
+
+        papers = await paper_service.fetch_papers(project_uuid=uuid)
+        if not papers:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found"
+            )
+
+        estimation = await token_estimation_service.estimate_tokens(
+            papers=papers, criteria=project.criteria
+        )
+        return estimation
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch project: {str(e)}",
+        )
+
+
 @router.post("/project", status_code=status.HTTP_201_CREATED, tags=["Project"])
 async def create_new_project(
     project_data: ProjectCreate, db_ctx: DBContext = Depends(get_db_ctx)
@@ -70,9 +111,7 @@ async def create_new_project(
         )
 
 
-@router.delete(
-    "/project/{uuid}", status_code=status.HTTP_200_OK, tags=["Project"]
-)
+@router.delete("/project/{uuid}", status_code=status.HTTP_200_OK, tags=["Project"])
 async def delete_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     projects = create_project_service(db_ctx)
     try:

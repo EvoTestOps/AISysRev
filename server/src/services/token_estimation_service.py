@@ -79,3 +79,6 @@ class TokenEstimationService:
         if not text:
             return 0
         return len(self._encoder.encode(text))
+
+def create_token_estimation_service() -> TokenEstimationService:
+    return TokenEstimationService()
