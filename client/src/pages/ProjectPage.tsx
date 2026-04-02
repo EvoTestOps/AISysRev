@@ -461,14 +461,15 @@ export const ProjectPage = () => {
       setTokenEstimation(null);
       return;
     }
-    try {
-      const estimation = await fetchTokenEstimation(projectUuid);
-      setTokenEstimation(estimation);
-    } catch (error) {
-      setTokenEstimation(null);
-      toast.error("Token estimation failed");
-    }
-  }, [projectUuid, fetchedFiles.length, fetchTokenEstimation])
+    fetchTokenEstimation(projectUuid)
+      .then((estimation) => {
+        setTokenEstimation(estimation)
+      })
+      .catch((error) => {
+        setTokenEstimation(null);
+        toast.error(`Token estimation failed: ${error instanceof Error ? error.message : String(error)}`);
+      })
+  }, [projectUuid, fetchedFiles.length])
 
   useEffect(() => {
     getEstimation();
