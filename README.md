@@ -40,6 +40,7 @@ The tool has been tested with CSV data exported from [Scopus](https://www.scopus
 
 ### LLMs Access
 The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
+
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
 ### LLM screening speed
@@ -87,9 +88,9 @@ The startup of the app may a while due to the download of corresponding Docker i
 
 After startup, open the application:
 
-If you ran `start-prod`, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
+If you ran `start-prod`, navigate to [https://localhost:3000](https://localhost:3000) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning).
 
-If you used `make start-dev`, navigate to [http://localhost:3000](http://localhost:3000)
+If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
 
 
 #### Windows (non-WSL)
@@ -109,6 +110,10 @@ TypeScript, React, Tailwind CSS, Vite, Wouter, Zod, Redux
 
 Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
+### System design
+
+See [Architecture.md](docs/Architecture.md)
+
 ## Development requirements
 - Node.js v22 LTS
 - Python 3.14
@@ -127,13 +132,13 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 ### Getting started with development
 
-Open up the client: [http://localhost:3000](http://localhost:3000)
+Open up the client: [http://localhost:3001](http://localhost:3001)
 
-`/api` is proxied to the backend container, e.g. `http://localhost:3000/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+`/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
-API docs: [http://localhost:3000/documentation](http://localhost:3000/docs)
+API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
 
-Server: [http://localhost:8080](http://localhost:3000)
+API docs: [http://localhost:3001/documentation](http://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 

@@ -25,8 +25,6 @@ FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8c
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
 
-EXPOSE 443
-
 FROM python:3.14-alpine AS server-builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 

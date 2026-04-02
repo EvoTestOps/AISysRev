@@ -1,4 +1,14 @@
-localhost {
+{
+	http_port  9080
+	https_port 9443
+	auto_https disable_redirects
+}
+
+localhost:9080 {
+    redir https://localhost:3000{uri} permanent
+}
+
+localhost:9443 {
 	tls internal
 
 	handle /api* {
