@@ -13,7 +13,8 @@ import {
   fileUploadToBackend,
   fileFetchFromBackend,
 } from "../services/fileService";
-import { JobStatus } from "../state/types";
+import { fetchTokenEstimation } from "../services/projectService";
+import { JobStatus, TokenEstimation } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
 import {
@@ -31,6 +32,7 @@ import {
   CircleAlert,
   CircleCheck,
   CircleStop,
+  ChevronDown,
   Download,
   FileText,
   Loader,
@@ -433,6 +435,7 @@ export const ProjectPage = () => {
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
   >([]);
 
+
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
@@ -449,6 +452,27 @@ export const ProjectPage = () => {
   );
 
   const project = getProjectByUuid(projectUuid);
+
+  const [tokenEstimation, setTokenEstimation] = useState<TokenEstimation | null>(null);
+  const [showTokenDetails, setShowTokenDetails] = useState(false);
+
+  const getEstimation = useCallback(async () => {
+    if (!projectUuid || fetchedFiles.length === 0) {
+      setTokenEstimation(null);
+      return;
+    }
+    try {
+      const estimation = await fetchTokenEstimation(projectUuid);
+      setTokenEstimation(estimation);
+    } catch (error) {
+      setTokenEstimation(null);
+      toast.error("Token estimation failed");
+    }
+  }, [projectUuid, fetchedFiles.length, fetchTokenEstimation])
+
+  useEffect(() => {
+    getEstimation();
+  }, [getEstimation]);
 
   useEffect(() => {
     if (project !== undefined) {
@@ -1148,6 +1172,47 @@ export const ProjectPage = () => {
               </Button>
             </div>
           </Card>
+          <button
+            type="button"
+            onClick={() => tokenEstimation && setShowTokenDetails(!showTokenDetails)}
+            disabled={!tokenEstimation}
+            className={classNames(
+              "p-2 bg-white shadow-sm rounded-lg flex flex-col border border-transparent",
+              { "hover:border-slate-200 hover:bg-gray-100 cursor-pointer": tokenEstimation }
+            )}
+          >
+            <div className="flex justify-between items-center w-full px-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-700">Estimated tokens</span>
+                {tokenEstimation && (
+                  <ChevronDown
+                    size={14}
+                    className={classNames("text-slate-400 transition-transform", { "rotate-180": showTokenDetails })}
+                  />
+                )}
+              </div>
+              <span className="text-sm font-mono font-bold text-slate-900">
+                {tokenEstimation ? `~${tokenEstimation.total_estimated_tokens}` : "?"}
+              </span>
+            </div>
+
+            {showTokenDetails && tokenEstimation && (
+              <div className="w-full pt-2 flex flex-col gap-1 px-1">
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Input tokens:</span>
+                  <span className="font-mono">{tokenEstimation.estimated_input_tokens}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Output tokens:</span>
+                  <span className="font-mono">{tokenEstimation.estimated_output_tokens}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Tasks:</span>
+                  <span className="font-mono">{tokenEstimation.task_count}</span>
+                </div>
+              </div>
+            )}
+          </button>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import {
   DeletedProjectModel,
   ProjectModel,
 } from "../state/types/project";
+import { TokenEstimation } from "../state/types";
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
@@ -54,6 +55,19 @@ export const delete_project = async (uuid: string): Promise<DeletedProject> => {
     return DeletedProjectModel.parse(res.data);
   } catch (error) {
     console.error("Deleting project unsuccessful", error);
+    throw error;
+  }
+};
+
+// TODO: why no camelcase for rest?
+export const fetchTokenEstimation = async (
+  uuid: string,
+): Promise<TokenEstimation> => {
+  try {
+    const res = await api.get(`/api/v1/project/${uuid}/estimate`);
+    return res.data;
+  } catch (error) {
+    console.error("Fetching project by UUID unsuccessful", error);
     throw error;
   }
 };

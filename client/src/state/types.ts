@@ -104,15 +104,15 @@ export type JobStats = {
 };
 
 export type JobWithStats = {
-    uuid: string;
-    id: string;
-    project_uuid: string;
-    prompting_config: PromptingConfig;
-    llm_config: LlmConfig;
-    created_at: Date | null;
-    updated_at: Date | null;
-    stats: JobStats;
-}
+  uuid: string;
+  id: string;
+  project_uuid: string;
+  prompting_config: PromptingConfig;
+  llm_config: LlmConfig;
+  created_at: Date | null;
+  updated_at: Date | null;
+  stats: JobStats;
+};
 
 export type Paper = {
   uuid: string;
@@ -149,6 +149,13 @@ export type Result = {
   doi: string;
   human_result: string;
   [modelName: string]: string;
+};
+
+export type TokenEstimation = {
+  task_count: number;
+  estimated_input_tokens: number;
+  estimated_output_tokens: number;
+  total_estimated_tokens: number;
 };
 
 // Keep this up-to-date with server/src/core/llm_providers.py
