@@ -8,7 +8,5 @@ AISysRev supports local LLMs. This setup guide is intended to help setting up a 
 ## MacOS - LM Studio
 
 1. Download and setup LM Studio
-2. Start the local LLM
-3. In AISysDev, put the following into local provider base URL:
-
-TODO
+2. Start the LM Studio server. The server should by default start at http://localhost:1234/
+3. In AISysDev, put `http://localhost:1234/` as the base URL for the local provider.
