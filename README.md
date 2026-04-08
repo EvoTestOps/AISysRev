@@ -190,6 +190,31 @@ The project includes a `Makefile` for common development and database operations
 
 Currently, we support models provided via Openrouter, OpenAI or via a local provider (OpenAI SDK).
 
+## BibTeX Citation
+
+Please use the following BibTeX citation to cite our work:
+
+### Conference proceedings
+
+Coming soon.
+
+### Preprint
+
+```
+@misc{huotalaAISysRevLLMbasedTool2025,
+	title = {{AISysRev} -- {LLM}-based {Tool} for {Title}-abstract {Screening}},
+	url = {http://arxiv.org/abs/2510.06708},
+	doi = {10.48550/arXiv.2510.06708},
+	publisher = {arXiv},
+	author = {Huotala, Aleksi and Kuutila, Miikka and Turtio, Olli-Pekka and Mäntylä, Mika},
+	month = oct,
+	year = {2025},
+	note = {arXiv:2510.06708 [cs]},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Software Engineering}
+}
+```
+
+
 ## License
 
 MIT
