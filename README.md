@@ -1,4 +1,4 @@
-# AISysRev
+# AISysRev - LLM-based Tool for Title-abstract Screening
 
 > [!IMPORTANT]
 > AISysRev is a Minimum Viable Product (MVP) with core functionality working. Some features are missing and there might be bugs. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
