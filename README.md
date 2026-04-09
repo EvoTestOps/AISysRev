@@ -4,12 +4,51 @@
 ![GitHub License](https://img.shields.io/github/license/EvoTestOps/AiSysRev) ![GitHub Repo stars](https://img.shields.io/github/stars/EvoTestOps/AiSysRev) ![GitHub contributors](https://img.shields.io/github/contributors/EvoTestOps/AiSysRev)
 
 
-
-
 ![Claude](https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white) ![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white) ![Google Gemini](https://img.shields.io/badge/google%20gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white) ![MistralAI](https://img.shields.io/badge/mistralai-FA520F?style=for-the-badge&logo=mistralai&logoColor=white) ![Ollama](https://img.shields.io/badge/ollama-%23000000.svg?style=for-the-badge&logo=ollama&logoColor=white)
+
 
 > [!IMPORTANT]
 > AISysRev is a Minimum Viable Product (MVP) with core functionality working. Some features are missing and there might be bugs. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
+
+
+## Table of contents
+
+- [AISysRev - LLM-based Tool for Title-abstract Screening](#aisysrev---llm-based-tool-for-title-abstract-screening)
+  * [Introduction](#introduction)
+  * [Features](#features)
+  * [Showcase](#showcase)
+  * [Getting started](#getting-started)
+    + [Data](#data)
+    + [LLMs Access](#llms-access)
+    + [LLM screening speed](#llm-screening-speed)
+  * [System and software requirements](#system-and-software-requirements)
+    + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
+    + [Running the AISysRev application](#running-the-aisysrev-application)
+      - [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl-)
+      - [Windows (non-WSL)](#windows--non-wsl-)
+  * [Technology](#technology)
+    + [Front-end](#front-end)
+    + [Back-end](#back-end)
+    + [System design](#system-design)
+  * [Development requirements](#development-requirements)
+  * [Running in development mode](#running-in-development-mode)
+    + [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl--1)
+    + [Windows (non-WSL)](#windows--non-wsl--1)
+    + [Getting started with development](#getting-started-with-development)
+  * [Mock data](#mock-data)
+  * [Tests](#tests)
+    + [Client](#client)
+    + [Server](#server)
+  * [Makefile Commands](#makefile-commands)
+    + [Development](#development)
+    + [Database Migrations (Alembic)](#database-migrations--alembic-)
+  * [Supported LLMs](#supported-llms)
+  * [BibTeX Citation](#bibtex-citation)
+    + [Conference proceedings](#conference-proceedings)
+    + [Preprint](#preprint)
+  * [License](#license)
+  * [References](#references)
+
 
 ## Introduction
 
