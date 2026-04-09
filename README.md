@@ -1,6 +1,9 @@
 # AISysRev - LLM-based Tool for Title-abstract Screening
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/EvoTestOps/AiSysRev)
+ ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/EvoTestOps/AiSysRev/tests.yml) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/EvoTestOps/AiSysRev) 
+![GitHub License](https://img.shields.io/github/license/EvoTestOps/AiSysRev) ![GitHub Repo stars](https://img.shields.io/github/stars/EvoTestOps/AiSysRev) ![GitHub contributors](https://img.shields.io/github/contributors/EvoTestOps/AiSysRev)
+
+
 
 
 ![Claude](https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white) ![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white) ![Google Gemini](https://img.shields.io/badge/google%20gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white) ![MistralAI](https://img.shields.io/badge/mistralai-FA520F?style=for-the-badge&logo=mistralai&logoColor=white) ![Ollama](https://img.shields.io/badge/ollama-%23000000.svg?style=for-the-badge&logo=ollama&logoColor=white)
