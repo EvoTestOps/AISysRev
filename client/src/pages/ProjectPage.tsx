@@ -710,6 +710,8 @@ export const ProjectPage = () => {
     [
       uploadFilesToBackend,
       fetchFiles,
+      projectUuid,
+      fetchPapers,
       // loadPapers
     ],
   );
