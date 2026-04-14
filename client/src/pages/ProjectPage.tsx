@@ -702,6 +702,7 @@ export const ProjectPage = () => {
       try {
         await uploadFilesToBackend(files);
         await fetchFiles();
+        await fetchPapers(projectUuid);
       } catch (error) {
         console.error("Problem uploading the files", error);
       }
@@ -709,6 +710,8 @@ export const ProjectPage = () => {
     [
       uploadFilesToBackend,
       fetchFiles,
+      projectUuid,
+      fetchPapers,
       // loadPapers
     ],
   );
