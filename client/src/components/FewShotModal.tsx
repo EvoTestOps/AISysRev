@@ -13,16 +13,20 @@ import { useTypedStoreState } from "../state/store";
 import { useParams } from "wouter";
 import {
   createFewShotPromptingConfig,
+  JobPromptingType,
   JobTaskHumanResult,
   LlmConfig,
   PaperWithModelEval,
+  TokenEstimation,
 } from "../state/types";
 import { twMerge } from "tailwind-merge";
 import classNames from "classnames";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { AlertMessage } from "./AlertMessage";
 import { createJob } from "../services/jobService";
 import { Hr } from "./Hr";
+import { fetchTokenEstimation } from "../services/projectService";
+import { toast } from "react-toastify";
 
 type FewShotModalProps = {
   onClose: () => void;
@@ -103,6 +107,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   // Default to true
   const [rememberSelection, setRememberSelection] = useState(true);
 
+  const [tokenEstimation, setTokenEstimation] = useState<TokenEstimation | null>(null);
+
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
   );
@@ -160,6 +166,28 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     onClose,
   ]);
 
+  useEffect(() => {
+    const getEstimation = async () => {
+      if (!projectUuid) {
+        return;
+      }
+      try {
+        const estimation = await fetchTokenEstimation(projectUuid, {
+          screening_type: JobPromptingType.FEW_SHOT,
+          inc_seed_uuids: selectedExclusionSeeds,
+          exc_seed_uuids: selectedExclusionSeeds,
+        });
+        setTokenEstimation(estimation)
+      } catch (error) {
+        setTokenEstimation(null);
+        toast.error(`Token estimation failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    };
+    if (currentStep === "OVERVIEW") {
+      getEstimation();
+    }
+  }, [projectUuid, currentStep, selectedExclusionSeeds, selectedInclusionSeeds])
+
   if (!project) {
     return null;
   }
@@ -198,15 +226,15 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
           >
             {(currentStep === "INCLUSION_SEED" ||
               currentStep === "EXCLUSION_SEED") && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
-                <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
-                  Title
+                <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
+                  <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
+                    Title
+                  </div>
+                  <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
+                    Score
+                  </div>
                 </div>
-                <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
-                  Score
-                </div>
-              </div>
-            )}
+              )}
             {currentStep === "OVERVIEW" && (
               <div className="flex flex-col gap-2">
                 <H6>Inclusion seeds</H6>
@@ -238,6 +266,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                   )}
                 </div>
                 <Hr />
+
                 <H6>Exclusion seeds</H6>
                 <div className="flex flex-col gap-2">
                   {selectedExclusionSeeds.map((s) => {
@@ -266,6 +295,50 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                     <AlertMessage message="No exclusion seeds selected." />
                   )}
                 </div>
+                <Hr />
+
+                <div className="w-full py-1">
+                  <div className="max-w-xs mx-auto bg-slate-50 rounded-lg border border-slate-200 p-3 shadow-sm">
+                    <div className="text-center border-b border-slate-200 pb-2 mb-3">
+                      <span className="text-sm uppercase font-bold text-slate-500 tracking-wider">
+                        Total Estimated Tokens
+                      </span>
+                      <div className="text-xl font-mono font-bold text-slate-900">
+                        {tokenEstimation
+                          ? `~${tokenEstimation.total_estimated_tokens}`
+                          : "?"}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <div className="flex-1 text-center">
+                        <div className="text-xs uppercase text-slate-500 font-bold">Input</div>
+                        <div className="text-md font-mono text-slate-700">
+                          {tokenEstimation?.estimated_input_tokens ?? "?"}
+                        </div>
+                      </div>
+
+                      <div className="h-6 w-[1px] bg-slate-200" />
+
+                      <div className="flex-1 text-center">
+                        <div className="text-xs uppercase text-slate-500 font-bold">Output</div>
+                        <div className="text-md font-mono text-slate-700">
+                          {tokenEstimation?.estimated_output_tokens ?? "?"}
+                        </div>
+                      </div>
+
+                      <div className="h-6 w-[1px] bg-slate-200" />
+
+                      <div className="flex-1 text-center">
+                        <div className="text-xs uppercase text-slate-500 font-bold">Tasks</div>
+                        <div className="text-md font-mono text-slate-700">
+                          {tokenEstimation?.task_count ?? "?"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             )}
             {currentStep === "INCLUSION_SEED" &&

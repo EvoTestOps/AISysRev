@@ -151,6 +151,12 @@ export type Result = {
   [modelName: string]: string;
 };
 
+export type TokenEstimationRequest = {
+  screening_type: JobPromptingType;
+  inc_seed_uuids?: string[];
+  exc_seed_uuids?: string[];
+};
+
 export type TokenEstimation = {
   task_count: number;
   estimated_input_tokens: number;

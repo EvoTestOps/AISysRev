@@ -461,7 +461,7 @@ export const ProjectPage = () => {
       setTokenEstimation(null);
       return;
     }
-    fetchTokenEstimation(projectUuid)
+    fetchTokenEstimation(projectUuid, { screening_type: JobPromptingType.ZERO_SHOT })
       .then((estimation) => {
         setTokenEstimation(estimation)
       })

@@ -11,7 +11,7 @@ import {
   DeletedProjectModel,
   ProjectModel,
 } from "../state/types/project";
-import { TokenEstimation } from "../state/types";
+import { TokenEstimation, TokenEstimationRequest } from "../state/types";
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
@@ -62,9 +62,10 @@ export const delete_project = async (uuid: string): Promise<DeletedProject> => {
 // TODO: why no camelcase for rest?
 export const fetchTokenEstimation = async (
   uuid: string,
+  req_data: TokenEstimationRequest,
 ): Promise<TokenEstimation> => {
   try {
-    const res = await api.get(`/api/v1/project/${uuid}/estimate`);
+    const res = await api.post(`/api/v1/project/${uuid}/estimate`, req_data);
     return res.data;
   } catch (error) {
     console.error("Fetching project by UUID unsuccessful", error);

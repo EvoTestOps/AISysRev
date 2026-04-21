@@ -15,7 +15,7 @@ from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
 
 
-def _create_few_shot_examples(papers: list[PaperRead]):
+def create_few_shot_examples(papers: list[PaperRead]):
     txt_parts = []
 
     for paper in papers:
@@ -88,7 +88,7 @@ async def get_structured_response(
     elif isinstance(cfg, FewShotPromptingConfig):
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
         seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
-        seed_paper_txt = _create_few_shot_examples(seed_papers)
+        seed_paper_txt = create_few_shot_examples(seed_papers)
         prompt_text = few_shot_task_prompt.format(
             job_task_data.title,
             job_task_data.abstract,

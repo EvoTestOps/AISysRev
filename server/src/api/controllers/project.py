@@ -2,15 +2,15 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.core.prompts import few_shot_task_prompt
 from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
+from src.schemas.job import JobPromptingType
 from src.schemas.project import ProjectCreate, ProjectRead
+from src.schemas.token_estimation import TokenEstimation, TokenEstimationRequest
 from src.services.paper_service import create_paper_service
 from src.services.project_service import create_project_service
-from src.services.token_estimation_service import (
-    TokenEstimation,
-    create_token_estimation_service,
-)
+from src.services.token_estimation_service import create_token_estimation_service
 
 router = APIRouter()
 
@@ -56,13 +56,17 @@ async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
-@router.get(
+@router.post(
     "/project/{uuid}/estimate",
     status_code=status.HTTP_200_OK,
     response_model=TokenEstimation,
     tags=["Project"],
 )
-async def estimate_tokens(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def estimate_tokens(
+    uuid: UUID,
+    request_data: TokenEstimationRequest,
+    db_ctx: DBContext = Depends(get_db_ctx),
+):
     project_service = create_project_service(db_ctx)
     paper_service = create_paper_service(db_ctx)
     token_estimation_service = create_token_estimation_service()
@@ -79,16 +83,29 @@ async def estimate_tokens(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
                 status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found"
             )
 
-        estimation = await token_estimation_service.estimate_tokens(
-            papers=papers, criteria=project.criteria
+        if request_data.screening_type != JobPromptingType.FEW_SHOT:
+            return token_estimation_service.estimate_zero_shot_tokens(
+                papers=papers, criteria=project.criteria
+            )
+
+        inc_set = set(request_data.inc_seed_uuids)
+        exc_set = set(request_data.exc_seed_uuids)
+
+        inc_seeds = [paper for paper in papers if paper.uuid in inc_set]
+        exc_seeds = [paper for paper in papers if paper.uuid in exc_set]
+
+        return token_estimation_service.estimate_few_shot_tokens(
+            papers=papers,
+            criteria=project.criteria,
+            inc_seeds=inc_seeds,
+            exc_seeds=exc_seeds,
         )
-        return estimation
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch project: {str(e)}",
+            detail=f"Failed to estimate tokens: {str(e)}",
         )
 
 
