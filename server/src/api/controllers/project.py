@@ -2,7 +2,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.core.prompts import few_shot_task_prompt
 from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.job import JobPromptingType
