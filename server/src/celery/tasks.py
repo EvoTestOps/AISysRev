@@ -79,6 +79,7 @@ async def _process_job_task(
     counter: Dict[str, int],
     counter_lock: asyncio.Lock,
     client: AsyncClient,
+    update_interval: int = 5,
 ):
     async with semaphore:
         try:
@@ -151,30 +152,33 @@ async def _process_job_task(
                 total = counter["total"]
                 success = counter["success"]
                 failed = counter["failed"]
+                should_update = completed % update_interval == 0
 
-            status = resolve_job_status(total, success, failed, cancelled=0)
+            if should_update:
+                status = resolve_job_status(total, success, failed, cancelled=0)
 
-            # TODO: maybe buffer to avoid spamming
-            await _publish_redis_event(
-                redis,
-                EventName.JOB_PROGRESS,
-                {
-                    "job_id": job_id,
-                    "stats": {
-                        "total": total,
-                        "success": success,
-                        "failed": failed,
-                        "status": status,
-                    },
-                },
-            )
-
-            try:
-                celery_task.update_state(
-                    state="PROGRESS", meta={"current": completed, "total": total}
-                )
-            except Exception:
-                logger.exception("Failed to update celery progress counter")
+                try:
+                    await _publish_redis_event(
+                        redis,
+                        EventName.JOB_PROGRESS,
+                        {
+                            "job_id": job_id,
+                            "stats": {
+                                "total": total,
+                                "success": success,
+                                "failed": failed,
+                                "status": status,
+                            },
+                        },
+                    )
+                except Exception:
+                    logger.exception("Failed to publish progress to Redis")
+                try:
+                    celery_task.update_state(
+                        state="PROGRESS", meta={"current": completed, "total": total}
+                    )
+                except Exception:
+                    logger.exception("Failed to update celery progress counter")
 
 
 async def process_job(
@@ -228,6 +232,24 @@ async def process_job(
     ]
 
     await asyncio.gather(*tasks)
+
+    final_status = resolve_job_status(
+        counter["total"], counter["success"], counter["failed"], cancelled=0
+    )
+
+    await _publish_redis_event(
+        redis,
+        EventName.JOB_PROGRESS,
+        {
+            "job_id": job_id,
+            "stats": {
+                "total": counter["total"],
+                "success": counter["success"],
+                "failed": counter["failed"],
+                "status": final_status,
+            },
+        },
+    )
 
     return {"result": "all job tasks processed"}
 
