@@ -38,7 +38,7 @@
     "react-toastify": "^11.0.5",
     "tailwind-merge": "^2.6.0",
     "tiktoken": "^1.0.18",
-    "vite-plugin-top-level-await": "^1.4.4",
+    "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.4.1",
     "wouter": "^3.4.0",
     "zod": "^4.2.1"
