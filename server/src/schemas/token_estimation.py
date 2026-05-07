@@ -1,6 +1,3 @@
-from typing import List
-from uuid import UUID
-
 from pydantic import BaseModel
 
 from src.schemas.job import JobPromptingType

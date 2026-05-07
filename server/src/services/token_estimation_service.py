@@ -6,7 +6,6 @@ import tiktoken
 from src.core.prompts import (
     additional_instructions,
     default_system_prompt,
-    few_shot_task_prompt,
     zero_shot_task_prompt,
 )
 from src.schemas.job import JobPromptingType
@@ -14,7 +13,7 @@ from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperRead
 from src.schemas.project import Criteria
 from src.schemas.token_estimation import TokenEstimation
-from src.tools.llm_decision_creator import create_criteria, create_few_shot_examples
+from src.tools.llm_decision_creator import create_criteria
 
 DEFAULT_ENCODING = "o200k_base"
 BUFFER = 1.10
