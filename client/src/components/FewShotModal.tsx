@@ -19,7 +19,7 @@ import {
 } from "../state/types";
 import { twMerge } from "tailwind-merge";
 import classNames from "classnames";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
 import { createJob } from "../services/jobService";
 import { Hr } from "./Hr";

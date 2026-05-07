@@ -32,7 +32,6 @@ import {
   CircleAlert,
   CircleCheck,
   CircleStop,
-  ChevronDown,
   Download,
   FileText,
   Loader,
@@ -69,6 +68,11 @@ type ModelConfigurationProps = {
     React.SetStateAction<Record<string, unknown>>
   >;
 };
+
+const fmt = new Intl.NumberFormat("en", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -454,7 +458,6 @@ export const ProjectPage = () => {
   const project = getProjectByUuid(projectUuid);
 
   const [tokenEstimation, setTokenEstimation] = useState<TokenEstimation | null>(null);
-  const [showTokenDetails, setShowTokenDetails] = useState(false);
 
   const getEstimation = useCallback(async () => {
     if (!projectUuid || fetchedFiles.length === 0) {
@@ -1154,11 +1157,11 @@ export const ProjectPage = () => {
               <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
                 <div className="flex justify-between text-sm text-slate-500">
                   <span>Input tokens:</span>
-                  <span className="font-mono font-medium text-slate-700">~{tokenEstimation.estimated_input_tokens}</span>
+                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_input_tokens)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-slate-500">
                   <span>Output tokens:</span>
-                  <span className="font-mono font-medium text-slate-700">~{tokenEstimation.estimated_output_tokens}</span>
+                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_output_tokens)}</span>
                 </div>
               </div>
             )}
