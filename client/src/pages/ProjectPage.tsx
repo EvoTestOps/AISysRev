@@ -461,7 +461,7 @@ export const ProjectPage = () => {
       setTokenEstimation(null);
       return;
     }
-    fetchTokenEstimation(projectUuid, { screening_type: JobPromptingType.ZERO_SHOT })
+    fetchTokenEstimation(projectUuid, { screening_type: promptingStrategy === "ZS" ? JobPromptingType.ZERO_SHOT : JobPromptingType.FEW_SHOT })
       .then((estimation) => {
         setTokenEstimation(estimation)
       })
@@ -469,7 +469,7 @@ export const ProjectPage = () => {
         setTokenEstimation(null);
         toast.error(`Token estimation failed: ${error instanceof Error ? error.message : String(error)}`);
       })
-  }, [projectUuid, fetchedFiles.length])
+  }, [projectUuid, fetchedFiles.length, promptingStrategy])
 
   useEffect(() => {
     getEstimation();
@@ -1150,6 +1150,18 @@ export const ProjectPage = () => {
                 Few-shot
               </button>
             </div>
+            {tokenEstimation && (
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Input tokens:</span>
+                  <span className="font-mono font-medium text-slate-700">~{tokenEstimation.estimated_input_tokens}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Output tokens:</span>
+                  <span className="font-mono font-medium text-slate-700">~{tokenEstimation.estimated_output_tokens}</span>
+                </div>
+              </div>
+            )}
             <div className="flex justify-start">
               <Button
                 variant="purple"
@@ -1173,47 +1185,6 @@ export const ProjectPage = () => {
               </Button>
             </div>
           </Card>
-          <button
-            type="button"
-            onClick={() => tokenEstimation && setShowTokenDetails(!showTokenDetails)}
-            disabled={!tokenEstimation}
-            className={classNames(
-              "p-2 bg-white shadow-sm rounded-lg flex flex-col border border-transparent",
-              { "hover:border-slate-200 hover:bg-gray-100 cursor-pointer": tokenEstimation }
-            )}
-          >
-            <div className="flex justify-between items-center w-full px-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-slate-700">Estimated tokens</span>
-                {tokenEstimation && (
-                  <ChevronDown
-                    size={14}
-                    className={classNames("text-slate-400 transition-transform", { "rotate-180": showTokenDetails })}
-                  />
-                )}
-              </div>
-              <span className="text-sm font-mono font-bold text-slate-900">
-                {tokenEstimation ? `~${tokenEstimation.total_estimated_tokens}` : "?"}
-              </span>
-            </div>
-
-            {showTokenDetails && tokenEstimation && (
-              <div className="w-full pt-2 flex flex-col gap-1 px-1">
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Input tokens:</span>
-                  <span className="font-mono">{tokenEstimation.estimated_input_tokens}</span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Output tokens:</span>
-                  <span className="font-mono">{tokenEstimation.estimated_output_tokens}</span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Tasks:</span>
-                  <span className="font-mono">{tokenEstimation.task_count}</span>
-                </div>
-              </div>
-            )}
-          </button>
         </div>
       </div>
 

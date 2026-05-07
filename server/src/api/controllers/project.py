@@ -82,23 +82,25 @@ async def estimate_tokens(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found"
             )
 
-        if request_data.screening_type != JobPromptingType.FEW_SHOT:
-            return token_estimation_service.estimate_zero_shot_tokens(
+        if request_data.screening_type == JobPromptingType.ZERO_SHOT:
+            return token_estimation_service.estimate_tokens(
                 papers=papers, criteria=project.criteria
             )
-
-        inc_set = set(request_data.inc_seed_uuids)
-        exc_set = set(request_data.exc_seed_uuids)
-
-        inc_seeds = [paper for paper in papers if paper.uuid in inc_set]
-        exc_seeds = [paper for paper in papers if paper.uuid in exc_set]
-
-        return token_estimation_service.estimate_few_shot_tokens(
-            papers=papers,
-            criteria=project.criteria,
-            inc_seeds=inc_seeds,
-            exc_seeds=exc_seeds,
-        )
+        elif request_data.screening_type == JobPromptingType.FEW_SHOT:
+            max_seed_paper_amount = await paper_service.count_papers_with_human_result(
+                project_uuid=uuid
+            )
+            return token_estimation_service.estimate_tokens(
+                papers=papers,
+                criteria=project.criteria,
+                prompt_type=JobPromptingType.FEW_SHOT,
+                seed_paper_count=max_seed_paper_amount,
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Screening type {request_data.screening_type} is not supported",
+            )
     except HTTPException:
         raise
     except Exception as e:

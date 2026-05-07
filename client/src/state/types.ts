@@ -153,8 +153,6 @@ export type Result = {
 
 export type TokenEstimationRequest = {
   screening_type: JobPromptingType;
-  inc_seed_uuids?: string[];
-  exc_seed_uuids?: string[];
 };
 
 export type TokenEstimation = {

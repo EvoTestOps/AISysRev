@@ -15,5 +15,3 @@ class TokenEstimation(BaseModel):
 
 class TokenEstimationRequest(BaseModel):
     screening_type: JobPromptingType = JobPromptingType.ZERO_SHOT
-    inc_seed_uuids: List[UUID] = []
-    exc_seed_uuids: List[UUID] = []
