@@ -474,7 +474,7 @@ export const ProjectPage = () => {
       estimated_input_tokens: inputTokens,
       estimated_output_tokens: outputTokens,
     };
-  }, [projectUuid, papers, promptingStrategy])
+  }, [projectUuid, papers.length, promptingStrategy])
 
   useEffect(() => {
     if (project !== undefined) {
