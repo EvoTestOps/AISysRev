@@ -1,9 +1,61 @@
-# AISysRev
+# AISysRev - LLM-based Tool for Title-abstract Screening
+
+ ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/EvoTestOps/AiSysRev/tests.yml) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/EvoTestOps/AiSysRev) 
+![GitHub License](https://img.shields.io/github/license/EvoTestOps/AiSysRev) ![GitHub Repo stars](https://img.shields.io/github/stars/EvoTestOps/AiSysRev) ![GitHub contributors](https://img.shields.io/github/contributors/EvoTestOps/AiSysRev)
+
+
+![Claude](https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=claude&logoColor=white) ![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white) ![Google Gemini](https://img.shields.io/badge/google%20gemini-8E75B2?style=for-the-badge&logo=google%20gemini&logoColor=white) ![MistralAI](https://img.shields.io/badge/mistralai-FA520F?style=for-the-badge&logo=mistralai&logoColor=white) ![Ollama](https://img.shields.io/badge/ollama-%23000000.svg?style=for-the-badge&logo=ollama&logoColor=white)
+
 
 > [!IMPORTANT]
 > AISysRev is a Minimum Viable Product (MVP) with core functionality working. Some features are missing and there might be bugs. You can also checkout command line alternative [AISysRevCmdLine](https://github.com/EvoTestOps/AISysRevCmdLine)
 
-This web-application offers AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported as a CSV from [Scopus](https://www.scopus.com/). 
+
+## Table of contents
+
+- [AISysRev - LLM-based Tool for Title-abstract Screening](#aisysrev---llm-based-tool-for-title-abstract-screening)
+  * [Introduction](#introduction)
+  * [Features](#features)
+  * [Showcase](#showcase)
+  * [Getting started](#getting-started)
+    + [Data](#data)
+    + [LLMs Access](#llms-access)
+    + [LLM screening speed](#llm-screening-speed)
+  * [System and software requirements](#system-and-software-requirements)
+    + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
+    + [Running the AISysRev application](#running-the-aisysrev-application)
+      - [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl-)
+      - [Windows (non-WSL)](#windows--non-wsl-)
+  * [Technology](#technology)
+    + [Front-end](#front-end)
+    + [Back-end](#back-end)
+    + [System design](#system-design)
+  * [Development requirements](#development-requirements)
+  * [Running in development mode](#running-in-development-mode)
+    + [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl--1)
+    + [Windows (non-WSL)](#windows--non-wsl--1)
+    + [Getting started with development](#getting-started-with-development)
+  * [Mock data](#mock-data)
+  * [Tests](#tests)
+    + [Client](#client)
+    + [Server](#server)
+  * [Makefile Commands](#makefile-commands)
+    + [Development](#development)
+    + [Database Migrations (Alembic)](#database-migrations--alembic-)
+  * [Supported LLMs](#supported-llms)
+  * [BibTeX Citation](#bibtex-citation)
+    + [Conference proceedings](#conference-proceedings)
+    + [Preprint](#preprint)
+  * [License](#license)
+  * [References](#references)
+
+
+## Introduction
+
+The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported as a CSV from [Scopus](https://www.scopus.com/). 
+
+## Features
+
 The application allows you to:
 - Import a CSV file with paper titles and abstracts. You can also use our [Demo CSV file](data/Demo_TimePressure_5_papers.csv)
 - Specify include/exclude criteria for paper screening
@@ -12,49 +64,60 @@ The application allows you to:
 - Perform manual evaluation of titles and abstracts alongside LLM evaluations
 - Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc.
 
-The application is based on our research papers on this topic. Please consider citing if you use the application [1–2](#references).
+The application is based on our research papers on this topic. Please consider citing if you use the application [1–3](#references).
+
+## Showcase
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/e0d5aaf2-8c67-4991-bfa4-460fa9e06bfc" width="700"><br>
-  <em>Main view shows LLM screening tasks.</em>
+  <em><b>Figure 1:</b> Main view shows LLM screening tasks.</em>
 </p>
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/03a9ea35-e1f6-4489-9e85-2e0efce829f9" width="700"><br>
-  <em>Manual evaluation view, with LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
+  <em><b>Figure 2:</b> Manual evaluation view, with LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
 </p>
 
 <p align="left">
   <img src="https://github.com/user-attachments/assets/d8e3de7d-7ccd-41a4-8af0-b2c7ca3a65e7" width="700"><br>
-  <em>Manual evaluation list view, with papers sorted by inclusion probability according to all executed LLMs.</em>
+  <em><b>Figure 3:</b> Manual evaluation list view, with papers sorted by inclusion probability according to all executed LLMs.</em>
 </p>
 
 
 ## Getting started
 
 ### Data
-The tool has been tested with CSV data exported from [Scopus](https://www.scopus.com/). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: Document title, DOI, Abstract, Authors, and Source title. 
+
+The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>. 
 
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
 
 ### LLMs Access
-The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website. New users also receive $5 in free credits when creating an account.
+
+The application is integrated with [OpenRouter](https://openrouter.ai/), which supports multiple LLMs ranging from very affordable to top-tier models like OpenAI’s ChatGPT, Google’s Gemini, Anthropic’s Claude, Meta's LLama, and Mistral. To use the models, you need to provide an [OpenRouter](https://openrouter.ai/) key. You can set spending limits for each key directly on the [OpenRouter](https://openrouter.ai/) website.
+
 <img width="784" height="117" alt="{585DBE92-5A2F-412E-BEF1-A727015EE872}" src="https://github.com/user-attachments/assets/bc112d74-31a0-4ce0-aeec-4879030c391e" />
 
 ### LLM screening speed
-LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter.
 
+LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter. The screening speed depends on the model used.
 
-### System and software requirements
+## System and software requirements
+
 - Docker, with Compose and buildx plugins installed.
 - `uv` Python package and project manager: https://docs.astral.sh/uv/getting-started/installation/
 - Enough RAM (At least 8GB recommended)
+- Enough disk space (Around 8GB)
 - Network connection
 
-See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop includes Docker Compose, Docker Buildx, Docker Engine and the Docker CLI.**
+> [!TIP]
+> See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop** includes **Docker Compose**, **Docker Buildx**, **Docker Engine** and the **Docker CLI.**
 
-If Docker Desktop did not include Buildx plugin, see: [https://github.com/docker/buildx][https://github.com/docker/buildx]
+> [!NOTE]
+> If Docker Desktop did not include the Buildx plugin, see: [https://github.com/docker/buildx][https://github.com/docker/buildx]
+
+### Verifying Docker setup and environment
 
 1. Run `docker info` to verify you have Docker installed
    - Docker `26.0.0` has been tested as working. For MacOS computers with Colima, Docker version `28.5.1` confirmed to be working.
@@ -64,7 +127,8 @@ If Docker Desktop did not include Buildx plugin, see: [https://github.com/docker
    - **Note:** Older versions of Compose use `docker-compose` as the compose command. We don't provide support for legacy Compose versions.
 
 
-### Running the application
+### Running the AISysRev application
+
 First, clone the repository to your local computer.
 ```bash
 git clone https://github.com/EvoTestOps/AISysRev.git
@@ -82,14 +146,15 @@ make start-prod
 If you want to develop the app, run:
 ```bash
 make start-dev
-``` 
-The startup of the app may a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
+```
+> [!NOTE]
+> The startup of the app may a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
 
 After startup, open the application:
 
-If you ran `start-prod`, navigate to [https://localhost](https://localhost) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning). 
+If you ran `start-prod`, navigate to [https://localhost:3000](https://localhost:3000) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning).
 
-If you used `make start-dev`, navigate to [http://localhost:3000](http://localhost:3000)
+If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
 
 
 #### Windows (non-WSL)
@@ -101,6 +166,8 @@ If you do not have Windows Subsystem for Linux (WSL), start the application with
 
 ## Technology
 
+The AISysRev tool is built on bleeding front-end and back-end technology, with industry-demonstrated stability. We follow the best known coding conventions and toolkit.
+
 ### Front-end
 
 TypeScript, React, Tailwind CSS, Vite, Wouter, Zod, Redux
@@ -108,6 +175,10 @@ TypeScript, React, Tailwind CSS, Vite, Wouter, Zod, Redux
 ### Back-end
 
 Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
+
+### System design
+
+See [Architecture.md](docs/Architecture.md)
 
 ## Development requirements
 - Node.js v22 LTS
@@ -127,13 +198,14 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 ### Getting started with development
 
-Open up the client: [http://localhost:3000](http://localhost:3000)
+Open up the client: [http://localhost:3001](http://localhost:3001)
 
-`/api` is proxied to the backend container, e.g. `http://localhost:3000/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+> [!INFO]
+> `/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
-API docs: [http://localhost:3000/documentation](http://localhost:3000/docs)
+API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
 
-Server: [http://localhost:8080](http://localhost:3000)
+API docs: [http://localhost:3001/documentation](http://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 
@@ -183,7 +255,32 @@ The project includes a `Makefile` for common development and database operations
 
 ## Supported LLMs
 
-Currently, we support models provided via Openrouter, OpenAI or via a local provider (OpenAI SDK).
+Currently, we support models provided via Openrouter, OpenAI or via a local provider (OpenAI SDK). The list of supported LLMs is continuously evolving and changing, which is why we don't provide a comprehensive list.
+
+## BibTeX Citation
+
+Please use the following BibTeX citation to cite our work:
+
+### Conference proceedings
+
+Coming soon.
+
+### Preprint
+
+```
+@misc{huotalaAISysRevLLMbasedTool2025,
+	title = {{AISysRev} -- {LLM}-based {Tool} for {Title}-abstract {Screening}},
+	url = {http://arxiv.org/abs/2510.06708},
+	doi = {10.48550/arXiv.2510.06708},
+	publisher = {arXiv},
+	author = {Huotala, Aleksi and Kuutila, Miikka and Turtio, Olli-Pekka and Mäntylä, Mika},
+	month = oct,
+	year = {2025},
+	note = {arXiv:2510.06708 [cs]},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Software Engineering}
+}
+```
+
 
 ## License
 
