@@ -11,7 +11,6 @@ import {
   DeletedProjectModel,
   ProjectModel,
 } from "../state/types/project";
-import { TokenEstimation, TokenEstimationRequest } from "../state/types";
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
