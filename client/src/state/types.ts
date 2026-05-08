@@ -151,15 +151,9 @@ export type Result = {
   [modelName: string]: string;
 };
 
-export type TokenEstimationRequest = {
-  screening_type: JobPromptingType;
-};
-
 export type TokenEstimation = {
-  task_count: number;
   estimated_input_tokens: number;
   estimated_output_tokens: number;
-  total_estimated_tokens: number;
 };
 
 // Keep this up-to-date with server/src/core/llm_providers.py

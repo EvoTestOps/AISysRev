@@ -4,12 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.db.db_context import DBContext, get_db_ctx
 from src.event_queue import EventName, QueueItem, push_event
-from src.schemas.job import JobPromptingType
 from src.schemas.project import ProjectCreate, ProjectRead
-from src.schemas.token_estimation import TokenEstimation, TokenEstimationRequest
-from src.services.paper_service import create_paper_service
 from src.services.project_service import create_project_service
-from src.services.token_estimation_service import create_token_estimation_service
 
 router = APIRouter()
 
@@ -52,61 +48,6 @@ async def get_project(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch project: {str(e)}",
-        )
-
-
-@router.post(
-    "/project/{uuid}/estimate",
-    status_code=status.HTTP_200_OK,
-    response_model=TokenEstimation,
-    tags=["Project"],
-)
-async def estimate_tokens(
-    uuid: UUID,
-    request_data: TokenEstimationRequest,
-    db_ctx: DBContext = Depends(get_db_ctx),
-):
-    project_service = create_project_service(db_ctx)
-    paper_service = create_paper_service(db_ctx)
-    token_estimation_service = create_token_estimation_service()
-    try:
-        project = await project_service.fetch_by_uuid(uuid)
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
-
-        papers = await paper_service.fetch_papers(project_uuid=uuid)
-        if not papers:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Papers not found"
-            )
-
-        if request_data.screening_type == JobPromptingType.ZERO_SHOT:
-            return token_estimation_service.estimate_tokens(
-                papers=papers, criteria=project.criteria
-            )
-        elif request_data.screening_type == JobPromptingType.FEW_SHOT:
-            max_seed_paper_amount = await paper_service.count_papers_with_human_result(
-                project_uuid=uuid
-            )
-            return token_estimation_service.estimate_tokens(
-                papers=papers,
-                criteria=project.criteria,
-                prompt_type=JobPromptingType.FEW_SHOT,
-                seed_paper_count=max_seed_paper_amount,
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Screening type {request_data.screening_type} is not supported",
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to estimate tokens: {str(e)}",
         )
 
 

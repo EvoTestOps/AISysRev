@@ -58,17 +58,3 @@ export const delete_project = async (uuid: string): Promise<DeletedProject> => {
     throw error;
   }
 };
-
-// TODO: why no camelcase for rest?
-export const fetchTokenEstimation = async (
-  uuid: string,
-  req_data: TokenEstimationRequest,
-): Promise<TokenEstimation> => {
-  try {
-    const res = await api.post(`/api/v1/project/${uuid}/estimate`, req_data);
-    return res.data;
-  } catch (error) {
-    console.error("Fetching project by UUID unsuccessful", error);
-    throw error;
-  }
-};

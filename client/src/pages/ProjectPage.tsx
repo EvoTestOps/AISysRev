@@ -13,7 +13,6 @@ import {
   fileUploadToBackend,
   fileFetchFromBackend,
 } from "../services/fileService";
-import { fetchTokenEstimation } from "../services/projectService";
 import { JobStatus, TokenEstimation } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
@@ -70,9 +69,9 @@ type ModelConfigurationProps = {
 };
 
 const fmt = new Intl.NumberFormat("en", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  });
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -457,26 +456,25 @@ export const ProjectPage = () => {
 
   const project = getProjectByUuid(projectUuid);
 
-  const [tokenEstimation, setTokenEstimation] = useState<TokenEstimation | null>(null);
-
-  const getEstimation = useCallback(async () => {
-    if (!projectUuid || fetchedFiles.length === 0) {
-      setTokenEstimation(null);
-      return;
+  const tokenEstimation = useMemo<TokenEstimation | null>(() => {
+    if (!projectUuid || papers.length === 0) {
+      return null;
     }
-    fetchTokenEstimation(projectUuid, { screening_type: promptingStrategy === "ZS" ? JobPromptingType.ZERO_SHOT : JobPromptingType.FEW_SHOT })
-      .then((estimation) => {
-        setTokenEstimation(estimation)
-      })
-      .catch((error) => {
-        setTokenEstimation(null);
-        toast.error(`Token estimation failed: ${error instanceof Error ? error.message : String(error)}`);
-      })
-  }, [projectUuid, fetchedFiles.length, promptingStrategy])
+    const INPUT_TOKENS_PER_PAPER = 1500;
+    const OUTPUT_TOKENS_PER_PAPER = 130;
+    const FEW_SHOT_MULTIPLIER = 1.4;
 
-  useEffect(() => {
-    getEstimation();
-  }, [getEstimation]);
+    const isFewShot = promptingStrategy !== "ZS";
+    const multiplier = isFewShot ? FEW_SHOT_MULTIPLIER : 1;
+
+    const inputTokens = Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier);
+    const outputTokens = Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER);
+
+    return {
+      estimated_input_tokens: inputTokens,
+      estimated_output_tokens: outputTokens,
+    };
+  }, [projectUuid, papers, promptingStrategy])
 
   useEffect(() => {
     if (project !== undefined) {
