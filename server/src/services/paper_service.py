@@ -64,6 +64,9 @@ class PaperService:
     async def add_human_result(self, uuid: UUID, human_result: PaperHumanResult):
         await self.paper_crud.add_paper_human_result(uuid, human_result)
 
+    async def count_papers_with_human_result(self, project_uuid: UUID):
+        return await self.paper_crud.count_papers_with_human_results(project_uuid)
+
 
 def create_paper_service(db_ctx: DBContext) -> PaperService:
     return PaperService(db_ctx.crud(PaperCrud))

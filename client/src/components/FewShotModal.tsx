@@ -103,6 +103,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   // Default to true
   const [rememberSelection, setRememberSelection] = useState(true);
 
+
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
   );
@@ -198,15 +199,15 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
           >
             {(currentStep === "INCLUSION_SEED" ||
               currentStep === "EXCLUSION_SEED") && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
-                <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
-                  Title
+                <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
+                  <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
+                    Title
+                  </div>
+                  <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
+                    Score
+                  </div>
                 </div>
-                <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
-                  Score
-                </div>
-              </div>
-            )}
+              )}
             {currentStep === "OVERVIEW" && (
               <div className="flex flex-col gap-2">
                 <H6>Inclusion seeds</H6>
@@ -238,6 +239,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                   )}
                 </div>
                 <Hr />
+
                 <H6>Exclusion seeds</H6>
                 <div className="flex flex-col gap-2">
                   {selectedExclusionSeeds.map((s) => {
