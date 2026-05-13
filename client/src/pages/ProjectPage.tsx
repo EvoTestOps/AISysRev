@@ -460,8 +460,8 @@ export const ProjectPage = () => {
     if (!projectUuid || papers.length === 0) {
       return null;
     }
-    const INPUT_TOKENS_PER_PAPER = 1500;
-    const OUTPUT_TOKENS_PER_PAPER = 130;
+    const INPUT_TOKENS_PER_PAPER = 1880;
+    const OUTPUT_TOKENS_PER_PAPER = 1300;
     const FEW_SHOT_MULTIPLIER = 1.4;
 
     const isFewShot = promptingStrategy !== "ZS";
