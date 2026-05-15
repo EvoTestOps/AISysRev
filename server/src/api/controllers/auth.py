@@ -4,10 +4,13 @@ import json
 from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, Depends, HTTPException, status
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, JSONResponse
 
+from src.core.auth import get_current_user
 from src.core.config import settings
 from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
+from src.schemas.user import UserRead
 from src.services.user_service import create_user_service
 from src.redis_client.client import get_redis_client
 
@@ -74,12 +77,17 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
+@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead)
+async def me(current_user: User = Depends(get_current_user)):
+    return UserRead.model_validate(current_user)
+
+
 @router.post("/auth/logout", status_code=status.HTTP_200_OK)
 async def logout(request: Request):
     session_id = request.cookies.get("session_id")
     if session_id:
         redis_client = get_redis_client()
         await redis_client.delete(f"session:{session_id}")
-    response = RedirectResponse(url=settings.FRONTEND_URL)
+    response = JSONResponse(content={"detail": "Logged out successfully"})
     response.delete_cookie(key="session_id")
     return response

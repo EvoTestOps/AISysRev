@@ -12,11 +12,14 @@ import { SettingsPage } from "./pages/SettingPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
+import { LoginPage } from "./pages/LoginPage";
 import { useTypedStoreActions } from "./state/store";
+import { api } from "./services/api";
 
 function App() {
   const [location, navigate] = useLocation();
   const [checkedTerms, setCheckedTerms] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
@@ -24,6 +27,18 @@ function App() {
   const fetchProviders = useTypedStoreActions(
     (actions) => actions.fetchProviders
   );
+
+  useEffect(() => {
+    api.get("/api/v1/auth/me")
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false));
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated === false && location !== "/login") {
+      navigate("/login");
+    }
+  }, [isAuthenticated, location, navigate]);
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
@@ -35,11 +50,14 @@ function App() {
 
   // Initialization hook
   useEffect(() => {
-    fetchProviders();
-    fetchProjects();
+    if (isAuthenticated) {
+      fetchProviders();
+      fetchProjects();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
+  if (isAuthenticated === null) return null;
   if (!checkedTerms) return null;
 
   return (
@@ -63,6 +81,7 @@ function App() {
         />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/result/:uuid" component={ResultPage} />
+        <Route path="/login" component={LoginPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
