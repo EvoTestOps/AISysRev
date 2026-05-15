@@ -13,7 +13,7 @@ import {
   fileUploadToBackend,
   fileFetchFromBackend,
 } from "../services/fileService";
-import { JobStatus } from "../state/types";
+import { JobStatus, TokenEstimation } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
 import {
@@ -67,6 +67,11 @@ type ModelConfigurationProps = {
     React.SetStateAction<Record<string, unknown>>
   >;
 };
+
+const fmt = new Intl.NumberFormat("en", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -433,6 +438,7 @@ export const ProjectPage = () => {
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
   >([]);
 
+
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
   const getProjectByUuid = useTypedStoreState(
@@ -449,6 +455,26 @@ export const ProjectPage = () => {
   );
 
   const project = getProjectByUuid(projectUuid);
+
+  const tokenEstimation = useMemo<TokenEstimation | null>(() => {
+    if (!projectUuid || papers.length === 0) {
+      return null;
+    }
+    const INPUT_TOKENS_PER_PAPER = 1880;
+    const OUTPUT_TOKENS_PER_PAPER = 1300;
+    const FEW_SHOT_MULTIPLIER = 1.4;
+
+    const isFewShot = promptingStrategy !== "ZS";
+    const multiplier = isFewShot ? FEW_SHOT_MULTIPLIER : 1;
+
+    const inputTokens = Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier);
+    const outputTokens = Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER);
+
+    return {
+      estimated_input_tokens: inputTokens,
+      estimated_output_tokens: outputTokens,
+    };
+  }, [projectUuid, papers.length, promptingStrategy])
 
   useEffect(() => {
     if (project !== undefined) {
@@ -1128,6 +1154,18 @@ export const ProjectPage = () => {
                 Few-shot
               </button>
             </div>
+            {tokenEstimation && (
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Input tokens:</span>
+                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_input_tokens)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Output tokens:</span>
+                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_output_tokens)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex justify-start">
               <Button
                 variant="purple"

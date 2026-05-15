@@ -67,3 +67,14 @@ class PaperCrud:
         )
         await self.db.execute(stmt)
         await self.db.flush()
+
+    async def count_papers_with_human_results(self, project_uuid: UUID):
+        stmt = (
+            select(func.count())
+            .select_from(Paper)
+            .where(Paper.project_uuid == project_uuid, Paper.human_result.isnot(None))
+        )
+        count = await self.db.execute(stmt)
+        return count.scalar()
+
+
