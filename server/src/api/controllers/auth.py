@@ -72,3 +72,14 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication failed: {str(e)}",
         )
+
+
+@router.post("/auth/logout", status_code=status.HTTP_200_OK)
+async def logout(request: Request):
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        redis_client = get_redis_client()
+        await redis_client.delete(f"session:{session_id}")
+    response = RedirectResponse(url=settings.FRONTEND_URL)
+    response.delete_cookie(key="session_id")
+    return response
