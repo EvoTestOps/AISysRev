@@ -2,7 +2,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
 from src.schemas.jobtask import JobTaskHumanResultUpdate, JobTaskReadWithLLMConfig
 from src.services.jobtask_service import create_jobtask_service
 
@@ -10,7 +12,11 @@ router = APIRouter()
 
 
 @router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK, tags=["Job task"])
-async def get_job_tasks(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def get_job_tasks(
+    uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
     try:
         jobtask_service = create_jobtask_service(db_ctx)
         job_tasks = await jobtask_service.fetch_job_tasks(uuid)
@@ -35,15 +41,14 @@ async def get_job_tasks(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
     tags=["Job task"],
 )
 async def get_job_tasks_by_paper(
-    paper_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)
+    paper_uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         jobtask_service = create_jobtask_service(db_ctx)
         job_tasks = await jobtask_service.fetch_job_tasks_for_paper(paper_uuid)
         if not job_tasks:
-            # raise HTTPException(
-            #     status_code=status.HTTP_404_NOT_FOUND, detail="Job tasks not found"
-            # )
             return []
         return job_tasks
     except HTTPException:
@@ -60,6 +65,7 @@ async def add_job_task_human_result(
     uuid: UUID,
     result: JobTaskHumanResultUpdate,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         jobtask_service = create_jobtask_service(db_ctx)

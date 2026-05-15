@@ -3,7 +3,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
 from src.event_queue import EventName, QueueItem, push_event
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead, JobReadWithStats
 from src.schemas.project import FewShotPreferences
@@ -20,7 +22,9 @@ router = APIRouter()
     tags=["Job"],
 )
 async def get_jobs(
-    project: Optional[UUID] = None, db_ctx: DBContext = Depends(get_db_ctx)
+    project: Optional[UUID] = None,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         job_service = create_job_service(db_ctx)
@@ -38,7 +42,11 @@ async def get_jobs(
 @router.get(
     "/job/{uuid}", status_code=status.HTTP_200_OK, response_model=JobRead, tags=["Job"]
 )
-async def get_single_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def get_single_job(
+    uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
     try:
         job_service = create_job_service(db_ctx)
         job = await job_service.fetch_by_uuid(uuid)
@@ -60,6 +68,7 @@ async def get_single_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
 async def create_job(
     job_data: JobCreate,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     job_service = create_job_service(db_ctx)
     project_service = create_project_service(db_ctx)
@@ -67,11 +76,9 @@ async def create_job(
     try:
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):
-            # If the user wants to remember their choice:
             if cfg.remember_selection:
                 await project_service.update_project_preferences(
                     job_data.project_uuid,
-                    # TODO: Validate seed paper validity. Seed papers must exist in the system.
                     ProjectPreferences(
                         few_shot=FewShotPreferences(
                             inc_seed_papers=cfg.seed_paper_inc,
@@ -80,7 +87,6 @@ async def create_job(
                     ),
                 )
             else:
-                # Otherwise, empty few-shot selection
                 await project_service.update_project_preferences(
                     job_data.project_uuid,
                     ProjectPreferences(few_shot=None),
@@ -103,7 +109,11 @@ async def create_job(
 
 
 @router.post("/job/{uuid}/cancel", status_code=status.HTTP_200_OK, tags=["Job"])
-async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def cancel_job(
+    uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
     job_service = create_job_service(db_ctx)
     try:
         await job_service.cancel_job(uuid)
@@ -117,7 +127,11 @@ async def cancel_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
 
 
 @router.delete("/job/{uuid}", status_code=status.HTTP_200_OK, tags=["Job"])
-async def delete_job(uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def delete_job(
+    uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
     job_service = create_job_service(db_ctx)
     try:
         await job_service.delete_job(uuid)

@@ -31,6 +31,11 @@ class Settings:
         self.MINIO_ROOT_USER: str = get_env("MINIO_ROOT_USER")
         self.MINIO_ROOT_PASSWORD: str = get_env("MINIO_ROOT_PASSWORD")
         self.MINIO_BUCKET: str = get_env("MINIO_BUCKET", "default-bucket")
+        self.OIDC_CLIENT_ID: str = get_env("OIDC_CLIENT_ID", "")
+        self.OIDC_CLIENT_SECRET: str = get_env("OIDC_CLIENT_SECRET", "")
+        self.OIDC_ISSUER_URL: str = get_env("OIDC_ISSUER_URL", "https://login.helsinki.fi")
+        self.OIDC_REDIRECT_URI: str = get_env("OIDC_REDIRECT_URI", "https://localhost:3001/api/v1/auth/callback")
+        self.FRONTEND_URL: str = get_env("FRONTEND_URL", "https://localhost:3001")
         self.RUN_MIGRATIONS: bool = get_env("RUN_MIGRATIONS", "false").lower() in [
             "y",
             "1",

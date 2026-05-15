@@ -2,12 +2,13 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 const appEnv = process.env.VITE_APP_ENV;
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [wasm(), topLevelAwait(), react()],
+  plugins: [wasm(), topLevelAwait(), react(), basicSsl()],
   server: {
     open: false,
     port: 3000,
