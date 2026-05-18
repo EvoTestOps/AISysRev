@@ -24,7 +24,7 @@ async def list_projects(
 ):
     projects = create_project_service(db_ctx)
     try:
-        return await projects.fetch_all()
+        return await projects.fetch_all(current_user.uuid)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -68,6 +68,7 @@ async def create_new_project(
 ):
     projects = create_project_service(db_ctx)
     try:
+        project_data.owner_uuid = current_user.uuid
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()
         await push_event(
