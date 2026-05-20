@@ -104,7 +104,7 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         key="session_id",
         value=session_id,
         httponly=True,
-        secure=True,
+        secure=settings.APP_ENV != "test",
         samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )

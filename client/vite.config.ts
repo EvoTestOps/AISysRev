@@ -8,7 +8,7 @@ const appEnv = process.env.VITE_APP_ENV;
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [wasm(), topLevelAwait(), react(), basicSsl()],
+  plugins: [wasm(), topLevelAwait(), react(), ...(appEnv === "dev" ? [basicSsl()] : [])],
   server: {
     open: false,
     port: 3000,

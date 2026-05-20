@@ -1,14 +1,22 @@
 import pytest
 from src.crud.project_crud import ProjectCrud
+from src.crud.user_crud import UserCrud
 from src.schemas.project import Criteria, ProjectCreate, ProjectRead
+from src.schemas.user import UserCreate
 
 
 @pytest.mark.asyncio
 async def test_fetch_projects_crud(db_ctx):
+    user_crud = db_ctx.crud(UserCrud)
+    user = await user_crud.create_user(
+        UserCreate(sub="test-owner", email="test@test.com", name="Test User")
+    )
+
     crud = db_ctx.crud(ProjectCrud)
     for i in range(1, 6):
         project_data = ProjectCreate(
             name=f"Test Project {i}",
+            owner_uuid=user.uuid,
             criteria=Criteria(
                 inclusion_criteria=["Must be peer reviewed"],
                 exclusion_criteria=["Not in English"],
@@ -16,7 +24,7 @@ async def test_fetch_projects_crud(db_ctx):
         )
         await crud.create_project(project_data)
 
-    projects = await crud.fetch_projects()
+    projects = await crud.fetch_projects(user.uuid)
     assert len(projects) == 5
 
 

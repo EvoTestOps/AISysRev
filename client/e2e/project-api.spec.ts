@@ -11,10 +11,14 @@ let mockProject: {
   };
 };
 
-// TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
   const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
   expect(fixtureRes.status()).toBe(200)
+
+  await request.get(`${prefix}/auth/dev-login`);
+  const meRes = await request.get(`${prefix}/auth/me`);
+  expect(meRes.status(), 'should be authenticated after dev-login').toBe(200);
+
   const createRes = await request.post(`${prefix}/project`, {
     data: {
       name: 'Test Project',
