@@ -77,6 +77,40 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
+@router.get("/auth/dev-login")
+async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
+    if settings.APP_ENV == "prod":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    user_service = create_user_service(db_ctx)
+    user = await user_service.get_or_create_user(
+        sub="dev-user",
+        email="dev@dev.local",
+        name="Dev User",
+    )
+    await db_ctx.commit()
+    session_id = str(uuid.uuid4())
+    session_data = json.dumps({
+        "access_token": "dev-token",
+        "user_uuid": str(user.uuid),
+    })
+    redis_client = get_redis_client()
+    await redis_client.setex(
+        f"session:{session_id}",
+        settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        session_data,
+    )
+    response = RedirectResponse(url=settings.FRONTEND_URL)
+    response.set_cookie(
+        key="session_id",
+        value=session_id,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    return response
+
+
 @router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead)
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)

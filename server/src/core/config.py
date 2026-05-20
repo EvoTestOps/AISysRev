@@ -24,7 +24,7 @@ class Settings:
 
         self.SECRET_KEY: str = get_env("SECRET_KEY", "yoursecretkey")
         self.ALGORITHM: str = "HS256"
-        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 5
         self.REDIS_URL: str = get_env("REDIS_URL")
         self.CELERY_BROKER_URL: str = get_env("CELERY_BROKER_URL")
         self.MINIO_ENDPOINT: str = get_env("MINIO_ENDPOINT")
