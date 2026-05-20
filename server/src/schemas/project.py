@@ -1,7 +1,9 @@
+from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class FewShotPreferences(BaseModel):
@@ -16,6 +18,7 @@ class ProjectPreferences(BaseModel):
 class Criteria(BaseModel):
     inclusion_criteria: List[str]
     exclusion_criteria: List[str]
+    inclusion_expression: Optional[str] = None
 
     @field_validator("inclusion_criteria", "exclusion_criteria")
     @classmethod

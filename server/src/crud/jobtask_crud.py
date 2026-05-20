@@ -1,4 +1,4 @@
-from typing import List, Sequence, Tuple
+from typing import Any, List, Sequence, Tuple
 from uuid import UUID
 
 from sqlalchemy import Row, case, func, select, update
@@ -9,7 +9,6 @@ from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskStatus
-from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperCreate
 
 
@@ -137,13 +136,12 @@ class JobTaskCrud:
         )
         await self.db.execute(stmt)
 
-    async def update_job_task_result(
-        self, job_task_id: int, result: StructuredResponse
-    ):
+    async def update_job_task_result(self, job_task_id: int, result: Any):
+        result_data = (
+            result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+        )
         stmt = (
-            update(JobTask)
-            .where(JobTask.id == job_task_id)
-            .values(result=result.model_dump(mode="json"))
+            update(JobTask).where(JobTask.id == job_task_id).values(result=result_data)
         )
         await self.db.execute(stmt)
         await self.db.flush()
