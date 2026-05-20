@@ -99,6 +99,22 @@ b) Each individual inclusion or exclusion criterion
 {1}
 \"\"\""""
 
+per_criteria_task_prompt = """You are an expert research assistant conducting a systematic literature review.
+
+TITLE: {0}
+ABSTRACT: {1}
+
+Does the following criterion apply to this paper?
+Criterion: {2}
+
+Provide a probability and a brief reason for your estimate.
+
+- **Value:** A float between `0.000` and `1.000`
+    - **Interpretation:** The likelihood that the criterion applies or the primary study is relevant.
+        - A value closer to `1.000` means that it is extremely likely (very strong match)
+        - A value closer to `0.000` means it is extremely unlikely (very weak or no match)
+        - You are encouraged to use intermediate values (e.g. `0.100`, `0.250`, `0.350`, `0.700`, `0.950`, `0.999` etc.), not just `0.000` or `1.000`"""
+
 few_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
 
 Task: Evaluate a primary study using **three types of assessments**, applied to both:

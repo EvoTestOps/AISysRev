@@ -3,17 +3,13 @@ import random
 from typing import Any, List
 
 from httpx import AsyncClient
+from openai.types.model import Model
 from pydantic import BaseModel, Field
 
-from src.core.llm.providers.provider import (
-    T,
-    BaseLLMParams,
-    LLMProvider,
-)
-from openai.types.model import Model
-
+from src.core.llm.providers.provider import BaseLLMParams, LLMProvider, T
 from src.schemas.llm import (
     Criterion,
+    CriterionOnlyResponse,
     Decision,
     LikertDecision,
     ProviderRuntimeParameters,
@@ -61,7 +57,7 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         model_parameters: dict[str, Any],
         schema: type[T],
         prompt,
-    ) -> StructuredResponse:
+    ) -> T:
         if self.provider_parameters is None:
             raise RuntimeError("Provider parameters needs to be defined")
 
@@ -71,6 +67,12 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         )
         delay_ms = max(0.0, self.provider_parameters.delay + jitter_ms)
         await asyncio.sleep(delay_ms / 1000.0)
+
+        if schema is CriterionOnlyResponse:
+            return CriterionOnlyResponse(
+                probability_decision=1.0,
+                reason="The criterion is met.",
+            )
 
         return StructuredResponse(
             overall_decision=Decision(

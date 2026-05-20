@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Optional
+
 from pydantic import BaseModel, Field
+
 from src.core.prompts import default_system_prompt
 
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
@@ -45,6 +47,13 @@ class StructuredResponse(BaseModel, extra="forbid"):
     overall_decision: Decision
     inclusion_criteria: list[Criterion]
     exclusion_criteria: list[Criterion]
+
+
+class CriterionOnlyResponse(BaseModel, extra="forbid"):
+    probability_decision: float = Field(
+        description="The likelihood, that the criterion applies or the primary study is relevant. A value closer to `1.0` means that it is extremely likely (very strong match). A value closer to `0.0` means it is extremely unlikely (very weak or no match). You are encouraged to use intermediate values (e.g. `0.1`, `0.2`, `0.35`, `0.7`, etc..), not just `0.0` or `1.0`"
+    )
+    reason: str = Field(description="Reasoning for the probability estimate.")
 
 
 class ProviderRuntimeParameters(BaseModel):
