@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "react-toastify";
 import { H6 } from "../components/Typography";
@@ -19,22 +19,23 @@ export const NewProject = () => {
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
+  const [inclusionExpression, setInclusionExpression] = useState("");
 
   const [, navigate] = useLocation();
 
   const handleInclusionSetup = useCallback(() => {
     if (inclusionCriteriaInput.trim() !== "") {
-      setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
+      setInclusionCriteria((prev) => [...prev, inclusionCriteriaInput]);
       setInclusionCriteriaInput("");
     }
-  }, [inclusionCriteria, inclusionCriteriaInput]);
+  }, [inclusionCriteriaInput]);
 
   const handleExclusionSetup = useCallback(() => {
     if (exclusionCriteriaInput.trim() !== "") {
-      setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
+      setExclusionCriteria((prev) => [...prev, exclusionCriteriaInput]);
       setExclusionCriteriaInput("");
     }
-  }, [exclusionCriteria, exclusionCriteriaInput]);
+  }, [exclusionCriteriaInput]);
 
   const deleteInclusionCriteria = useCallback((index: number) => {
     setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
@@ -48,6 +49,12 @@ export const NewProject = () => {
     (actions) => actions.refreshProjects,
   );
 
+  const criteriaIdMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    inclusionCriteria.forEach((desc, i) => { map[`IC${i + 1}`] = desc; });
+    return map;
+  }, [inclusionCriteria]);
+
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
       toast.error("Title is required");
@@ -59,11 +66,13 @@ export const NewProject = () => {
       const criteria: Criteria = {
         inclusion_criteria: inclusionCriteria,
         exclusion_criteria: exclusionCriteria,
+        ...(inclusionExpression.trim()
+          ? { inclusion_expression: inclusionExpression.trim() }
+          : {}),
       };
 
       try {
         const res = await create_project(title, criteria);
-        // console.log("Project created, res: ", res);
         return { id: res.id, uuid: res.uuid };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
@@ -76,13 +85,10 @@ export const NewProject = () => {
 
     async function handle() {
       let uuid: string | null = null;
-
       try {
         const res = await create();
-
         uuid = res.uuid;
         toast.success("Project created successfully!");
-
         if (uuid) {
           refreshProjects();
           navigate(`/project/${uuid}`);
@@ -92,7 +98,6 @@ export const NewProject = () => {
         try {
           const msg = typeof error?.message === "string" ? error.message : "";
           const parsed = JSON.parse(msg);
-
           if (Array.isArray(parsed)) {
             ExpandableToast(parsed);
           } else {
@@ -106,7 +111,16 @@ export const NewProject = () => {
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, refreshProjects, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, refreshProjects, navigate]);
+
+  const handleReset = useCallback(() => {
+    setTitle("");
+    setInclusionCriteria([]);
+    setExclusionCriteria([]);
+    setInclusionCriteriaInput("");
+    setExclusionCriteriaInput("");
+    setInclusionExpression("");
+  }, []);
 
   return (
     <Layout title="New Project">
@@ -169,17 +183,40 @@ export const NewProject = () => {
           </div>
         </Card>
         <Card>
+          <div className="flex flex-col gap-4">
+            <div>
+              <H6>Inclusion logic <span className="font-normal text-gray-400">(optional, required for per-criteria screening)</span></H6>
+              <p className="text-sm text-gray-500 mt-1">
+                Define how inclusion criteria are combined using AND, OR, NOT and parentheses.
+                Leave blank to default to OR across all inclusion criteria.
+              </p>
+              {Object.keys(criteriaIdMap).length > 0 && (
+                <div className="mt-2 text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
+                  {Object.entries(criteriaIdMap).map(([id, desc]) => (
+                    <span key={id}>
+                      <span className="font-mono font-semibold text-gray-600">{id}</span>
+                      {" = "}
+                      <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-[200px_1fr] items-center gap-4">
+              <H6>Inclusion logic</H6>
+              <input
+                type="text"
+                className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
+                placeholder="e.g. IC1 OR IC2"
+                value={inclusionExpression}
+                onChange={(e) => setInclusionExpression(e.target.value)}
+              />
+            </div>
+          </div>
+        </Card>
+        <Card>
           <div className="flex justify-between items-end gap-4">
-            <Button
-              variant="red"
-              onClick={() => {
-                setTitle("");
-                setInclusionCriteria([]);
-                setExclusionCriteria([]);
-                setInclusionCriteriaInput("");
-                setExclusionCriteriaInput("");
-              }}
-            >
+            <Button variant="red" onClick={handleReset}>
               <RotateCcw size={16} />
               <span>Reset</span>
             </Button>

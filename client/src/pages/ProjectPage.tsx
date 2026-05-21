@@ -20,6 +20,7 @@ import {
   FetchedFile,
   LlmConfig,
   createZeroShotPromptingConfig,
+  createPerCriteriaPromptingConfig,
   JobPromptingType,
   Provider,
 } from "../state/types";
@@ -422,7 +423,7 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
-  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS">("ZS");
+  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS" | "PC">("ZS");
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
@@ -651,39 +652,46 @@ export const ProjectPage = () => {
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
-  const createZeroShotJob = useCallback(async () => {
+  const buildLlmConfig = useCallback((): LlmConfig | null => {
     if (!selectedLlm) {
       toast.error("Please select a model before creating a task.");
-      return;
+      return null;
     }
     if (!selectedLlmProvider) {
       toast.error("Please select a provider before creating a task.");
-      return;
+      return null;
     }
-    const llmConfig: LlmConfig = {
+    return {
       model_name: selectedLlm.value,
       provider_name: selectedLlmProvider.value,
-      model_parameters: modelFormValues, // Form values contain all LLM-specific configuration what is needed
+      model_parameters: modelFormValues,
       provider_parameters: providerFormValues,
     };
+  }, [selectedLlm, selectedLlmProvider, modelFormValues, providerFormValues]);
 
-    const promptingConfig = createZeroShotPromptingConfig();
-
+  const createZeroShotJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig);
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig());
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [
-    selectedLlm,
-    selectedLlmProvider,
-    modelFormValues,
-    providerFormValues,
-    projectUuid,
-    fetchJobsForProject,
-  ]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+
+  const createPerCriteriaJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
+    try {
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig());
+      fetchJobsForProject(projectUuid);
+    } catch (e) {
+      console.error("Error creating job:", e);
+      toast.error("Error creating job");
+    }
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -895,6 +903,8 @@ export const ProjectPage = () => {
                       JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
                     {job.prompting_config.screening_type ==
                       JobPromptingType.FEW_SHOT && <Badge text="FS" invert />}
+                    {job.prompting_config.screening_type ==
+                      JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
                   </>
                   <div className="flex items-center font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
@@ -1153,6 +1163,28 @@ export const ProjectPage = () => {
               >
                 Few-shot
               </button>
+              <button
+                type="button"
+                className={twMerge(
+                  classNames(
+                    "rounded-lg px-3 py-2 text-sm text-slate-900 hover:cursor-pointer",
+                    {
+                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
+                        promptingStrategy === "PC",
+                      "opacity-20 hover:cursor-default":
+                        !isLlmProviderSelected || !isLlmSelected,
+                    },
+                  ),
+                )}
+                onClick={() => {
+                  if (isLlmProviderSelected && isLlmSelected) {
+                    setPromptingStrategy("PC");
+                  }
+                }}
+                aria-pressed={promptingStrategy === "PC"}
+              >
+                Per-criteria
+              </button>
             </div>
             {tokenEstimation && (
               <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
@@ -1172,6 +1204,8 @@ export const ProjectPage = () => {
                 onClick={() => {
                   if (promptingStrategy === "ZS") {
                     createZeroShotJob();
+                  } else if (promptingStrategy === "PC") {
+                    createPerCriteriaJob();
                   } else {
                     navigate(`/project/${projectUuid}/few_shot`);
                   }

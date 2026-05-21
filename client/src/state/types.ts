@@ -15,7 +15,7 @@ export type LlmConfig = {
   model_parameters: Record<string, unknown>;
 };
 
-export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;
+export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
 
 export type ZeroShotPromptingConfig = {
   screening_type: JobPromptingType.ZERO_SHOT;
@@ -43,6 +43,14 @@ export const createFewShotPromptingConfig = (
   remember_selection,
 });
 
+export type PerCriteriaPromptingConfig = {
+  screening_type: JobPromptingType.PER_CRITERIA;
+};
+
+export const createPerCriteriaPromptingConfig = (): PerCriteriaPromptingConfig => ({
+  screening_type: JobPromptingType.PER_CRITERIA,
+});
+
 export type CreatedJob = {
   uuid: string;
   project_uuid: string;
@@ -56,6 +64,7 @@ export enum JobPromptingType {
   ZERO_SHOT = "ZERO_SHOT",
   ONE_SHOT = "ONE_SHOT",
   FEW_SHOT = "FEW_SHOT",
+  PER_CRITERIA = "PER_CRITERIA",
 }
 
 export enum JobTaskHumanResult {
