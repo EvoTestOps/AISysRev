@@ -115,7 +115,7 @@ LLM calls are parallelized, and you should achieve a screening speed exceeding 1
 > See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop** includes **Docker Compose**, **Docker Buildx**, **Docker Engine** and the **Docker CLI.**
 
 > [!NOTE]
-> If Docker Desktop did not include the Buildx plugin, see: [https://github.com/docker/buildx][https://github.com/docker/buildx]
+> If Docker Desktop did not include the Buildx plugin, see: [https://github.com/docker/buildx](https://github.com/docker/buildx)
 
 ### Verifying Docker setup and environment
 
