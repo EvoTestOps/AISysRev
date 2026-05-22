@@ -27,3 +27,12 @@ class UserCrud:
         await self.db.flush()
         await self.db.refresh(user)
         return user
+
+    async def delete_user(self, user_uuid: str) -> bool:
+        stmt = select(User).where(User.uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+        if user:
+            await self.db.delete(user)
+            return True
+        return False

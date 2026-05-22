@@ -1,8 +1,16 @@
+import { useLocation } from "wouter";
 import { Button } from "../components/Button";
 import { H2 } from "../components/Typography";
+import { api } from "../services/api";
 
 export const LoginPage = () => {
   const isDev = import.meta.env.VITE_APP_ENV === "dev";
+  const [, navigate] = useLocation();
+
+  const handleDevLogin = async () => {
+    await api.get("/api/v1/auth/dev-login");
+    navigate("/");
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-200 gap-6">
@@ -19,11 +27,7 @@ export const LoginPage = () => {
           Login with University of Helsinki
         </Button>
         {isDev && (
-          <Button
-            size="md"
-            variant="gray"
-            onClick={() => (window.location.href = "/api/v1/auth/dev-login")}
-          >
+          <Button size="md" variant="gray" onClick={handleDevLogin}>
             Dev Login
           </Button>
         )}

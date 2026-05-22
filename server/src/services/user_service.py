@@ -9,6 +9,9 @@ class UserService:
     def __init__(self, user_crud: UserCrud):
         self.user_crud = user_crud
 
+    async def delete_user(self, user_uuid: str) -> bool:
+        return await self.user_crud.delete_user(user_uuid)
+
     async def get_or_create_user(
         self, sub: str, email: Optional[str]
     ) -> UserRead:

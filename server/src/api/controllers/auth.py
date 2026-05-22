@@ -114,6 +114,26 @@ async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
 
 
+@router.delete("/auth/me", status_code=status.HTTP_200_OK)
+async def delete_account(
+    request: Request,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    session_id = request.cookies.get("session_id")
+    if session_id:
+        redis_client = get_redis_client()
+        await redis_client.delete(f"session:{session_id}")
+
+    user_service = create_user_service(db_ctx)
+    await user_service.delete_user(str(current_user.uuid))
+    await db_ctx.commit()
+
+    response = JSONResponse(content={"detail": "Account deleted successfully"})
+    response.delete_cookie(key="session_id")
+    return response
+
+
 @router.post("/auth/logout", status_code=status.HTTP_200_OK)
 async def logout(request: Request):
     session_id = request.cookies.get("session_id")

@@ -9,6 +9,7 @@ import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { SettingsPage } from "./pages/SettingPage";
+import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
@@ -32,13 +33,7 @@ function App() {
     api.get("/api/v1/auth/me")
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false));
-  }, []);
-
-  useEffect(() => {
-    if (isAuthenticated === false && location !== "/login") {
-      navigate("/login");
-    }
-  }, [isAuthenticated, location, navigate]);
+  }, [location]);
 
   useEffect(() => {
     const hasReadTerms = Cookies.get("disclaimer_read");
@@ -57,7 +52,8 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  if (isAuthenticated === null) return null;
+  if (location === "/login") return <LoginPage />;
+  if (!isAuthenticated) return null;
   if (!checkedTerms) return null;
 
   return (
@@ -80,8 +76,8 @@ function App() {
           component={TermsAndConditionsPage}
         />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/settings/account" component={AccountSettingsPage} />
         <Route path="/result/:uuid" component={ResultPage} />
-        <Route path="/login" component={LoginPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
