@@ -53,10 +53,14 @@ class _Parser:
     def _not_atom(self) -> dict:
         if self._peek() == "NOT":
             self._consume("NOT")
+            if self._peek() == "(":
+                raise ValueError(
+                    "NOT can only be applied to a single criterion (e.g. NOT IC1), not a group. "
+                    "Rewrite using De Morgan's law: NOT (A OR B) -> NOT A AND NOT B, "
+                    "NOT (A AND B) -> NOT A OR NOT B."
+                )
             node = self._atom()
-            if "id" in node:
-                return {**node, "negate": True}
-            return {"operator": "AND", "criteria": [node], "negate": True}
+            return {**node, "negate": True}
         return self._atom()
 
     def _atom(self) -> dict:
@@ -82,15 +86,6 @@ def parse_expression(expr: str, valid_ids: list[str]) -> dict:
         raise ValueError("Empty expression")
     parser = _Parser(tokens, set(id.upper() for id in valid_ids))
     return parser.parse()
-
-
-def extract_leaf_criteria(node: dict) -> list[dict]:
-    if "id" in node:
-        return [node]
-    result = []
-    for child in node.get("criteria", []):
-        result.extend(extract_leaf_criteria(child))
-    return result
 
 
 def build_criteria_tree_with_expressions(
@@ -137,8 +132,19 @@ def build_criteria_tree_with_expressions(
     return result
 
 
+# Ported from command line version (AISysRevCmdLine)
+# https://github.com/EvoTestOps/AISysRevCmdLine/blob/main/screen_boolean.py
+
+def extract_leaf_criteria(node: dict) -> list[dict]:
+    if "id" in node:
+        return [node]
+    result = []
+    for child in node.get("criteria", []):
+        result.extend(extract_leaf_criteria(child))
+    return result
+
+
 def _attach_descriptions(node: dict, leaf_map: dict[str, str]) -> None:
-    """Recursively attach 'description' to leaf nodes from leaf_map."""
     if "id" in node:
         node["description"] = leaf_map.get(node["id"], "")
         return

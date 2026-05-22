@@ -20,6 +20,7 @@ export const NewProject = () => {
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [inclusionExpression, setInclusionExpression] = useState("");
+  const [exclusionExpression, setExclusionExpression] = useState("");
 
   const [, navigate] = useLocation();
 
@@ -55,6 +56,12 @@ export const NewProject = () => {
     return map;
   }, [inclusionCriteria]);
 
+  const exclusionCriteriaIdMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    exclusionCriteria.forEach((desc, i) => { map[`EC${i + 1}`] = desc; });
+    return map;
+  }, [exclusionCriteria]);
+
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
       toast.error("Title is required");
@@ -69,6 +76,9 @@ export const NewProject = () => {
         ...(inclusionExpression.trim()
           ? { inclusion_expression: inclusionExpression.trim() }
           : {}),
+        ...(exclusionExpression.trim()
+          ? { exclusion_expression: exclusionExpression.trim() }
+          : {}),
       };
 
       try {
@@ -78,6 +88,13 @@ export const NewProject = () => {
       } catch (error: any) {
         if (error.response?.data?.detail?.errors) {
           throw new Error(JSON.stringify(error.response.data.detail.errors));
+        }
+        if (Array.isArray(error.response?.data?.detail)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const msg = (error.response.data.detail as any[])
+            .map((e) => e.msg as string)
+            .join("\n");
+          throw new Error(msg);
         }
         throw error;
       }
@@ -95,23 +112,20 @@ export const NewProject = () => {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        const msg = typeof error?.message === "string" ? error.message : "";
         try {
-          const msg = typeof error?.message === "string" ? error.message : "";
           const parsed = JSON.parse(msg);
           if (Array.isArray(parsed)) {
             ExpandableToast(parsed);
           } else {
-            toast.error("Project creation failed (non-array error).");
+            toast.error("Project creation failed.");
           }
-        } catch (parseError) {
-          console.error("JSON parsing failed:", parseError);
-          toast.error(
-            `Project creation failed: ${error.message || "Unknown error"}`,
-          );
+        } catch {
+          toast.error(msg || "Project creation failed.");
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, refreshProjects, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, exclusionExpression, refreshProjects, navigate]);
 
   const handleReset = useCallback(() => {
     setTitle("");
@@ -120,6 +134,7 @@ export const NewProject = () => {
     setInclusionCriteriaInput("");
     setExclusionCriteriaInput("");
     setInclusionExpression("");
+    setExclusionExpression("");
   }, []);
 
   return (
@@ -185,32 +200,56 @@ export const NewProject = () => {
         <Card>
           <div className="flex flex-col gap-4">
             <div>
-              <H6>Inclusion logic <span className="font-normal text-gray-400">(optional, required for per-criteria screening)</span></H6>
+              <H6>Per-criteria logic <span className="font-normal text-gray-400">(optional)</span></H6>
               <p className="text-sm text-gray-500 mt-1">
-                Define how inclusion criteria are combined using AND, OR, NOT and parentheses.
-                Leave blank to default to OR across all inclusion criteria.
+                Define custom boolean logic for how criteria are combined. Use AND, OR, and NOT — NOT flips a single criterion (e.g. <span className="font-mono">NOT IC1</span>). Use parentheses to group AND/OR sub-expressions. Leave blank to default to OR.
               </p>
-              {Object.keys(criteriaIdMap).length > 0 && (
-                <div className="mt-2 text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1">
-                  {Object.entries(criteriaIdMap).map(([id, desc]) => (
-                    <span key={id}>
-                      <span className="font-mono font-semibold text-gray-600">{id}</span>
-                      {" = "}
-                      <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
-            <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-              <H6>Inclusion logic</H6>
-              <input
-                type="text"
-                className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
-                placeholder="e.g. IC1 OR IC2"
-                value={inclusionExpression}
-                onChange={(e) => setInclusionExpression(e.target.value)}
-              />
+            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+              <H6 className="mt-2">Inclusion logic</H6>
+              <div className="flex flex-col gap-1">
+                {Object.keys(criteriaIdMap).length > 0 && (
+                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
+                    {Object.entries(criteriaIdMap).map(([id, desc]) => (
+                      <span key={id}>
+                        <span className="font-mono font-semibold text-gray-600">{id}</span>
+                        {" = "}
+                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
+                  placeholder="e.g. IC1 AND IC2"
+                  value={inclusionExpression}
+                  onChange={(e) => setInclusionExpression(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+              <H6 className="mt-2">Exclusion logic</H6>
+              <div className="flex flex-col gap-1">
+                {Object.keys(exclusionCriteriaIdMap).length > 0 && (
+                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
+                    {Object.entries(exclusionCriteriaIdMap).map(([id, desc]) => (
+                      <span key={id}>
+                        <span className="font-mono font-semibold text-gray-600">{id}</span>
+                        {" = "}
+                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
+                  placeholder="e.g. EC1 OR EC2"
+                  value={exclusionExpression}
+                  onChange={(e) => setExclusionExpression(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </Card>

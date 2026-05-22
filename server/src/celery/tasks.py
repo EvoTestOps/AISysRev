@@ -8,7 +8,7 @@ from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_
 from tenacity import retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from celery import Task
-from src.core.boolean_parser import (
+from src.tools.boolean_parser import (
     build_criteria_tree_with_expressions,
     compute_overall,
     extract_leaf_criteria,
@@ -337,8 +337,9 @@ async def process_job(
             inc_list: list[str] = project_criteria["inclusion_criteria"]
             exc_list: list[str] = project_criteria["exclusion_criteria"]
             inc_expr: str | None = project_criteria.get("inclusion_expression")
+            exc_expr: str | None = project_criteria.get("exclusion_expression")
             criteria_tree = build_criteria_tree_with_expressions(
-                inc_list, exc_list, inc_expr, None
+                inc_list, exc_list, inc_expr, exc_expr
             )
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)

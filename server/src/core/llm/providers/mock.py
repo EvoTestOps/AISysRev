@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from src.core.llm.providers.provider import BaseLLMParams, LLMProvider, T
 from src.schemas.llm import (
     Criterion,
-    CriterionOnlyResponse,
+    CriterionResponse,
     Decision,
     LikertDecision,
     ProviderRuntimeParameters,
@@ -68,8 +68,8 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         delay_ms = max(0.0, self.provider_parameters.delay + jitter_ms)
         await asyncio.sleep(delay_ms / 1000.0)
 
-        if schema is CriterionOnlyResponse:
-            return CriterionOnlyResponse(
+        if schema is CriterionResponse:
+            return CriterionResponse(
                 probability_decision=1.0,
                 reason="The criterion is met.",
             )

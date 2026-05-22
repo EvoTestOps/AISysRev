@@ -9,7 +9,9 @@ from src.schemas.jobtask import (
     JobTaskRead,
     JobTaskReadWithLLMConfig,
 )
+from src.schemas.project import Criteria
 from src.services.paper_service import PaperService, create_paper_service
+from src.tools.per_criteria_stats import compute_criterion_irr
 
 
 class JobTaskService:
@@ -93,6 +95,54 @@ class JobTaskService:
         # job_data is of type JobCreate
         print(f"start_job_tasks: Processing job {job_id}")
         return process_job_task.delay(job_id, job_data)
+
+    async def compute_per_criteria_agreement(
+        self, project_uuid: UUID, criteria: Criteria
+    ) -> dict:
+        tasks = await self.jobtask_crud.fetch_per_criteria_tasks_by_project(
+            project_uuid
+        )
+
+        rater_job_uuids = sorted({str(t["job_uuid"]) for t in tasks})
+
+        crit_probs: dict[str, dict[str, dict[str, float]]] = {}
+        for task in tasks:
+            result = task["result"]
+            if not result or result.get("mode") != "PER_CRITERIA":
+                continue
+            job_uuid = str(task["job_uuid"])
+            paper_uuid = str(task["paper_uuid"])
+            for crit_id, crit_result in result.get("criterion_results", {}).items():
+                if not isinstance(crit_result, dict) or "error" in crit_result:
+                    continue
+                prob = crit_result.get("probability_decision")
+                if prob is not None and 0.0 <= float(prob) <= 1.0:
+                    crit_probs.setdefault(crit_id, {}).setdefault(job_uuid, {})[
+                        paper_uuid
+                    ] = float(prob)
+
+        crit_meta = {
+            **{
+                f"IC{i + 1}": {"description": d, "type": "inclusion"}
+                for i, d in enumerate(criteria.inclusion_criteria)
+            },
+            **{
+                f"EC{i + 1}": {"description": d, "type": "exclusion"}
+                for i, d in enumerate(criteria.exclusion_criteria)
+            },
+        }
+
+        criteria_stats = {}
+        for crit_id, probs_by_rater in crit_probs.items():
+            stats = compute_criterion_irr(probs_by_rater)
+            meta = crit_meta.get(crit_id, {"description": "", "type": "unknown"})
+            criteria_stats[crit_id] = {**meta, **stats}
+
+        return {
+            "n_raters": len(rater_job_uuids),
+            "rater_job_uuids": rater_job_uuids,
+            "criteria": criteria_stats,
+        }
 
 
 def create_jobtask_service(db_ctx: DBContext) -> JobTaskService:

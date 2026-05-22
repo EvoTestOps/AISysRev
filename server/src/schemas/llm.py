@@ -49,9 +49,12 @@ class StructuredResponse(BaseModel, extra="forbid"):
     exclusion_criteria: list[Criterion]
 
 
-class CriterionOnlyResponse(BaseModel, extra="forbid"):
+class CriterionResponse(BaseModel, extra="forbid"):
     probability_decision: float = Field(
-        description="The likelihood, that the criterion applies or the primary study is relevant. A value closer to `1.0` means that it is extremely likely (very strong match). A value closer to `0.0` means it is extremely unlikely (very weak or no match). You are encouraged to use intermediate values (e.g. `0.1`, `0.2`, `0.35`, `0.7`, etc..), not just `0.0` or `1.0`"
+        description="The likelihood, that the criterion applies or the primary study is relevant. "
+        "A float between 0.000 and 1.000: closer to 1.000 means extremely likely (very strong match), "
+        "closer to 0.000 means extremely unlikely (very weak or no match). "
+        "Use intermediate values, not just 0.000 or 1.000."
     )
     reason: str = Field(description="Reasoning for the probability estimate.")
 

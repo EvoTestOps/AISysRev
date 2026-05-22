@@ -818,6 +818,18 @@ redis = [
 ]
 
 [[package]]
+name = "krippendorff"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/1c/839234d9b9ca3c2c1f9445bb7f3022662face6cc6f9e3f915d8b7654dea7/krippendorff-0.8.2.tar.gz", hash = "sha256:f975bf4b5d93439d3264c4fc85a45d014aca9f5f9fca17f18fa2f3c89ee158ca", size = 18229, upload-time = "2025-11-03T03:03:39.821Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/01/4f/597b65bc88a031ee68b459fec05f8b40a60c3c3f6d5cde5b1403d965d199/krippendorff-0.8.2-py3-none-any.whl", hash = "sha256:1922ff73f7caa5faab6237a1abcb4f3e6ab605e3f7d39acd7998176873b8cd57", size = 18616, upload-time = "2025-11-03T03:03:38.583Z" },
+]
+
+[[package]]
 name = "logfire-api"
 version = "4.21.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1546,6 +1558,7 @@ dependencies = [
     { name = "debugpy" },
     { name = "fastapi", extra = ["standard"] },
     { name = "flower" },
+    { name = "krippendorff" },
     { name = "minio" },
     { name = "openai" },
     { name = "pandas" },
@@ -1571,6 +1584,7 @@ requires-dist = [
     { name = "debugpy", specifier = ">=1.8.19" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.124.4" },
     { name = "flower", specifier = ">=2.0.1" },
+    { name = "krippendorff", specifier = ">=0.8.2" },
     { name = "minio", specifier = ">=7.2.20" },
     { name = "openai", specifier = ">=2.14.0" },
     { name = "pandas", specifier = ">=2.3.3" },

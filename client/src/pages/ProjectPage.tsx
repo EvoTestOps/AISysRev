@@ -465,7 +465,7 @@ export const ProjectPage = () => {
     const OUTPUT_TOKENS_PER_PAPER = 1300;
     const FEW_SHOT_MULTIPLIER = 1.4;
 
-    const isFewShot = promptingStrategy !== "ZS";
+    const isFewShot = promptingStrategy === "FS";
     const multiplier = isFewShot ? FEW_SHOT_MULTIPLIER : 1;
 
     const inputTokens = Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier);
@@ -1186,6 +1186,19 @@ export const ProjectPage = () => {
                 Per-criteria
               </button>
             </div>
+            {promptingStrategy === "PC" && (
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
+                <div className="text-xs font-medium text-slate-600 mb-0.5">Per-criteria logic</div>
+                <div className="flex justify-between gap-2 text-xs text-slate-500">
+                  <span>Inclusion:</span>
+                  <span className="font-mono text-slate-700">{project.criteria.inclusion_expression ?? "default (OR)"}</span>
+                </div>
+                <div className="flex justify-between gap-2 text-xs text-slate-500">
+                  <span>Exclusion:</span>
+                  <span className="font-mono text-slate-700">{project.criteria.exclusion_expression ?? "default (OR)"}</span>
+                </div>
+              </div>
+            )}
             {tokenEstimation && (
               <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
                 <div className="flex justify-between text-sm text-slate-500">

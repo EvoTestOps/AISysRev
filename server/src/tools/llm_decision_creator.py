@@ -9,7 +9,7 @@ from src.core.prompts import (
 from src.db.models.jobtask import JobTask
 from src.schemas.job import FewShotPromptingConfig, JobCreate, ZeroShotPromptingConfig
 from src.schemas.llm import (
-    CriterionOnlyResponse,
+    CriterionResponse,
     ProviderRuntimeParameters,
     StructuredResponse,
 )
@@ -125,7 +125,7 @@ async def get_single_criterion_response(
     abstract: str,
     criterion_description: str,
     client: AsyncClient,
-) -> CriterionOnlyResponse:
+) -> CriterionResponse:
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
 
     api_key: SettingRead | None = None
@@ -150,7 +150,7 @@ async def get_single_criterion_response(
             model=job_data.llm_config.model_name,
             api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
         ),
-        response_schema=CriterionOnlyResponse,
+        response_schema=CriterionResponse,
         user_prompt=prompt_text,
         client=client,
     )

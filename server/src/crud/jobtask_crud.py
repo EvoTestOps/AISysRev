@@ -151,6 +151,24 @@ class JobTaskCrud:
         await self.db.execute(stmt)
         await self.db.flush()
 
+    async def fetch_per_criteria_tasks_by_project(self, project_uuid: UUID):
+        stmt = (
+            select(
+                JobTask.paper_uuid,
+                JobTask.result,
+                Job.uuid.label("job_uuid"),
+            )
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Job.project_id == Project.id)
+            .where(
+                Project.uuid == project_uuid,
+                JobTask.status == JobTaskStatus.DONE,
+                Job.prompting_config["screening_type"].astext == "PER_CRITERIA",
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
     async def add_jobtask_human_result(
         self, job_task_uuid: UUID, human_result: JobTaskHumanResult
     ):
