@@ -42,7 +42,6 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         user = await user_service.get_or_create_user(
             sub=userinfo.get("sub"),
             email=userinfo.get("email"),
-            name=userinfo.get("name"),
         )
         await db_ctx.commit()
 
@@ -85,7 +84,6 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
     user = await user_service.get_or_create_user(
         sub="dev-user",
         email="dev@dev.local",
-        name="Dev User",
     )
     await db_ctx.commit()
     session_id = str(uuid.uuid4())

@@ -10,12 +10,12 @@ class UserService:
         self.user_crud = user_crud
 
     async def get_or_create_user(
-        self, sub: str, email: Optional[str], name: Optional[str]
+        self, sub: str, email: Optional[str]
     ) -> UserRead:
         user = await self.user_crud.get_user_by_sub(sub)
         if not user:
             user = await self.user_crud.create_user(
-                UserCreate(sub=sub, email=email, name=name)
+                UserCreate(sub=sub, email=email)
             )
         return UserRead.model_validate(user)
 

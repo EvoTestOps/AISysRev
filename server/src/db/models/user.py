@@ -16,4 +16,3 @@ class User(Base, TimestampMixin):
     )
     sub: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=True)
-    name: Mapped[str] = mapped_column(String(255), nullable=True)
