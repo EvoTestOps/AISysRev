@@ -1,12 +1,12 @@
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+
+from src.db.db_context import DBContext, get_db_ctx
 from src.services.jobtask_service import create_jobtask_service
 from src.services.project_service import create_project_service
 from src.services.result_service import create_result_service
-from src.db.db_context import DBContext, get_db_ctx
-
 
 router = APIRouter()
 
@@ -87,10 +87,19 @@ async def get_per_criteria_stats(
     project_service = create_project_service(db_ctx)
     project = await project_service.fetch_by_uuid(project_uuid)
     if project is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-
-    jobtask_service = create_jobtask_service(db_ctx)
-    return await jobtask_service.compute_per_criteria_agreement(project_uuid, project.criteria)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+    try:
+        jobtask_service = create_jobtask_service(db_ctx)
+        return await jobtask_service.compute_per_criteria_agreement(
+            project_uuid, project.criteria
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch per-criteria stats: {str(e)}",
+        )
 
 
 @router.get("/result/", status_code=200, tags=["Results"])

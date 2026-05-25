@@ -23,11 +23,17 @@ import {
   createPerCriteriaPromptingConfig,
   JobPromptingType,
   Provider,
+  PerCriteriaStatsResponse
 } from "../state/types";
+import {
+  fetchPerCriteriaStats,
+} from "../services/resultService";
+import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { twMerge } from "tailwind-merge";
 import {
+  BarChart2,
   ChartCandlestick,
   CircleAlert,
   CircleCheck,
@@ -58,6 +64,8 @@ type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+  onPerCriteriaStats: () => void;
+  hasMultiplePcJobs: boolean;
 };
 
 type ModelConfigurationProps = {
@@ -325,9 +333,17 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
   downloadCsv,
+  onPerCriteriaStats,
+  hasMultiplePcJobs,
 }) => {
   return (
     <div className="flex flex-row gap-2">
+      {hasMultiplePcJobs && (
+        <Button variant="slate" onClick={onPerCriteriaStats} title="Per-criteria agreement statistics">
+          <BarChart2 />
+          <span>PC Agreement Stats</span>
+        </Button>
+      )}
       <Button
         variant="slate"
         onClick={downloadCsv}
@@ -430,6 +446,7 @@ export const ProjectPage = () => {
 
   const [jobToCancel, setJobToCancel] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [perCriteriaStatsData, setPerCriteriaStatsData] = useState<PerCriteriaStatsResponse | null>(null);
 
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
@@ -847,6 +864,19 @@ export const ProjectPage = () => {
 
   const hasPapers = papers && papers.length > 0;
 
+  const hasMultiplePcJobs =
+    jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA).length >= 2;
+
+  // TODO: Use redux
+  const handlePerCriteriaStats = useCallback(async () => {
+    try {
+      const data = await fetchPerCriteriaStats(projectUuid);
+      setPerCriteriaStatsData(data);
+    } catch (e) {
+      toast.error("Failed to load agreement statistics.");
+    }
+  }, [projectUuid]);
+
   useEffect(() => {
     if (isLlmProviderSelected && !modelsLoaded) {
       fetchModels();
@@ -868,6 +898,8 @@ export const ProjectPage = () => {
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
           projectUuid={projectUuid}
+          onPerCriteriaStats={handlePerCriteriaStats}
+          hasMultiplePcJobs={hasMultiplePcJobs}
         />
       )}
     >
@@ -1289,6 +1321,13 @@ export const ProjectPage = () => {
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
+        />
+      )}
+      {perCriteriaStatsData && (
+        <PerCriteriaStatsModal
+          open={true}
+          onClose={() => setPerCriteriaStatsData(null)}
+          data={perCriteriaStatsData}
         />
       )}
       {jobToCancel && (

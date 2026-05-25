@@ -15,7 +15,10 @@ export type LlmConfig = {
   model_parameters: Record<string, unknown>;
 };
 
-export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
+export type PromptingConfig =
+  | ZeroShotPromptingConfig
+  | FewShotPromptingConfig
+  | PerCriteriaPromptingConfig;
 
 export type ZeroShotPromptingConfig = {
   screening_type: JobPromptingType.ZERO_SHOT;
@@ -47,9 +50,10 @@ export type PerCriteriaPromptingConfig = {
   screening_type: JobPromptingType.PER_CRITERIA;
 };
 
-export const createPerCriteriaPromptingConfig = (): PerCriteriaPromptingConfig => ({
-  screening_type: JobPromptingType.PER_CRITERIA,
-});
+export const createPerCriteriaPromptingConfig =
+  (): PerCriteriaPromptingConfig => ({
+    screening_type: JobPromptingType.PER_CRITERIA,
+  });
 
 export type CreatedJob = {
   uuid: string;
@@ -163,6 +167,21 @@ export type Result = {
 export type TokenEstimation = {
   estimated_input_tokens: number;
   estimated_output_tokens: number;
+};
+
+export type CriterionAgreementStats = {
+  description: string;
+  type: "inclusion" | "exclusion" | "unknown";
+  n_papers: number;
+  krippendorff_alpha: number | null;
+  percent_agreement: number | null;
+  gwet_ac1: number | null;
+};
+
+export type PerCriteriaStatsResponse = {
+  n_raters: number;
+  rater_job_uuids: string[];
+  criteria: Record<string, CriterionAgreementStats>;
 };
 
 // Keep this up-to-date with server/src/core/llm_providers.py
