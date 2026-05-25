@@ -873,6 +873,7 @@ export const ProjectPage = () => {
       const data = await fetchPerCriteriaStats(projectUuid);
       setPerCriteriaStatsData(data);
     } catch (e) {
+      console.error("Error fetching agreement stats:", e);
       toast.error("Failed to load agreement statistics.");
     }
   }, [projectUuid]);
