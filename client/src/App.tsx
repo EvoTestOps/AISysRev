@@ -14,6 +14,7 @@ import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
 
@@ -30,18 +31,26 @@ function App() {
   );
 
   useEffect(() => {
+    if (location === "/login" || location === "/privacy-policy") return;
     api.get("/api/v1/auth/me")
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false));
   }, [location]);
 
   useEffect(() => {
+    if (isAuthenticated === false && location !== "/login" && location !== "/privacy-policy") {
+      navigate("/login");
+    }
+  }, [isAuthenticated, location, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated !== true) return;
     const hasReadTerms = Cookies.get("disclaimer_read");
     if (!hasReadTerms && location !== "/terms-and-conditions") {
       navigate("/terms-and-conditions");
     }
     setCheckedTerms(true);
-  }, [location, navigate]);
+  }, [location, navigate, isAuthenticated]);
 
   // Initialization hook
   useEffect(() => {
@@ -53,6 +62,7 @@ function App() {
   }, [isAuthenticated]);
 
   if (location === "/login") return <LoginPage />;
+  if (location === "/privacy-policy") return <PrivacyPolicyPage />;
   if (!isAuthenticated) return null;
   if (!checkedTerms) return null;
 
@@ -78,6 +88,7 @@ function App() {
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />
         <Route path="/result/:uuid" component={ResultPage} />
+        <Route path="/privacy-policy" component={PrivacyPolicyPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
