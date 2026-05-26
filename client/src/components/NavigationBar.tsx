@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { H3 } from "./Typography";
 import { api } from "../services/api";
 
@@ -13,10 +13,9 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
   const NavbarActionComponent = navbarActionComponent;
-  const [, navigate] = useLocation();
   const handleLogout = async () => {
     await api.post("/api/v1/auth/logout");
-    navigate("/login");
+    window.location.href = "/login";
   };
   return (
     <nav className="bg-neutral-50 flex flex-col">
