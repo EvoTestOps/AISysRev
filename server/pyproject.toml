@@ -13,6 +13,7 @@ dependencies = [
     "debugpy>=1.8.19",
     "fastapi[standard]>=0.124.4",
     "flower>=2.0.1",
+    "gwet-ac1",
     "krippendorff>=0.8.2",
     "minio>=7.2.20",
     "openai>=2.14.0",
@@ -71,3 +72,6 @@ formatter = "generic"
 [[tool.alembic.formatter_generic]]
 format = "%(levelname)-5.5s [%(name)s] %(message)s"
 datefmt = "%H:%M:%S"
+
+[tool.uv.sources]
+gwet-ac1 = { git = "https://github.com/EvoTestOps/gwet_ac1" }

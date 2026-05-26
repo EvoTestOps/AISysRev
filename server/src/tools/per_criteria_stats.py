@@ -5,9 +5,8 @@ from typing import Optional
 
 import krippendorff
 import numpy as np
-
-# import pandas as pd
-# from irrCAC.raw import CAC
+import pandas as pd
+from gwet_ac1 import CAC
 
 
 def compute_criterion_irr(
@@ -56,12 +55,12 @@ def compute_criterion_irr(
         pct_agreement = round(agree / total, 4)
 
     ac1 = None
-    # try:
-    #     binary_df = pd.DataFrame(binary.T, columns=rater_ids)
-    #     cac = CAC(binary_df, categories=[0, 1])
-    #     ac1 = round(float(cac.gwet()["est"]["coefficient_value"]), 4)
-    # except Exception:
-    #     pass
+    try:
+        binary_df = pd.DataFrame(binary.T, columns=rater_ids) # type: ignore
+        cac = CAC(binary_df, categ_labels=[0, 1])
+        ac1 = round(float(cac.gwet_ac1().coeff_val), 4)
+    except Exception:
+        pass
 
     return {
         "krippendorff_alpha": alpha,
