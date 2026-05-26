@@ -134,12 +134,12 @@ async def delete_account(
     return response
 
 
-@router.post("/auth/logout", status_code=status.HTTP_200_OK)
+@router.get("/auth/logout")
 async def logout(request: Request):
     session_id = request.cookies.get("session_id")
     if session_id:
         redis_client = get_redis_client()
         await redis_client.delete(f"session:{session_id}")
-    response = JSONResponse(content={"detail": "Logged out successfully"})
+    response = RedirectResponse(url="/login")
     response.delete_cookie(key="session_id")
     return response

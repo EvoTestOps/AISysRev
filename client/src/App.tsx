@@ -15,6 +15,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
+import { Layout } from "./components/Layout";
 
 function App() {
   const [location, navigate] = useLocation();
@@ -27,13 +28,14 @@ function App() {
   const fetchProviders = useTypedStoreActions(
     (actions) => actions.fetchProviders
   );
-
+// Checks session validity here
   useEffect(() => {
     api.get("/api/v1/auth/me")
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false));
   }, [location]);
 
+// Hook to redirect to login if not authenticated
   useEffect(() => {
     if (isAuthenticated === false) {
       window.location.href = "/login";
@@ -58,7 +60,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
   if (!checkedTerms) return null;
 
   return (

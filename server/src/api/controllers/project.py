@@ -68,7 +68,9 @@ async def create_new_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        project_data.owner_uuid = current_user.uuid
+        project_data = project_data.model_copy(
+            update={"owner_uuid": current_user.uuid}
+        )
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()
         await push_event(

@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
-import { api } from "../services/api";
 
 type NavigationBarProps = {
   pageTitle: string;
@@ -13,10 +12,6 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
 }) => {
   const appEnv = import.meta.env.VITE_APP_ENV;
   const NavbarActionComponent = navbarActionComponent;
-  const handleLogout = async () => {
-    await api.post("/api/v1/auth/logout");
-    window.location.href = "/login";
-  };
   return (
     <nav className="bg-neutral-50 flex flex-col">
       <div className="flex flex-col sm:flex-row justify-between p-8 relative">
@@ -49,12 +44,12 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           >
             About
           </Link>
-          <button
-            onClick={handleLogout}
+          <a
+            href="/api/v1/auth/logout"
             className="text-xs sm:text-sm font-semibold text-gray-900"
           >
             Logout
-          </button>
+          </a>
         </div>
       </div>
       <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">
