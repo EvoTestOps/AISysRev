@@ -54,7 +54,7 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         redis_client = get_redis_client()
         await redis_client.setex(
             f"session:{session_id}",
-            settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            settings.ACCESS_TOKEN_EXPIRE_SECONDS,
             session_data,
         )
 
@@ -65,7 +65,7 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
             httponly=True,
             secure=True,
             samesite="lax",
-            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            max_age=settings.ACCESS_TOKEN_EXPIRE_SECONDS,
         )
         return response
 
@@ -94,7 +94,7 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
-        settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        settings.ACCESS_TOKEN_EXPIRE_SECONDS,
         session_data,
     )
     response = RedirectResponse(url=settings.FRONTEND_URL)
@@ -104,7 +104,7 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         httponly=True,
         secure=settings.APP_ENV != "test",
         samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_SECONDS,
     )
     return response
 

@@ -47,7 +47,7 @@ async def test_invalid_session(db_ctx):
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
-        settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        settings.ACCESS_TOKEN_EXPIRE_SECONDS,
         session_data,
     )
     request = make_request(cookies={"session_id": session_id})
@@ -70,7 +70,7 @@ async def test_valid_session_returns_user(db_ctx):
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
-        settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        settings.ACCESS_TOKEN_EXPIRE_SECONDS,
         session_data,
     )
     request = make_request(cookies={"session_id": session_id})
