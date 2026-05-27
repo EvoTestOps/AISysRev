@@ -9,8 +9,8 @@ class ProjectService:
     def __init__(self, project_crud: ProjectCrud):
         self.project_crud = project_crud
 
-    async def fetch_all(self) -> list[ProjectRead]:
-        rows = await self.project_crud.fetch_projects()
+    async def fetch_all(self, owner_uuid: UUID) -> list[ProjectRead]:
+        rows = await self.project_crud.fetch_projects(owner_uuid)
         return [
             ProjectRead(
                 uuid=row.uuid,

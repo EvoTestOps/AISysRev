@@ -41,6 +41,11 @@ services:
       MINIO_ROOT_USER: your_username
       MINIO_ROOT_PASSWORD: minio-secret-key
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      OIDC_CLIENT_ID: ${SP_REGISTERY_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${SP_REGISTERY_CLIENT_SECRET}
+      OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-https://login.helsinki.fi}
+      OIDC_REDIRECT_URI: "https://localhost:3001/api/v1/auth/callback"
+      FRONTEND_URL: ${FRONTEND_URL:-https://localhost:3001}
     volumes:
       - ./server/migrations:/app/migrations
     healthcheck:

@@ -9,14 +9,18 @@ import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { SettingsPage } from "./pages/SettingPage";
+import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
+import { api } from "./services/api";
+import { Layout } from "./components/Layout";
 
 function App() {
   const [location, navigate] = useLocation();
   const [checkedTerms, setCheckedTerms] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
@@ -24,22 +28,39 @@ function App() {
   const fetchProviders = useTypedStoreActions(
     (actions) => actions.fetchProviders
   );
+// Checks session validity here
+  useEffect(() => {
+    api.get("/api/v1/auth/me")
+      .then(() => setIsAuthenticated(true))
+      .catch(() => setIsAuthenticated(false));
+  }, [location]);
+
+// Hook to redirect to login if not authenticated
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      window.location.href = "/login";
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (isAuthenticated !== true) return;
     const hasReadTerms = Cookies.get("disclaimer_read");
     if (!hasReadTerms && location !== "/terms-and-conditions") {
       navigate("/terms-and-conditions");
     }
     setCheckedTerms(true);
-  }, [location, navigate]);
+  }, [location, navigate, isAuthenticated]);
 
   // Initialization hook
   useEffect(() => {
-    fetchProviders();
-    fetchProjects();
+    if (isAuthenticated) {
+      fetchProviders();
+      fetchProjects();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isAuthenticated]);
 
+  if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
   if (!checkedTerms) return null;
 
   return (
@@ -62,8 +83,9 @@ function App() {
           component={TermsAndConditionsPage}
         />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/settings/account" component={AccountSettingsPage} />
         <Route path="/result/:uuid" component={ResultPage} />
-        <Route path="*" component={NotFoundPage} />
+<Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
   );

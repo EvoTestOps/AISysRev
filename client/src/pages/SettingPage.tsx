@@ -6,6 +6,7 @@ import { Layout } from "../components/Layout";
 import { useConfig } from "../config/config";
 import { CircleX, Pencil, Save, KeyRound } from "lucide-react";
 import { Card } from "../components/Card";
+import { TabButton } from "../components/TabButton";
 import { H4 } from "../components/Typography";
 
 type SettingEntryProps = {
@@ -222,6 +223,12 @@ export const SettingsPage = () => {
 
   return (
     <Layout title="Settings">
+      <div className="flex flex-row mb-4">
+        <TabButton href="/settings" active>
+          LLM Settings
+        </TabButton>
+        <TabButton href="/settings/account">Account</TabButton>
+      </div>
       <Card>
         <div className="border-b border-slate-200 bg-white px-6 py-5">
           <h1 className="text-xl font-semibold text-slate-900">Settings</h1>

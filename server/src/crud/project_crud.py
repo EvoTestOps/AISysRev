@@ -12,7 +12,7 @@ class ProjectCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_projects(self) -> Sequence[ProjectRead]:
+    async def fetch_projects(self, owner_uuid: UUID) -> Sequence[ProjectRead]:
         stmt = select(
             Project.uuid,
             Project.name,
@@ -20,7 +20,7 @@ class ProjectCrud:
             Project.preferences,
             Project.created_at,
             Project.updated_at,
-        )
+        ).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         # TODO: Fix
         return result.mappings().all()  # type: ignore

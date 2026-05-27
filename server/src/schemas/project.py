@@ -29,6 +29,7 @@ class Criteria(BaseModel):
 
 class ProjectCreate(BaseModel):
     uuid: UUID | None = None
+    owner_uuid: UUID | None = None
     name: str = Field(max_length=255)
     criteria: Criteria
 
