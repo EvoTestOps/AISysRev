@@ -3,6 +3,8 @@ import uvicorn
 import asyncio
 from fastapi import FastAPI, APIRouter
 from fastapi.logger import logger
+from fastapi.responses import FileResponse, HTMLResponse
+from starlette.middleware.sessions import SessionMiddleware
 from src.core.config import settings
 from src.core.readiness import startup_complete
 from src.api.controllers.fixture import router as fixture_router
@@ -14,6 +16,7 @@ from src.api.controllers.llm import router as llm_router
 from src.api.controllers.jobtask import router as jobtask_router
 from src.api.controllers.paper import router as paper_router
 from src.api.controllers.setting import router as setting_router
+from src.api.controllers.auth import router as auth_router
 from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
@@ -65,6 +68,8 @@ app = FastAPI(
     contact={"name": "EvoTestOps", "url": "https://github.com/EvoTestOps"},
 )
 
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+
 v1_router = APIRouter(prefix="/api/v1")
 
 if settings.APP_ENV == "test":
@@ -81,8 +86,116 @@ v1_router.include_router(celery_test_router)
 v1_router.include_router(llm_router)
 v1_router.include_router(result_router)
 v1_router.include_router(event_queue_router)
+v1_router.include_router(auth_router)
 
 app.include_router(v1_router)
+
+@app.get("/privacy-policy")
+async def privacy_policy_page():
+    return FileResponse("static/privacy-policy.pdf", media_type="application/pdf")
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    dev_button = (
+        """
+        <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray disabled" aria-disabled="true">
+            Dev Login
+        </a>"""
+        if settings.APP_ENV != "prod"
+        else ""
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AISysRev – Login</title>
+  <style>
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      min-height: 100vh;
+      background: #e5e7eb;
+      font-family: Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+    .card {{
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      max-width: 22rem;
+      width: 100%;
+    }}
+    h1 {{ font-size: 1.5rem; font-weight: 700; color: #111; }}
+    .terms {{
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #4b5563;
+      cursor: pointer;
+    }}
+    .terms input {{ margin-top: 0.125rem; cursor: pointer; }}
+    .terms a {{ color: inherit; text-decoration: underline; }}
+    .btn {{
+      display: inline-block;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 2px solid;
+      font-weight: 600;
+      font-size: 1rem;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.2s;
+    }}
+    .btn-slate {{ background: #1e293b; border-color: #1e293b; color: #fff; }}
+    .btn-slate:not(.disabled):hover {{ background: #334155; }}
+    .btn-gray {{ background: #6b7280; border-color: #6b7280; color: #fff; }}
+    .btn-gray:not(.disabled):hover {{ background: #9ca3af; }}
+    .btn.disabled {{ opacity: 0.2; pointer-events: none; cursor: not-allowed; }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>AISysRev</h1>
+    <label class="terms">
+      <input type="checkbox" id="agree" onchange="toggleButtons(this.checked)" />
+      <span>
+        By logging in you accept and agree to our
+        <a href="/privacy-policy">register and privacy policy</a>.
+      </span>
+    </label>
+    <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate disabled" aria-disabled="true">
+      Login with University of Helsinki
+    </a>
+    {dev_button}
+  </div>
+  <script>
+    function toggleButtons(checked) {{
+      ['login-btn', 'dev-btn'].forEach(function(id) {{
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (checked) {{
+          el.classList.remove('disabled');
+          el.removeAttribute('aria-disabled');
+        }} else {{
+          el.classList.add('disabled');
+          el.setAttribute('aria-disabled', 'true');
+        }}
+      }});
+    }}
+  </script>
+</body>
+</html>"""
+
 
 if __name__ == "__main__":
     logger.info("Starting uvicorn server")

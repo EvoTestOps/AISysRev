@@ -8,6 +8,7 @@ type LayoutProps = {
   title: string;
   className?: string;
   navbarActionComponent?: React.ElementType;
+  hideNavbar?: boolean;
 };
 
 export const Layout = ({
@@ -15,10 +16,11 @@ export const Layout = ({
   children,
   className,
   navbarActionComponent,
+  hideNavbar,
 }: PropsWithChildren<LayoutProps>) => {
   const [location] = useLocation();
 
-  const hideNavBar = location === "/terms";
+  const hideNavBar = location === "/terms" || hideNavbar;
 
   return (
     <div className="flex flex-col min-h-screen">

@@ -44,6 +44,12 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
           >
             About
           </Link>
+          <a
+            href="/api/v1/auth/logout"
+            className="text-xs sm:text-sm font-semibold text-gray-900"
+          >
+            Logout
+          </a>
         </div>
       </div>
       <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">

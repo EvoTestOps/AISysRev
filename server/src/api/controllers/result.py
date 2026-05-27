@@ -3,7 +3,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
 
+from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
 from src.services.jobtask_service import create_jobtask_service
 from src.services.project_service import create_project_service
 from src.services.result_service import create_result_service
@@ -15,6 +17,7 @@ router = APIRouter()
 async def download_result_csv(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
@@ -44,6 +47,7 @@ async def download_result_csv(
 async def download_result_html(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
@@ -61,7 +65,7 @@ async def download_result_html(
 <html>
     <head>
         <title>Viewing results for Project {project_uuid}</title>
-        <style> 
+        <style>
   table, th, td {{font-size:10pt; border:1px solid black; border-collapse:collapse; text-align:left;}}
   th, td {{padding: 5px;}}
 </style>
@@ -83,6 +87,7 @@ async def download_result_html(
 async def get_per_criteria_stats(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
     project = await project_service.fetch_by_uuid(project_uuid)
@@ -106,6 +111,7 @@ async def get_per_criteria_stats(
 async def get_result(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
@@ -118,7 +124,6 @@ async def get_result(
         )
     try:
         return await result_service.fetch_result(project_uuid)
-
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

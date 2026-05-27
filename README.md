@@ -115,7 +115,7 @@ LLM calls are parallelized, and you should achieve a screening speed exceeding 1
 > See [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/) for Docker installation instructions. **Docker Desktop** includes **Docker Compose**, **Docker Buildx**, **Docker Engine** and the **Docker CLI.**
 
 > [!NOTE]
-> If Docker Desktop did not include the Buildx plugin, see: [https://github.com/docker/buildx][https://github.com/docker/buildx]
+> If Docker Desktop did not include the Buildx plugin, see: [https://github.com/docker/buildx](https://github.com/docker/buildx)
 
 ### Verifying Docker setup and environment
 
@@ -198,14 +198,14 @@ See [Architecture.md](docs/Architecture.md)
 
 ### Getting started with development
 
-Open up the client: [http://localhost:3001](http://localhost:3001)
+Open up the client: [https://localhost:3001](https://localhost:3001)
 
 > [!INFO]
-> `/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+> `/api` is internally proxied to the backend container, e.g. `https://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
-API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
+API: [https://localhost:3001/api/v1](https://localhost:3001/api/v1)
 
-API docs: [http://localhost:3001/documentation](http://localhost:3001/docs)
+API docs: [https://localhost:3001/docs](https://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 

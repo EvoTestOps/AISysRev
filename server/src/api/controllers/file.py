@@ -11,7 +11,9 @@ from fastapi import (
     status,
 )
 
+from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
 from src.schemas.file import FileReadWithPaperCount
 from src.services.file_service import create_file_service
 
@@ -24,7 +26,11 @@ router = APIRouter()
     response_model=list[FileReadWithPaperCount],
     tags=["File"],
 )
-async def list_files(project_uuid: UUID, db_ctx: DBContext = Depends(get_db_ctx)):
+async def list_files(
+    project_uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
     try:
         file_service = create_file_service(db_ctx)
         return await file_service.fetch_all(project_uuid)
@@ -40,6 +46,7 @@ async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     try:
         file_service = create_file_service(db_ctx)
