@@ -20,7 +20,7 @@ export const Layout = ({
 }: PropsWithChildren<LayoutProps>) => {
   const [location] = useLocation();
 
-  const hideNavBar = location === "/terms" || hideNavbar;
+  const hideNavBar = location === "/terms-and-conditions" || hideNavbar;
 
   return (
     <div className="flex flex-col min-h-screen">

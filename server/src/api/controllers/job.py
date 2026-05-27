@@ -73,6 +73,8 @@ async def create_job(
     job_service = create_job_service(db_ctx)
     project_service = create_project_service(db_ctx)
 
+    job_data = job_data.model_copy(update={"owner_uuid": current_user.uuid})
+
     try:
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):

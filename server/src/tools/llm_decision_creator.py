@@ -58,7 +58,7 @@ async def get_structured_response(
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
         api_key = await llm_service.setting_service.get_setting(
-            llm.api_key_config_parameter.key, mask_secret=False
+            llm.api_key_config_parameter.key, owner_uuid=job_data.owner_uuid, mask_secret=False
         )
         if api_key is None:
             raise RuntimeError(

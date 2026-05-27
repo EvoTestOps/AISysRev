@@ -22,7 +22,7 @@ from src.services.job_service import create_job_service
 
 
 @pytest.mark.asyncio
-async def test_create_jobtask(db_ctx, test_project_uuid, test_files_working):
+async def test_create_jobtask(db_ctx, test_project_uuid, test_user_uuid, test_files_working):
     file_service = create_file_service(db_ctx)
     jobtask_crud = db_ctx.crud(JobTaskCrud)
     job_service = create_job_service(db_ctx)
@@ -31,6 +31,7 @@ async def test_create_jobtask(db_ctx, test_project_uuid, test_files_working):
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
+        owner_uuid=test_user_uuid,
         llm_config=LLMModelConfig(
             model_name="test-model",
             model_parameters={"temperature": 0, "top_p": 0.1},
@@ -53,7 +54,7 @@ async def test_create_jobtask(db_ctx, test_project_uuid, test_files_working):
 
 @pytest.mark.asyncio
 async def test_create_job_transaction_rollback(
-    db_ctx, test_project_uuid, test_files_working, monkeypatch
+    db_ctx, test_project_uuid, test_user_uuid, test_files_working, monkeypatch
 ):
     job_service = create_job_service(db_ctx)
     job_crud = db_ctx.crud(JobCrud)
@@ -68,6 +69,7 @@ async def test_create_job_transaction_rollback(
 
     job_data = JobCreate(
         project_uuid=test_project_uuid,
+        owner_uuid=test_user_uuid,
         llm_config=LLMModelConfig(
             model_name="test-model",
             model_parameters={"temperature": 0, "top_p": 0.1},

@@ -49,11 +49,12 @@ async def test_create_and_fetch_job_crud(db_ctx, test_job_data):
 
 
 @pytest.mark.asyncio
-async def test_fetch_jobs_by_project(db_ctx, test_project_uuid):
+async def test_fetch_jobs_by_project(db_ctx, test_project_uuid, test_user_uuid):
     crud = db_ctx.crud(JobCrud)
     for i in range(1, 11):
         job_data = JobCreate(
             project_uuid=test_project_uuid,
+            owner_uuid=test_user_uuid,
             prompting_config=ZeroShotPromptingConfig(),
             llm_config=LLMModelConfig(
                 model_name=f"project-test-model {i}",
