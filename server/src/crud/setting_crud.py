@@ -26,6 +26,15 @@ class SettingCrud:
         row = result.mappings().one_or_none()
         return SettingRead(**row) if row else None
 
+    async def delete_setting(self, name: str, owner_uuid: UUID) -> bool:
+        stmt = select(Setting).where(Setting.name == name, Setting.owner_uuid == owner_uuid)
+        result = await self.db.execute(stmt)
+        row = result.scalar_one_or_none()
+        if row is None:
+            return False
+        await self.db.delete(row)
+        return True
+
     async def upsert_setting(self, setting_data: SettingCreate) -> Tuple[int, UUID]:
         stmt = (
             insert(Setting)

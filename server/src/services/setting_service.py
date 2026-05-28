@@ -23,6 +23,9 @@ class SettingService:
 
         return setting
 
+    async def delete_setting(self, name: str, owner_uuid: UUID) -> bool:
+        return await self.setting_crud.delete_setting(name, owner_uuid)
+
     async def upsert_setting(self, name: str, value: str, owner_uuid: UUID, secret=True) -> UUID:
         affected_rows, uuid = await self.setting_crud.upsert_setting(
             SettingCreate(name=name, value=value, owner_uuid=owner_uuid, secret=secret)
