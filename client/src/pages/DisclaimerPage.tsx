@@ -1,5 +1,4 @@
 import { Layout } from "../components/Layout";
-import { H3 } from "../components/Typography";
 
 export const DisclaimerPage = () => {
   return (
