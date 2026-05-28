@@ -90,9 +90,9 @@ v1_router.include_router(auth_router)
 
 app.include_router(v1_router)
 
-@app.get("/privacy-policy")
+@app.get("/register_and_privacy_policy")
 async def privacy_policy_page():
-    return FileResponse("static/privacy-policy.pdf", media_type="application/pdf")
+    return FileResponse("static/register-privacy-policy.pdf", media_type="application/pdf")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -170,7 +170,7 @@ async def login_page():
       <input type="checkbox" id="agree" onchange="toggleButtons(this.checked)" />
       <span>
         By logging in you accept and agree to our
-        <a href="/privacy-policy">register and privacy policy</a>.
+        <a href="/register_and_privacy_policy">Register and Privacy Policy</a>.
       </span>
     </label>
     <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate disabled" aria-disabled="true">

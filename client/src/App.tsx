@@ -1,9 +1,8 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { ToastContainer } from "react-toastify";
-import Cookies from "js-cookie";
 import { NotFoundPage } from "./pages/NotFound";
-import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
+import { DisclaimerPage } from "./pages/DisclaimerPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
@@ -18,8 +17,7 @@ import { api } from "./services/api";
 import { Layout } from "./components/Layout";
 
 function App() {
-  const [location, navigate] = useLocation();
-  const [checkedTerms, setCheckedTerms] = useState(false);
+  const [location] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   const fetchProjects = useTypedStoreActions(
@@ -28,28 +26,20 @@ function App() {
   const fetchProviders = useTypedStoreActions(
     (actions) => actions.fetchProviders
   );
-// Checks session validity here
+
+  // Checks session validity here
   useEffect(() => {
     api.get("/api/v1/auth/me")
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false));
   }, [location]);
 
-// Hook to redirect to login if not authenticated
+  // Hook to redirect to login if not authenticated
   useEffect(() => {
     if (isAuthenticated === false) {
       window.location.href = "/login";
     }
   }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated !== true) return;
-    const hasReadTerms = Cookies.get("disclaimer_read");
-    if (!hasReadTerms && location !== "/terms-and-conditions") {
-      navigate("/terms-and-conditions");
-    }
-    setCheckedTerms(true);
-  }, [location, navigate, isAuthenticated]);
 
   // Initialization hook
   useEffect(() => {
@@ -61,7 +51,6 @@ function App() {
   }, [isAuthenticated]);
 
   if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
-  if (!checkedTerms) return null;
 
   return (
     <div className="flex flex-col bg-gray-200 font-roboto pb-32">
@@ -78,14 +67,11 @@ function App() {
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
-        <Route
-          path="/terms-and-conditions"
-          component={TermsAndConditionsPage}
-        />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />
+        <Route path="/disclaimer" component={DisclaimerPage} />
         <Route path="/result/:uuid" component={ResultPage} />
-<Route path="*" component={NotFoundPage} />
+        <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
   );

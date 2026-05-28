@@ -43,6 +43,14 @@ export const Layout = ({
       >
         {children}
       </div>
+      <footer className="mt-auto py-4 flex justify-end gap-6 pr-8 text-sm text-slate-900">
+        <a href="/disclaimer" className="hover:text-slate-600 underline">
+          Disclaimer
+        </a>
+        <a href="/register_and_privacy_policy" className="hover:text-slate-600 underline">
+          Register and Privacy Policy
+        </a>
+      </footer>
     </div>
   );
 };
