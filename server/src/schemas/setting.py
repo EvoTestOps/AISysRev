@@ -2,14 +2,6 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class Setting(BaseModel):
-    id: int
-    uuid: str
-    name: str
-    value: str
-    secret: str
-
-
 class SettingCreate(BaseModel):
     uuid: UUID | None = None
     owner_uuid: UUID
