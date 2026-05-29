@@ -15,7 +15,10 @@ export type LlmConfig = {
   model_parameters: Record<string, unknown>;
 };
 
-export type PromptingConfig = ZeroShotPromptingConfig | FewShotPromptingConfig;
+export type PromptingConfig =
+  | ZeroShotPromptingConfig
+  | FewShotPromptingConfig
+  | PerCriteriaPromptingConfig;
 
 export type ZeroShotPromptingConfig = {
   screening_type: JobPromptingType.ZERO_SHOT;
@@ -43,6 +46,15 @@ export const createFewShotPromptingConfig = (
   remember_selection,
 });
 
+export type PerCriteriaPromptingConfig = {
+  screening_type: JobPromptingType.PER_CRITERIA;
+};
+
+export const createPerCriteriaPromptingConfig =
+  (): PerCriteriaPromptingConfig => ({
+    screening_type: JobPromptingType.PER_CRITERIA,
+  });
+
 export type CreatedJob = {
   uuid: string;
   project_uuid: string;
@@ -56,6 +68,7 @@ export enum JobPromptingType {
   ZERO_SHOT = "ZERO_SHOT",
   ONE_SHOT = "ONE_SHOT",
   FEW_SHOT = "FEW_SHOT",
+  PER_CRITERIA = "PER_CRITERIA",
 }
 
 export enum JobTaskHumanResult {
@@ -154,6 +167,21 @@ export type Result = {
 export type TokenEstimation = {
   estimated_input_tokens: number;
   estimated_output_tokens: number;
+};
+
+export type CriterionAgreementStats = {
+  description: string;
+  type: "inclusion" | "exclusion" | "unknown";
+  n_papers: number;
+  krippendorff_alpha: number | null;
+  percent_agreement: number | null;
+  gwet_ac1: number | null;
+};
+
+export type PerCriteriaStatsResponse = {
+  n_raters: number;
+  rater_job_uuids: string[];
+  criteria: Record<string, CriterionAgreementStats>;
 };
 
 // Keep this up-to-date with server/src/core/llm_providers.py

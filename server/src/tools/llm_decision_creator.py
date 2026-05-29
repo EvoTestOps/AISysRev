@@ -1,13 +1,18 @@
 from httpx import AsyncClient
 
-from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt, additional_instructions
-from src.db.models.jobtask import JobTask
-from src.schemas.job import (
-    FewShotPromptingConfig,
-    JobCreate,
-    ZeroShotPromptingConfig,
+from src.core.prompts import (
+    additional_instructions,
+    few_shot_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
 )
-from src.schemas.llm import ProviderRuntimeParameters, StructuredResponse
+from src.db.models.jobtask import JobTask
+from src.schemas.job import FewShotPromptingConfig, JobCreate, ZeroShotPromptingConfig
+from src.schemas.llm import (
+    CriterionResponse,
+    ProviderRuntimeParameters,
+    StructuredResponse,
+)
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead
@@ -111,3 +116,41 @@ async def get_structured_response(
         return result
     else:
         raise RuntimeError("Unknown prompting type.")
+
+
+async def get_single_criterion_response(
+    llm_service: LLMService,
+    job_data: JobCreate,
+    title: str,
+    abstract: str,
+    criterion_description: str,
+    client: AsyncClient,
+) -> CriterionResponse:
+    llm = llm_service.get_llm(job_data.llm_config.provider_name)
+
+    api_key: SettingRead | None = None
+    if llm.api_key_config_parameter is not None:
+        api_key = await llm_service.setting_service.get_setting(
+            llm.api_key_config_parameter.key, mask_secret=False
+        )
+        if api_key is None:
+            raise RuntimeError(
+                f"API key {llm.api_key_config_parameter.key} for provider "
+                f"{job_data.llm_config.provider_name} is missing"
+            )
+
+    prompt_text = per_criteria_task_prompt.format(
+        title, abstract, criterion_description
+    )
+    return await llm_service.call_llm(
+        llm,
+        provider_parameters=job_data.llm_config.provider_parameters,
+        model_parameters=job_data.llm_config.model_parameters,
+        runtime_parameters=ProviderRuntimeParameters(
+            model=job_data.llm_config.model_name,
+            api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+        ),
+        response_schema=CriterionResponse,
+        user_prompt=prompt_text,
+        client=client,
+    )

@@ -3,6 +3,8 @@ import z from "zod";
 export const CriteriaModel = z.object({
   inclusion_criteria: z.array(z.string()),
   exclusion_criteria: z.array(z.string()),
+  inclusion_expression: z.string().optional().nullable(),
+  exclusion_expression: z.string().optional().nullable(),
 });
 
 export type Criteria = z.infer<typeof CriteriaModel>;

@@ -28,6 +28,8 @@ COPY --from=client-build /app/dist /srv
 FROM python:3.14-alpine AS server-builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 COPY server/pyproject.toml /app/pyproject.toml
