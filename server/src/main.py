@@ -21,7 +21,6 @@ from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.redis_client.client import redis_subscribe
-from src.tools.minio_client import check_and_create_s3_bucket
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
 
@@ -36,9 +35,6 @@ async def lifespan(app: FastAPI):
 
     print("Checking Redis connection...")
     await check_redis_connection()
-
-    print("Checking S3 bucket...")
-    check_and_create_s3_bucket()
 
     print("Subscribing to Redis topics..")
     redis_task: asyncio.Task = asyncio.create_task(

@@ -27,10 +27,6 @@ class Settings:
         self.ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 5
         self.REDIS_URL: str = get_env("REDIS_URL")
         self.CELERY_BROKER_URL: str = get_env("CELERY_BROKER_URL")
-        self.MINIO_ENDPOINT: str = get_env("MINIO_ENDPOINT")
-        self.MINIO_ROOT_USER: str = get_env("MINIO_ROOT_USER")
-        self.MINIO_ROOT_PASSWORD: str = get_env("MINIO_ROOT_PASSWORD")
-        self.MINIO_BUCKET: str = get_env("MINIO_BUCKET", "default-bucket")
         self.OIDC_CLIENT_ID: str = get_env("OIDC_CLIENT_ID", "")
         self.OIDC_CLIENT_SECRET: str = get_env("OIDC_CLIENT_SECRET", "")
         self.OIDC_ISSUER_URL: str = get_env("OIDC_ISSUER_URL", "https://login.helsinki.fi")
