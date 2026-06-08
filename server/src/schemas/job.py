@@ -10,6 +10,7 @@ class JobPromptingType(str, Enum):
     ZERO_SHOT = "ZERO_SHOT"
     ONE_SHOT = "ONE_SHOT"
     FEW_SHOT = "FEW_SHOT"
+    PER_CRITERIA = "PER_CRITERIA"
 
 
 class JobStatus(str, Enum):
@@ -49,8 +50,12 @@ class FewShotPromptingConfig(BaseModel):
     remember_selection: bool
 
 
+class PerCriteriaPromptingConfig(BaseModel):
+    screening_type: Literal[JobPromptingType.PER_CRITERIA] = JobPromptingType.PER_CRITERIA
+
+
 PromptingConfig = Annotated[
-    Union[ZeroShotPromptingConfig, FewShotPromptingConfig],
+    Union[ZeroShotPromptingConfig, FewShotPromptingConfig, PerCriteriaPromptingConfig],
     Field(discriminator="screening_type"),
 ]
 

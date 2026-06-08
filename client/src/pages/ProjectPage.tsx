@@ -20,25 +20,36 @@ import {
   FetchedFile,
   LlmConfig,
   createZeroShotPromptingConfig,
+  createPerCriteriaPromptingConfig,
   JobPromptingType,
   Provider,
+  PerCriteriaStatsResponse
 } from "../state/types";
+import {
+  fetchPerCriteriaStats,
+} from "../services/resultService";
+import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { twMerge } from "tailwind-merge";
 import {
+  BarChart2,
   ChartCandlestick,
   CircleAlert,
   CircleCheck,
   CircleStop,
   Download,
   FileText,
+  Info,
+  ListChecks,
   Loader,
   Sparkles,
   Square,
   SquareCheckBig,
   Trash2,
   TriangleAlert,
+  User,
+  Users,
   XCircle
 } from "lucide-react";
 import { Card } from "../components/Card";
@@ -57,6 +68,8 @@ type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+  onPerCriteriaStats: () => void;
+  hasMultiplePcJobs: boolean;
 };
 
 type ModelConfigurationProps = {
@@ -86,7 +99,7 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
     return null;
   }
   return isLlmSelected && modelParametersSchema ? (
-    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md">
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
@@ -109,9 +122,9 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
           aria-hidden="true"
         >
           <path
-            fill-rule="evenodd"
+            fillRule="evenodd"
             d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-            clip-rule="evenodd"
+            clipRule="evenodd"
           />
         </svg>
       </summary>
@@ -206,7 +219,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
     "rounded-lg p-2 h-8 bg-whitecursor-pointer text-sm border-1 border-slate-400 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800",
   );
   return providerParametersSchema ? (
-    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md w-full">
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-sm w-full">
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
@@ -221,9 +234,9 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
           aria-hidden="true"
         >
           <path
-            fill-rule="evenodd"
+            fillRule="evenodd"
             d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-            clip-rule="evenodd"
+            clipRule="evenodd"
           />
         </svg>
       </summary>
@@ -324,9 +337,17 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
   downloadCsv,
+  onPerCriteriaStats,
+  hasMultiplePcJobs,
 }) => {
   return (
     <div className="flex flex-row gap-2">
+      {hasMultiplePcJobs && (
+        <Button variant="slate" onClick={onPerCriteriaStats} title="Per-criteria agreement statistics">
+          <BarChart2 />
+          <span>PC Agreement Stats</span>
+        </Button>
+      )}
       <Button
         variant="slate"
         onClick={downloadCsv}
@@ -422,13 +443,14 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
-  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS">("ZS");
+  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS" | "PC">("ZS");
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
 
   const [jobToCancel, setJobToCancel] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [perCriteriaStatsData, setPerCriteriaStatsData] = useState<PerCriteriaStatsResponse | null>(null);
 
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
@@ -457,24 +479,29 @@ export const ProjectPage = () => {
   const project = getProjectByUuid(projectUuid);
 
   const tokenEstimation = useMemo<TokenEstimation | null>(() => {
-    if (!projectUuid || papers.length === 0) {
+    if (!projectUuid || papers.length === 0 || !project) {
       return null;
     }
     const INPUT_TOKENS_PER_PAPER = 1880;
     const OUTPUT_TOKENS_PER_PAPER = 1300;
     const FEW_SHOT_MULTIPLIER = 1.4;
 
-    const isFewShot = promptingStrategy !== "ZS";
-    const multiplier = isFewShot ? FEW_SHOT_MULTIPLIER : 1;
+    if (promptingStrategy === "PC") {
+      const criteriaCount =
+        (project.criteria.inclusion_criteria.length ?? 0) +
+        (project.criteria.exclusion_criteria.length ?? 0);
+      return {
+        estimated_input_tokens: Math.round(papers.length * INPUT_TOKENS_PER_PAPER * criteriaCount),
+        estimated_output_tokens: Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER),
+      };
+    }
 
-    const inputTokens = Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier);
-    const outputTokens = Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER);
-
+    const multiplier = promptingStrategy === "FS" ? FEW_SHOT_MULTIPLIER : 1;
     return {
-      estimated_input_tokens: inputTokens,
-      estimated_output_tokens: outputTokens,
+      estimated_input_tokens: Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier),
+      estimated_output_tokens: Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER),
     };
-  }, [projectUuid, papers.length, promptingStrategy])
+  }, [projectUuid, papers.length, promptingStrategy, project])
 
   useEffect(() => {
     if (project !== undefined) {
@@ -651,39 +678,46 @@ export const ProjectPage = () => {
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
-  const createZeroShotJob = useCallback(async () => {
+  const buildLlmConfig = useCallback((): LlmConfig | null => {
     if (!selectedLlm) {
       toast.error("Please select a model before creating a task.");
-      return;
+      return null;
     }
     if (!selectedLlmProvider) {
       toast.error("Please select a provider before creating a task.");
-      return;
+      return null;
     }
-    const llmConfig: LlmConfig = {
+    return {
       model_name: selectedLlm.value,
       provider_name: selectedLlmProvider.value,
-      model_parameters: modelFormValues, // Form values contain all LLM-specific configuration what is needed
+      model_parameters: modelFormValues,
       provider_parameters: providerFormValues,
     };
+  }, [selectedLlm, selectedLlmProvider, modelFormValues, providerFormValues]);
 
-    const promptingConfig = createZeroShotPromptingConfig();
-
+  const createZeroShotJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig);
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig());
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [
-    selectedLlm,
-    selectedLlmProvider,
-    modelFormValues,
-    providerFormValues,
-    projectUuid,
-    fetchJobsForProject,
-  ]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+
+  const createPerCriteriaJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
+    try {
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig());
+      fetchJobsForProject(projectUuid);
+    } catch (e) {
+      console.error("Error creating job:", e);
+      toast.error("Error creating job");
+    }
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -839,6 +873,20 @@ export const ProjectPage = () => {
 
   const hasPapers = papers && papers.length > 0;
 
+  const hasMultiplePcJobs =
+    jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA).length >= 2;
+
+  // TODO: Use redux
+  const handlePerCriteriaStats = useCallback(async () => {
+    try {
+      const data = await fetchPerCriteriaStats(projectUuid);
+      setPerCriteriaStatsData(data);
+    } catch (e) {
+      console.error("Error fetching agreement stats:", e);
+      toast.error("Failed to load agreement statistics.");
+    }
+  }, [projectUuid]);
+
   useEffect(() => {
     if (isLlmProviderSelected && !modelsLoaded) {
       fetchModels();
@@ -860,6 +908,8 @@ export const ProjectPage = () => {
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
           projectUuid={projectUuid}
+          onPerCriteriaStats={handlePerCriteriaStats}
+          hasMultiplePcJobs={hasMultiplePcJobs}
         />
       )}
     >
@@ -895,6 +945,8 @@ export const ProjectPage = () => {
                       JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
                     {job.prompting_config.screening_type ==
                       JobPromptingType.FEW_SHOT && <Badge text="FS" invert />}
+                    {job.prompting_config.screening_type ==
+                      JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
                   </>
                   <div className="flex items-center font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
@@ -1019,7 +1071,7 @@ export const ProjectPage = () => {
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
-          <Card className="relative w-72">
+          <Card className="relative w-84">
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
@@ -1108,59 +1160,130 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
-            <div className="inline-flex rounded-xl bg-slate-50 p-1 ring-1 gap-1 ring-slate-200">
+            <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
+                <Tooltip title="Choose how criteria are evaluated during screening.">
+                  <Info size={14} className="text-slate-400 cursor-help" />
+                </Tooltip>
+              </div>
               <button
                 type="button"
-                className={twMerge(
-                  classNames(
-                    "rounded-lg px-3 py-2 text-sm  text-slate-900 hover:cursor-pointer",
-                    {
-                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
-                        promptingStrategy === "ZS",
-                      "opacity-20 hover:cursor-default":
-                        !isLlmProviderSelected || !isLlmSelected,
-                    },
-                  ),
-                )}
-                onClick={() => {
-                  if (isLlmProviderSelected && isLlmSelected) {
-                    setPromptingStrategy("ZS");
+                onClick={() => { if (promptingStrategy === "PC") setPromptingStrategy("ZS"); }}
+                className={classNames(
+                  "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
+                  {
+                    "border-blue-500 bg-blue-50/60": promptingStrategy !== "PC",
+                    "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy === "PC",
                   }
-                }}
-                aria-pressed={promptingStrategy === "ZS"}
+                )}
               >
-                Zero-shot
+                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
+                  "border-blue-500": promptingStrategy !== "PC",
+                  "border-slate-300": promptingStrategy === "PC",
+                })}>
+                  {promptingStrategy !== "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                </div>
+                <div className="flex-shrink-0 p-1.5 rounded-md bg-blue-100">
+                  <Sparkles size={16} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">All criteria together</div>
+                  <div className="text-xs text-slate-500">One LLM call evaluates all criteria.</div>
+                  <div className="text-xs text-slate-500">Supports zero-shot and few-shot prompting.</div>
+                </div>
               </button>
               <button
                 type="button"
-                className={twMerge(
-                  classNames(
-                    "rounded-lg px-3 py-2 text-sm text-slate-900 hover:cursor-pointer",
-                    {
-                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
-                        promptingStrategy === "FS",
-                      "opacity-20 hover:cursor-default":
-                        !isLlmProviderSelected || !isLlmSelected,
-                    },
-                  ),
-                )}
-                onClick={() => {
-                  if (isLlmProviderSelected && isLlmSelected) {
-                    setPromptingStrategy("FS");
+                onClick={() => setPromptingStrategy("PC")}
+                className={classNames(
+                  "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
+                  {
+                    "border-blue-500 bg-blue-50/60": promptingStrategy === "PC",
+                    "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy !== "PC",
                   }
-                }}
-                aria-pressed={promptingStrategy === "FS"}
+                )}
               >
-                Few-shot
+                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
+                  "border-blue-500": promptingStrategy === "PC",
+                  "border-slate-300": promptingStrategy !== "PC",
+                })}>
+                  {promptingStrategy === "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                </div>
+                <div className="flex-shrink-0 p-1.5 rounded-md bg-purple-100">
+                  <ListChecks size={16} className="text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">One call per criterion</div>
+                  <div className="text-xs text-slate-500">Runs one LLM call for each criterion.</div>
+                  <div className="text-xs text-slate-500">Prompting strategy is fixed for this mode.</div>
+                </div>
               </button>
             </div>
+            {promptingStrategy !== "PC" && (
+              <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-700">Prompting strategy</span>
+                </div>
+                <p className="text-xs text-slate-500 -mt-1">Choose how examples are provided to the model.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPromptingStrategy("ZS")}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white": promptingStrategy === "ZS",
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "ZS",
+                      }
+                    )}
+                  >
+                    <User size={14} />
+                    <span>Zero-shot</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromptingStrategy("FS")}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white": promptingStrategy === "FS",
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "FS",
+                      }
+                    )}
+                  >
+                    <Users size={14} />
+                    <span>Few-shot</span>
+                  </button>
+                </div>
+              </div>
+            )}
+            {promptingStrategy === "PC" && (
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-slate-600 mb-1">Per-criteria logic</div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Inclusion:</span>
+                  <span className="font-mono font-medium text-slate-700">{project.criteria.inclusion_expression ?? "default (OR)"}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Exclusion:</span>
+                  <span className="font-mono font-medium text-slate-700">{project.criteria.exclusion_expression ?? "default (OR)"}</span>
+                </div>
+              </div>
+            )}
             {tokenEstimation && (
-              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
-                <div className="flex justify-between text-sm text-slate-500">
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-slate-600">Estimated usage</span>
+                  <Tooltip title="Values are approximate estimates.">
+                    <Info size={13} className="text-slate-400 cursor-help" />
+                  </Tooltip>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Input tokens:</span>
                   <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_input_tokens)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-slate-500">
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Output tokens:</span>
                   <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_output_tokens)}</span>
                 </div>
@@ -1172,6 +1295,8 @@ export const ProjectPage = () => {
                 onClick={() => {
                   if (promptingStrategy === "ZS") {
                     createZeroShotJob();
+                  } else if (promptingStrategy === "PC") {
+                    createPerCriteriaJob();
                   } else {
                     navigate(`/project/${projectUuid}/few_shot`);
                   }
@@ -1242,6 +1367,13 @@ export const ProjectPage = () => {
           paperUuid={paperUuid}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
+        />
+      )}
+      {perCriteriaStatsData && (
+        <PerCriteriaStatsModal
+          open={true}
+          onClose={() => setPerCriteriaStatsData(null)}
+          data={perCriteriaStatsData}
         />
       )}
       {jobToCancel && (

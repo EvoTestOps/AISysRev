@@ -1,4 +1,4 @@
-from typing import List, Sequence, Tuple
+from typing import Any, List, Sequence, Tuple
 from uuid import UUID
 
 from sqlalchemy import Row, case, func, select, update
@@ -9,7 +9,6 @@ from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskStatus
-from src.schemas.llm import StructuredResponse
 from src.schemas.paper import PaperCreate
 
 
@@ -137,13 +136,12 @@ class JobTaskCrud:
         )
         await self.db.execute(stmt)
 
-    async def update_job_task_result(
-        self, job_task_id: int, result: StructuredResponse
-    ):
+    async def update_job_task_result(self, job_task_id: int, result: Any):
+        result_data = (
+            result.model_dump(mode="json") if hasattr(result, "model_dump") else result
+        )
         stmt = (
-            update(JobTask)
-            .where(JobTask.id == job_task_id)
-            .values(result=result.model_dump(mode="json"))
+            update(JobTask).where(JobTask.id == job_task_id).values(result=result_data)
         )
         await self.db.execute(stmt)
         await self.db.flush()
@@ -152,6 +150,24 @@ class JobTaskCrud:
         stmt = update(JobTask).where(JobTask.id == job_task_id).values(error=error)
         await self.db.execute(stmt)
         await self.db.flush()
+
+    async def fetch_per_criteria_tasks_by_project(self, project_uuid: UUID):
+        stmt = (
+            select(
+                JobTask.paper_uuid,
+                JobTask.result,
+                Job.uuid.label("job_uuid"),
+            )
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Job.project_id == Project.id)
+            .where(
+                Project.uuid == project_uuid,
+                JobTask.status == JobTaskStatus.DONE,
+                Job.prompting_config["screening_type"].astext == "PER_CRITERIA",
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
 
     async def add_jobtask_human_result(
         self, job_task_uuid: UUID, human_result: JobTaskHumanResult

@@ -35,6 +35,13 @@ class ResultCrud:
                 JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria"),
                 Job.prompting_config["screening_type"].astext.label("screening_type"),
                 JobTask.error.label("error"),
+                # PER_CRITERIA mode fields
+                JobTask.result["mode"].astext.label("result_mode"),
+                JobTask.result["criterion_results"].astext.label("criterion_results"),
+                JobTask.result["overall_probability"].astext.label(
+                    "pc_overall_probability"
+                ),
+                JobTask.result["binary_decision"].astext.label("pc_binary_decision"),
             )
             .select_from(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
