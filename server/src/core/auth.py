@@ -26,6 +26,12 @@ async def get_current_user(
         )
 
     data = json.loads(session_data)
+
+    if "pending_sub" in data:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Consent required"
+        )
+
     crud = UserCrud(db_ctx.session)
     user = await crud.get_user_by_uuid(data.get("user_uuid"))
     if not user:

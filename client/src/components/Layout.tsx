@@ -1,6 +1,5 @@
 import { PropsWithChildren } from "react";
 import { Helmet } from "react-helmet-async";
-import { useLocation } from "wouter";
 import { twMerge } from "tailwind-merge";
 import { NavigationBar } from "./NavigationBar";
 
@@ -18,9 +17,7 @@ export const Layout = ({
   navbarActionComponent,
   hideNavbar,
 }: PropsWithChildren<LayoutProps>) => {
-  const [location] = useLocation();
-
-  const hideNavBar = location === "/terms-and-conditions" || hideNavbar;
+  const hideNavBar = hideNavbar;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -44,8 +41,8 @@ export const Layout = ({
         {children}
       </div>
       <footer className="mt-auto py-4 flex justify-end gap-6 pr-8 text-sm text-slate-900">
-        <a href="/disclaimer" className="hover:text-slate-600 underline">
-          Disclaimer
+        <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="hover:text-slate-600 underline">
+          Terms and Conditions
         </a>
         <a href="/register_and_privacy_policy" className="hover:text-slate-600 underline">
           Register and Privacy Policy

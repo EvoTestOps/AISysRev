@@ -1,8 +1,8 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { ToastContainer } from "react-toastify";
 import { NotFoundPage } from "./pages/NotFound";
-import { DisclaimerPage } from "./pages/DisclaimerPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
@@ -15,10 +15,12 @@ import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
 import { Layout } from "./components/Layout";
+import { ConsentModal } from "./components/ConsentModal";
 
 function App() {
   const [location] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [consentRequired, setConsentRequired] = useState(false);
 
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
@@ -30,16 +32,27 @@ function App() {
   // Checks session validity here
   useEffect(() => {
     api.get("/api/v1/auth/me")
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false));
+      .then(() => {
+        setConsentRequired(false);
+        setIsAuthenticated(true);
+      })
+      .catch((error) => {
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          setConsentRequired(true);
+          setIsAuthenticated(false);
+          return;
+        }
+        setConsentRequired(false);
+        setIsAuthenticated(false);
+      });
   }, [location]);
 
-  // Hook to redirect to login if not authenticated
+  // Hook to redirect to login if not authenticated and consent isn't pending
   useEffect(() => {
-    if (isAuthenticated === false) {
+    if (isAuthenticated === false && !consentRequired) {
       window.location.href = "/login";
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, consentRequired]);
 
   // Initialization hook
   useEffect(() => {
@@ -49,6 +62,20 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  if (consentRequired) {
+    return (
+      <Layout title="Loading..." hideNavbar>
+        <ConsentModal
+          open={consentRequired}
+          onAccepted={() => {
+            setConsentRequired(false);
+            setIsAuthenticated(true);
+          }}
+        />
+      </Layout>
+    );
+  }
 
   if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
 
@@ -69,7 +96,6 @@ function App() {
         <Route path="/about" component={AboutPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />
-        <Route path="/disclaimer" component={DisclaimerPage} />
         <Route path="/result/:uuid" component={ResultPage} />
         <Route path="*" component={NotFoundPage} />
       </Switch>

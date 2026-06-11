@@ -12,7 +12,7 @@ from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
 from src.redis_client.client import get_redis_client
 from src.schemas.project import Criteria, ProjectCreate
-from src.schemas.user import UserCreate, UserRead
+from src.schemas.user import ConsentAccept, UserCreate, UserRead
 from src.services.user_service import create_user_service
 
 
@@ -41,7 +41,6 @@ async def test_unauthenticated_request(db_ctx):
 async def test_invalid_session(db_ctx):
     session_id = str(uuid.uuid4())
     session_data = json.dumps({
-        "access_token": "test-token",
         "user_uuid": str(uuid.uuid4()),
     })
     redis_client = get_redis_client()
@@ -64,7 +63,6 @@ async def test_valid_session_returns_user(db_ctx):
 
     session_id = str(uuid.uuid4())
     session_data = json.dumps({
-        "access_token": "test-token",
         "user_uuid": str(user.uuid),
     })
     redis_client = get_redis_client()
@@ -79,25 +77,26 @@ async def test_valid_session_returns_user(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_get_or_create_user_creates_new_user(db_ctx):
+async def test_create_user_with_consent(db_ctx):
     service = create_user_service(db_ctx)
-    user = await service.get_or_create_user(sub="new-user", email="new@test.com")
+    consent = ConsentAccept(terms=True, privacy_policy=True, research=True)
+    user = await service.create_user_with_consent(sub="new-user", email="new@test.com", consent=consent)
     await db_ctx.commit()
 
     assert isinstance(user, UserRead)
     assert user.sub == "new-user"
     assert user.email == "new@test.com"
+    assert user.consent_anonymized_research_usage is True
 
 
 @pytest.mark.asyncio
-async def test_get_or_create_user_returns_existing_user(db_ctx):
+async def test_create_user_with_consent_research_optional(db_ctx):
     service = create_user_service(db_ctx)
-    user_first = await service.get_or_create_user(sub="existing-user", email="e@test.com")
+    consent = ConsentAccept(terms=True, privacy_policy=True, research=None)
+    user = await service.create_user_with_consent(sub="no-research-user", email="nr@test.com", consent=consent)
     await db_ctx.commit()
 
-    user_second = await service.get_or_create_user(sub="existing-user", email="e@test.com")
-
-    assert user_first.uuid == user_second.uuid
+    assert user.consent_anonymized_research_usage is None
 
 
 @pytest.mark.asyncio

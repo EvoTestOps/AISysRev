@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Trash2 } from "lucide-react";
+import { toast } from "react-toastify";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
@@ -10,7 +11,29 @@ import { api } from "../services/api";
 
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [researchConsent, setResearchConsent] = useState<boolean>(false);
+  const [saving, setSaving] = useState(false);
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    api.get("/api/v1/auth/me").then((res) => {
+      setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
+    });
+  }, []);
+
+  const handleSaveResearchConsent = async () => {
+    const newValue = !researchConsent;
+    setSaving(true);
+    try {
+      await api.patch("/api/v1/auth/me/research-consent", { research: newValue });
+      setResearchConsent(newValue);
+      toast.success("Research consent updated.");
+    } catch {
+      toast.error("Failed to update research consent. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     await api.delete("/api/v1/auth/me");
@@ -33,6 +56,33 @@ export const AccountSettingsPage = () => {
           </p>
         </div>
         <div className="space-y-4 bg-slate-50 px-6 py-6">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
+            <p className="text-sm font-semibold text-slate-900">
+              Research data consent
+            </p>
+            <p className="mt-1 text-sm text-slate-600 mb-4">
+              I consent to my anonymized usage data being used for academic
+              research about this tool. This is optional and will not affect
+              your use of the application. You can change your consent for this
+              at any time.
+            </p>
+            <button
+              role="switch"
+              aria-checked={researchConsent}
+              onClick={handleSaveResearchConsent}
+              disabled={saving}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                researchConsent ? "bg-slate-800" : "bg-slate-300"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  researchConsent ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-5">
             <p className="text-sm font-semibold text-slate-900">
               Delete account

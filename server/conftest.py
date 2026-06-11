@@ -10,7 +10,8 @@ from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
-from src.services.user_service import create_user_service
+from src.crud.user_crud import UserCrud
+from src.schemas.user import UserCreate
 from src.schemas.job import (
     JobCreate,
     LLMModelConfig,
@@ -28,9 +29,11 @@ from src.tools.diagnostics.db_check import run_migration
 
 @pytest_asyncio.fixture
 async def test_user_uuid(db_ctx):
-    service = create_user_service(db_ctx)
-    user = await service.get_or_create_user(sub="test-user", email="test@test.com")
-    await db_ctx.commit()
+    user_crud = db_ctx.crud(UserCrud)
+    user = await user_crud.get_user_by_sub("test-user")
+    if not user:
+        user = await user_crud.create_user(UserCreate(sub="test-user", email="test@test.com"))
+        await db_ctx.commit()
     return user.uuid
 
 

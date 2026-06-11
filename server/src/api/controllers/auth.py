@@ -8,9 +8,10 @@ from starlette.responses import RedirectResponse, JSONResponse
 
 from src.core.auth import get_current_user
 from src.core.config import settings
+from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.schemas.user import UserRead
+from src.schemas.user import ConsentAccept, ResearchConsentUpdate, UserRead
 from src.services.user_service import create_user_service
 from src.redis_client.client import get_redis_client
 
@@ -36,21 +37,20 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
     try:
         token = await oauth.helsinki.authorize_access_token(request)
         userinfo = token.get("userinfo")
-        access_token = token.get("access_token")
+        sub = userinfo.get("sub")
+        email = userinfo.get("email")
 
-        user_service = create_user_service(db_ctx)
-        user = await user_service.get_or_create_user(
-            sub=userinfo.get("sub"),
-            email=userinfo.get("email"),
-        )
-        await db_ctx.commit()
+        user_crud = db_ctx.crud(UserCrud)
+        existing_user = await user_crud.get_user_by_sub(sub)
+
+        if existing_user:
+            session_data = json.dumps({"user_uuid": str(existing_user.uuid)})
+        else:
+            #New sign in: A user is created only after giving consent to the terms and privacy policy. 
+            #Until then, the sub and email are stored in Redis with a temporary session ID.
+            session_data = json.dumps({"pending_sub": sub, "pending_email": email})
 
         session_id = str(uuid.uuid4())
-        session_data = json.dumps({
-            "access_token": access_token,
-            "user_uuid": str(user.uuid),
-        })
-
         redis_client = get_redis_client()
         await redis_client.setex(
             f"session:{session_id}",
@@ -76,21 +76,73 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         )
 
 
+@router.post("/auth/consent", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+async def accept_consent(
+    consent: ConsentAccept,
+    request: Request,
+    db_ctx: DBContext = Depends(get_db_ctx),
+):
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
+    redis_client = get_redis_client()
+    session_data = await redis_client.get(f"session:{session_id}")
+    if not session_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired"
+        )
+
+    data = json.loads(session_data)
+    pending_sub = data.get("pending_sub")
+    if not pending_sub:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No pending consent for this session",
+        )
+
+    if not (consent.terms and consent.privacy_policy):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Terms and Privacy Policy must be accepted",
+        )
+
+    user_service = create_user_service(db_ctx)
+    user = await user_service.create_user_with_consent(
+        sub=pending_sub,
+        email=data.get("pending_email"),
+        consent=consent,
+    )
+    await db_ctx.commit()
+
+    await redis_client.setex(
+        f"session:{session_id}",
+        settings.ACCESS_TOKEN_EXPIRE_SECONDS,
+        json.dumps({"user_uuid": str(user.uuid)}),
+    )
+
+    return user
+
+
 @router.get("/auth/dev-login")
 async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
     if settings.APP_ENV == "prod":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    user_service = create_user_service(db_ctx)
-    user = await user_service.get_or_create_user(
-        sub="dev-user",
-        email="dev@dev.local",
-    )
-    await db_ctx.commit()
+
+    sub = "dev-user"
+    email = "dev@dev.local"
+
+    user_crud = db_ctx.crud(UserCrud)
+    existing_user = await user_crud.get_user_by_sub(sub)
+
+    if existing_user:
+        session_data = json.dumps({"user_uuid": str(existing_user.uuid)})
+    else:
+        session_data = json.dumps({"pending_sub": sub, "pending_email": email})
+
     session_id = str(uuid.uuid4())
-    session_data = json.dumps({
-        "access_token": "dev-token",
-        "user_uuid": str(user.uuid),
-    })
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
@@ -112,6 +164,18 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
 @router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead)
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
+
+
+@router.patch("/auth/me/research-consent", response_model=UserRead, status_code=status.HTTP_200_OK)
+async def update_research_consent(
+    body: ResearchConsentUpdate,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    user_service = create_user_service(db_ctx)
+    user = await user_service.update_research_consent(str(current_user.uuid), body.research)
+    await db_ctx.commit()
+    return user
 
 
 @router.delete("/auth/me", status_code=status.HTTP_200_OK)

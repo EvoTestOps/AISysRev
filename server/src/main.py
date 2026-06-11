@@ -91,11 +91,16 @@ async def privacy_policy_page():
     return FileResponse("static/register-privacy-policy.pdf", media_type="application/pdf")
 
 
+@app.get("/terms-and-conditions")
+async def terms_and_conditions_page():
+    return FileResponse("static/terms-and-conditions.pdf", media_type="application/pdf")
+
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
     dev_button = (
         """
-        <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray disabled" aria-disabled="true">
+        <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray">
             Dev Login
         </a>"""
         if settings.APP_ENV != "prod"
@@ -130,16 +135,6 @@ async def login_page():
       width: 100%;
     }}
     h1 {{ font-size: 1.5rem; font-weight: 700; color: #111; }}
-    .terms {{
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: #4b5563;
-      cursor: pointer;
-    }}
-    .terms input {{ margin-top: 0.125rem; cursor: pointer; }}
-    .terms a {{ color: inherit; text-decoration: underline; }}
     .btn {{
       display: inline-block;
       width: 100%;
@@ -153,42 +148,19 @@ async def login_page():
       transition: background 0.2s;
     }}
     .btn-slate {{ background: #1e293b; border-color: #1e293b; color: #fff; }}
-    .btn-slate:not(.disabled):hover {{ background: #334155; }}
+    .btn-slate:hover {{ background: #334155; }}
     .btn-gray {{ background: #6b7280; border-color: #6b7280; color: #fff; }}
-    .btn-gray:not(.disabled):hover {{ background: #9ca3af; }}
-    .btn.disabled {{ opacity: 0.2; pointer-events: none; cursor: not-allowed; }}
+    .btn-gray:hover {{ background: #9ca3af; }}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>AISysRev</h1>
-    <label class="terms">
-      <input type="checkbox" id="agree" onchange="toggleButtons(this.checked)" />
-      <span>
-        By logging in you accept and agree to our
-        <a href="/register_and_privacy_policy">Register and Privacy Policy</a>.
-      </span>
-    </label>
-    <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate disabled" aria-disabled="true">
+    <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate">
       Login with University of Helsinki
     </a>
     {dev_button}
   </div>
-  <script>
-    function toggleButtons(checked) {{
-      ['login-btn', 'dev-btn'].forEach(function(id) {{
-        var el = document.getElementById(id);
-        if (!el) return;
-        if (checked) {{
-          el.classList.remove('disabled');
-          el.removeAttribute('aria-disabled');
-        }} else {{
-          el.classList.add('disabled');
-          el.setAttribute('aria-disabled', 'true');
-        }}
-      }});
-    }}
-  </script>
 </body>
 </html>"""
 

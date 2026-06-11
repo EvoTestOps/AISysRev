@@ -25,6 +25,8 @@ class Settings:
         self.SECRET_KEY: str = get_env("SECRET_KEY", "yoursecretkey")
         self.ALGORITHM: str = "HS256"
         self.ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 5
+        self.CURRENT_TERMS_VERSION: str = "8.6.2026"
+        self.CURRENT_PRIVACY_POLICY_VERSION: str = "8.6.2026"
         self.REDIS_URL: str = get_env("REDIS_URL")
         self.CELERY_BROKER_URL: str = get_env("CELERY_BROKER_URL")
         self.OIDC_CLIENT_ID: str = get_env("OIDC_CLIENT_ID", "")
@@ -38,6 +40,7 @@ class Settings:
             "true",
             "yes",
         ]
+
 
 
 settings = Settings()
