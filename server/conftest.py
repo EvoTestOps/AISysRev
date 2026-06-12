@@ -38,10 +38,11 @@ async def test_user_uuid(db_ctx):
 
 
 @pytest_asyncio.fixture
-async def test_project_uuid(db_ctx):
+async def test_project_uuid(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Project for Job Test",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(
             inclusion_criteria=["A", "B", "C"], exclusion_criteria=["D", "E", "F"]
         ),

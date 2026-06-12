@@ -20,6 +20,12 @@ class PaperCrud:
         self.db.add_all(db_objs)
         await self.db.flush()
         return db_objs
+    
+    async def fetch_paper_by_uuid(self, uuid: UUID) -> Paper | None:
+        stmt = select(Paper).where(Paper.uuid == uuid)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
 
     async def fetch_papers_by_project_uuid(self, project_uuid: UUID) -> Sequence[Paper]:
         stmt = select(Paper).where(Paper.project_uuid == project_uuid)

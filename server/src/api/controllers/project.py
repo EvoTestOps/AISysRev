@@ -45,7 +45,7 @@ async def get_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        project = await projects.fetch_by_uuid(uuid)
+        project = await projects.fetch_by_uuid(uuid, owner_uuid=current_user.uuid)
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -94,11 +94,12 @@ async def delete_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        deleted = await projects.delete(uuid)
-        if not deleted:
+        project = await projects.fetch_by_uuid(uuid, owner_uuid=current_user.uuid)
+        if not project:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Project not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
             )
+        await projects.delete(uuid)
         await db_ctx.commit()
         return {"detail": "Project deleted successfully"}
     except HTTPException:

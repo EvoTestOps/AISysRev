@@ -178,3 +178,13 @@ class JobTaskCrud:
             .values(human_result=human_result)
         )
         await self.db.execute(stmt)
+
+    async def fetch_project_uuid_for_jobtask(self, job_task_uuid: UUID) -> UUID | None:
+        stmt = (
+            select(Project.uuid)
+            .join(Job, Job.project_id == Project.id)
+            .join(JobTask, JobTask.job_id == Job.id)
+            .where(JobTask.uuid == job_task_uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()

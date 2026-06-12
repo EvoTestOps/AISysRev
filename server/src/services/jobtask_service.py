@@ -72,6 +72,9 @@ class JobTaskService:
     async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
 
+    async def fetch_project_uuid_for_jobtask(self, uuid: UUID) -> UUID | None:
+        return await self.jobtask_crud.fetch_project_uuid_for_jobtask(uuid)
+
     async def bulk_create(self, job_id: int, project_uuid: UUID):
         papers = await self.paper_service.fetch_papers(project_uuid=project_uuid)
         if len(papers) == 0:
