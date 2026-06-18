@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 import uvicorn
-import asyncio
 from fastapi import FastAPI, APIRouter
 from fastapi.logger import logger
 from fastapi.responses import FileResponse, HTMLResponse
@@ -20,7 +19,6 @@ from src.api.controllers.auth import router as auth_router
 from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
-from src.redis_client.client import redis_subscribe
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
 
@@ -36,19 +34,10 @@ async def lifespan(app: FastAPI):
     print("Checking Redis connection...")
     await check_redis_connection()
 
-    print("Subscribing to Redis topics..")
-    redis_task: asyncio.Task = asyncio.create_task(
-        redis_subscribe(), name="redis_subscription"
-    )
-    print(f"Redis subscriber task created: {redis_task!r}")
-
     print("Application startup complete!")
     startup_complete.set()
 
     yield
-
-    if redis_task:
-        redis_task.cancel()
 
 
 app = FastAPI(

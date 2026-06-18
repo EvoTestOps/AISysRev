@@ -70,7 +70,7 @@ async def test_create_jobtask(db_ctx, test_files_working):
     jobtask_crud = db_ctx.crud(JobTaskCrud)
     job_service = create_job_service(db_ctx)
 
-    await file_service.process_files(project_uuid, [test_files_working[0]])
+    await file_service.process_files(project_uuid, [test_files_working[0]], owner_uuid)
 
     job_data = _make_job_create(project_uuid, owner_uuid)
 
@@ -95,7 +95,7 @@ async def test_create_job_transaction_rollback(db_ctx, test_files_working, monke
     job_crud = db_ctx.crud(JobCrud)
     file_service = create_file_service(db_ctx)
 
-    await file_service.process_files(project_uuid, [test_files_working[0]])
+    await file_service.process_files(project_uuid, [test_files_working[0]], owner_uuid)
 
     async def fail_bulk_create(*args, **kwargs):
         raise Exception("Simulated failure")

@@ -1,5 +1,7 @@
-import asyncio
+from datetime import datetime, timezone
 from enum import Enum
+from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -21,11 +23,6 @@ class EventName(Enum):
     # Events for Project-related things
     PROJECT_CREATED = 4001
     PROJECT_FILE_UPLOADED = 4002
-    # Events for Project-related things
-    # Server-related
-    REDIS_UNSUB = 89990
-    REDIS_SUB = 89991
-    PING = 89992
     # Server error
     SERVER_ERROR = 99999
 
@@ -41,20 +38,20 @@ class QueueItemWithTimestamp(BaseModel):
     value: dict
 
 
-queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
+def event_channel(owner_uuid: UUID) -> str:
+    return f"events:{owner_uuid}"
 
 
-async def push_event(event: QueueItem):
-    from datetime import datetime, timezone
+async def publish_event(owner_uuid: UUID, event: QueueItem, redis_client=None):
+    from src.redis_client.client import get_redis_client
 
-    now_utc = datetime.now(timezone.utc)
+    item = QueueItemWithTimestamp(
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        event_name=event.event_name,
+        value=event.value,
+    )
+    client = redis_client if redis_client is not None else get_redis_client()
     try:
-        await queue.put(
-            QueueItemWithTimestamp(
-                timestamp=now_utc.isoformat(),
-                event_name=event.event_name,
-                value=event.value,
-            )
-        )
-    except:  # noqa: E722
-        print("An error occured while pushing events to the front-end")
+        await client.publish(event_channel(owner_uuid), item.model_dump_json())
+    except Exception:
+        print("An error occurred while publishing event to Redis")

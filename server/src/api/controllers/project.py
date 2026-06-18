@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.event_queue import EventName, QueueItem, push_event
+from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.project import ProjectCreate, ProjectRead
 from src.services.project_service import create_project_service
 
@@ -73,8 +73,9 @@ async def create_new_project(
         )
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()
-        await push_event(
-            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid})
+        await publish_event(
+            current_user.uuid,
+            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid}),
         )
         return {"id": new_id, "uuid": str(new_uuid)}
     except Exception as e:

@@ -16,9 +16,9 @@ from src.tools.boolean_parser import (
 from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
-from src.event_queue import EventName, QueueItem
+from src.event_queue import EventName, QueueItem, publish_event
 from src.helpers.resolve_job_status import resolve_job_status
-from src.redis_client.client import REDIS_CHANNEL, get_redis_client
+from src.redis_client.client import get_redis_client
 from src.schemas.job import JobCreate, PerCriteriaPromptingConfig
 from src.schemas.jobtask import JobTaskStatus
 from src.schemas.project import Criteria
@@ -50,11 +50,6 @@ def process_job_task(self: Task, job_id: int, job_data: dict):
     asyncio.run(process_job(self, job_id, job_data_unpacked))
 
 
-async def _publish_redis_event(redis, event_name, value):
-    await redis.publish(
-        REDIS_CHANNEL, QueueItem(event_name=event_name, value=value).model_dump_json()
-    )
-
 
 def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> AsyncClient:
     def should_retry_status(response):
@@ -80,6 +75,7 @@ async def _update_progress(
     celery_task: Task,
     redis,
     job_id: int,
+    owner_uuid: UUID,
     counter: Dict[str, int],
     counter_lock: asyncio.Lock,
     update_interval: int,
@@ -95,18 +91,21 @@ async def _update_progress(
     if should_update:
         status = resolve_job_status(total, success, failed, cancelled=0)
         try:
-            await _publish_redis_event(
-                redis,
-                EventName.JOB_PROGRESS,
-                {
-                    "job_id": job_id,
-                    "stats": {
-                        "total": total,
-                        "success": success,
-                        "failed": failed,
-                        "status": status,
+            await publish_event(
+                owner_uuid,
+                QueueItem(
+                    event_name=EventName.JOB_PROGRESS,
+                    value={
+                        "job_id": job_id,
+                        "stats": {
+                            "total": total,
+                            "success": success,
+                            "failed": failed,
+                            "status": status,
+                        },
                     },
-                },
+                ),
+                redis_client=redis,
             )
         except Exception:
             logger.exception("Failed to publish progress to Redis")
@@ -183,20 +182,23 @@ async def _process_standard_task(
                     err_db_exc,
                 )
             try:
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_ERROR,
-                    {
-                        "job_task_id": job_task_id,
-                        "status": JobTaskStatus.ERROR,
-                        "message": str(e),
-                    },
+                await publish_event(
+                    job_data.owner_uuid,
+                    QueueItem(
+                        event_name=EventName.JOB_TASK_ERROR,
+                        value={
+                            "job_task_id": job_task_id,
+                            "status": JobTaskStatus.ERROR,
+                            "message": str(e),
+                        },
+                    ),
+                    redis_client=redis,
                 )
             except Exception:
                 logger.exception("Failed to publish error %s", job_task_id)
         finally:
             await _update_progress(
-                celery_task, redis, job_id, counter, counter_lock, update_interval
+                celery_task, redis, job_id, job_data.owner_uuid, counter, counter_lock, update_interval
             )
 
 
@@ -292,21 +294,24 @@ async def _process_per_criteria_task(
                     "Failed to write error to DB for job_task %s", job_task_id
                 )
             try:
-                await _publish_redis_event(
-                    redis,
-                    EventName.JOB_TASK_ERROR,
-                    {
-                        "job_task_id": job_task_id,
-                        "status": JobTaskStatus.ERROR,
-                        "message": str(e),
-                    },
+                await publish_event(
+                    job_data.owner_uuid,
+                    QueueItem(
+                        event_name=EventName.JOB_TASK_ERROR,
+                        value={
+                            "job_task_id": job_task_id,
+                            "status": JobTaskStatus.ERROR,
+                            "message": str(e),
+                        },
+                    ),
+                    redis_client=redis,
                 )
             except Exception:
                 logger.exception("Failed to publish error for job_task %s", job_task_id)
 
         finally:
             await _update_progress(
-                celery_task, redis, job_id, counter, counter_lock, update_interval
+                celery_task, redis, job_id, job_data.owner_uuid, counter, counter_lock, update_interval
             )
 
 
@@ -393,18 +398,21 @@ async def process_job(
     final_status = resolve_job_status(
         counter["total"], counter["success"], counter["failed"], cancelled=0
     )
-    await _publish_redis_event(
-        redis,
-        EventName.JOB_PROGRESS,
-        {
-            "job_id": job_id,
-            "stats": {
-                "total": counter["total"],
-                "success": counter["success"],
-                "failed": counter["failed"],
-                "status": final_status,
+    await publish_event(
+        job_data.owner_uuid,
+        QueueItem(
+            event_name=EventName.JOB_PROGRESS,
+            value={
+                "job_id": job_id,
+                "stats": {
+                    "total": counter["total"],
+                    "success": counter["success"],
+                    "failed": counter["failed"],
+                    "status": final_status,
+                },
             },
-        },
+        ),
+        redis_client=redis,
     )
 
     return {"result": "all job tasks processed"}

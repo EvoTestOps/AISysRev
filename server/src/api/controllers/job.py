@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.event_queue import EventName, QueueItem, push_event
+from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead, JobReadWithStats
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
@@ -114,8 +114,9 @@ async def create_job(
                 )
         create_job = await job_service.create(job_data)
         await db_ctx.commit()
-        await push_event(
-            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid})
+        await publish_event(
+            job_data.owner_uuid,
+            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid}),
         )
         return create_job
     except HTTPException:

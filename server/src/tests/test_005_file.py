@@ -25,10 +25,12 @@ async def test_create_and_fetch_file_record(db_ctx, test_project_uuid):
 
 
 @pytest.mark.asyncio
-async def test_file_service(db_ctx, test_project_uuid, test_files_working):
+async def test_file_service(
+    db_ctx, test_project_uuid, test_files_working, test_user_uuid
+):
     service = create_file_service(db_ctx)
 
-    result = await service.process_files(test_project_uuid, [test_files_working[0]])
+    result = await service.process_files(test_project_uuid, [test_files_working[0]], test_user_uuid)
     assert len(result.valid_filenames) == 1
 
     files = await service.fetch_all(test_project_uuid)
@@ -41,14 +43,14 @@ async def test_file_service(db_ctx, test_project_uuid, test_files_working):
 
 @pytest.mark.asyncio
 async def test_files_service_invalid_data(
-    db_ctx, test_project_uuid, test_files_invalid
+    db_ctx, test_project_uuid, test_files_invalid, test_user_uuid
 ):
     service = create_file_service(db_ctx)
 
     errors_msgs = [
         "Missing required columns: title",
     ]
-    result = await service.process_files(test_project_uuid, [test_files_invalid[0]])
+    result = await service.process_files(test_project_uuid, [test_files_invalid[0]], test_user_uuid)
 
     assert len(result.errors) == 1
     assert result.errors[0].message in errors_msgs

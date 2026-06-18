@@ -71,7 +71,7 @@ async def process_csv(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        result = await file_service.process_files(project_uuid, files)
+        result = await file_service.process_files(project_uuid, files, current_user.uuid)
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:
