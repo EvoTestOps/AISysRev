@@ -31,12 +31,14 @@ function App() {
 
   // Checks session validity here
   useEffect(() => {
-    api.get("/api/v1/auth/me")
-      .then(() => {
+    const controller = new AbortController();
+    const checkSession = async () => {
+      try {
+        await api.get("/api/v1/auth/me", { signal: controller.signal });
         setConsentRequired(false);
         setIsAuthenticated(true);
-      })
-      .catch((error) => {
+      } catch (error) {
+        if (controller.signal.aborted) return;
         if (axios.isAxiosError(error) && error.response?.status === 403) {
           setConsentRequired(true);
           setIsAuthenticated(false);
@@ -44,7 +46,10 @@ function App() {
         }
         setConsentRequired(false);
         setIsAuthenticated(false);
-      });
+      }
+    };
+    checkSession();
+    return () => controller.abort();
   }, [location]);
 
   // Hook to redirect to login if not authenticated and consent isn't pending

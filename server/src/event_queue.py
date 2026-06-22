@@ -43,14 +43,14 @@ def event_channel(owner_uuid: UUID) -> str:
 
 
 async def publish_event(owner_uuid: UUID, event: QueueItem, redis_client=None):
-    from src.redis_client.client import get_redis_client
+    from src.redis_client.client import get_shared_redis_client
 
     item = QueueItemWithTimestamp(
         timestamp=datetime.now(timezone.utc).isoformat(),
         event_name=event.event_name,
         value=event.value,
     )
-    client = redis_client if redis_client is not None else get_redis_client()
+    client = redis_client if redis_client is not None else get_shared_redis_client()
     try:
         await client.publish(event_channel(owner_uuid), item.model_dump_json())
     except Exception:

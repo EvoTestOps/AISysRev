@@ -33,7 +33,7 @@ def make_request(cookies: dict = {}):
 async def test_unauthenticated_request(db_ctx):
     request = make_request()
     with pytest.raises(HTTPException) as exc_info:
-        await get_current_user(request, db_ctx)
+        await get_current_user(request, db_ctx, get_redis_client())
     assert exc_info.value.status_code == 401
 
 
@@ -51,7 +51,7 @@ async def test_invalid_session(db_ctx):
     )
     request = make_request(cookies={"session_id": session_id})
     with pytest.raises(HTTPException) as exc_info:
-        await get_current_user(request, db_ctx)
+        await get_current_user(request, db_ctx, redis_client)
     assert exc_info.value.status_code == 401
 
 
@@ -72,7 +72,7 @@ async def test_valid_session_returns_user(db_ctx):
         session_data,
     )
     request = make_request(cookies={"session_id": session_id})
-    result = await get_current_user(request, db_ctx)
+    result = await get_current_user(request, db_ctx, redis_client)
     assert result.uuid == user.uuid
 
 

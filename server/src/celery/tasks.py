@@ -415,6 +415,8 @@ async def process_job(
         redis_client=redis,
     )
 
+    await redis.aclose()
+
     return {"result": "all job tasks processed"}
 
 

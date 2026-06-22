@@ -13,7 +13,8 @@ from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.schemas.user import ConsentAccept, ResearchConsentUpdate, UserRead
 from src.services.user_service import create_user_service
-from src.redis_client.client import get_redis_client
+from src.redis_client.client import get_shared_redis_client
+import redis.asyncio as redis
 
 router = APIRouter(tags=["Auth"])
 
@@ -33,7 +34,11 @@ async def login(request: Request):
 
 
 @router.get("/auth/callback")
-async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
+async def callback(
+    request: Request,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
+):
     try:
         token = await oauth.helsinki.authorize_access_token(request)
         userinfo = token.get("userinfo")
@@ -51,7 +56,6 @@ async def callback(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
             session_data = json.dumps({"pending_sub": sub, "pending_email": email})
 
         session_id = str(uuid.uuid4())
-        redis_client = get_redis_client()
         await redis_client.setex(
             f"session:{session_id}",
             settings.ACCESS_TOKEN_EXPIRE_SECONDS,
@@ -81,14 +85,13 @@ async def accept_consent(
     consent: ConsentAccept,
     request: Request,
     db_ctx: DBContext = Depends(get_db_ctx),
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
     session_id = request.cookies.get("session_id")
     if not session_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
-
-    redis_client = get_redis_client()
     session_data = await redis_client.get(f"session:{session_id}")
     if not session_data:
         raise HTTPException(
@@ -127,7 +130,11 @@ async def accept_consent(
 
 
 @router.get("/auth/dev-login")
-async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
+async def dev_login(
+    request: Request,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
+):
     if settings.APP_ENV == "prod":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
@@ -143,7 +150,6 @@ async def dev_login(request: Request, db_ctx: DBContext = Depends(get_db_ctx)):
         session_data = json.dumps({"pending_sub": sub, "pending_email": email})
 
     session_id = str(uuid.uuid4())
-    redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
         settings.ACCESS_TOKEN_EXPIRE_SECONDS,
@@ -183,10 +189,10 @@ async def delete_account(
     request: Request,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
     session_id = request.cookies.get("session_id")
     if session_id:
-        redis_client = get_redis_client()
         await redis_client.delete(f"session:{session_id}")
 
     user_service = create_user_service(db_ctx)
@@ -199,10 +205,12 @@ async def delete_account(
 
 
 @router.get("/auth/logout")
-async def logout(request: Request):
+async def logout(
+    request: Request,
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
+):
     session_id = request.cookies.get("session_id")
     if session_id:
-        redis_client = get_redis_client()
         await redis_client.delete(f"session:{session_id}")
     response = RedirectResponse(url="/login")
     response.delete_cookie(key="session_id")

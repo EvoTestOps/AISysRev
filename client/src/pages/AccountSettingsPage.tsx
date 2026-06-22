@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
@@ -16,12 +16,20 @@ export const AccountSettingsPage = () => {
   const [, navigate] = useLocation();
 
   useEffect(() => {
-    api.get("/api/v1/auth/me").then((res) => {
-      setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
-    });
+    const controller = new AbortController();
+    const fetchUser = async () => {
+      try {
+        const res = await api.get("/api/v1/auth/me", { signal: controller.signal });
+        setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
+      } catch (e) {
+        if (!controller.signal.aborted) throw e;
+      }
+    };
+    fetchUser();
+    return () => controller.abort();
   }, []);
 
-  const handleSaveResearchConsent = async () => {
+  const handleSaveResearchConsent = useCallback(async () => {
     const newValue = !researchConsent;
     setSaving(true);
     try {
@@ -33,7 +41,7 @@ export const AccountSettingsPage = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [researchConsent]);
 
   const handleDeleteAccount = async () => {
     await api.delete("/api/v1/auth/me");

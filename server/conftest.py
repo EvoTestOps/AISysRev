@@ -162,3 +162,10 @@ async def db_ctx():
     async with DBContext() as ctx:
         yield ctx
         await ctx.rollback()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_shared_redis():
+    yield
+    from src.redis_client.client import close_shared_redis_client
+    await close_shared_redis_client()
