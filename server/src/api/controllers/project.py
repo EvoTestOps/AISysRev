@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.event_queue import EventName, QueueItem, push_event
+from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.project import ProjectCreate, ProjectRead
 from src.services.project_service import create_project_service
 
@@ -45,7 +45,7 @@ async def get_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        project = await projects.fetch_by_uuid(uuid)
+        project = await projects.fetch_by_uuid(uuid, owner_uuid=current_user.uuid)
         if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -73,8 +73,9 @@ async def create_new_project(
         )
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()
-        await push_event(
-            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid})
+        await publish_event(
+            current_user.uuid,
+            QueueItem(event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid}),
         )
         return {"id": new_id, "uuid": str(new_uuid)}
     except Exception as e:
@@ -94,11 +95,12 @@ async def delete_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        deleted = await projects.delete(uuid)
-        if not deleted:
+        project = await projects.fetch_by_uuid(uuid, owner_uuid=current_user.uuid)
+        if not project:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Project not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
             )
+        await projects.delete(uuid)
         await db_ctx.commit()
         return {"detail": "Project deleted successfully"}
     except HTTPException:

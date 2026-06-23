@@ -29,10 +29,11 @@ async def test_fetch_projects_crud(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_project_crud(db_ctx):
+async def test_create_and_fetch_project_crud(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Test",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
     )
     id, uuid = await crud.create_project(project_data)
@@ -57,10 +58,11 @@ async def test_create_and_fetch_project_crud(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_delete_project_crud(db_ctx):
+async def test_delete_project_crud(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="To Be Deleted",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
     )
     id, uuid = await crud.create_project(project_data)

@@ -21,8 +21,8 @@ class JobService:
         self.job_crud = job_crud
         self.jobtask_service = jobtask_service
 
-    async def fetch_all(self) -> list[JobRead]:
-        rows = await self.job_crud.fetch_jobs()
+    async def fetch_all(self, owner_uuid: UUID) -> list[JobRead]:
+        rows = await self.job_crud.fetch_jobs(owner_uuid)
         return [
             JobRead(
                 uuid=row.uuid,

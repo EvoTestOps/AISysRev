@@ -13,15 +13,19 @@ class JobCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_jobs(self) -> List[JobRead]:
-        stmt = select(
-            Job.uuid,
-            Project.uuid.label("project_uuid"),
-            Job.llm_config,
-            Job.prompting_config,
-            Job.created_at,
-            Job.updated_at,
-        ).join(Project, Project.id == Job.project_id)
+    async def fetch_jobs(self, owner_uuid: UUID) -> List[JobRead]:
+        stmt = (
+            select(
+                Job.uuid,
+                Project.uuid.label("project_uuid"),
+                Job.llm_config,
+                Job.prompting_config,
+                Job.created_at,
+                Job.updated_at,
+            )
+            .join(Project, Project.id == Job.project_id)
+            .where(Project.owner_uuid == owner_uuid)
+        )
         result = await self.db.execute(stmt)
         # TODO: Fix
 

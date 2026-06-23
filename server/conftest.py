@@ -10,6 +10,8 @@ from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
+from src.crud.user_crud import UserCrud
+from src.schemas.user import UserCreate
 from src.schemas.job import (
     JobCreate,
     LLMModelConfig,
@@ -26,10 +28,21 @@ from src.tools.diagnostics.db_check import run_migration
 
 
 @pytest_asyncio.fixture
-async def test_project_uuid(db_ctx):
+async def test_user_uuid(db_ctx):
+    user_crud = db_ctx.crud(UserCrud)
+    user = await user_crud.get_user_by_sub("test-user")
+    if not user:
+        user = await user_crud.create_user(UserCreate(sub="test-user", email="test@test.com"))
+        await db_ctx.commit()
+    return user.uuid
+
+
+@pytest_asyncio.fixture
+async def test_project_uuid(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Project for Job Test",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(
             inclusion_criteria=["A", "B", "C"], exclusion_criteria=["D", "E", "F"]
         ),
@@ -43,9 +56,10 @@ async def test_project_uuid(db_ctx):
 
 
 @pytest.fixture
-def test_job_data(test_project_uuid):
+def test_job_data(test_project_uuid, test_user_uuid):
     return JobCreate(
         project_uuid=test_project_uuid,
+        owner_uuid=test_user_uuid,
         llm_config=LLMModelConfig(
             model_name="test-model",
             model_parameters={"temperature": 0, "top_p": 0.1},
@@ -148,3 +162,10 @@ async def db_ctx():
     async with DBContext() as ctx:
         yield ctx
         await ctx.rollback()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_shared_redis():
+    yield
+    from src.redis_client.client import close_shared_redis_client
+    await close_shared_redis_client()

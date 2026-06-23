@@ -22,7 +22,7 @@ async def download_result_csv(
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
 
-    project = await project_service.fetch_by_uuid(project_uuid)
+    project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -52,7 +52,7 @@ async def download_result_html(
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
 
-    project = await project_service.fetch_by_uuid(project_uuid)
+    project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -90,7 +90,7 @@ async def get_per_criteria_stats(
     current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
-    project = await project_service.fetch_by_uuid(project_uuid)
+    project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -116,7 +116,7 @@ async def get_result(
     project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
 
-    project = await project_service.fetch_by_uuid(project_uuid)
+    project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

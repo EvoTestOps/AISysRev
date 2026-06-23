@@ -22,6 +22,10 @@ class PaperService:
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid)
         return [PaperRead.model_validate(paper) for paper in papers]
 
+    async def fetch_by_uuid(self, uuid: UUID) -> PaperRead | None:
+        paper = await self.paper_crud.fetch_paper_by_uuid(uuid)
+        return None if paper is None else PaperRead.model_validate(paper)
+
     async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]):
         papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids)
         return [PaperRead.model_validate(paper) for paper in papers]

@@ -2,16 +2,14 @@ from typing import List
 from uuid import UUID
 
 from fastapi import UploadFile
-from minio.error import S3Error
 
 from src.crud.file_crud import FileCrud
 from src.db.db_context import DBContext
-from src.event_queue import EventName, QueueItem, push_event
+from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 from src.schemas.file_service import FileError, ProcessedFiles
 from src.services.paper_service import PaperCreate, PaperCrud
 from src.tools.csv_file_validation import validate_csv
-from src.tools.minio_file_uploader import upload_file_to_object_storage
 
 
 class FileService:
@@ -28,7 +26,7 @@ class FileService:
         return [FileReadWithPaperCount(**row) for row in rows]  # type: ignore
 
     async def process_files(
-        self, project_uuid: UUID, files: List[UploadFile]
+        self, project_uuid: UUID, files: List[UploadFile], owner_uuid: UUID
     ) -> ProcessedFiles:
         """
         Processes a list of uploaded files for a given project.
@@ -88,23 +86,15 @@ class FileService:
                 if papers:
                     await self.paper_crud.bulk_create_papers(papers)
 
-                upload_file_to_object_storage(f.file, f.filename, str(result.uuid))
-                await push_event(
+                await publish_event(
+                    owner_uuid,
                     QueueItem(
                         event_name=EventName.PROJECT_FILE_UPLOADED,
                         value={"uuid": result.uuid},
-                    )
+                    ),
                 )
 
                 valid_filenames.append(f.filename)
-            except S3Error as e:
-                errors.append(
-                    FileError(
-                        file=f.filename,
-                        message=f"MinIO upload failed: {str(e)}",
-                        row="",
-                    )
-                )
             except Exception as e:
                 raise e
 

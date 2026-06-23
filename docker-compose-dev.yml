@@ -37,9 +37,6 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
-      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       OIDC_CLIENT_ID: ${SP_REGISTERY_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${SP_REGISTERY_CLIENT_SECRET}
@@ -68,7 +65,6 @@ services:
           path: server/pyproject.toml
     depends_on:
       - postgres
-      - minio
       - redis
       - celery
 
@@ -91,24 +87,6 @@ services:
     restart: always
     ports:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
-
-  minio:
-    image: minio/minio:latest@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
-    container_name: minio${APP_ENV:-dev}
-    environment:
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
-    command: server /data --console-address ":9001"
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 10s
-      retries: 2
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
@@ -134,9 +112,6 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
-      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
       - redis
 
@@ -154,9 +129,6 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
-      MINIO_ENDPOINT: minio${APP_ENV:-dev}:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
       RUN_MIGRATIONS: false
     ports:
       - 127.0.0.1:${FLOWER_PORT:-5555}:5555
@@ -166,5 +138,4 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:
   redis_data:

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.event_queue import EventName, QueueItem, push_event
+from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead, JobReadWithStats
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
@@ -26,12 +26,20 @@ async def get_jobs(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    job_service = create_job_service(db_ctx)
+    project_service = create_project_service(db_ctx)
     try:
-        job_service = create_job_service(db_ctx)
         if project is not None:
+            owned_project = await project_service.fetch_by_uuid(project, owner_uuid=current_user.uuid)
+            if not owned_project:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+                )
             return await job_service.fetch_by_project(project)
         else:
-            return await job_service.fetch_all()
+            return await job_service.fetch_all(current_user.uuid)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -47,16 +55,22 @@ async def get_single_job(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    job_service = create_job_service(db_ctx)
+    project_service = create_project_service(db_ctx)
     try:
-        job_service = create_job_service(db_ctx)
         job = await job_service.fetch_by_uuid(uuid)
-        if not job:
+        project = await project_service.fetch_by_uuid(job.project_uuid, owner_uuid=current_user.uuid)
+        if not project:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
             )
         return job
     except HTTPException:
         raise
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -73,7 +87,14 @@ async def create_job(
     job_service = create_job_service(db_ctx)
     project_service = create_project_service(db_ctx)
 
+    job_data = job_data.model_copy(update={"owner_uuid": current_user.uuid})
+
     try:
+        project = await project_service.fetch_by_uuid(job_data.project_uuid, owner_uuid=current_user.uuid)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+            )
         cfg = job_data.prompting_config
         if isinstance(cfg, FewShotPromptingConfig):
             if cfg.remember_selection:
@@ -93,8 +114,9 @@ async def create_job(
                 )
         create_job = await job_service.create(job_data)
         await db_ctx.commit()
-        await push_event(
-            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid})
+        await publish_event(
+            job_data.owner_uuid,
+            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid}),
         )
         return create_job
     except HTTPException:
@@ -115,10 +137,23 @@ async def cancel_job(
     current_user: User = Depends(get_current_user),
 ):
     job_service = create_job_service(db_ctx)
+    project_service = create_project_service(db_ctx)
     try:
+        job = await job_service.fetch_by_uuid(uuid)
+        project = await project_service.fetch_by_uuid(job.project_uuid, owner_uuid=current_user.uuid)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+            )
         await job_service.cancel_job(uuid)
         await db_ctx.commit()
         return {"detail": "Task cancelled successfully"}
+    except HTTPException:
+        raise
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -133,10 +168,23 @@ async def delete_job(
     current_user: User = Depends(get_current_user),
 ):
     job_service = create_job_service(db_ctx)
+    project_service = create_project_service(db_ctx)
     try:
+        job = await job_service.fetch_by_uuid(uuid)
+        project = await project_service.fetch_by_uuid(job.project_uuid, owner_uuid=current_user.uuid)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+            )
         await job_service.delete_job(uuid)
         await db_ctx.commit()
         return {"detail": "Job deleted successfully"}
+    except HTTPException:
+        raise
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -47,8 +47,10 @@ class ProjectCrud:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
-    async def fetch_project_by_uuid(self, uuid: UUID) -> ProjectRead | None:
+    async def fetch_project_by_uuid(self, uuid: UUID, owner_uuid: UUID | None = None) -> ProjectRead | None:
         stmt = select(Project).where(Project.uuid == uuid)
+        if owner_uuid is not None:
+            stmt = stmt.where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
