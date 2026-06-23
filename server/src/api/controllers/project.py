@@ -6,7 +6,7 @@ from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.event_queue import EventName, QueueItem, publish_event
-from src.schemas.project import ProjectCreate, ProjectRead
+from src.schemas.project import ProjectCreate, ProjectCreateRequest, ProjectRead
 from src.services.project_service import create_project_service
 
 router = APIRouter()
@@ -62,14 +62,15 @@ async def get_project(
 
 @router.post("/project", status_code=status.HTTP_201_CREATED, tags=["Project"])
 async def create_new_project(
-    project_data: ProjectCreate,
+    request_data: ProjectCreateRequest,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     projects = create_project_service(db_ctx)
     try:
-        project_data = project_data.model_copy(
-            update={"owner_uuid": current_user.uuid}
+        project_data = ProjectCreate(
+            **request_data.model_dump(),
+            owner_uuid=current_user.uuid,
         )
         new_id, new_uuid = await projects.create(project_data)
         await db_ctx.commit()

@@ -110,7 +110,7 @@ class JobService:
             updated_at=new_job.updated_at,
         )
         task = await self.jobtask_service.start_job_tasks(
-            new_job.id, job_read.model_dump()
+            new_job.id, job_data.model_dump()
         )
 
         await self.job_crud.update_celery_task_id(new_job.uuid, UUID(task.id))

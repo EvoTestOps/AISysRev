@@ -60,14 +60,16 @@ PromptingConfig = Annotated[
 ]
 
 
-class JobCreate(BaseModel):
+class JobCreateRequest(BaseModel):
     project_uuid: UUID
-    owner_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
+
+class JobCreate(JobCreateRequest):
+    owner_uuid: UUID
 
 class JobRead(BaseModel):
     uuid: UUID

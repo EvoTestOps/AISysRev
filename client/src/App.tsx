@@ -2,6 +2,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ToastContainer } from "react-toastify";
+import { EventStream } from "./components/EventStream";
 import { NotFoundPage } from "./pages/NotFound";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
@@ -87,6 +88,7 @@ function App() {
   return (
     <div className="flex flex-col bg-gray-200 font-roboto pb-32">
       <ToastContainer autoClose={4000} />
+      <EventStream />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />

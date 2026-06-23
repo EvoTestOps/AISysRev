@@ -7,7 +7,7 @@ from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.event_queue import EventName, QueueItem, publish_event
-from src.schemas.job import FewShotPromptingConfig, JobCreate, JobRead, JobReadWithStats
+from src.schemas.job import FewShotPromptingConfig, JobCreate, JobCreateRequest, JobRead, JobReadWithStats
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
 from src.services.project_service import ProjectPreferences, create_project_service
@@ -80,14 +80,17 @@ async def get_single_job(
 
 @router.post("/job", status_code=status.HTTP_201_CREATED, tags=["Job"])
 async def create_job(
-    job_data: JobCreate,
+    request_data: JobCreateRequest,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     job_service = create_job_service(db_ctx)
     project_service = create_project_service(db_ctx)
 
-    job_data = job_data.model_copy(update={"owner_uuid": current_user.uuid})
+    job_data = JobCreate(
+        **request_data.model_dump(),
+        owner_uuid=current_user.uuid,
+    )
 
     try:
         project = await project_service.fetch_by_uuid(job_data.project_uuid, owner_uuid=current_user.uuid)

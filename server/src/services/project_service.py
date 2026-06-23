@@ -39,7 +39,7 @@ class ProjectService:
             await self.project_crud.update_project_preferences(uuid, merged)
             return True
 
-    async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID | None = None) -> ProjectRead | None:
+    async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> ProjectRead | None:
         row = await self.project_crud.fetch_project_by_uuid(uuid, owner_uuid)
         return None if row is None else ProjectRead.model_validate(row)
 

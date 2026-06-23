@@ -47,15 +47,13 @@ class ProjectCrud:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
-    async def fetch_project_by_uuid(self, uuid: UUID, owner_uuid: UUID | None = None) -> ProjectRead | None:
-        stmt = select(Project).where(Project.uuid == uuid)
-        if owner_uuid is not None:
-            stmt = stmt.where(Project.owner_uuid == owner_uuid)
+    async def fetch_project_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> ProjectRead | None:
+        stmt = select(Project).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
     async def create_project(self, project_data: ProjectCreate) -> Tuple[int, UUID]:
-        new_project = Project(**project_data.model_dump(exclude_none=True))
+        new_project = Project(**project_data.model_dump())
         self.db.add(new_project)
         await self.db.flush()
         return new_project.id, new_project.uuid
