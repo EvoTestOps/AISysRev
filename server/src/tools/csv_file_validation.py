@@ -1,4 +1,4 @@
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, List, Optional, Literal
 
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
@@ -8,10 +8,12 @@ from src.tools.csv_file_reader import read_csv_resilient
 from src.schemas.publication import PublicationRowData
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
+GITHUB_REQUIRED_FIELDS = {"repo_name", "description", "html_url", "readme"}
+
 
 
 def validate_csv(
-    file_obj: BinaryIO, filename: str
+    file_obj: BinaryIO, filename: str, screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER",
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:
     errors: List[FileError] = []
     empty_abstract_count = 0
@@ -21,8 +23,12 @@ def validate_csv(
         raw = file_obj.read()
         df = read_csv_resilient(raw)
         df.columns = [str(c).strip().lower() for c in df.columns]
+        if screening_target == "GITHUB_REPOSITORY":
+            missing = GITHUB_REQUIRED_FIELDS - set(df.columns)
+        else:
+            missing = REQUIRED_FIELDS - set(df.columns)
 
-        missing = REQUIRED_FIELDS - set(df.columns)
+
         if missing:
             return (
                 None,
@@ -37,6 +43,14 @@ def validate_csv(
                 ],
                 0,
             )
+        if screening_target == "GITHUB_REPOSITORY":
+            df["title"] = (
+                df["repo_name"].fillna("").astype(str).str.strip()
+                + " - "
+                + df["description"].fillna("").astype(str).str.strip()
+            )
+            df["abstract"] = df["readme"]
+            df["doi"] = df["html_url"]
 
         df = df.where(df.notna(), None)
         empty_abstract_count = df["abstract"].isna().sum()

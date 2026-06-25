@@ -63,6 +63,7 @@ import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
+import { ScreeningTarget } from "../state/types";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -85,6 +86,10 @@ const fmt = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+
+
+
+
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -440,6 +445,22 @@ export const ProjectPage = () => {
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
 
+  const screeningTargetKey = `aisysrev:screeningTarget:${projectUuid}`;
+
+  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(() => {
+    const stored = window.localStorage.getItem(screeningTargetKey);
+
+    if (stored === ScreeningTarget.GITHUB_REPOSITORY) {
+      return ScreeningTarget.GITHUB_REPOSITORY;
+    }
+
+    return ScreeningTarget.PAPER;
+  });
+  useEffect(() => {
+      window.localStorage.setItem(screeningTargetKey, screeningTarget);
+    }, [screeningTargetKey, screeningTarget]);
+  const isGithubScreening =
+    screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
@@ -698,8 +719,11 @@ export const ProjectPage = () => {
   const createZeroShotJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
+
+
+
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig());
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget));
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
@@ -717,12 +741,12 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
       try {
-        const res = await fileUploadToBackend(files, projectUuid);
+        const res = await fileUploadToBackend(files, projectUuid, screeningTarget);
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
@@ -743,7 +767,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid],
+    [projectUuid, screeningTarget],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -1053,6 +1077,23 @@ export const ProjectPage = () => {
             );
           })}
         </div>
+        <label className="flex items-start gap-3 border border-gray-200 p-3 text-sm mb-3">
+              <input
+                type="checkbox"
+                checked={isGithubScreening}
+                disabled={fetchedFiles.length !== 0}
+                onChange={(event) =>
+                  setScreeningTarget(
+                    event.target.checked
+                      ? ScreeningTarget.GITHUB_REPOSITORY
+                      : ScreeningTarget.PAPER,
+                  )
+                }
+              />
+
+
+              <span className="font-semibold">GitHub repository screening</span>
+            </label>
         <div className="flex flex-col gap-2">
           <SectionHeader
             title="Step 1. Upload papers"
@@ -1289,6 +1330,8 @@ export const ProjectPage = () => {
                 </div>
               </div>
             )}
+
+
             <div className="flex justify-start">
               <Button
                 variant="purple"
@@ -1350,6 +1393,7 @@ export const ProjectPage = () => {
             model_parameters: modelFormValues,
             provider_parameters: {},
           }}
+          screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
             fetchJobsForProject(projectUuid);

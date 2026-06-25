@@ -1,10 +1,14 @@
 from httpx import AsyncClient
 
+
 from src.core.prompts import (
     additional_instructions,
     few_shot_task_prompt,
     per_criteria_task_prompt,
     zero_shot_task_prompt,
+    github_additional_instructions,
+    github_zero_shot_task_prompt,
+    github_few_shot_task_prompt
 )
 from src.db.models.jobtask import JobTask
 from src.schemas.job import FewShotPromptingConfig, JobCreate, ZeroShotPromptingConfig
@@ -12,7 +16,9 @@ from src.schemas.llm import (
     CriterionResponse,
     ProviderRuntimeParameters,
     StructuredResponse,
+
 )
+
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead
@@ -58,6 +64,19 @@ async def get_structured_response(
         inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
 
+    screening_target = getattr(
+    job_data.prompting_config,
+    "screening_target",
+    "PAPER",
+    )
+
+    is_github_screening = screening_target == "GITHUB_REPOSITORY"
+
+    used_additional_instructions = (
+        github_additional_instructions
+        if is_github_screening
+        else additional_instructions
+    )
     api_key: SettingRead | None = None
     cfg = job_data.prompting_config
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
@@ -71,11 +90,16 @@ async def get_structured_response(
             )
 
     if isinstance(cfg, ZeroShotPromptingConfig):
-        prompt_text = zero_shot_task_prompt.format(
+        prompt_template = (
+            github_zero_shot_task_prompt
+            if is_github_screening
+            else zero_shot_task_prompt
+        )
+        prompt_text = prompt_template.format(
             job_task_data.title,
             job_task_data.abstract,
             criteria,
-            additional_instructions,
+            used_additional_instructions,
         )
         result = await llm_service.call_llm(
             llm,
@@ -94,11 +118,17 @@ async def get_structured_response(
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
         seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
         seed_paper_txt = create_few_shot_examples(seed_papers)
-        prompt_text = few_shot_task_prompt.format(
+        prompt_template = (
+            github_few_shot_task_prompt
+            if is_github_screening
+            else few_shot_task_prompt
+        )
+
+        prompt_text = prompt_template.format(
             job_task_data.title,
             job_task_data.abstract,
             criteria,
-            additional_instructions,
+            used_additional_instructions,
             seed_paper_txt,
         )
         result = await llm_service.call_llm(

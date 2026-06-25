@@ -38,13 +38,14 @@ class LLMModelConfig(BaseModel):
 
 # Define different configs for prompting strategies
 
-
 class ZeroShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
+    screening_type: Literal[JobPromptingType.ZERO_SHOT]  = JobPromptingType.ZERO_SHOT
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
 
 
 class FewShotPromptingConfig(BaseModel):
     screening_type: Literal[JobPromptingType.FEW_SHOT] = JobPromptingType.FEW_SHOT
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
     seed_paper_inc: List[str]
     seed_paper_exc: List[str]
     remember_selection: bool

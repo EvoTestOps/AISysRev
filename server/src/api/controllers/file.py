@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 from uuid import UUID
 
 from fastapi import (
@@ -45,6 +45,7 @@ async def list_files(
 async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = Form("PAPER"),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
@@ -56,7 +57,7 @@ async def process_csv(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        result = await file_service.process_files(project_uuid, files)
+        result = await file_service.process_files(project_uuid, files, screening_target)
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:

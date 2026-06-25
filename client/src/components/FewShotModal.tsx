@@ -23,9 +23,11 @@ import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
 import { createJob } from "../services/jobService";
 import { Hr } from "./Hr";
+import { ScreeningTarget } from "../state/types";
 
 type FewShotModalProps = {
   onClose: () => void;
+  screeningTarget: ScreeningTarget;
   llmConfig: LlmConfig;
 };
 
@@ -83,6 +85,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
 
 export const FewShotModal: React.FC<FewShotModalProps> = ({
   onClose,
+  screeningTarget,
   llmConfig,
 }) => {
   const [currentStep, setCurrentStep] = useState<
@@ -134,7 +137,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     const promptingConfig = createFewShotPromptingConfig(
       selectedInclusionSeeds,
       selectedExclusionSeeds,
-      rememberSelection
+      rememberSelection,
+      screeningTarget,
     );
 
     try {

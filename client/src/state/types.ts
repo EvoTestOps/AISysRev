@@ -20,16 +20,24 @@ export type PromptingConfig =
   | FewShotPromptingConfig
   | PerCriteriaPromptingConfig;
 
+export enum ScreeningTarget {
+  PAPER = "PAPER",
+  GITHUB_REPOSITORY = "GITHUB_REPOSITORY",
+}
+
 export type ZeroShotPromptingConfig = {
   screening_type: JobPromptingType.ZERO_SHOT;
+  screening_target: ScreeningTarget,
 };
 
-export const createZeroShotPromptingConfig = (): ZeroShotPromptingConfig => ({
+export const createZeroShotPromptingConfig = (screeningTarget = ScreeningTarget.PAPER,): ZeroShotPromptingConfig => ({
   screening_type: JobPromptingType.ZERO_SHOT,
+  screening_target: screeningTarget,
 });
 
 export type FewShotPromptingConfig = {
   screening_type: JobPromptingType.FEW_SHOT;
+  screening_target: ScreeningTarget,
   seed_paper_inc: string[];
   seed_paper_exc: string[];
   remember_selection: boolean;
@@ -39,8 +47,10 @@ export const createFewShotPromptingConfig = (
   include_seeds: string[],
   exclude_seeds: string[],
   remember_selection = true,
+  screeningTarget = ScreeningTarget.PAPER,
 ): FewShotPromptingConfig => ({
   screening_type: JobPromptingType.FEW_SHOT,
+  screening_target: screeningTarget,
   seed_paper_exc: exclude_seeds,
   seed_paper_inc: include_seeds,
   remember_selection,
