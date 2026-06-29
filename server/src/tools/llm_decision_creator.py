@@ -1,6 +1,5 @@
 from httpx import AsyncClient
 
-
 from src.core.prompts import (
     additional_instructions,
     few_shot_task_prompt,
@@ -16,9 +15,7 @@ from src.schemas.llm import (
     CriterionResponse,
     ProviderRuntimeParameters,
     StructuredResponse,
-
 )
-
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead

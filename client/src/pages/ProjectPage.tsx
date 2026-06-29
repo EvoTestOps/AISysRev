@@ -87,10 +87,6 @@ const fmt = new Intl.NumberFormat("en", {
   maximumFractionDigits: 1,
 });
 
-
-
-
-
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
   modelParametersSchema,
@@ -445,22 +441,20 @@ export const ProjectPage = () => {
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
 
-  const screeningTargetKey = `aisysrev:screeningTarget:${projectUuid}`;
 
-  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(() => {
-    const stored = window.localStorage.getItem(screeningTargetKey);
+  const screeningTarget = useMemo<ScreeningTarget>(() => {
+    const stored = window.localStorage.getItem(
+      `aisysrev:screeningTarget:${projectUuid}`,
+    );
 
     if (stored === ScreeningTarget.GITHUB_REPOSITORY) {
       return ScreeningTarget.GITHUB_REPOSITORY;
     }
-
     return ScreeningTarget.PAPER;
-  });
-  useEffect(() => {
-      window.localStorage.setItem(screeningTargetKey, screeningTarget);
-    }, [screeningTargetKey, screeningTarget]);
-  const isGithubScreening =
-    screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+}, [projectUuid]);
+
+
+
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
@@ -719,9 +713,6 @@ export const ProjectPage = () => {
   const createZeroShotJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
-
-
-
     try {
       await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget));
       fetchJobsForProject(projectUuid);
@@ -729,7 +720,7 @@ export const ProjectPage = () => {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
 
   const createPerCriteriaJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
@@ -1077,23 +1068,6 @@ export const ProjectPage = () => {
             );
           })}
         </div>
-        <label className="flex items-start gap-3 border border-gray-200 p-3 text-sm mb-3">
-              <input
-                type="checkbox"
-                checked={isGithubScreening}
-                disabled={fetchedFiles.length !== 0}
-                onChange={(event) =>
-                  setScreeningTarget(
-                    event.target.checked
-                      ? ScreeningTarget.GITHUB_REPOSITORY
-                      : ScreeningTarget.PAPER,
-                  )
-                }
-              />
-
-
-              <span className="font-semibold">GitHub repository screening</span>
-            </label>
         <div className="flex flex-col gap-2">
           <SectionHeader
             title="Step 1. Upload papers"
@@ -1330,8 +1304,6 @@ export const ProjectPage = () => {
                 </div>
               </div>
             )}
-
-
             <div className="flex justify-start">
               <Button
                 variant="purple"

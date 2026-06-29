@@ -11,7 +11,6 @@ REQUIRED_FIELDS = {"title", "abstract", "doi"}
 GITHUB_REQUIRED_FIELDS = {"repo_name", "description", "html_url", "readme"}
 
 
-
 def validate_csv(
     file_obj: BinaryIO, filename: str, screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER",
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:

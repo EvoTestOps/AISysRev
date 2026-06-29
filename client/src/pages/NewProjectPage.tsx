@@ -12,6 +12,7 @@ import { Card } from "../components/Card";
 import { useTypedStoreActions } from "../state/store";
 import { Button } from "../components/Button";
 import type { Criteria } from "../state/types/project";
+import { ScreeningTarget } from "../state/types";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -62,6 +63,10 @@ export const NewProject = () => {
     return map;
   }, [exclusionCriteria]);
 
+  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(
+    ScreeningTarget.PAPER,
+  );
+
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
       toast.error("Title is required");
@@ -107,6 +112,10 @@ export const NewProject = () => {
         uuid = res.uuid;
         toast.success("Project created successfully!");
         if (uuid) {
+          window.localStorage.setItem(
+            `aisysrev:screeningTarget:${uuid}`,
+            screeningTarget,
+          );
           refreshProjects();
           navigate(`/project/${uuid}`);
         }
@@ -125,7 +134,7 @@ export const NewProject = () => {
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, exclusionExpression, refreshProjects, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, exclusionExpression, refreshProjects, navigate, screeningTarget]);
 
   const handleReset = useCallback(() => {
     setTitle("");
@@ -135,6 +144,7 @@ export const NewProject = () => {
     setExclusionCriteriaInput("");
     setInclusionExpression("");
     setExclusionExpression("");
+    setScreeningTarget(ScreeningTarget.PAPER);
   }, []);
 
   return (
@@ -197,6 +207,20 @@ export const NewProject = () => {
             </div>
           </div>
         </Card>
+        <label className="flex items-start gap-3 border border-gray-200 p-3 text-sm mb-3">
+              <input
+                type="checkbox"
+                checked={screeningTarget === ScreeningTarget.GITHUB_REPOSITORY}
+                onChange={(event) =>
+                  setScreeningTarget(
+                    event.target.checked
+                      ? ScreeningTarget.GITHUB_REPOSITORY
+                      : ScreeningTarget.PAPER,
+                  )
+                }
+              />
+              <span className="font-semibold">GitHub repository screening</span>
+          </label>
         <Card>
           <div className="flex flex-col gap-4">
             <div>
