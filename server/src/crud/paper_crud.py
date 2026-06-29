@@ -1,7 +1,7 @@
 from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float

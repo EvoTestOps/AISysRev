@@ -2,7 +2,7 @@ import pytest
 
 from src.crud.file_crud import FileCrud
 from src.schemas.file import FileCreate
-from src.services.file_service import FileService, create_file_service
+from src.services.file_service import create_file_service
 
 
 @pytest.mark.asyncio
