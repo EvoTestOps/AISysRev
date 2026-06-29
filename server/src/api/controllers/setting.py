@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
@@ -41,6 +41,12 @@ class UpsertData(BaseModel):
     name: str
     value: str
 
+    @field_validator("name", "value")
+    @classmethod
+    def non_empty(cls, v, field):
+        if not v.strip():
+            raise ValueError(f"{field.field_name} must be a non-empty string")
+        return v
 
 @router.post("/setting", status_code=status.HTTP_201_CREATED, tags=["Settings"])
 async def upsert_setting(
