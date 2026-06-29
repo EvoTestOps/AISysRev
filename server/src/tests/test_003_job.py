@@ -8,7 +8,6 @@ from src.crud.user_crud import UserCrud
 from src.schemas.job import JobCreate, ZeroShotPromptingConfig, LLMModelConfig
 from src.schemas.project import Criteria, ProjectCreate
 from src.schemas.user import UserCreate
-from src.services.job_service import create_job_service
 
 
 async def _create_owned_project(db_ctx, sub: str) -> tuple[UUID, UUID]:
