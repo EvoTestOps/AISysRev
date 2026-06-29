@@ -18,21 +18,21 @@ class PaperService:
     def __init__(self, paper_crud: PaperCrud):
         self.paper_crud = paper_crud
 
-    async def fetch_papers(self, project_uuid: UUID):
-        papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid)
+    async def fetch_papers(self, project_uuid: UUID, owner_uuid: UUID):
+        papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid, owner_uuid)
         return [PaperRead.model_validate(paper) for paper in papers]
 
-    async def fetch_by_uuid(self, uuid: UUID) -> PaperRead | None:
-        paper = await self.paper_crud.fetch_paper_by_uuid(uuid)
+    async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> PaperRead | None:
+        paper = await self.paper_crud.fetch_paper_by_uuid(uuid, owner_uuid)
         return None if paper is None else PaperRead.model_validate(paper)
 
-    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str]):
-        papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids)
+    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str], owner_uuid: UUID):
+        papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids, owner_uuid)
         return [PaperRead.model_validate(paper) for paper in papers]
 
-    async def fetch_papers_with_model_evals(self, project_uuid: UUID):
+    async def fetch_papers_with_model_evals(self, project_uuid: UUID, owner_uuid: UUID):
         rows = await self.paper_crud.fetch_papers_with_model_evals_by_project_uuid(
-            project_uuid
+            project_uuid, owner_uuid
         )
         return [
             PaperReadWithAvgProbability(
@@ -65,11 +65,11 @@ class PaperService:
     #     logger.info("start_job_tasks: Processing job %s", job_id)
     #     return process_job_task.delay(job_id, job_data)
 
-    async def add_human_result(self, uuid: UUID, human_result: PaperHumanResult):
-        await self.paper_crud.add_paper_human_result(uuid, human_result)
+    async def add_human_result(self, uuid: UUID, owner_uuid: UUID, human_result: PaperHumanResult):
+        await self.paper_crud.add_paper_human_result(uuid, owner_uuid, human_result)
 
-    async def count_papers_with_human_result(self, project_uuid: UUID):
-        return await self.paper_crud.count_papers_with_human_results(project_uuid)
+    async def count_papers_with_human_result(self, project_uuid: UUID, owner_uuid: UUID) -> int:
+        return await self.paper_crud.count_papers_with_human_results(project_uuid, owner_uuid)
 
 
 def create_paper_service(db_ctx: DBContext) -> PaperService:

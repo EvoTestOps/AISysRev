@@ -96,12 +96,7 @@ async def delete_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        project = await projects.fetch_by_uuid(uuid, owner_uuid=current_user.uuid)
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
-        await projects.delete(uuid)
+        await projects.delete(uuid, current_user.uuid)
         await db_ctx.commit()
         return {"detail": "Project deleted successfully"}
     except HTTPException:

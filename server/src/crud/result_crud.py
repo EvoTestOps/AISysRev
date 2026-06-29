@@ -13,7 +13,7 @@ class ResultCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_result(self, project_uuid: UUID):
+    async def create_result(self, project_uuid: UUID, owner_uuid: UUID):
         stmt = (
             select(
                 Paper.title,
@@ -48,6 +48,7 @@ class ResultCrud:
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
             .outerjoin(Job, Job.id == JobTask.job_id)
             .where(Project.uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
         return result.all()

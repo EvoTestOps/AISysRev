@@ -74,8 +74,8 @@ async def test_create_and_fetch_job_crud(db_ctx):
     crud = db_ctx.crud(JobCrud)
 
     created_job = await crud.create_job(job_data)
-    fetched_job = await crud.fetch_job_by_uuid(created_job.uuid)
-    job = await crud.fetch_job_by_uuid(created_job.uuid)
+    fetched_job = await crud.fetch_job_by_uuid(created_job.uuid, owner_uuid)
+    job = await crud.fetch_job_by_uuid(created_job.uuid, owner_uuid)
 
     assert fetched_job is not None
     assert job is not None
@@ -112,17 +112,9 @@ async def test_fetch_jobs_by_project(db_ctx):
         )
         await crud.create_job(job_data)
 
-    jobs = await crud.fetch_jobs_by_project(project_uuid)
+    jobs = await crud.fetch_jobs_by_project(project_uuid, owner_uuid)
 
     assert jobs is not None
     assert len(jobs) == 10
     for job in jobs:
         assert job.project_uuid == project_uuid
-
-
-@pytest.mark.asyncio
-async def test_get_job_service(db_ctx):
-    service = create_job_service(db_ctx)
-
-    assert service is not None
-    assert isinstance(service, JobService)

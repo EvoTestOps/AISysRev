@@ -25,8 +25,8 @@ class ProjectCrud:
         # TODO: Fix
         return result.mappings().all()  # type: ignore
 
-    async def get_project_preferences(self, uuid: UUID) -> Optional[ProjectPreferences]:
-        stmt = select(Project.preferences).where(Project.uuid == uuid)
+    async def get_project_preferences(self, uuid: UUID, owner_uuid: UUID) -> Optional[ProjectPreferences]:
+        stmt = select(Project.preferences).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         row = result.mappings().one_or_none()
         if row is None:
@@ -37,11 +37,12 @@ class ProjectCrud:
         return ProjectPreferences(**data)
 
     async def update_project_preferences(
-        self, uuid: UUID, preferences: ProjectPreferences
+        self, uuid: UUID, owner_uuid: UUID, preferences: ProjectPreferences
     ) -> bool:
         stmt = (
             update(Project)
             .where(Project.uuid == uuid)
+            .where(Project.owner_uuid == owner_uuid)
             .values(preferences=preferences.model_dump())
         )
         result = await self.db.execute(stmt)
@@ -58,8 +59,8 @@ class ProjectCrud:
         await self.db.flush()
         return new_project.id, new_project.uuid
 
-    async def delete_project(self, uuid: UUID) -> bool:
-        stmt = select(Project).where(Project.uuid == uuid)
+    async def delete_project(self, uuid: UUID, owner_uuid: UUID) -> bool:
+        stmt = select(Project).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         project = result.scalar_one_or_none()
 
