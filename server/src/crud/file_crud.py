@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.file import File
 from src.db.models.paper import Paper
+from src.db.models.project import Project
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 
 
@@ -13,7 +14,7 @@ class FileCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_files(self, project_uuid: UUID) -> List[FileReadWithPaperCount]:
+    async def fetch_files(self, project_uuid: UUID, owner_uuid: UUID) -> List[FileReadWithPaperCount]:
         stmt = (
             select(
                 File.uuid,
@@ -28,7 +29,9 @@ class FileCrud:
                 Paper.project_uuid == File.project_uuid,
                 isouter=True,
             )
+            .join(Project, Project.uuid == File.project_uuid)
             .where(File.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
             .group_by(
                 File.uuid,
                 File.project_uuid,

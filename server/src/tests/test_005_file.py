@@ -2,11 +2,11 @@ import pytest
 
 from src.crud.file_crud import FileCrud
 from src.schemas.file import FileCreate
-from src.services.file_service import FileService, create_file_service
+from src.services.file_service import create_file_service
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_file_record(db_ctx, test_project_uuid):
+async def test_create_and_fetch_file_record(db_ctx, test_project_uuid, test_user_uuid):
     crud = db_ctx.crud(FileCrud)
 
     file_data = FileCreate(
@@ -18,7 +18,7 @@ async def test_create_and_fetch_file_record(db_ctx, test_project_uuid):
     assert new_file.filename == file_data.filename
     assert new_file.mime_type == file_data.mime_type
 
-    fetched_files = await crud.fetch_files(test_project_uuid)
+    fetched_files = await crud.fetch_files(test_project_uuid, test_user_uuid)
     assert len(fetched_files) == 1
     assert fetched_files[0].filename == file_data.filename
     assert fetched_files[0].mime_type == file_data.mime_type
@@ -33,11 +33,11 @@ async def test_file_service(
     result = await service.process_files(test_project_uuid, [test_files_working[0]], test_user_uuid)
     assert len(result.valid_filenames) == 1
 
-    files = await service.fetch_all(test_project_uuid)
+    files = await service.fetch_all(test_project_uuid, test_user_uuid)
     assert len(files) == 1
     assert files[0].filename in result.valid_filenames
 
-    papers = await service.fetch_all(test_project_uuid)
+    papers = await service.fetch_all(test_project_uuid, test_user_uuid)
     assert len(papers) == 1
 
 
@@ -56,9 +56,3 @@ async def test_files_service_invalid_data(
     assert result.errors[0].message in errors_msgs
 
 
-@pytest.mark.asyncio
-async def test_get_file_service(db_ctx):
-    service = create_file_service(db_ctx)
-
-    assert service is not None
-    assert isinstance(service, FileService)

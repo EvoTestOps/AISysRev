@@ -16,7 +16,6 @@ from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.schemas.file import FileReadWithPaperCount
 from src.services.file_service import create_file_service
-from src.services.project_service import create_project_service
 
 router = APIRouter()
 
@@ -33,14 +32,8 @@ async def list_files(
     current_user: User = Depends(get_current_user),
 ):
     file_service = create_file_service(db_ctx)
-    project_service = create_project_service(db_ctx)
     try:
-        project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
-        return await file_service.fetch_all(project_uuid)
+        return await file_service.fetch_all(project_uuid, current_user.uuid)
     except HTTPException:
         raise
     except Exception as e:
@@ -58,14 +51,8 @@ async def process_csv(
     current_user: User = Depends(get_current_user),
 ):
     file_service = create_file_service(db_ctx)
-    project_service = create_project_service(db_ctx)
     try:
-        project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
-            )
-        existing_files = await file_service.fetch_all(project_uuid)
+        existing_files = await file_service.fetch_all(project_uuid, current_user.uuid)
         if len(existing_files) != 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

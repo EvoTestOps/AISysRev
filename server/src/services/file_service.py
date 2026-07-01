@@ -21,8 +21,8 @@ class FileService:
         self.file_crud = file_crud
         self.paper_crud = paper_crud
 
-    async def fetch_all(self, project_uuid: UUID):
-        rows = await self.file_crud.fetch_files(project_uuid)
+    async def fetch_all(self, project_uuid: UUID, owner_uuid: UUID) -> List[FileReadWithPaperCount]:
+        rows = await self.file_crud.fetch_files(project_uuid, owner_uuid)
         return [FileReadWithPaperCount(**row) for row in rows]  # type: ignore
 
     async def process_files(

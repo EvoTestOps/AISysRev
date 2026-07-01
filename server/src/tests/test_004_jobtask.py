@@ -80,7 +80,7 @@ async def test_create_jobtask(db_ctx, test_files_working):
     assert isinstance(new_job, JobRead)
     assert new_job.project_uuid == project_uuid
 
-    job_tasks = await jobtask_crud.fetch_job_tasks_by_job_uuid(new_job.uuid)
+    job_tasks = await jobtask_crud.fetch_job_tasks_by_job_uuid(new_job.uuid, owner_uuid)
     assert job_tasks is not None
     assert len(job_tasks) == 1
 
