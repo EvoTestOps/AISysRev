@@ -331,7 +331,7 @@ async def process_job(
         jobtask_crud = db_ctx.crud(JobTaskCrud)
 
         logger.info("Fetching project by UUID %s", job_data.project_uuid)
-        project = await project_crud.fetch_project_by_uuid(job_data.project_uuid)
+        project = await project_crud.fetch_project_by_uuid(job_data.project_uuid, job_data.owner_uuid)
         if project is None:
             raise RuntimeError("Project not found")
 

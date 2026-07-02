@@ -41,7 +41,7 @@ async def test_create_and_fetch_project_crud(db_ctx, test_user_uuid):
     assert uuid
     assert id
 
-    project = await crud.fetch_project_by_uuid(uuid)
+    project = await crud.fetch_project_by_uuid(uuid, test_user_uuid)
     assert project is not None
 
     project_read = ProjectRead.model_validate(project)
@@ -67,8 +67,8 @@ async def test_delete_project_crud(db_ctx, test_user_uuid):
     )
     id, uuid = await crud.create_project(project_data)
 
-    deleted = await crud.delete_project(uuid)
+    deleted = await crud.delete_project(uuid, test_user_uuid)
     assert deleted
 
-    project = await crud.fetch_project_by_uuid(uuid)
+    project = await crud.fetch_project_by_uuid(uuid, test_user_uuid)
     assert project is None
