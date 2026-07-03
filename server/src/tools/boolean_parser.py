@@ -104,16 +104,18 @@ def build_criteria_tree_with_expressions(
     }
 
     def make_tree(
-        ids: list[str], descriptions: list[str], expression: Optional[str]
+        ids: list[str],
+        descriptions: list[str],
+        expression: Optional[str],
+        default_operator: str = "OR",
     ) -> dict:
         if expression:
             tree = parse_expression(expression, all_ids)
             _attach_descriptions(tree, leaf_map)
             return tree
 
-        # Default: OR over all criteria in section
         return {
-            "operator": "OR",
+            "operator": default_operator,
             "criteria": [
                 {"id": cid, "description": desc} for cid, desc in zip(ids, descriptions)
             ],
@@ -122,11 +124,11 @@ def build_criteria_tree_with_expressions(
     result: dict = {}
     if inclusion_criteria:
         result["inclusion"] = make_tree(
-            inc_ids, inclusion_criteria, inclusion_expression
+            inc_ids, inclusion_criteria, inclusion_expression, default_operator="AND"
         )
     if exclusion_criteria:
         result["exclusion"] = make_tree(
-            exc_ids, exclusion_criteria, exclusion_expression
+            exc_ids, exclusion_criteria, exclusion_expression, default_operator="OR"
         )
     result["_leaf_map"] = leaf_map
     return result
@@ -134,6 +136,7 @@ def build_criteria_tree_with_expressions(
 
 # Ported from command line version (AISysRevCmdLine)
 # https://github.com/EvoTestOps/AISysRevCmdLine/blob/main/screen_boolean.py
+
 
 def extract_leaf_criteria(node: dict) -> list[dict]:
     if "id" in node:
