@@ -107,4 +107,14 @@ class PaperCrud:
         count = await self.db.execute(stmt)
         return count.scalar()
 
+    async def fetch_max_paper_id(self, project_uuid: UUID, owner_uuid: UUID) -> int:
+        stmt = (
+            select(func.coalesce(func.max(Paper.paper_id), 0))
+            .select_from(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar()
 

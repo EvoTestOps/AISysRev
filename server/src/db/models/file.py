@@ -21,3 +21,4 @@ class File(Base, TimestampMixin):
     )
     filename = Column(String(255), nullable=False)
     mime_type = Column(String(255), nullable=False)
+    storage_path = Column(String(255), nullable=True)

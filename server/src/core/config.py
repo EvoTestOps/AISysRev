@@ -40,6 +40,8 @@ class Settings:
             "true",
             "yes",
         ]
+        self.PDF_STORAGE_PATH: str = get_env("PDF_STORAGE_PATH", "/app/data/pdfs")
+        self.MAX_PDF_UPLOAD_MB: int = int(get_env("MAX_PDF_UPLOAD_MB", "50"))
 
 
 

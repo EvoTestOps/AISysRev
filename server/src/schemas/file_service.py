@@ -13,6 +13,11 @@ class ProcessedFiles(BaseModel):
     errors: List[FileError]
     empty_abstract_count: int = 0
 
+class ProcessedPdfFiles(BaseModel):
+    valid_filenames: List[str]
+    errors: List[FileError]
+    created_paper_count: int = 0
+
 class UploadedFilePaper(BaseModel):
     title: str
     abstract: str

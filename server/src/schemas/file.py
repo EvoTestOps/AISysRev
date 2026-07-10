@@ -8,6 +8,7 @@ class FileCreate(BaseModel):
     project_uuid: UUID
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
+    storage_path: Optional[str] = None
 
     @field_validator("filename", "mime_type")
     @classmethod
@@ -23,6 +24,7 @@ class FileRead(BaseModel):
 
     filename: str = Field(max_length=255)
     mime_type: str = Field(max_length=255)
+    storage_path: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

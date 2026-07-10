@@ -18,7 +18,8 @@ class PaperHumanResultUpdate(BaseModel):
 class PaperCreate(BaseModel):
     paper_id: int
     project_uuid: UUID
-    file_uuid: UUID
+    file_uuid: Optional[UUID] = None
+    pdf_file_uuid: Optional[UUID] = None
     doi: Optional[str]
     title: str
     abstract: str
@@ -28,7 +29,8 @@ class PaperRead(BaseModel):
     uuid: UUID
     paper_id: int
     project_uuid: UUID
-    file_uuid: UUID
+    file_uuid: Optional[UUID] = None
+    pdf_file_uuid: Optional[UUID] = None
     doi: Optional[str]
     title: str
     abstract: str
@@ -43,7 +45,8 @@ class PaperReadWithAvgProbability(BaseModel):
     uuid: UUID
     paper_id: int
     project_uuid: UUID
-    file_uuid: UUID
+    file_uuid: Optional[UUID] = None
+    pdf_file_uuid: Optional[UUID] = None
     doi: Optional[str]
     title: str
     abstract: str

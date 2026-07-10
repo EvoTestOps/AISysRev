@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.file import File
@@ -26,7 +26,7 @@ class FileCrud:
             .select_from(File)
             .join(
                 Paper,
-                Paper.project_uuid == File.project_uuid,
+                or_(Paper.file_uuid == File.uuid, Paper.pdf_file_uuid == File.uuid),
                 isouter=True,
             )
             .join(Project, Project.uuid == File.project_uuid)
