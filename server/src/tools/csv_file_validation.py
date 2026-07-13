@@ -38,7 +38,7 @@ def validate_csv(
                 0,
             )
 
-        df = df.where(df.notna(), None)
+        df = df.astype(object).where(df.notna(), None)
         empty_abstract_count = df["abstract"].isna().sum()
 
         records = df.to_dict("records")
