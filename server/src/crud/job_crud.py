@@ -20,6 +20,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,
+                Job.screening_mode,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -39,6 +40,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,
+                Job.screening_mode,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -56,6 +58,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,
+                Job.screening_mode,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -79,6 +82,7 @@ class JobCrud:
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,
+                Job.screening_mode,
                 Job.created_at,
                 Job.updated_at,
                 Job.celery_task_id,
@@ -135,6 +139,7 @@ class JobCrud:
             project_id=project.id,
             llm_config=job_data.llm_config.model_dump(),
             prompting_config=job_data.prompting_config.model_dump(),
+            screening_mode=job_data.screening_mode.value,
         )
         self.db.add(new_job)
         await self.db.flush()

@@ -4,6 +4,7 @@ from uuid import UUID
 
 from src.crud.paper_crud import PaperCrud
 from src.db.db_context import DBContext
+from src.schemas.job import JobScreeningMode
 from src.schemas.paper import (
     PaperCreate,
     PaperHumanResult,
@@ -20,6 +21,14 @@ class PaperService:
 
     async def fetch_papers(self, project_uuid: UUID, owner_uuid: UUID):
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid, owner_uuid)
+        return [PaperRead.model_validate(paper) for paper in papers]
+    
+    async def fetch_papers_for_screening(
+        self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+    ):
+        papers = await self.paper_crud.fetch_papers_for_screening(
+            project_uuid, owner_uuid, screening_mode
+        )
         return [PaperRead.model_validate(paper) for paper in papers]
 
     async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> PaperRead | None:

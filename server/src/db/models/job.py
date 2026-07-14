@@ -1,7 +1,7 @@
 import enum
 import uuid
 from uuid import UUID as PyUUID
-from sqlalchemy import ForeignKey
+from sqlalchemy import Enum as SAEnum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from src.schemas.job import LLMModelConfig, PromptingConfig
@@ -13,6 +13,10 @@ class JobPromptingType(enum.Enum):
     ZERO_SHOT = "ZERO_SHOT"
     ONE_SHOT = "ONE_SHOT"
     FEW_SHOT = "FEW_SHOT"
+
+class JobScreeningMode(enum.Enum):
+    TEXT = "TEXT"
+    PDF = "PDF"
 
 
 class Job(Base, TimestampMixin):
@@ -28,3 +32,7 @@ class Job(Base, TimestampMixin):
     )
     llm_config: Mapped[LLMModelConfig] = mapped_column(JSONB, nullable=False)
     prompting_config: Mapped[PromptingConfig] = mapped_column(JSONB, nullable=False)
+    screening_mode: Mapped[JobScreeningMode] = mapped_column(
+        SAEnum(JobScreeningMode, name="jobscreeningmode"),
+        default=JobScreeningMode.TEXT, nullable=False
+    )

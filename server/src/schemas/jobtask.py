@@ -30,6 +30,7 @@ class JobTaskCreate(BaseModel):
     title: str
     abstract: str
     paper_uuid: UUID
+    pdf_file_uuid: UUID | None = None
     status: Optional[JobTaskStatus] = JobTaskStatus.NOT_STARTED
 
 

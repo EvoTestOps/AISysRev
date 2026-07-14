@@ -9,6 +9,7 @@ from sqlalchemy.sql.sqltypes import Float
 from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
+from src.schemas.job import JobScreeningMode
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
 
 
@@ -117,4 +118,20 @@ class PaperCrud:
         )
         result = await self.db.execute(stmt)
         return result.scalar()
+
+    async def fetch_papers_for_screening(
+        self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+    ) -> Sequence[Paper]:
+        source_column = (
+            Paper.file_uuid if screening_mode == JobScreeningMode.TEXT else Paper.pdf_file_uuid
+        )
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .where(source_column.isnot(None))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
