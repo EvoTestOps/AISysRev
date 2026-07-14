@@ -207,9 +207,11 @@ export const NewProject = () => {
             </div>
           </div>
         </Card>
-        <label className="flex items-start gap-3 border border-gray-200 p-3 text-sm mb-3">
+        <Card>
+          <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
+                className="h-5 w-5 accent-slate-800 cursor-pointer"
                 checked={screeningTarget === ScreeningTarget.GITHUB_REPOSITORY}
                 onChange={(event) =>
                   setScreeningTarget(
@@ -221,6 +223,7 @@ export const NewProject = () => {
               />
               <span className="font-semibold">GitHub repository screening</span>
           </label>
+        </Card>
         <Card>
           <div className="flex flex-col gap-4">
             <div>
