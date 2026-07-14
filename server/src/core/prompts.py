@@ -184,14 +184,14 @@ github_additional_instructions = (
     "Screening is for a GitHub repository, not an academic paper. "
     "The title field contains the repository name and GitHub description. "
     "The abstract field contains the README.md. "
-    "Do not assume features that are not mentioned in the README or description."
+    "Do not assume features that are not mentioned in the README or description. "
     "Exclude collection repositories and text-only repositories. "
     "Absence of evidence is not enough for inclusion. "
 
 )
 
 
-github_zero_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic review (SLR)
+github_zero_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic review of GitHub repositories.
 
 Task: Evaluate a GitHub repository using **three types of assessments**, applied to both:
 
@@ -257,7 +257,7 @@ If the README is missing, short, or ambiguous, reflect this uncertainty in the p
 \"\"\""""
 
 
-github_few_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic review (SLR).
+github_few_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic review of GitHub repositories.
 
 Task: Evaluate a GitHub repository using **three types of assessments**, applied to both:
 
@@ -327,3 +327,29 @@ Here are a few labeled repository examples to aid in your decision making:
 \"\"\"
 {1}
 \"\"\""""
+
+
+github_per_criteria_task_prompt = """You are an expert research assistant conducting a systematic review of GitHub repositories.
+
+Screening is for a GitHub repository, not an academic paper.
+The title field contains the repository name and GitHub description.
+The abstract field contains the README.md.
+
+
+TITLE: {0}
+ABSTRACT: {1}
+
+Does the following criterion apply to this GitHub repository?
+Criterion: {2}
+
+Do not assume features that are not mentioned in the README or description.
+Exclude collection repositories and text-only repositories.
+Absence of evidence is not enough for inclusion.
+
+Provide a probability and a brief reason for your estimate.
+
+- **Value:** A float between `0.000` and `1.000`
+    - **Interpretation:** The likelihood that the criterion applies or the primary study is relevant.
+        - A value closer to `1.000` means that it is extremely likely (very strong match)
+        - A value closer to `0.000` means it is extremely unlikely (very weak or no match)
+        - You are encouraged to use intermediate values (e.g. `0.100`, `0.250`, `0.350`, `0.700`, `0.950`, `0.999` etc.), not just `0.000` or `1.000`"""

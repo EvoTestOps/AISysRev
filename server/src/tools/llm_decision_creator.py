@@ -7,7 +7,8 @@ from src.core.prompts import (
     zero_shot_task_prompt,
     github_additional_instructions,
     github_zero_shot_task_prompt,
-    github_few_shot_task_prompt
+    github_few_shot_task_prompt,
+    github_per_criteria_task_prompt,
 )
 from src.db.models.jobtask import JobTask
 from src.schemas.job import FewShotPromptingConfig, JobCreate, ZeroShotPromptingConfig
@@ -165,8 +166,17 @@ async def get_single_criterion_response(
                 f"API key {llm.api_key_config_parameter.key} for provider "
                 f"{job_data.llm_config.provider_name} is missing"
             )
-
-    prompt_text = per_criteria_task_prompt.format(
+    screening_target = getattr(
+        job_data.prompting_config,
+        "screening_target",
+        "PAPER",
+    )
+    prompt_template = (
+        github_per_criteria_task_prompt
+        if screening_target == "GITHUB_REPOSITORY"
+        else per_criteria_task_prompt
+    )
+    prompt_text = prompt_template.format(
         title, abstract, criterion_description
     )
     return await llm_service.call_llm(

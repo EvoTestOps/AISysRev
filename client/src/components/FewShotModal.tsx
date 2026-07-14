@@ -161,6 +161,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     selectedExclusionSeeds,
     rememberSelection,
     projectUuid,
+    screeningTarget,
     llmConfig,
     onClose,
   ]);

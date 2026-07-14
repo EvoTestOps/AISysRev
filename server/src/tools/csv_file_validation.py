@@ -22,8 +22,6 @@ def validate_csv(
         raw = file_obj.read()
         df = read_csv_resilient(raw)
         df.columns = [str(c).strip().lower() for c in df.columns]
-        df = df.replace(r"^\s*$", None, regex=True)
-        df = df.astype(object).where(pd.notna(df), None)
         if screening_target == "GITHUB_REPOSITORY":
             missing = GITHUB_REQUIRED_FIELDS - set(df.columns)
         else:
@@ -53,7 +51,7 @@ def validate_csv(
             df["abstract"] = df["readme"]
             df["doi"] = df["html_url"]
 
-        df = df.where(df.notna(), None)
+        df = df.astype(object).where(df.notna(), None)
         empty_abstract_count = df["abstract"].isna().sum()
 
         records = df.to_dict("records")

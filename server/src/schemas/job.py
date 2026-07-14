@@ -53,7 +53,7 @@ class FewShotPromptingConfig(BaseModel):
 
 class PerCriteriaPromptingConfig(BaseModel):
     screening_type: Literal[JobPromptingType.PER_CRITERIA] = JobPromptingType.PER_CRITERIA
-
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
 
 PromptingConfig = Annotated[
     Union[ZeroShotPromptingConfig, FewShotPromptingConfig, PerCriteriaPromptingConfig],

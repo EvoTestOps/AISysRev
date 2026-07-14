@@ -726,7 +726,7 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig());
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget));
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);

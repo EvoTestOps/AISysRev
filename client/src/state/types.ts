@@ -58,11 +58,13 @@ export const createFewShotPromptingConfig = (
 
 export type PerCriteriaPromptingConfig = {
   screening_type: JobPromptingType.PER_CRITERIA;
+  screening_target: ScreeningTarget;
 };
 
 export const createPerCriteriaPromptingConfig =
-  (): PerCriteriaPromptingConfig => ({
+  (screeningTarget = ScreeningTarget.PAPER): PerCriteriaPromptingConfig => ({
     screening_type: JobPromptingType.PER_CRITERIA,
+    screening_target: screeningTarget,
   });
 
 export type CreatedJob = {
