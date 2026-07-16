@@ -1,3 +1,4 @@
+import shutil
 from pathlib import Path
 from uuid import UUID
 
@@ -12,3 +13,15 @@ def write_pdf_bytes(storage_path: str, content: bytes) -> None:
     path = Path(storage_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(content)
+
+
+def read_pdf_bytes(storage_path: str) -> bytes:
+    return Path(storage_path).read_bytes()
+
+
+def delete_pdf_bytes(storage_path: str) -> None:
+    Path(storage_path).unlink(missing_ok=True)
+
+
+def delete_project_pdf_directory(project_uuid: UUID) -> None:
+    shutil.rmtree(f"{settings.PDF_STORAGE_PATH}/{project_uuid}", ignore_errors=True)

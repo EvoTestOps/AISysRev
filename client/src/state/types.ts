@@ -132,6 +132,7 @@ export type Paper = {
   paper_id: number;
   project_uuid: string;
   file_uuid: string;
+  pdf_file_uuid: string | null;
   doi: string | null;
   title: string;
   abstract: string;
@@ -145,6 +146,8 @@ export type PaperWithModelEval = {
   paper_id: number;
   project_uuid: string;
   file_uuid: string;
+  pdf_file_uuid: string | null;
+  pdf_filename: string | null;
   doi: string | null;
   title: string;
   abstract: string;

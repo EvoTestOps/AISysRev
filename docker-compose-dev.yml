@@ -45,6 +45,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost:3001}
     volumes:
       - ./server/migrations:/app/migrations
+      - pdf_data:/app/data/pdfs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
       interval: 10s
@@ -114,6 +115,8 @@ services:
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
     depends_on:
       - redis
+    volumes:
+      - pdf_data:/app/data/pdfs
 
   flower:
     container_name: flower_${APP_ENV:-dev}
@@ -139,3 +142,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  pdf_data:

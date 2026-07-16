@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
 
+from src.db.models.file import File
 from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
@@ -71,12 +72,13 @@ class PaperCrud:
             .label("error_messages")
         )
         stmt = (
-            select(Paper, avg_prob, error_messages)
+            select(Paper, avg_prob, error_messages, File.filename.label("pdf_filename"))
             .join(Project, Project.uuid == Paper.project_uuid)
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
+            .outerjoin(File, File.uuid == Paper.pdf_file_uuid)
             .where(Paper.project_uuid == project_uuid)
             .where(Project.owner_uuid == owner_uuid)
-            .group_by(Paper.id)
+            .group_by(Paper.id, File.filename)
         )
         result = await self.db.execute(stmt)
         # TODO: Fix
@@ -135,3 +137,32 @@ class PaperCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
+    async def set_paper_pdf_file_uuid(
+        self, paper_uuid: UUID, owner_uuid: UUID, pdf_file_uuid: UUID
+    ) -> Paper | None:
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.uuid == paper_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        paper = result.scalar_one_or_none()
+        if paper:
+            paper.pdf_file_uuid = pdf_file_uuid
+            await self.db.flush()
+            await self.db.refresh(paper)
+        return paper
+    
+    async def fetch_papers_missing_pdf(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> Sequence[Paper]:
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .where(Paper.pdf_file_uuid.is_(None))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

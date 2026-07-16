@@ -48,6 +48,7 @@ class PaperService:
                 **paper.__dict__,  # or unpack via your ORM->schema adapter
                 avg_probability_decision=row["avg_probability_decision"],
                 error_messages=row["error_messages"] or None,
+                pdf_filename=row["pdf_filename"],
             )
             for row in rows
             # TODO: Fix

@@ -1,8 +1,10 @@
+import asyncio
 from uuid import UUID
 
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+from src.tools.pdf_storage import delete_project_pdf_directory
 
 
 class ProjectService:
@@ -47,7 +49,10 @@ class ProjectService:
         return await self.project_crud.create_project(data)
 
     async def delete(self, uuid: UUID, owner_uuid: UUID) -> bool:
-        return await self.project_crud.delete_project(uuid, owner_uuid)
+        deleted = await self.project_crud.delete_project(uuid, owner_uuid)
+        if deleted:
+            await asyncio.to_thread(delete_project_pdf_directory, uuid)
+        return deleted
 
 
 def create_project_service(db_ctx: DBContext) -> ProjectService:

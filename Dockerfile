@@ -50,6 +50,7 @@ COPY server/. /app
 RUN chown -R app:app /app
 RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
 RUN chown app:app /app/migrate.sh && chmod +x /app/migrate.sh
+RUN mkdir -p /app/data/pdfs && chown app:app /app/data/pdfs
 
 USER app
 CMD ["/bin/sh", "/app/start.sh"]
@@ -64,6 +65,7 @@ COPY --from=server-builder --chown=celeryuser:celerygroup /app/.venv /app/.venv
 
 COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
+RUN mkdir -p /app/data/pdfs && chown celeryuser:celerygroup /app/data/pdfs
 
 EXPOSE 8080
 USER celeryuser

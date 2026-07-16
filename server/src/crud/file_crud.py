@@ -21,6 +21,7 @@ class FileCrud:
                 File.project_uuid,
                 File.filename,
                 File.mime_type,
+                File.storage_path,
                 func.count(Paper.uuid).label("paper_count"),
             )
             .select_from(File)
@@ -37,11 +38,22 @@ class FileCrud:
                 File.project_uuid,
                 File.filename,
                 File.mime_type,
+                File.storage_path,
             )
         )
         result = await self.db.execute(stmt)
         # TODO: Fix
         return result.mappings().all()  # type: ignore
+    
+    async def fetch_file_by_uuid(self, file_uuid: UUID, owner_uuid: UUID) -> File | None:
+        stmt = (
+            select(File)
+            .join(Project, Project.uuid == File.project_uuid)
+            .where(File.uuid == file_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
 
     async def create_file_record(self, file_data: FileCreate):
         new_file = File(**file_data.model_dump(exclude_none=True))
@@ -49,3 +61,7 @@ class FileCrud:
         await self.db.flush()
         await self.db.refresh(new_file)
         return new_file
+    
+    async def delete_file(self, file: File) -> None:
+        await self.db.delete(file)
+        await self.db.flush()
