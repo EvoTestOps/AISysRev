@@ -49,10 +49,10 @@ class ProjectService:
         return await self.project_crud.create_project(data)
 
     async def delete(self, uuid: UUID, owner_uuid: UUID) -> bool:
-        deleted = await self.project_crud.delete_project(uuid, owner_uuid)
-        if deleted:
-            await asyncio.to_thread(delete_project_pdf_directory, uuid)
-        return deleted
+        return await self.project_crud.delete_project(uuid, owner_uuid)
+    
+    async def cleanup_pdf_storage(self, project_uuid: UUID) -> None:
+        await asyncio.to_thread(delete_project_pdf_directory, project_uuid)
 
 
 def create_project_service(db_ctx: DBContext) -> ProjectService:

@@ -176,7 +176,7 @@ class FileService:
     
     async def attach_pdf_to_paper(
         self, paper_uuid: UUID, file: UploadFile, owner_uuid: UUID
-    ) -> PaperRead:
+    ) -> tuple[PaperRead, str | None]:
         paper = await self.paper_crud.fetch_paper_by_uuid(paper_uuid, owner_uuid)
         if paper is None:
             raise ValueError("Paper not found")
@@ -206,14 +206,13 @@ class FileService:
         updated_paper = await self.paper_crud.set_paper_pdf_file_uuid(
             paper_uuid, owner_uuid, created_file.uuid
         )
-
+        
+        old_storage_path = None
         if old_pdf_file_uuid:
             old_file = await self.file_crud.fetch_file_by_uuid(old_pdf_file_uuid, owner_uuid)
             if old_file:
                 old_storage_path = old_file.storage_path
                 await self.file_crud.delete_file(old_file)
-                if old_storage_path:
-                    await asyncio.to_thread(delete_pdf_bytes, old_storage_path)
 
         await publish_event(
             owner_uuid,
@@ -222,7 +221,10 @@ class FileService:
                 value={"uuid": created_file.uuid},
             ),
         )
-        return PaperRead.model_validate(updated_paper)
+        return PaperRead.model_validate(updated_paper), old_storage_path
+    
+    async def cleanup_pdf_storage(self, storage_path: str) -> None:
+        await asyncio.to_thread(delete_pdf_bytes, storage_path)
     
     async def fetch_file_content(self, file_uuid: UUID, owner_uuid: UUID) -> tuple[str, str, bytes]:
         file_record = await self.file_crud.fetch_file_by_uuid(file_uuid, owner_uuid)

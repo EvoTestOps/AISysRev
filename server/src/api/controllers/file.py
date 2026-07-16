@@ -112,8 +112,14 @@ async def attach_pdf_to_paper(
 ):
     file_service = create_file_service(db_ctx)
     try:
-        result = await file_service.attach_pdf_to_paper(paper_uuid, file, current_user.uuid)
+        result, old_storage_path = await file_service.attach_pdf_to_paper(
+            paper_uuid,
+            file,
+            current_user.uuid,
+        )
         await db_ctx.commit()
+        if old_storage_path:
+            await file_service.cleanup_pdf_storage(old_storage_path)
         return result
     except HTTPException:
         raise

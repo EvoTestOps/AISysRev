@@ -70,6 +70,7 @@ type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+  downloadMissingFulltextRis: () => unknown;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
 };
@@ -339,6 +340,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
   downloadCsv,
+  downloadMissingFulltextRis,
   onPerCriteriaStats,
   hasMultiplePcJobs,
 }) => {
@@ -350,6 +352,15 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           <span>PC Agreement Stats</span>
         </Button>
       )}
+      <Button
+        variant="slate"
+        onClick={downloadMissingFulltextRis}
+        title="Download RIS of papers missing full text"
+        disabled={!hasPapers}
+      >
+        <Download />
+        <span>Download papers missing full text</span>
+      </Button>
       <Button
         variant="slate"
         onClick={downloadCsv}
@@ -916,6 +927,28 @@ export const ProjectPage = () => {
     dl().catch(console.error);
   }, [projectUuid]);
 
+  const downloadMissingFulltextRis = useCallback(() => {
+    async function dl() {
+      if (!projectUuid) return;
+      const response = await fetch(
+        `/api/v1/paper/${projectUuid}/missing_fulltext_ris`,
+      );
+      if (!response.ok) {
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${projectUuid}_missing_fulltext.ris`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }
+    dl().catch(console.error);
+  }, [projectUuid]);
+
   const hasPapers = papers && papers.length > 0;
 
   const hasMultiplePcJobs =
@@ -955,6 +988,7 @@ export const ProjectPage = () => {
         <ActionComponent
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
+          downloadMissingFulltextRis={downloadMissingFulltextRis}
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}

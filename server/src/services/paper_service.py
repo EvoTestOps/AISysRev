@@ -11,6 +11,7 @@ from src.schemas.paper import (
     PaperRead,
     PaperReadWithAvgProbability,
 )
+from src.tools.ris_file_builder import build_ris_file
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,11 @@ class PaperService:
             project_uuid, owner_uuid, screening_mode
         )
         return [PaperRead.model_validate(paper) for paper in papers]
+    
+    async def generate_missing_fulltext_ris(self, project_uuid: UUID, owner_uuid: UUID) -> str:
+        papers = await self.paper_crud.fetch_papers_missing_pdf(project_uuid, owner_uuid)
+        paper_reads = [PaperRead.model_validate(paper) for paper in papers]
+        return build_ris_file(paper_reads)
 
     async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> PaperRead | None:
         paper = await self.paper_crud.fetch_paper_by_uuid(uuid, owner_uuid)

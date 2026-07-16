@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
@@ -49,6 +49,34 @@ async def get_project_papers_with_model_evals(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch papers: {str(e)}",
+        ) from e
+
+
+@router.get(
+    "/paper/{project_uuid}/missing_fulltext_ris",
+    status_code=status.HTTP_200_OK,
+    tags=["Paper"],
+)
+async def download_missing_fulltext_ris(
+    project_uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    papers = create_paper_service(db_ctx)
+    try:
+        ris_content = await papers.generate_missing_fulltext_ris(project_uuid, current_user.uuid)
+        filename = f"project_{project_uuid}_missing_fulltext.ris"
+        return Response(
+            content=ris_content,
+            media_type="application/x-research-info-systems",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate RIS: {str(e)}",
         ) from e
 
 
