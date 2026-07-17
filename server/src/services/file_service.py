@@ -10,10 +10,18 @@ from src.crud.file_crud import FileCrud
 from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
-from src.schemas.file_service import FileError, ProcessedFiles, ProcessedPdfFiles
+from src.schemas.file_service import (
+    FileError,
+    FulltextImportResult,
+    FulltextImportUnmatched,
+    ProcessedFiles,
+    ProcessedPdfFiles,
+)
 from src.schemas.paper import PaperRead
 from src.services.paper_service import PaperCreate, PaperCrud
 from src.tools.csv_file_validation import validate_csv
+from src.tools.doi_normalizer import normalize_doi
+from src.tools.endnote_xml_parser import parse_endnote_xml, path_suffix
 from src.tools.pdf_file_validation import validate_pdf
 from src.tools.pdf_storage import build_storage_path, delete_pdf_bytes, read_pdf_bytes, write_pdf_bytes
 
@@ -226,6 +234,98 @@ class FileService:
     async def cleanup_pdf_storage(self, storage_path: str) -> None:
         await asyncio.to_thread(delete_pdf_bytes, storage_path)
     
+    async def import_fulltext_from_endnote_xml(
+        self,
+        project_uuid: UUID,
+        xml_file: UploadFile,
+        pdf_files: List[UploadFile],
+        pdf_relative_paths: List[str],
+        owner_uuid: UUID,
+    ) -> FulltextImportResult:
+        if len(pdf_files) != len(pdf_relative_paths):
+            raise ValueError("pdf_files and pdf_relative_paths must be the same length")
+        
+        records = parse_endnote_xml(await xml_file.read())
+        doi_by_pdf_suffix = {
+            path_suffix(r.pdf_relative_path): normalize_doi(r.doi)
+            for r in records 
+            if r.pdf_relative_path and r.doi
+        }
+
+        papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid, owner_uuid)
+        papers_by_doi: dict[str, list] = {}
+        dois_with_pdf: set[str] = set()
+        for paper in papers:
+            norm = normalize_doi(paper.doi)
+            if not norm:
+                continue
+            if paper.pdf_file_uuid:
+                dois_with_pdf.add(norm)
+            else:
+                papers_by_doi.setdefault(norm, []).append(paper)
+        
+        max_size_bytes = settings.MAX_PDF_UPLOAD_MB * 1024 * 1024
+        unmatched: List[FulltextImportUnmatched] = []
+        matched_count = 0
+
+        for pdf_file, relative_path in zip(pdf_files, pdf_relative_paths):
+            if pdf_file.filename is None:
+                continue
+            clean_filename = relative_path.split("/")[-1]
+            doi = doi_by_pdf_suffix.get(path_suffix(relative_path))
+            if doi is None:
+                unmatched.append(FulltextImportUnmatched(
+                    filename=clean_filename,
+                    reason="No DOI found in EndNote XML for this file"
+                ))
+                continue
+
+            candidates = papers_by_doi.get(doi, [])
+            if len(candidates) != 1:
+                if not candidates and doi in dois_with_pdf:
+                    reason = f"Paper with DOI {doi} already has full text"
+                elif not candidates:
+                    reason = f"No paper in project matches DOI {doi}"
+                else:
+                    reason = f"Multiple papers match DOI {doi}"
+                unmatched.append(FulltextImportUnmatched(
+                    filename=clean_filename,
+                    reason=reason,
+                ))
+                continue
+
+            content = await pdf_file.read()
+            validation_errors = validate_pdf(content, clean_filename, max_size_bytes)
+            if validation_errors:
+                unmatched.append(FulltextImportUnmatched(
+                    filename=clean_filename,
+                    reason=validation_errors[0].message,
+                ))
+                continue
+
+            file_uuid = uuid4()
+            storage_path = build_storage_path(project_uuid, file_uuid)
+            await asyncio.to_thread(write_pdf_bytes, storage_path, content)
+            created_file = await self.file_crud.create_file_record(FileCreate(
+                uuid=file_uuid,
+                project_uuid=project_uuid,
+                filename=clean_filename,
+                mime_type="application/pdf",
+                storage_path=storage_path,
+            ))
+            await self.paper_crud.set_paper_pdf_file_uuid(
+                candidates[0].uuid,
+                owner_uuid,
+                created_file.uuid,
+            )
+            await publish_event(owner_uuid, QueueItem(
+                event_name=EventName.PROJECT_FILE_UPLOADED,
+                value={"uuid": created_file.uuid},
+            ))
+            matched_count += 1
+        
+        return FulltextImportResult(matched_count=matched_count, unmatched=unmatched)
+
     async def fetch_file_content(self, file_uuid: UUID, owner_uuid: UUID) -> tuple[str, str, bytes]:
         file_record = await self.file_crud.fetch_file_by_uuid(file_uuid, owner_uuid)
         if file_record is None or file_record.storage_path is None:

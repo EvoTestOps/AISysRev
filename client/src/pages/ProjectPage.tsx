@@ -1,5 +1,5 @@
 import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
@@ -65,12 +65,15 @@ import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
+import { importFulltextFromEndnoteXml } from "../services/fileService";
 
 type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
   downloadMissingFulltextRis: () => unknown;
+  onImportFulltext: () => unknown;
+  importingFulltext: boolean;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
 };
@@ -341,6 +344,8 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   projectUuid,
   downloadCsv,
   downloadMissingFulltextRis,
+  onImportFulltext,
+  importingFulltext,
   onPerCriteriaStats,
   hasMultiplePcJobs,
 }) => {
@@ -355,11 +360,20 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
       <Button
         variant="slate"
         onClick={downloadMissingFulltextRis}
-        title="Download RIS of papers missing full text"
+        title="Download papers missing full text"
         disabled={!hasPapers}
       >
         <Download />
         <span>Download papers missing full text</span>
+      </Button>
+      <Button
+        variant="slate"
+        onClick={onImportFulltext}
+        title="Import full text (Zotero Export Folder)"
+        disabled={!hasPapers || importingFulltext}
+      >
+        <Download />
+        <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
       </Button>
       <Button
         variant="slate"
@@ -949,6 +963,62 @@ export const ProjectPage = () => {
     dl().catch(console.error);
   }, [projectUuid]);
 
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+  const [importingFulltext, setImportingFulltext] = useState(false);
+
+  const setFolderInputRef = useCallback((node: HTMLInputElement | null) => {
+    folderInputRef.current = node;
+    if (node) {
+      node.setAttribute("webkitdirectory", "true");
+    }
+  }, []);
+
+  const handleFolderSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (!projectUuid) return;
+
+    const fileArray = Array.from(files);
+    const xmlFile = fileArray.find((f) => f.name.toLowerCase().endsWith(".xml"));
+    const pdfFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+    const pdfRelativePaths = pdfFiles.map((f) => f.webkitRelativePath);
+
+    if (!xmlFile) {
+      toast.error("No XML file found in the selected folder");
+      e.target.value = "";
+      return;
+    }
+
+    setImportingFulltext(true);
+    try {
+      const result = await importFulltextFromEndnoteXml(
+        projectUuid,
+        xmlFile,
+        pdfFiles,
+        pdfRelativePaths,
+      );
+      toast.success(
+        `Matched ${result.matched_count} full text${result.matched_count === 1 ? "" : "s"}` +
+        (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
+      );
+      if (result.unmatched.length > 0) {
+        console.warn("Unmatched files:", result.unmatched);
+      }
+      await fetchPapers(projectUuid);
+      await fetchFiles();
+    } catch (error) {
+      console.error("Failed to import full text:", error);
+      toast.error("Failed to import full text");
+    } finally {
+      setImportingFulltext(false);
+      e.target.value = "";
+    }
+  };
+
+  const triggerFulltextImport = useCallback(() => {
+    folderInputRef.current?.click();
+  }, []);
+
   const hasPapers = papers && papers.length > 0;
 
   const hasMultiplePcJobs =
@@ -989,6 +1059,8 @@ export const ProjectPage = () => {
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
           downloadMissingFulltextRis={downloadMissingFulltextRis}
+          onImportFulltext={triggerFulltextImport}
+          importingFulltext={importingFulltext}
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}
@@ -1492,6 +1564,13 @@ export const ProjectPage = () => {
           confirmButtonIcon={<Trash2 size={16} />}
         />
       )}
+      <input
+        type="file"
+        ref={setFolderInputRef}
+        multiple
+        onChange={handleFolderSelected}
+        className="hidden"
+      />
     </Layout>
   );
 };
