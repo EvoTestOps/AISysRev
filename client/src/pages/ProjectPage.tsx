@@ -71,6 +71,7 @@ type ActionComponentProps = {
   downloadCsv: () => unknown;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
+  screeningTarget: ScreeningTarget;
 };
 
 type ModelConfigurationProps = {
@@ -340,6 +341,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   downloadCsv,
   onPerCriteriaStats,
   hasMultiplePcJobs,
+  screeningTarget,
 }) => {
   return (
     <div className="flex flex-row gap-2">
@@ -365,6 +367,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
+            screening_target: screeningTarget,
           }).toString()}`}
           target="__blank"
           rel="noopener noreferrer"
@@ -868,6 +871,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
+          screening_target: screeningTarget,
         }).toString()}`,
       );
       if (!response.ok) {
@@ -884,7 +888,7 @@ export const ProjectPage = () => {
       window.URL.revokeObjectURL(url);
     }
     dl().catch(console.error);
-  }, [projectUuid]);
+  }, [projectUuid, screeningTarget]);
 
   const hasPapers = papers && papers.length > 0;
 
@@ -925,6 +929,7 @@ export const ProjectPage = () => {
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}
+          screeningTarget={screeningTarget}
         />
       )}
     >

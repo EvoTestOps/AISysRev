@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
@@ -16,6 +17,7 @@ router = APIRouter()
 @router.get("/result/download_result_csv", status_code=200, tags=["Results"])
 async def download_result_csv(
     project_uuid: UUID,
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"],
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
@@ -29,7 +31,7 @@ async def download_result_csv(
             detail="Project not found",
         )
     try:
-        csv_content = await result_service.generate_result_csv(project_uuid)
+        csv_content = await result_service.generate_result_csv(project_uuid, screening_target)
         filename = f"project_{project_uuid}_results.csv"
         return Response(
             content=csv_content,
@@ -46,6 +48,7 @@ async def download_result_csv(
 @router.get("/result/html", status_code=200, tags=["Results"])
 async def download_result_html(
     project_uuid: UUID,
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"],
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
@@ -59,7 +62,7 @@ async def download_result_html(
             detail="Project not found",
         )
     try:
-        content = await result_service.generate_html(project_uuid)
+        content = await result_service.generate_html(project_uuid, screening_target)
         return HTMLResponse(
             content=f"""
 <html>

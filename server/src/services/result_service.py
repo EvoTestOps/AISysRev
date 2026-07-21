@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Literal
 from uuid import UUID
 
 import pandas as pd
@@ -32,6 +32,18 @@ ALL_COLUMNS = [
     "pc_binary_decision",
 ]
 
+ScreeningTarget = Literal["PAPER", "GITHUB_REPOSITORY"]
+
+GITHUB_REPO_COLUMNS = {
+    "title": "repository_name",
+    "abstract": "readme",
+    "doi": "repository_url",
+}
+
+def rename_columns(df: pd.DataFrame, screening_target: ScreeningTarget) -> pd.DataFrame:
+    if screening_target == "GITHUB_REPOSITORY":
+        df = df.rename(columns=GITHUB_REPO_COLUMNS)
+    return df
 
 def _ie(x) -> bool | None:
     s = str(x).lower()
@@ -242,19 +254,22 @@ class ResultService:
     def __init__(self, result_crud: ResultCrud):
         self.result_crud = result_crud
 
-    async def generate_result_csv(self, project_uuid: UUID) -> str:
+    async def generate_result_csv(self, project_uuid: UUID, screening_target: ScreeningTarget) -> str:
         rows = await self.result_crud.create_result(project_uuid)
         df = create_dataframe(rows)  # type: ignore
+        df = rename_columns(df, screening_target)
         return df.to_csv(index=False)
 
-    async def generate_html(self, project_uuid: UUID) -> str:
+    async def generate_html(self, project_uuid: UUID, screening_target: ScreeningTarget) -> str:
         rows = await self.result_crud.create_result(project_uuid)
         df = create_dataframe(rows)  # type: ignore
+        df = rename_columns(df, screening_target)
         return df.to_html(index=False)
 
-    async def fetch_result(self, project_uuid: UUID) -> list[dict]:
+    async def fetch_result(self, project_uuid: UUID, screening_target: ScreeningTarget) -> list[dict]:
         rows = await self.result_crud.create_result(project_uuid)
         df = create_dataframe(rows)  # type: ignore
+        df = rename_columns(df, screening_target)
         return df.to_dict("records")
 
 

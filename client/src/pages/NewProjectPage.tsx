@@ -221,7 +221,7 @@ export const NewProject = () => {
                   )
                 }
               />
-              <span className="font-semibold">GitHub repository screening</span>
+              <H6 className="select-none">GitHub repository screening</H6>
           </label>
         </Card>
         <Card>
