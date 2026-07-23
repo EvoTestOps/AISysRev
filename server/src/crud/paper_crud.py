@@ -1,7 +1,7 @@
 from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
@@ -124,15 +124,18 @@ class PaperCrud:
     async def fetch_papers_for_screening(
         self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
     ) -> Sequence[Paper]:
-        source_column = (
-            Paper.file_uuid if screening_mode == JobScreeningMode.TEXT else Paper.pdf_file_uuid
-        )
+        if screening_mode == JobScreeningMode.TEXT:
+            source_filter = Paper.file_uuid.isnot(None)
+        elif screening_mode == JobScreeningMode.PDF:
+            source_filter = Paper.pdf_file_uuid.isnot(None)
+        else:
+            source_filter = or_(Paper.file_uuid.isnot(None), Paper.pdf_file_uuid.isnot(None))
         stmt = (
             select(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
             .where(Paper.project_uuid == project_uuid)
             .where(Project.owner_uuid == owner_uuid)
-            .where(source_column.isnot(None))
+            .where(source_filter)
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()

@@ -25,6 +25,7 @@ class JobStatus(str, Enum):
 class JobScreeningMode(str, Enum):
     TEXT = "TEXT"
     PDF = "PDF"
+    AUTOMATIC = "AUTOMATIC"
 
 
 class JobStats(BaseModel):

@@ -29,6 +29,8 @@ dependencies = [
     "ruff>=0.14.9",
     "sqlalchemy[asyncio]>=2.0.45",
     "uvicorn>=0.38.0",
+    "pypdf>=6.14.2",
+    "langchain-text-splitters>=1.1.2",
 ]
 [tool.setuptools]
 package-dir = {"" = "src"}

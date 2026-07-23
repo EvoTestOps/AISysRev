@@ -17,6 +17,7 @@ class JobPromptingType(enum.Enum):
 class JobScreeningMode(enum.Enum):
     TEXT = "TEXT"
     PDF = "PDF"
+    AUTOMATIC = "AUTOMATIC"
 
 
 class Job(Base, TimestampMixin):

@@ -56,6 +56,7 @@ class JobTaskService:
                 result=task.result,
                 human_result=task.human_result,
                 status_metadata=task.status_metadata,
+                error=task.error,
                 llm_config=job.llm_config,
                 prompting_config=job.prompting_config,
             )

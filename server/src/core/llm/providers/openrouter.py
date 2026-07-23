@@ -154,13 +154,13 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         
         from openai import AsyncOpenAI
 
-        async with AsyncOpenAI(
+        openai_client = AsyncOpenAI(
             api_key=self.runtime_parameters.api_key,
             base_url="https://openrouter.ai/api/v1",
             http_client=client,
-        ) as openai_client:
-            response = await openai_client.embeddings.create(
-                model="openai/text-embedding-3-small",
-                input=texts,
-            )
-            return [item.embedding for item in response.data]
+        )
+        response = await openai_client.embeddings.create(
+            model="openai/text-embedding-3-small",
+            input=texts,
+        )
+        return [item.embedding for item in response.data]

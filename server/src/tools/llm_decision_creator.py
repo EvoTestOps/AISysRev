@@ -7,7 +7,12 @@ from src.core.prompts import (
     zero_shot_task_prompt,
 )
 from src.db.models.jobtask import JobTask
-from src.schemas.job import FewShotPromptingConfig, JobCreate, ZeroShotPromptingConfig
+from src.schemas.job import (
+    FewShotPromptingConfig,
+    JobCreate,
+    JobScreeningMode,
+    ZeroShotPromptingConfig,
+)
 from src.schemas.llm import (
     CriterionResponse,
     ProviderRuntimeParameters,
@@ -18,6 +23,7 @@ from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead
 from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
+from src.services.pdf_screening_service import PdfScreeningService
 
 
 def create_few_shot_examples(papers: list[PaperRead]):
@@ -47,6 +53,7 @@ def create_criteria(
 async def get_structured_response(
     llm_service: LLMService,
     paper_service: PaperService,
+    pdf_screening_service: PdfScreeningService,
     job_task_data: JobTask,
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
@@ -57,6 +64,8 @@ async def get_structured_response(
         inc_exc_criteria["inclusion_criteria"],  # type: ignore
         inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
+    inclusion_criteria = inc_exc_criteria["inclusion_criteria"]
+    exclusion_criteria = inc_exc_criteria["exclusion_criteria"]
 
     api_key: SettingRead | None = None
     cfg = job_data.prompting_config
@@ -69,13 +78,35 @@ async def get_structured_response(
             raise RuntimeError(
                 f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
             )
+    
+    abstract = job_task_data.abstract
+    content_label = "Abstract"
+    if job_data.screening_mode == JobScreeningMode.PDF or (
+        job_data.screening_mode == JobScreeningMode.AUTOMATIC and job_task_data.pdf_file_uuid is not None
+    ):
+        content_label = "Excerpts from the paper"
+        abstract = await pdf_screening_service.get_pdf_chunks_for_screening(
+            llm,
+            job_data.llm_config.provider_parameters,
+            ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            client,
+            job_data.project_uuid,
+            job_data.owner_uuid,
+            job_task_data.pdf_file_uuid,
+            inclusion_criteria,
+            exclusion_criteria,
+        )
 
     if isinstance(cfg, ZeroShotPromptingConfig):
         prompt_text = zero_shot_task_prompt.format(
             job_task_data.title,
-            job_task_data.abstract,
+            abstract,
             criteria,
             additional_instructions,
+            content_label,
         )
         result = await llm_service.call_llm(
             llm,
@@ -96,10 +127,11 @@ async def get_structured_response(
         seed_paper_txt = create_few_shot_examples(seed_papers)
         prompt_text = few_shot_task_prompt.format(
             job_task_data.title,
-            job_task_data.abstract,
+            abstract,
             criteria,
             additional_instructions,
             seed_paper_txt,
+            content_label,
         )
         result = await llm_service.call_llm(
             llm,

@@ -108,9 +108,10 @@ class JobService:
     async def create(self, job_data: JobCreate):
         logger.info("Creating new job", job_data)
 
-        if job_data.screening_mode == JobScreeningMode.PDF and isinstance(
-            job_data.prompting_config, PerCriteriaPromptingConfig
-        ):
+        if job_data.screening_mode in (
+            JobScreeningMode.PDF,
+            JobScreeningMode.AUTOMATIC,
+        ) and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
             raise ValueError("PER_CRITERIA prompting with PDFs not possible yet")
 
         new_job = await self.job_crud.create_job(job_data)

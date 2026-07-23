@@ -24,6 +24,7 @@ from src.schemas.jobtask import JobTaskStatus
 from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
+from src.services.pdf_screening_service import create_pdf_screening_service
 from src.tools.llm_decision_creator import (
     get_single_criterion_response,
     get_structured_response,
@@ -45,7 +46,7 @@ def test_task(name: str):
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: Task, job_id: int, job_data: dict):
-    job_data_unpacked = JobCreate.model_validate(job_data, strict=True)
+    job_data_unpacked = JobCreate.model_validate(job_data)
     logger.info("Running job task using asyncio, ID: %s", job_id)
     asyncio.run(process_job(self, job_id, job_data_unpacked))
 
@@ -138,6 +139,7 @@ async def _process_standard_task(
 
                 llm_service = create_llm_service(task_db_ctx)
                 paper_service = create_paper_service(task_db_ctx)
+                pdf_screening_service = create_pdf_screening_service(task_db_ctx)
 
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
@@ -147,6 +149,7 @@ async def _process_standard_task(
                 llm_result = await get_structured_response(
                     llm_service,
                     paper_service,
+                    pdf_screening_service,
                     job_task,
                     job_data,
                     project_criteria,
