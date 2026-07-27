@@ -71,6 +71,7 @@ class JobTaskReadWithLLMConfig(BaseModel):
     error: Optional[str] = None
     llm_config: Optional[Dict[str, Any]] = None
     prompting_config: Optional[Dict[str, Any]] = None
+    screening_mode: str
 
     @field_validator("result", mode="before")
     @classmethod

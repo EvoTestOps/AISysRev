@@ -59,6 +59,7 @@ class JobTaskService:
                 error=task.error,
                 llm_config=job.llm_config,
                 prompting_config=job.prompting_config,
+                screening_mode=job.screening_mode.value,
             )
             for task, job in job_tasks_with_jobs
         ]

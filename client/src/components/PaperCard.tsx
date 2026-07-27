@@ -5,6 +5,7 @@ import {
   X,
   CircleQuestionMark,
   Check,
+  FileText,
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
@@ -74,12 +75,21 @@ export const PaperCard: React.FC<
           {paper.paper_id}
         </div>
         <div
-          className="text-sm font-semibold select-non text-left"
+          className="text-sm font-semibold select-none text-left flex items-center gap-1.5"
           title={paper.title}
         >
-          {paper.title.length > 80
-            ? paper.title.substring(0, 77) + "..."
-            : paper.title}
+          {paper.pdf_file_uuid && (
+            <FileText
+              size={14}
+              className="text-teal-600 shrink-0"
+              aria-label="Full text attached"
+            />
+          )}
+          <span className="truncate">
+            {paper.title.length > 80
+              ? paper.title.substring(0, 77) + "..."
+              : paper.title}
+          </span>
         </div>
         <div
           className={classNames("text-center text-sm select-none", {

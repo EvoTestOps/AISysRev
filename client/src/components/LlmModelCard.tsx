@@ -1,4 +1,4 @@
-import { JobPromptingType, PromptingConfig } from "../state/types";
+import { JobPromptingType, JobScreeningMode, PromptingConfig } from "../state/types";
 import { Badge } from "./Badge";
 
 type LlmModelCardProps = {
@@ -7,6 +7,7 @@ type LlmModelCardProps = {
   likertScale: string | null;
   probability: number | null;
   screeningType: PromptingConfig["screening_type"];
+  screeningMode: JobScreeningMode | null;
 };
 
 const likertMap: Record<string, string> = {
@@ -25,6 +26,7 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
   likertScale,
   probability,
   screeningType,
+  screeningMode,
 }) => {
   // console.log(binary);
   return (
@@ -33,12 +35,19 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
       aria-label="Model Card"
     >
       <div className="font-bold text-lg flex flex-col gap-2 items-start content-center">
+        <div className="flex items-center gap-2">
         {screeningType == JobPromptingType.ZERO_SHOT && (
           <Badge text="ZS" invert />
         )}
         {screeningType == JobPromptingType.FEW_SHOT && (
           <Badge text="FS" invert />
         )}
+          <span className="text-xs font-normal text-slate-500">
+            {screeningMode === JobScreeningMode.TEXT && "Abstract"}
+            {screeningMode === JobScreeningMode.PDF && "PDF"}
+            {screeningMode === JobScreeningMode.AUTOMATIC && "Automatic"}
+          </span>
+        </div>
         {modelName}
       </div>
       <div>

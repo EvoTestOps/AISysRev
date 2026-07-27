@@ -24,6 +24,7 @@ import {
   createZeroShotPromptingConfig,
   createPerCriteriaPromptingConfig,
   JobPromptingType,
+  JobScreeningMode,
   Provider,
   PerCriteriaStatsResponse
 } from "../state/types";
@@ -471,6 +472,7 @@ export const ProjectPage = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
   const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS" | "PC">("ZS");
+  const [screeningMode, setScreeningMode] = useState<JobScreeningMode>(JobScreeningMode.TEXT);
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
@@ -727,25 +729,25 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig());
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode]);
 
   const createPerCriteriaJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig());
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -1102,7 +1104,7 @@ export const ProjectPage = () => {
                     {job.prompting_config.screening_type ==
                       JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
                   </>
-                  <div className="flex items-center font-semibold">
+                  <div className="flex items-center gap-2 font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
                       <span className="text-sm text-nowrap">
                         {job.llm_config.model_name.length > 30
@@ -1110,6 +1112,11 @@ export const ProjectPage = () => {
                           : job.llm_config.model_name}
                       </span>
                     </Tooltip>
+                    <span className="text-xs font-normal text-slate-500">
+                      {job.screening_mode === JobScreeningMode.TEXT && "Abstract"}
+                      {job.screening_mode === JobScreeningMode.PDF && "PDF"}
+                      {job.screening_mode === JobScreeningMode.AUTOMATIC && "Automatic"}
+                    </span>
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
@@ -1324,6 +1331,62 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
+            <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">Screening mode</span>
+                <Tooltip title="Choose what content is used for screening papers.">
+                  <Info size={14} className="text-slate-400 cursor-help" />
+                </Tooltip>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.TEXT,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.TEXT,
+                    }
+                  )}
+                >
+                  <span>Abstract</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.PDF)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.PDF,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.PDF && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>PDF</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.AUTOMATIC,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.AUTOMATIC && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>Automatic</span>
+                </button>
+              </div>
+              {promptingStrategy === "PC" && (
+                <p className="text-xs text-amber-600 -mt-1">PDF/Automatic screening modes aren't available with per-criterion evaluation yet</p>)}
+            </div>
             <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
@@ -1359,7 +1422,12 @@ export const ProjectPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setPromptingStrategy("PC")}
+                onClick={() => {
+                  setPromptingStrategy("PC");
+                  if (screeningMode !== JobScreeningMode.TEXT) {
+                    setScreeningMode(JobScreeningMode.TEXT);
+                  }
+                  }}
                 className={classNames(
                   "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
                   {
@@ -1514,6 +1582,7 @@ export const ProjectPage = () => {
             model_parameters: modelFormValues,
             provider_parameters: {},
           }}
+          screeningMode={screeningMode}
           onClose={() => {
             loadProjects();
             fetchJobsForProject(projectUuid);
