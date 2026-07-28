@@ -84,7 +84,7 @@ async def get_per_criteria_stats(
     try:
         jobtask_service = create_jobtask_service(db_ctx)
         return await jobtask_service.compute_per_criteria_agreement(
-            project_uuid, project.criteria, current_user.uuid
+            project_uuid, project.criteria, current_user.uuid,
         )
     except Exception as e:
         raise HTTPException(
