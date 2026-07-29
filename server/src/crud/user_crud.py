@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 
 from sqlalchemy import select
@@ -26,6 +27,19 @@ class UserCrud:
         self.db.add(user)
         await self.db.flush()
         await self.db.refresh(user)
+        return user
+
+    async def update_research_consent(self, user_uuid: str, value: bool) -> Optional[User]:
+        stmt = select(User).where(User.uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+        if user:
+            user.consent_anonymized_research_usage = value
+            user.consent_anonymized_research_usage_updated_at = datetime.datetime.now(
+                datetime.timezone.utc
+            )
+            await self.db.flush()
+            await self.db.refresh(user)
         return user
 
     async def delete_user(self, user_uuid: str) -> bool:

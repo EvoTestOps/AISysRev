@@ -52,9 +52,7 @@ class Criteria(BaseModel):
         return self
 
 
-class ProjectCreate(BaseModel):
-    uuid: UUID | None = None
-    owner_uuid: UUID | None = None
+class ProjectCreateRequest(BaseModel):
     name: str = Field(max_length=255)
     criteria: Criteria
 
@@ -64,6 +62,10 @@ class ProjectCreate(BaseModel):
         if not v.strip():
             raise ValueError(f"{field.field_name} must be a non-empty string")
         return v
+
+
+class ProjectCreate(ProjectCreateRequest):
+    owner_uuid: UUID
 
 
 class ProjectRead(BaseModel):

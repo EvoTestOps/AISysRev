@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
 
@@ -7,6 +8,8 @@ from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
 from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.paper_crud import PaperCrud
+from src.crud.project_crud import ProjectCrud
+from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
 from src.schemas.file import FileCreate
 from src.schemas.job import (
@@ -17,65 +20,89 @@ from src.schemas.job import (
 )
 from src.schemas.jobtask import JobTaskCreate, JobTaskStatus
 from src.schemas.paper import PaperCreate
+from src.schemas.project import Criteria, ProjectCreate
+from src.schemas.user import UserCreate
 from src.services.file_service import create_file_service
 from src.services.job_service import create_job_service
 
 
-@pytest.mark.asyncio
-async def test_create_jobtask(db_ctx, test_project_uuid, test_files_working):
-    file_service = create_file_service(db_ctx)
-    jobtask_crud = db_ctx.crud(JobTaskCrud)
-    job_service = create_job_service(db_ctx)
+async def _create_owned_project(db_ctx, sub: str) -> tuple[UUID, UUID]:
+    user_crud = db_ctx.crud(UserCrud)
+    user = await user_crud.create_user(UserCreate(sub=sub, email=f"{sub}@test.com"))
 
-    await file_service.process_files(test_project_uuid, [test_files_working[0]])
+    project_crud = db_ctx.crud(ProjectCrud)
+    _, project_uuid = await project_crud.create_project(
+        ProjectCreate(
+            name="Project for Job Test",
+            owner_uuid=user.uuid,
+            criteria=Criteria(
+                inclusion_criteria=["A", "B", "C"], exclusion_criteria=["D", "E", "F"]
+            ),
+        )
+    )
+    return project_uuid, user.uuid
 
-    job_data = JobCreate(
-        project_uuid=test_project_uuid,
+
+def _make_job_create(
+    project_uuid: UUID,
+    owner_uuid: UUID,
+    model_name: str = "test-model",
+    model_parameters: dict | None = None,
+) -> JobCreate:
+    return JobCreate(
+        project_uuid=project_uuid,
+        owner_uuid=owner_uuid,
         llm_config=LLMModelConfig(
-            model_name="test-model",
-            model_parameters={"temperature": 0, "top_p": 0.1},
+            model_name=model_name,
+            model_parameters=model_parameters or {"temperature": 0, "top_p": 0.1},
             provider_name="Test provider",
             provider_parameters={},
         ),
         prompting_config=ZeroShotPromptingConfig(),
     )
 
+
+@pytest.mark.asyncio
+async def test_create_jobtask(db_ctx, test_files_working):
+    project_uuid, owner_uuid = await _create_owned_project(db_ctx, "test-create-jobtask-owner")
+
+    file_service = create_file_service(db_ctx)
+    jobtask_crud = db_ctx.crud(JobTaskCrud)
+    job_service = create_job_service(db_ctx)
+
+    await file_service.process_files(project_uuid, [test_files_working[0]], owner_uuid)
+
+    job_data = _make_job_create(project_uuid, owner_uuid)
+
     new_job = await job_service.create(job_data)
 
     assert new_job is not None
     assert isinstance(new_job, JobRead)
-    assert new_job.project_uuid == test_project_uuid
+    assert new_job.project_uuid == project_uuid
 
-    job_tasks = await jobtask_crud.fetch_job_tasks_by_job_uuid(new_job.uuid)
+    job_tasks = await jobtask_crud.fetch_job_tasks_by_job_uuid(new_job.uuid, owner_uuid)
     assert job_tasks is not None
     assert len(job_tasks) == 1
 
 
 @pytest.mark.asyncio
-async def test_create_job_transaction_rollback(
-    db_ctx, test_project_uuid, test_files_working, monkeypatch
-):
+async def test_create_job_transaction_rollback(db_ctx, test_files_working, monkeypatch):
+    project_uuid, owner_uuid = await _create_owned_project(
+        db_ctx, "test-job-transaction-rollback-owner"
+    )
+
     job_service = create_job_service(db_ctx)
     job_crud = db_ctx.crud(JobCrud)
     file_service = create_file_service(db_ctx)
 
-    await file_service.process_files(test_project_uuid, [test_files_working[0]])
+    await file_service.process_files(project_uuid, [test_files_working[0]], owner_uuid)
 
     async def fail_bulk_create(*args, **kwargs):
         raise Exception("Simulated failure")
 
     monkeypatch.setattr(job_service.jobtask_service, "bulk_create", fail_bulk_create)
 
-    job_data = JobCreate(
-        project_uuid=test_project_uuid,
-        llm_config=LLMModelConfig(
-            model_name="test-model",
-            model_parameters={"temperature": 0, "top_p": 0.1},
-            provider_name="Test provider",
-            provider_parameters={},
-        ),
-        prompting_config=ZeroShotPromptingConfig(),
-    )
+    job_data = _make_job_create(project_uuid, owner_uuid)
 
     with pytest.raises(Exception, match="Simulated failure"):
         # TODO: job_service doesn't control the transaction any more so need to manually nest
@@ -83,7 +110,7 @@ async def test_create_job_transaction_rollback(
         async with db_ctx.nested():
             await job_service.create(job_data)
 
-    jobs = await job_crud.fetch_jobs()
+    jobs = await job_crud.fetch_jobs(owner_uuid)
     assert len(jobs) == 0
 
 

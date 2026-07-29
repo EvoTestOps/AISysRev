@@ -17,9 +17,9 @@ async def get_job_tasks(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    jobtask_service = create_jobtask_service(db_ctx)
     try:
-        jobtask_service = create_jobtask_service(db_ctx)
-        job_tasks = await jobtask_service.fetch_job_tasks(uuid)
+        job_tasks = await jobtask_service.fetch_job_tasks(uuid, current_user.uuid)
         if not job_tasks:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Job tasks not found"
@@ -27,6 +27,10 @@ async def get_job_tasks(
         return job_tasks
     except HTTPException:
         raise
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job tasks not found"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -45,9 +49,9 @@ async def get_job_tasks_by_paper(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    jobtask_service = create_jobtask_service(db_ctx)
     try:
-        jobtask_service = create_jobtask_service(db_ctx)
-        job_tasks = await jobtask_service.fetch_job_tasks_for_paper(paper_uuid)
+        job_tasks = await jobtask_service.fetch_job_tasks_for_paper(paper_uuid, current_user.uuid)
         if not job_tasks:
             return []
         return job_tasks
@@ -67,9 +71,9 @@ async def add_job_task_human_result(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    jobtask_service = create_jobtask_service(db_ctx)
     try:
-        jobtask_service = create_jobtask_service(db_ctx)
-        await jobtask_service.add_human_result(uuid, result.human_result)
+        await jobtask_service.add_human_result(uuid, current_user.uuid, result.human_result)
         await db_ctx.commit()
         return {"detail": "Job task human result added successfully"}
     except HTTPException:

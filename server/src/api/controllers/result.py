@@ -21,17 +21,10 @@ async def download_result_csv(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
-    project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
 
-    project = await project_service.fetch_by_uuid(project_uuid)
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
     try:
-        csv_content = await result_service.generate_result_csv(project_uuid, screening_target)
+        csv_content = await result_service.generate_result_csv(project_uuid, current_user.uuid, screening_target)
         filename = f"project_{project_uuid}_results.csv"
         return Response(
             content=csv_content,
@@ -52,17 +45,10 @@ async def download_result_html(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
-    project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
 
-    project = await project_service.fetch_by_uuid(project_uuid)
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
     try:
-        content = await result_service.generate_html(project_uuid, screening_target)
+        content = await result_service.generate_html(project_uuid, current_user.uuid, screening_target)
         return HTMLResponse(
             content=f"""
 <html>
@@ -93,7 +79,7 @@ async def get_per_criteria_stats(
     current_user: User = Depends(get_current_user),
 ):
     project_service = create_project_service(db_ctx)
-    project = await project_service.fetch_by_uuid(project_uuid)
+    project = await project_service.fetch_by_uuid(project_uuid, owner_uuid=current_user.uuid)
     if project is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
@@ -101,7 +87,7 @@ async def get_per_criteria_stats(
     try:
         jobtask_service = create_jobtask_service(db_ctx)
         return await jobtask_service.compute_per_criteria_agreement(
-            project_uuid, project.criteria
+            project_uuid, project.criteria, current_user.uuid,
         )
     except Exception as e:
         raise HTTPException(
@@ -116,17 +102,9 @@ async def get_result(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
-    project_service = create_project_service(db_ctx)
     result_service = create_result_service(db_ctx)
-
-    project = await project_service.fetch_by_uuid(project_uuid)
-    if project is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
     try:
-        return await result_service.fetch_result(project_uuid)
+        return await result_service.fetch_result(project_uuid, current_user.uuid)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

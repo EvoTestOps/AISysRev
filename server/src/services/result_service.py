@@ -254,20 +254,20 @@ class ResultService:
     def __init__(self, result_crud: ResultCrud):
         self.result_crud = result_crud
 
-    async def generate_result_csv(self, project_uuid: UUID, screening_target: ScreeningTarget) -> str:
-        rows = await self.result_crud.create_result(project_uuid)
+    async def generate_result_csv(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> str:
+        rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
         df = rename_columns(df, screening_target)
         return df.to_csv(index=False)
 
-    async def generate_html(self, project_uuid: UUID, screening_target: ScreeningTarget) -> str:
-        rows = await self.result_crud.create_result(project_uuid)
+    async def generate_html(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> str:
+        rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
         df = rename_columns(df, screening_target)
         return df.to_html(index=False)
 
-    async def fetch_result(self, project_uuid: UUID, screening_target: ScreeningTarget) -> list[dict]:
-        rows = await self.result_crud.create_result(project_uuid)
+    async def fetch_result(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> list[dict]:
+        rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
         df = rename_columns(df, screening_target)
         return df.to_dict("records")

@@ -73,7 +73,7 @@ async def get_available_models(
 
     if llm_class.api_key_config_parameter is not None:
         setting = await llm_service.setting_service.get_setting(
-            llm_class.api_key_config_parameter.key, mask_secret=False
+            llm_class.api_key_config_parameter.key, owner_uuid=current_user.uuid, mask_secret=False
         )
         if setting is None:
             raise HTTPException(status_code=400, detail="API key missing")

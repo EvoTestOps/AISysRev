@@ -16,11 +16,25 @@ async def get_setting(
     current_user: User = Depends(get_current_user),
 ):
     setting_service = create_setting_service(db_ctx)
-    data = await setting_service.get_setting(name, mask_secret=True)
+    data = await setting_service.get_setting(name, owner_uuid=current_user.uuid, mask_secret=True)
 
     if not data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     return data
+
+
+@router.delete("/setting", status_code=status.HTTP_200_OK, tags=["Settings"])
+async def delete_setting(
+    name: str,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    setting_service = create_setting_service(db_ctx)
+    deleted = await setting_service.delete_setting(name, owner_uuid=current_user.uuid)
+    await db_ctx.commit()
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return {"detail": "Deleted successfully"}
 
 
 class UpsertData(BaseModel):
@@ -35,7 +49,7 @@ async def upsert_setting(
     current_user: User = Depends(get_current_user),
 ):
     setting_service = create_setting_service(db_ctx)
-    uuid = await setting_service.upsert_setting(data.name, data.value, True)
+    uuid = await setting_service.upsert_setting(data.name, data.value, owner_uuid=current_user.uuid, secret=True)
     await db_ctx.commit()
 
     return {"uuid": uuid}

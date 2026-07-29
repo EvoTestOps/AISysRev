@@ -31,9 +31,11 @@ async def list_files(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    file_service = create_file_service(db_ctx)
     try:
-        file_service = create_file_service(db_ctx)
-        return await file_service.fetch_all(project_uuid)
+        return await file_service.fetch_all(project_uuid, current_user.uuid)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -49,15 +51,15 @@ async def process_csv(
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
+    file_service = create_file_service(db_ctx)
     try:
-        file_service = create_file_service(db_ctx)
-        existing_files = await file_service.fetch_all(project_uuid=project_uuid)
+        existing_files = await file_service.fetch_all(project_uuid, current_user.uuid)
         if len(existing_files) != 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        result = await file_service.process_files(project_uuid, files, screening_target)
+        result = await file_service.process_files(project_uuid, files, current_user.uuid, screening_target)
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:

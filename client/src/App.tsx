@@ -1,9 +1,9 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { ToastContainer } from "react-toastify";
-import Cookies from "js-cookie";
+import { EventStream } from "./components/EventStream";
 import { NotFoundPage } from "./pages/NotFound";
-import { TermsAndConditionsPage } from "./pages/TermsAndConditionsPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
@@ -16,11 +16,12 @@ import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
 import { Layout } from "./components/Layout";
+import { ConsentModal } from "./components/ConsentModal";
 
 function App() {
-  const [location, navigate] = useLocation();
-  const [checkedTerms, setCheckedTerms] = useState(false);
+  const [location] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [consentRequired, setConsentRequired] = useState(false);
 
   const fetchProjects = useTypedStoreActions(
     (actions) => actions.fetchProjects
@@ -28,28 +29,36 @@ function App() {
   const fetchProviders = useTypedStoreActions(
     (actions) => actions.fetchProviders
   );
-// Checks session validity here
+
+  // Checks session validity here
   useEffect(() => {
-    api.get("/api/v1/auth/me")
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false));
+    const controller = new AbortController();
+    const checkSession = async () => {
+      try {
+        await api.get("/api/v1/auth/me", { signal: controller.signal });
+        setConsentRequired(false);
+        setIsAuthenticated(true);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          setConsentRequired(true);
+          setIsAuthenticated(false);
+          return;
+        }
+        setConsentRequired(false);
+        setIsAuthenticated(false);
+      }
+    };
+    checkSession();
+    return () => controller.abort();
   }, [location]);
 
-// Hook to redirect to login if not authenticated
+  // Hook to redirect to login if not authenticated and consent isn't pending
   useEffect(() => {
-    if (isAuthenticated === false) {
+    if (isAuthenticated === false && !consentRequired) {
       window.location.href = "/login";
     }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated !== true) return;
-    const hasReadTerms = Cookies.get("disclaimer_read");
-    if (!hasReadTerms && location !== "/terms-and-conditions") {
-      navigate("/terms-and-conditions");
-    }
-    setCheckedTerms(true);
-  }, [location, navigate, isAuthenticated]);
+  }, [isAuthenticated, consentRequired]);
 
   // Initialization hook
   useEffect(() => {
@@ -60,12 +69,26 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  if (consentRequired) {
+    return (
+      <Layout title="Loading..." hideNavbar>
+        <ConsentModal
+          open={consentRequired}
+          onAccepted={() => {
+            setConsentRequired(false);
+            setIsAuthenticated(true);
+          }}
+        />
+      </Layout>
+    );
+  }
+
   if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
-  if (!checkedTerms) return null;
 
   return (
     <div className="flex flex-col bg-gray-200 font-roboto pb-32">
       <ToastContainer autoClose={4000} />
+      <EventStream />
       <Switch>
         <Route path="/" component={ProjectsPage} />
         <Route path="/projects" component={ProjectsPage} />
@@ -78,14 +101,10 @@ function App() {
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />
-        <Route
-          path="/terms-and-conditions"
-          component={TermsAndConditionsPage}
-        />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />
         <Route path="/result/:uuid" component={ResultPage} />
-<Route path="*" component={NotFoundPage} />
+        <Route path="*" component={NotFoundPage} />
       </Switch>
     </div>
   );

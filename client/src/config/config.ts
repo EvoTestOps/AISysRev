@@ -62,9 +62,24 @@ export function useConfig(name: string) {
     [name, refresh]
   );
 
+  const remove = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ name });
+      await axios.delete(`/api/v1/setting?${params.toString()}`);
+      setSetting(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      setError(e?.message || "Delete failed");
+    } finally {
+      setLoading(false);
+    }
+  }, [name]);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { setting, loading, error, refresh, update };
+  return { setting, loading, error, refresh, update, remove };
 }

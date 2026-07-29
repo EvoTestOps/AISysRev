@@ -229,7 +229,7 @@ export const NewProject = () => {
             <div>
               <H6>Per-criteria logic <span className="font-normal text-gray-400">(optional)</span></H6>
               <p className="text-sm text-gray-500 mt-1">
-                Define custom boolean logic for per-criteria screening. Use AND, OR, and NOT — NOT flips a single criterion (e.g. <span className="font-mono">NOT IC1</span>). Use parentheses to group AND/OR sub-expressions. Leave blank to default to OR.
+                Define custom boolean logic for per-criteria screening. Use AND, OR, and NOT — NOT flips a single criterion (e.g. <span className="font-mono">NOT IC1</span>). Use parentheses to group AND/OR sub-expressions. Leave blank to default to AND for inclusion criteria and OR for exclusion criteria.
               </p>
             </div>
             <div className="grid grid-cols-[200px_1fr] items-start gap-4">

@@ -29,10 +29,11 @@ async def test_fetch_projects_crud(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_project_crud(db_ctx):
+async def test_create_and_fetch_project_crud(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Test",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
     )
     id, uuid = await crud.create_project(project_data)
@@ -40,7 +41,7 @@ async def test_create_and_fetch_project_crud(db_ctx):
     assert uuid
     assert id
 
-    project = await crud.fetch_project_by_uuid(uuid)
+    project = await crud.fetch_project_by_uuid(uuid, test_user_uuid)
     assert project is not None
 
     project_read = ProjectRead.model_validate(project)
@@ -57,16 +58,17 @@ async def test_create_and_fetch_project_crud(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_delete_project_crud(db_ctx):
+async def test_delete_project_crud(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="To Be Deleted",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
     )
     id, uuid = await crud.create_project(project_data)
 
-    deleted = await crud.delete_project(uuid)
+    deleted = await crud.delete_project(uuid, test_user_uuid)
     assert deleted
 
-    project = await crud.fetch_project_by_uuid(uuid)
+    project = await crud.fetch_project_by_uuid(uuid, test_user_uuid)
     assert project is None

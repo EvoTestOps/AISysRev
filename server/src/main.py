@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 import uvicorn
-import asyncio
 from fastapi import FastAPI, APIRouter
 from fastapi.logger import logger
 from fastapi.responses import FileResponse, HTMLResponse
@@ -20,10 +19,9 @@ from src.api.controllers.auth import router as auth_router
 from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
-from src.redis_client.client import redis_subscribe
-from src.tools.minio_client import check_and_create_s3_bucket
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
+from src.redis_client.client import close_shared_redis_client
 
 
 @asynccontextmanager
@@ -37,22 +35,12 @@ async def lifespan(app: FastAPI):
     print("Checking Redis connection...")
     await check_redis_connection()
 
-    print("Checking S3 bucket...")
-    check_and_create_s3_bucket()
-
-    print("Subscribing to Redis topics..")
-    redis_task: asyncio.Task = asyncio.create_task(
-        redis_subscribe(), name="redis_subscription"
-    )
-    print(f"Redis subscriber task created: {redis_task!r}")
-
     print("Application startup complete!")
     startup_complete.set()
 
     yield
 
-    if redis_task:
-        redis_task.cancel()
+    await close_shared_redis_client()
 
 
 app = FastAPI(
@@ -90,16 +78,21 @@ v1_router.include_router(auth_router)
 
 app.include_router(v1_router)
 
-@app.get("/privacy-policy")
+@app.get("/register_and_privacy_policy")
 async def privacy_policy_page():
-    return FileResponse("static/privacy-policy.pdf", media_type="application/pdf")
+    return FileResponse("static/register-privacy-policy.pdf", media_type="application/pdf")
+
+
+@app.get("/terms-and-conditions")
+async def terms_and_conditions_page():
+    return FileResponse("static/terms-and-conditions.pdf", media_type="application/pdf")
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
     dev_button = (
         """
-        <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray disabled" aria-disabled="true">
+        <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray">
             Dev Login
         </a>"""
         if settings.APP_ENV != "prod"
@@ -134,16 +127,6 @@ async def login_page():
       width: 100%;
     }}
     h1 {{ font-size: 1.5rem; font-weight: 700; color: #111; }}
-    .terms {{
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: #4b5563;
-      cursor: pointer;
-    }}
-    .terms input {{ margin-top: 0.125rem; cursor: pointer; }}
-    .terms a {{ color: inherit; text-decoration: underline; }}
     .btn {{
       display: inline-block;
       width: 100%;
@@ -157,42 +140,19 @@ async def login_page():
       transition: background 0.2s;
     }}
     .btn-slate {{ background: #1e293b; border-color: #1e293b; color: #fff; }}
-    .btn-slate:not(.disabled):hover {{ background: #334155; }}
+    .btn-slate:hover {{ background: #334155; }}
     .btn-gray {{ background: #6b7280; border-color: #6b7280; color: #fff; }}
-    .btn-gray:not(.disabled):hover {{ background: #9ca3af; }}
-    .btn.disabled {{ opacity: 0.2; pointer-events: none; cursor: not-allowed; }}
+    .btn-gray:hover {{ background: #9ca3af; }}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>AISysRev</h1>
-    <label class="terms">
-      <input type="checkbox" id="agree" onchange="toggleButtons(this.checked)" />
-      <span>
-        By logging in you accept and agree to our
-        <a href="/privacy-policy">register and privacy policy</a>.
-      </span>
-    </label>
-    <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate disabled" aria-disabled="true">
+    <a href="/api/v1/auth/login" id="login-btn" class="btn btn-slate">
       Login with University of Helsinki
     </a>
     {dev_button}
   </div>
-  <script>
-    function toggleButtons(checked) {{
-      ['login-btn', 'dev-btn'].forEach(function(id) {{
-        var el = document.getElementById(id);
-        if (!el) return;
-        if (checked) {{
-          el.classList.remove('disabled');
-          el.removeAttribute('aria-disabled');
-        }} else {{
-          el.classList.add('disabled');
-          el.setAttribute('aria-disabled', 'true');
-        }}
-      }});
-    }}
-  </script>
 </body>
 </html>"""
 

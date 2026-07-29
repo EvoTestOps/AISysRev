@@ -17,7 +17,6 @@ dependencies = [
     "gwet-ac1",
     "krippendorff>=0.8.2",
     "itsdangerous>=2.2.0",
-    "minio>=7.2.20",
     "openai>=2.14.0",
     "pandas>=2.3.3",
     "pydantic>=2.12.5",

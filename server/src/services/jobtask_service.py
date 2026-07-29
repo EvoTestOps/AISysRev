@@ -19,8 +19,8 @@ class JobTaskService:
         self.jobtask_crud = jobtask_crud
         self.paper_service = paper_service
 
-    async def fetch_job_tasks(self, job_uuid: UUID):
-        job_tasks = await self.jobtask_crud.fetch_job_tasks_by_job_uuid(job_uuid)
+    async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
+        job_tasks = await self.jobtask_crud.fetch_job_tasks_by_job_uuid(job_uuid, owner_uuid)
 
         return [
             JobTaskRead(
@@ -38,9 +38,9 @@ class JobTaskService:
             for task in job_tasks
         ]
 
-    async def fetch_job_tasks_for_paper(self, paper_uuid: UUID):
+    async def fetch_job_tasks_for_paper(self, paper_uuid: UUID, owner_uuid: UUID):
         job_tasks_with_jobs = await self.jobtask_crud.fetch_job_tasks_by_paper_uuid(
-            paper_uuid
+            paper_uuid, owner_uuid
         )
 
         return [
@@ -61,19 +61,19 @@ class JobTaskService:
             for task, job in job_tasks_with_jobs
         ]
 
-    async def fetch_task_stats_by_project(self, project_uuid: UUID):
-        stats = await self.jobtask_crud.fetch_tasks_stats_by_project(project_uuid)
+    async def fetch_task_stats_by_project(self, project_uuid: UUID, owner_uuid: UUID):
+        stats = await self.jobtask_crud.fetch_tasks_stats_by_project(project_uuid, owner_uuid)
         return stats
 
     async def fetch_task_stats_by_job(self, job_id: int):
         job_stats = await self.jobtask_crud.fetch_task_stats_by_job(job_id)
         return job_stats
 
-    async def add_human_result(self, uuid: UUID, human_result: JobTaskHumanResult):
-        await self.jobtask_crud.add_jobtask_human_result(uuid, human_result)
+    async def add_human_result(self, uuid: UUID, owner_uuid: UUID, human_result: JobTaskHumanResult):
+        await self.jobtask_crud.add_jobtask_human_result(uuid, owner_uuid, human_result)
 
-    async def bulk_create(self, job_id: int, project_uuid: UUID):
-        papers = await self.paper_service.fetch_papers(project_uuid=project_uuid)
+    async def bulk_create(self, job_id: int, project_uuid: UUID, owner_uuid: UUID):
+        papers = await self.paper_service.fetch_papers(project_uuid=project_uuid, owner_uuid=owner_uuid)
         if len(papers) == 0:
             raise RuntimeError("There are no papers for the given project.")
         jobtasks = [
@@ -97,10 +97,10 @@ class JobTaskService:
         return process_job_task.delay(job_id, job_data)
 
     async def compute_per_criteria_agreement(
-        self, project_uuid: UUID, criteria: Criteria
+        self, project_uuid: UUID, criteria: Criteria, owner_uuid: UUID
     ) -> dict:
         tasks = await self.jobtask_crud.fetch_per_criteria_tasks_by_project(
-            project_uuid
+            project_uuid, owner_uuid
         )
 
         rater_job_uuids = sorted({str(t["job_uuid"]) for t in tasks})

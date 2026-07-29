@@ -8,6 +8,7 @@ from src.db.models.user import User
 from src.schemas.paper import PaperHumanResultUpdate
 from src.services.paper_service import create_paper_service
 
+
 router = APIRouter()
 
 
@@ -19,8 +20,7 @@ async def get_papers(
 ):
     papers = create_paper_service(db_ctx)
     try:
-        p = await papers.fetch_papers(project_uuid)
-        return p
+        return await papers.fetch_papers(project_uuid, current_user.uuid)
     except HTTPException:
         raise
     except Exception as e:
@@ -42,8 +42,7 @@ async def get_project_papers_with_model_evals(
 ):
     papers = create_paper_service(db_ctx)
     try:
-        p = await papers.fetch_papers_with_model_evals(project_uuid)
-        return p
+        return await papers.fetch_papers_with_model_evals(project_uuid, current_user.uuid)
     except HTTPException:
         raise
     except Exception as e:
@@ -62,7 +61,7 @@ async def add_paper_human_result(
 ):
     papers = create_paper_service(db_ctx)
     try:
-        await papers.add_human_result(uuid, result.human_result)
+        await papers.add_human_result(uuid, current_user.uuid, result.human_result)
         await db_ctx.commit()
         return {"detail": "Human result to paper added successfully"}
     except HTTPException:
