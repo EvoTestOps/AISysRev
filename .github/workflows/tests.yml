@@ -44,7 +44,7 @@ jobs:
         run: uv sync --locked --all-extras --dev
         working-directory: ./server
       - name: Lint project
-        run: uvx ruff check
+        run: uv run ruff check
         working-directory: ./server
   unit-test:
     runs-on: ubuntu-latest

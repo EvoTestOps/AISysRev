@@ -28,7 +28,9 @@ services:
       context: .
       dockerfile: Dockerfile-dev
       target: server
-    ports: ["127.0.0.1:5678:5678"]
+    ports: 
+      - "127.0.0.1:5678:5678"
+      - "127.0.0.1:8090:8080"
     environment:
       PYTHONPATH: /app
       DEBUG: ${DEBUG:-false}
