@@ -51,6 +51,17 @@ EOF
   exit 1
 }
 
+require_tools() {
+  local missing=()
+  for tool in docker curl python3; do
+    command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "Missing required tools on the host: ${missing[*]}" >&2
+    exit 1
+  fi
+}
+
 check_backend() {
   if ! curl -sf -m 5 "$BASE_URL/api/v1/health" >/dev/null 2>&1; then
     echo "Backend not reachable at $BASE_URL - is the dev stack running? (make start-dev)" >&2
@@ -58,8 +69,22 @@ check_backend() {
   fi
 }
 
+
+ensure_layout() {
+  mkdir -p "$SCRIPT_DIR/specs" "$SCRIPT_DIR/restler" \
+    "$SCRIPT_DIR/schemathesis" "$SCRIPT_DIR/evomaster/evomaster-tests"
+  chmod a+rX "$SCRIPT_DIR" "$SCRIPT_DIR/auth.py"
+  chmod a+rwX "$SCRIPT_DIR/specs" "$SCRIPT_DIR/restler" \
+    "$SCRIPT_DIR/schemathesis" "$SCRIPT_DIR/evomaster" \
+    "$SCRIPT_DIR/evomaster/evomaster-tests"
+}
+
 fetch_spec() {
-  curl -sf "$BASE_URL/openapi.json" -o "$SCRIPT_DIR/specs/aisysrev_live.json"
+  if ! curl -sf "$BASE_URL/openapi.json" -o "$SCRIPT_DIR/specs/aisysrev_live.json"; then
+    echo "Failed to fetch the OpenAPI spec from $BASE_URL/openapi.json" >&2
+    exit 1
+  fi
+  chmod a+r "$SCRIPT_DIR/specs/aisysrev_live.json"
 }
 
 get_cookie() {
@@ -121,6 +146,7 @@ json.dump(d, open(p, 'w'), indent=2)
 run_schemathesis() {
   local mode="${1:-smoke}"
   mkdir -p "$SCRIPT_DIR/schemathesis/$mode"
+  chmod a+rwX "$SCRIPT_DIR/schemathesis/$mode"
   local cookie
   cookie="$(get_cookie)"
   local excludes=()
@@ -173,13 +199,13 @@ ensure_evomaster() {
   echo "Downloading latest EvoMaster..." >&2
   curl -fL https://github.com/WebFuzzing/EvoMaster/releases/latest/download/evomaster.jar \
     -o "$SCRIPT_DIR/evomaster/evomaster.jar"
+  chmod a+r "$SCRIPT_DIR/evomaster/evomaster.jar"
 }
 
 run_evomaster() {
   local cookie
   cookie="$(get_cookie)"
   ensure_evomaster
-  mkdir -p "$SCRIPT_DIR/evomaster/evomaster-tests"
   local exclude_list
   exclude_list=$(IFS=,; echo "${COMMON_EXCLUDE_PATHS[*]},${SESSION_FRAGILE_PATHS[*]},${AUTH_FLOW_EXCLUDE_PATHS[*]}")
   docker run --rm -v "$SCRIPT_DIR":/fuzzing -w /fuzzing/evomaster --network host "$JAVA_IMG" \
@@ -196,7 +222,9 @@ run_evomaster() {
 
 TOOL="${1:-}"
 [ -z "$TOOL" ] && usage
+require_tools
 check_backend
+ensure_layout
 
 case "$TOOL" in
   restler) run_restler "${2:-}" "${3:-}" ;;

@@ -6,7 +6,7 @@
 
 **Prerequisite:** The dev stack must be running `make start-dev`
 
-**Notice:** No tool installation is needed: docker images are pulled and the EvoMaster jar is downloaded automatically on the first run. Only Docker is required.
+**Notice:** No fuzzer installation is needed: docker images are pulled and the EvoMaster jar is downloaded automatically on the first run. The host only needs Docker, curl and python3.
 
 **The script to running each tool is:** `./fuzzing/fuzz.sh <tool> [mode]`  
 
