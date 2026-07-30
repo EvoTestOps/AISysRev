@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aisysrev-redis-dep
+  namespace: aisysrev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aisysrev-redis
+  template:
+    metadata:
+      labels:
+        app: aisysrev-redis
+    spec:
+      serviceAccountName: redis
+      containers:
+        - name: redis
+          image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 100m
+            requests:
+              memory: 64Mi
+              cpu: 50m
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: aisysrev-redis-pvc
