@@ -24,6 +24,7 @@ FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8c
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
+RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
 FROM python:3.14-alpine AS server-builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -50,6 +51,7 @@ COPY server/. /app
 RUN chown -R app:app /app
 RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
 RUN chown app:app /app/migrate.sh && chmod +x /app/migrate.sh
+RUN chgrp -R 0 /app && chmod -R g=rX /app
 
 USER app
 CMD ["/bin/sh", "/app/start.sh"]
@@ -64,6 +66,7 @@ COPY --from=server-builder --chown=celeryuser:celerygroup /app/.venv /app/.venv
 
 COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
+RUN chgrp -R 0 /app && chmod -R g=rX /app
 
 EXPOSE 8080
 USER celeryuser
