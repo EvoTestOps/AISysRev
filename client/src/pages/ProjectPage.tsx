@@ -893,6 +893,14 @@ export const ProjectPage = () => {
     }
   }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
 
+  if (loadingProjects) {
+    return (
+      <Layout title="">
+        <Skeleton />
+      </Layout>
+    );
+  }
+
   if (!project) {
     return <NotFoundPage />;
   }
