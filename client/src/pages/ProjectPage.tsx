@@ -1018,6 +1018,17 @@ export const ProjectPage = () => {
                                 </span>
                               </>
                             )}
+                            {status === JobStatus.FAILED && (
+                              <>
+                                <CircleAlert
+                                  size={14}
+                                  className="text-red-600"
+                                />
+                                <span className="text-red-600">
+                                  Screening failed
+                                </span>
+                              </>
+                            )}
                           </div>
                         </>
                       )}
