@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aisysrev-config
+  namespace: aisysrev
+data:
+  REDIS_URL: redis://redis-service:6379/0
+  CELERY_BROKER_URL: redis://redis-service:6379/0

@@ -143,7 +143,7 @@ async def dev_login(
     db_ctx: DBContext = Depends(get_db_ctx),
     redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
-    if settings.APP_ENV == "prod":
+    if settings.APP_ENV not in ("dev", "test"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     sub = "dev-user"
