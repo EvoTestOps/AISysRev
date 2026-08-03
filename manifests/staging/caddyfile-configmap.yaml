@@ -22,7 +22,7 @@ data:
             reverse_proxy backend-service:8080
         }
 
-        handle /register_and_privacy_policy {
+        handle /register-and-privacy-policy {
             reverse_proxy backend-service:8080
         }
 

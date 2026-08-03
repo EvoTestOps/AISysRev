@@ -80,9 +80,9 @@ v1_router.include_router(auth_router)
 
 app.include_router(v1_router)
 
-@app.get("/register_and_privacy_policy")
+@app.get("/register-and-privacy-policy")
 async def privacy_policy_page():
-    return FileResponse("static/register-privacy-policy.pdf", media_type="application/pdf")
+    return FileResponse("static/register-and-privacy-policy.pdf", media_type="application/pdf")
 
 
 @app.get("/terms-and-conditions")

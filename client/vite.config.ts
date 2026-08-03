@@ -21,7 +21,7 @@ export default defineConfig({
       // This proxies API requests to the backend container
       "/api": `http://backend_${appEnv}:8080`,
       "/login": `http://backend_${appEnv}:8080`,
-      "/register_and_privacy_policy": `http://backend_${appEnv}:8080`,
+      "/register-and-privacy-policy": `http://backend_${appEnv}:8080`,
       "/terms-and-conditions": `http://backend_${appEnv}:8080`,
       // Proxying documentation
       "/docs": {
