@@ -21,6 +21,7 @@ COPY client/src ./src
 RUN npm run build
 
 FROM caddy:2.10.0-alpine@sha256:ae4458638da8e1a91aafffb231c5f8778e964bca650c8a8cb23a7e8ac557aa3c AS client
+RUN apk add --no-cache libcap && setcap -r /usr/bin/caddy && apk del libcap
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv

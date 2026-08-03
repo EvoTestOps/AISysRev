@@ -17,13 +17,11 @@ spec:
       labels:
         app: aisysrev-celery
     spec:
-      imagePullSecrets:
-        - name: quay-pull-secret
       containers:
         - name: aisysrev
           image: aisysrev:backend-staging
           imagePullPolicy: Always
-          command: ["/app/.venv/bin/celery", "-A", "src.worker", "worker", "--loglevel=info"]
+          command: ["/app/.venv/bin/celery", "-A", "src.worker", "worker", "--loglevel=info", "--concurrency=2"]
           env:
            - name: APP_ENV
              value: staging
