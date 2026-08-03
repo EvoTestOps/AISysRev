@@ -17,8 +17,6 @@ spec:
       labels:
         app: aisysrev-frontend
     spec:
-      imagePullSecrets:
-        - name: quay-pull-secret
       containers:
         - name: aisysrev
           image: aisysrev:frontend-staging
