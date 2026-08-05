@@ -60,9 +60,16 @@ def validate_csv(
         try:
             adapter.validate_python(records)
         except ValidationError as e:
+            github_field_names = {
+                    "title": "repository_name",
+                    "abstract": "readme",
+                    "doi": "html_url",
+                }
             for err in e.errors():
                 row = int(err["loc"][0]) + 1
                 err_field = err["loc"][1]
+                if screening_target == "GITHUB_REPOSITORY":
+                    err_field = github_field_names.get(err_field, err_field)
                 errors.append(
                     FileError(
                         file=filename,

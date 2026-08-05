@@ -745,7 +745,8 @@ export const ProjectPage = () => {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
         if ((res.empty_abstract_count ?? 0) > 0) {
-          toast.warn(`${res.empty_abstract_count} abstracts are empty - results will not be optimal`, { autoClose: 8000 })
+          const emptyFieldName = screeningTarget === ScreeningTarget.PAPER ? "readme" : "abstract";
+          toast.warn(`${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`, { autoClose: 8000 })
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
@@ -1386,6 +1387,7 @@ export const ProjectPage = () => {
           exclusionCriteria={exclusionCriteria || []}
           papers={papers}
           paperUuid={paperUuid}
+          screeningTarget={screeningTarget}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
         />

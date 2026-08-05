@@ -15,6 +15,7 @@ import {
   JobTaskStatus,
   Paper,
   PromptingConfig,
+  ScreeningTarget,
 } from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
@@ -58,6 +59,7 @@ type ManualEvaluationProps = {
   exclusionCriteria: string[];
   papers: Paper[];
   paperUuid: string | null;
+  screeningTarget: ScreeningTarget;
   onClose: () => void;
   onEvaluated: () => void;
 };
@@ -75,6 +77,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   exclusionCriteria,
   papers,
   paperUuid,
+  screeningTarget,
   onClose,
   onEvaluated,
 }) => {
@@ -86,6 +89,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   );
 
   const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult)
+
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
 
   const handleAddHumanResult = useCallback((humanResult: JobTaskHumanResult) => {
     if (!paperUuid || !currentPaper) return;
@@ -200,7 +205,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           <div className="flex flex-col min-h-0">
             <div className="pr-10">
               <DialogTitle className="text-lg font-bold mb-3">
-                Paper #{currentPaper.paper_id}: {currentPaper.title}
+                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}: {currentPaper.title}
               </DialogTitle>
             </div>
             <div
@@ -209,9 +214,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             >
               {currentPaper.doi && (
                 <div className="text-sm pt-2 pb-2">
-                  <strong>DOI:</strong>{" "}
+                  <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                   <a
-                    href={encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                    href={isGithubScreening ? currentPaper.doi : `https://doi.org/${currentPaper.doi}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover-underline text-blue-600 hover-underline"

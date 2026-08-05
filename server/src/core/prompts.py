@@ -187,7 +187,6 @@ github_additional_instructions = (
     "Evaluate the exclusion criteria before the inclusion criteria. "
     "An item may satisfy every inclusion criterion and still be excluded. "
     "Do not assume features that are not mentioned in the README or description. "
-    "Exclude collection repositories and text-only repositories. "
     "Absence of evidence is not enough for inclusion. "
     "Keyword being present in the README or description is not enough for inclusion. "
     "Repositories come from a broad keywoard search and may not be relevant to the research topic. "
