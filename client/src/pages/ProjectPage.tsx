@@ -921,6 +921,14 @@ export const ProjectPage = () => {
     }
   }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
 
+  if (loadingProjects) {
+    return (
+      <Layout title="">
+        <Skeleton />
+      </Layout>
+    );
+  }
+
   if (!project) {
     return <NotFoundPage />;
   }
@@ -1044,6 +1052,17 @@ export const ProjectPage = () => {
                                 />
                                 <span className="text-orange-600">
                                   Done with errors ({errorCount})
+                                </span>
+                              </>
+                            )}
+                            {status === JobStatus.FAILED && (
+                              <>
+                                <CircleAlert
+                                  size={14}
+                                  className="text-red-600"
+                                />
+                                <span className="text-red-600">
+                                  Screening failed
                                 </span>
                               </>
                             )}

@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+  namespace: aisysrev
+data:
+  Caddyfile: |
+    {
+        auto_https off
+    }
+
+    :9080 {
+        handle /api* {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /login {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /logout {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /register_and_privacy_policy {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /terms-and-conditions {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /openapi.json {
+            reverse_proxy backend-service:8080
+        }
+
+        handle /docs {
+            reverse_proxy backend-service:8080
+        }
+
+        handle {
+            root * /srv
+            try_files {path} /index.html
+            file_server
+        }
+
+        log {
+            output stdout
+            format console
+        }
+    }

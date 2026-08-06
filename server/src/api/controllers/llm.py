@@ -68,7 +68,10 @@ async def get_available_models(
 ):
     llm_service = create_llm_service(db_ctx)
 
-    llm_class: type[LLMProvider] = llm_service.get_llm(provider)
+    try:
+        llm_class: type[LLMProvider] = llm_service.get_llm(provider)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
     api_key = None
 
     if llm_class.api_key_config_parameter is not None:
