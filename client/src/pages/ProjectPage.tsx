@@ -88,6 +88,8 @@ const fmt = new Intl.NumberFormat("en", {
   maximumFractionDigits: 1,
 });
 
+
+
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
   modelParametersSchema,
@@ -457,6 +459,12 @@ export const ProjectPage = () => {
 }, [projectUuid]);
 
 
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+
+  const itemName = isGithubScreening ? "repository" : "paper";
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+
+
 
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -808,7 +816,7 @@ export const ProjectPage = () => {
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
     if (papers.length === 0) {
-      toast.warn("No papers available.");
+      toast.warn(`No ${itemNamePlural} available.`);
       return;
     }
     const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
@@ -939,7 +947,7 @@ export const ProjectPage = () => {
           Screening tasks
         </TabButton>
         <TabButton href={`/project/${projectUuid}/papers/page/1`}>
-          List of papers
+          List of {itemNamePlural}
         </TabButton>
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -1018,7 +1026,7 @@ export const ProjectPage = () => {
                                   strokeWidth={2}
                                 />
                                 <span>
-                                  Screening paper {completedCount} of {totalCount}
+                                  Screening {itemName} {completedCount} of {totalCount}
                                 </span>
                               </>
                             )}
@@ -1076,7 +1084,7 @@ export const ProjectPage = () => {
         </div>
         <div className="flex flex-col gap-2">
           <SectionHeader
-            title="Step 1. Upload papers"
+            title={`Step 1. Upload ${itemNamePlural}`}
             selected={fetchedFiles.length !== 0}
           />
           <Card>
@@ -1096,7 +1104,7 @@ export const ProjectPage = () => {
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
-                <span>To create tasks, you must first upload papers.</span>
+                <span>To create tasks, you must first upload {itemNamePlural}.</span>
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
