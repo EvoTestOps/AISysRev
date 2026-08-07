@@ -17,6 +17,18 @@ class UserService:
             raise ValueError("User not found")
         return UserRead.model_validate(user)
 
+    async def update_consent_versions(self, user_uuid: str) -> UserRead:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        user = await self.user_crud.update_consent_versions(
+            user_uuid,
+            terms_version=settings.CURRENT_TERMS_VERSION,
+            privacy_policy_version=settings.CURRENT_PRIVACY_POLICY_VERSION,
+            accepted_at=now,
+        )
+        if not user:
+            raise ValueError("User not found")
+        return UserRead.model_validate(user)
+
     async def delete_user(self, user_uuid: str) -> bool:
         return await self.user_crud.delete_user(user_uuid)
 

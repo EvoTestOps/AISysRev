@@ -108,7 +108,8 @@ async def accept_consent(
 
     data = json.loads(session_data)
     pending_sub = data.get("pending_sub")
-    if not pending_sub:
+    user_uuid = data.get("user_uuid")
+    if not pending_sub and not user_uuid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No pending consent for this session",
@@ -121,11 +122,14 @@ async def accept_consent(
         )
 
     user_service = create_user_service(db_ctx)
-    user = await user_service.create_user_with_consent(
-        sub=pending_sub,
-        email=data.get("pending_email"),
-        consent=consent,
-    )
+    if pending_sub:
+        user = await user_service.create_user_with_consent(
+            sub=pending_sub,
+            email=data.get("pending_email"),
+            consent=consent,
+        )
+    else:
+        user = await user_service.update_consent_versions(user_uuid)
     await db_ctx.commit()
 
     await redis_client.setex(
