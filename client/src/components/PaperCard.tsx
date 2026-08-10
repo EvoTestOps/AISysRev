@@ -15,11 +15,12 @@ import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 
 type PaperCardProps = {
   paper: PaperWithModelEval;
+  isGithubScreening: boolean;
 };
 
 export const PaperCard: React.FC<
   React.PropsWithChildren<CardProps> & PaperCardProps
-> = ({ paper, ...rest }) => {
+> = ({ paper, isGithubScreening, ...rest }) => {
   const [open, setOpen] = useState(false);
 
   const getPaperPendingState = useTypedStoreState(
@@ -89,9 +90,9 @@ export const PaperCard: React.FC<
           <div className="text-sm pt-2 pb-2">
             {paper.doi && (
               <>
-                <strong>DOI:</strong>{" "}
+                <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                 <a
-                  href={`https://doi.org/${paper.doi}`}
+                  href={isGithubScreening ? paper.doi : `https://doi.org/${paper.doi}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover-underline text-blue-600 hover-underline"

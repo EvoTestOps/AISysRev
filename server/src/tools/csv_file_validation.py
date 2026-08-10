@@ -8,7 +8,7 @@ from src.tools.csv_file_reader import read_csv_resilient
 from src.schemas.publication import PublicationRowData
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
-GITHUB_REQUIRED_FIELDS = {"repo_name", "description", "html_url", "readme"}
+GITHUB_REQUIRED_FIELDS = {"repository_name", "description", "html_url", "readme"}
 
 
 def validate_csv(
@@ -44,7 +44,7 @@ def validate_csv(
             )
         if screening_target == "GITHUB_REPOSITORY":
             df["title"] = (
-                df["repo_name"].fillna("").astype(str).str.strip()
+                df["repository_name"].fillna("").astype(str).str.strip()
                 + " - "
                 + df["description"].fillna("").astype(str).str.strip()
             )

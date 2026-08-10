@@ -216,7 +216,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 <div className="text-sm pt-2 pb-2">
                   <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                   <a
-                    href={isGithubScreening ? currentPaper.doi : `https://doi.org/${currentPaper.doi}`}
+                    href={isGithubScreening ? currentPaper.doi : encodeURI(`https://doi.org/${currentPaper.doi}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover-underline text-blue-600 hover-underline"
