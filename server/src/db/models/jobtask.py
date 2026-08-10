@@ -57,9 +57,9 @@ class JobTask(Base, TimestampMixin):
         nullable=False,
     )
 
-    pdf_file_uuid: Mapped[PyUUID] = mapped_column(
+    pdf_file_uuid: Mapped[PyUUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("file.uuid", ondelete="CASCADE"),
+        ForeignKey("file.uuid", ondelete="SET NULL"),
         nullable=True,
     )
 
