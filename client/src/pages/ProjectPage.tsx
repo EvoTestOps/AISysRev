@@ -807,7 +807,7 @@ export const ProjectPage = () => {
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${projectUuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished]);
+  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished, itemNamePlural]);
 
   const nextPaper = useCallback(async () => {
     if (!paperUuid) return;

@@ -3,6 +3,7 @@ import { setupServer } from "msw/node";
 import { http, HttpResponse } from "msw";
 import * as projectService from "./projectService";
 import type { Project } from "../state/types/project";
+import {ScreeningTarget} from "../state/types";
 
 describe("Project service", () => {
   it("Fetches projects successfully", async () => {
@@ -27,6 +28,7 @@ export const handlers = [
           },
           name: "Test project 123",
           preferences: {},
+          screening_target: ScreeningTarget.PAPER,
         } satisfies Project,
       ],
       { status: 200 },
