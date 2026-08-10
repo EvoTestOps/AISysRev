@@ -30,24 +30,6 @@ export const fileUploadToBackend = async (
   }
 };
 
-export const pdfUploadToBackend = async (
-  files: File[],
-  projectUuid: string,
-) => {
-  const formData = new FormData();
-
-  formData.append("project_uuid", projectUuid);
-  files.forEach((file) => formData.append("files", file));
-
-  try {
-    const res = await api.post(`/api/v1/files/upload-pdfs`, formData);
-    return res.data;
-  } catch (error) {
-    console.error("Backend PDF upload error", error);
-    throw error;
-  }
-};
-
 export const attachPdfToPaper = async (
   paperUuid: string,
   file: File,

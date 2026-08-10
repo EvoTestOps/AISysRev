@@ -5,7 +5,6 @@ import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
 import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
-import { PdfDropArea } from "../components/PdfDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { ConfirmationModal } from "../components/ConfirmationModal";
@@ -13,7 +12,6 @@ import { createJob } from "../services/jobService";
 import {
   fileUploadToBackend,
   fileFetchFromBackend,
-  pdfUploadToBackend,
 } from "../services/fileService";
 import { JobStatus, TokenEstimation } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
@@ -484,7 +482,6 @@ export const ProjectPage = () => {
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
 
-  const [uploadMode, setUploadMode] = useState<"csv" | "pdf">("csv");
   const [fetchedFiles, setFetchedFiles] = useState<FetchedFile[]>([]);
   const [availableModels, setAvailableModels] = useState<
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
@@ -776,30 +773,6 @@ export const ProjectPage = () => {
     [projectUuid],
   );
 
-  const uploadPdfsToBackend = useCallback(
-    async (files: File[]) => {
-      try {
-        const res = await pdfUploadToBackend(files, projectUuid);
-        if (res.valid_filenames?.length) {
-          toast.success(`${res.valid_filenames.length} PDF(s) uploaded`);
-        }
-        if (res.errors?.length) {
-          ExpandableToast(res.errors);
-          console.error("PDF upload errors:", res.errors);
-        }
-      } catch (e) {
-        if (axios.isAxiosError(e)) {
-          toast.error("PDF upload failed: " + e.response?.data.detail);
-        } else {
-          toast.error("PDF upload failed due to unknown error");
-        }
-        console.error("PDF upload error:", e);
-        throw e;
-      }
-    },
-    [projectUuid],
-  );
-
   const fetchFiles = useCallback(async () => {
     try {
       const files = await fileFetchFromBackend(projectUuid);
@@ -827,24 +800,6 @@ export const ProjectPage = () => {
       projectUuid,
       fetchPapers,
       // loadPapers
-    ],
-  );
-
-  const handlePdfsSelected = useCallback(
-    async (files: File[]) => {
-      try {
-        await uploadPdfsToBackend(files);
-        await fetchFiles();
-        await fetchPapers(projectUuid);
-      } catch (error) {
-        console.error("Problem uploading the PDFs", error);
-      }
-    },
-    [
-      uploadPdfsToBackend,
-      fetchFiles,
-      projectUuid,
-      fetchPapers,
     ],
   );
 
@@ -1220,14 +1175,9 @@ export const ProjectPage = () => {
             selected={fetchedFiles.length !== 0}
           />
           <Card>
-            {uploadMode === "csv" && fetchedFiles.length == 0 && (
+            {fetchedFiles.length == 0 && (
               <div>
                 <FileDropArea onFilesSelected={handleFilesSelected} />
-              </div>
-            )}
-            {uploadMode === "pdf" && (
-              <div>
-                <PdfDropArea onFilesSelected={handlePdfsSelected} />
               </div>
             )}
             {loadingProjects ? (
