@@ -179,7 +179,7 @@ async def dev_login(
     return response
 
 
-@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead)
+@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead, response_model_exclude={"sub"})
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
 
