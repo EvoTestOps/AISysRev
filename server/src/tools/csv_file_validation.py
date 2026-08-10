@@ -43,13 +43,30 @@ def validate_csv(
                 0,
             )
         if screening_target == "GITHUB_REPOSITORY":
-            df["title"] = (
-                df["repository_name"].fillna("").astype(str).str.strip()
-                + " - "
-                + df["description"].fillna("").astype(str).str.strip()
-            )
-            df["abstract"] = df["readme"]
-            df["doi"] = df["html_url"]
+                empty_repository_names = (
+                    df["repository_name"]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                    .eq("")
+                )
+
+                for row_index in df.index[empty_repository_names]:
+                    errors.append(
+                        FileError(
+                            file=filename,
+                            row=str(int(row_index) + 1),
+                            message="repository_name: Field must be non-empty",
+                        )
+                    )
+
+                df["title"] = (
+                    df["repository_name"].fillna("").astype(str).str.strip()
+                    + " - "
+                    + df["description"].fillna("").astype(str).str.strip()
+                )
+                df["abstract"] = df["readme"]
+                df["doi"] = df["html_url"]
 
         df = df.astype(object).where(df.notna(), None)
         empty_abstract_count = df["abstract"].isna().sum()
