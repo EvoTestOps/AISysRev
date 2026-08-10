@@ -17,6 +17,7 @@ import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import {useTypedStoreState} from "../state/store";
 
 function Row({
   paper,
@@ -89,7 +90,9 @@ function Row({
 export const ResultPage = () => {
   const params = useParams<{ uuid: string }>();
   const { uuid } = params;
-  const screeningTarget = window.localStorage.getItem("screeningTarget");
+  const getProjectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
+  const project = getProjectByUuid(uuid);
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   const [result, setResult] = useState<Result[]>([]);
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -55,6 +55,7 @@ class Criteria(BaseModel):
 class ProjectCreateRequest(BaseModel):
     name: str = Field(max_length=255)
     criteria: Criteria
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
 
     @field_validator("name")
     @classmethod
@@ -75,5 +76,6 @@ class ProjectRead(BaseModel):
     preferences: Optional[ProjectPreferences]
     created_at: datetime
     updated_at: datetime
+    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
 
     model_config = ConfigDict(from_attributes=True)

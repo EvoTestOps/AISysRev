@@ -446,26 +446,6 @@ export const ProjectPage = () => {
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
   const search = useSearch();
 
-
-  const screeningTarget = useMemo<ScreeningTarget>(() => {
-    const stored = window.localStorage.getItem(
-      `aisysrev:screeningTarget:${projectUuid}`,
-    );
-
-    if (stored === ScreeningTarget.GITHUB_REPOSITORY) {
-      return ScreeningTarget.GITHUB_REPOSITORY;
-    }
-    return ScreeningTarget.PAPER;
-}, [projectUuid]);
-
-
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-
-  const itemName = isGithubScreening ? "repository" : "paper";
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
-
-
-
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
@@ -504,6 +484,10 @@ export const ProjectPage = () => {
 
   const project = getProjectByUuid(projectUuid);
 
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemName = isGithubScreening ? "repository" : "paper";
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
   const tokenEstimation = useMemo<TokenEstimation | null>(() => {
     if (!projectUuid || papers.length === 0 || !project) {
       return null;

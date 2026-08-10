@@ -17,15 +17,7 @@ import { ScreeningTarget } from "../state/types";
 export const PapersPage = () => {
   const params = useParams<{ projectUuid: string; page?: string }>();
   const { projectUuid } = params;
-  const screeningTarget = useMemo<ScreeningTarget>(() => {
-    const stored = window.localStorage.getItem(`aisysrev:screeningTarget:${projectUuid}`);
-    if (stored === ScreeningTarget.GITHUB_REPOSITORY) {
-      return ScreeningTarget.GITHUB_REPOSITORY;
-    }
-    return ScreeningTarget.PAPER;
-  }, [projectUuid]);
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+
   const currentPage = Number(params.page ?? 1);
 
   const id = useId();
@@ -47,6 +39,10 @@ export const PapersPage = () => {
     (state) => state.getProjectByUuid
   );
   const project = getProjectByUuid(projectUuid);
+
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
 
   const getPapersForProject = useTypedStoreState(
     (state) => state.getPapersForProject

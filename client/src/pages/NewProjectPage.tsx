@@ -87,7 +87,7 @@ export const NewProject = () => {
       };
 
       try {
-        const res = await create_project(title, criteria);
+        const res = await create_project(title, criteria, screeningTarget);
         return { id: res.id, uuid: res.uuid };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
@@ -112,10 +112,6 @@ export const NewProject = () => {
         uuid = res.uuid;
         toast.success("Project created successfully!");
         if (uuid) {
-          window.localStorage.setItem(
-            `aisysrev:screeningTarget:${uuid}`,
-            screeningTarget,
-          );
           refreshProjects();
           navigate(`/project/${uuid}`);
         }
