@@ -266,7 +266,7 @@ class ResultService:
         df = rename_columns(df, screening_target)
         return df.to_html(index=False)
 
-    async def fetch_result(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> list[dict]:
+    async def fetch_result(self, project_uuid: UUID, owner_uuid: UUID):
         rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
         return df.to_dict("records")

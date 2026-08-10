@@ -92,7 +92,7 @@ export const PaperCard: React.FC<
               <>
                 <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                 <a
-                  href={isGithubScreening ? paper.doi : `https://doi.org/${paper.doi}`}
+                  href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover-underline text-blue-600 hover-underline"

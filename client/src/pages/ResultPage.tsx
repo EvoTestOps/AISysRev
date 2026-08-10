@@ -41,7 +41,7 @@ function Row({
         <TableCell>
           {paper.doi && (
             <a
-              href={isGithubScreening ? paper.doi : `https://doi.org/${paper.doi}`}
+              href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#1976d2", textDecoration: "underline" }}
