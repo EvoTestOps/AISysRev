@@ -31,6 +31,7 @@ dependencies = [
     "uvicorn>=0.38.0",
     "pypdf>=6.14.2",
     "langchain-text-splitters>=1.1.2",
+    "boto3>=1.43.67",
 ]
 [tool.setuptools]
 package-dir = {"" = "src"}

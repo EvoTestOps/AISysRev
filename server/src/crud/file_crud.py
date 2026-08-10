@@ -65,3 +65,21 @@ class FileCrud:
     async def delete_file(self, file: File) -> None:
         await self.db.delete(file)
         await self.db.flush()
+
+    async def fetch_storage_paths_by_project(self, project_uuid: UUID) -> List[str]:
+        stmt = (
+            select(File.storage_path)
+            .where(File.project_uuid == project_uuid)
+            .where(File.storage_path.is_not(None))
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_files_with_storage_path(self, storage_path: str) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(File)
+            .where(File.storage_path == storage_path)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()

@@ -20,6 +20,7 @@ from src.api.controllers.result import router as result_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.tools.diagnostics.redis_check import check_redis_connection
+from src.tools.diagnostics.storage_check import check_storage_backend
 from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
 from src.redis_client.client import close_shared_redis_client
 
@@ -34,6 +35,9 @@ async def lifespan(app: FastAPI):
 
     print("Checking Redis connection...")
     await check_redis_connection()
+
+    print("Checking storage backend...")
+    await check_storage_backend()
 
     print("Application startup complete!")
     startup_complete.set()

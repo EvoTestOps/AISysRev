@@ -140,7 +140,7 @@ class FileService:
 
             try:
                 file_uuid = uuid4()
-                storage_path = build_storage_path(project_uuid, file_uuid)
+                storage_path = await asyncio.to_thread(build_storage_path, owner_uuid, content)
                 await asyncio.to_thread(write_pdf_bytes, storage_path, content)
 
                 file_data = FileCreate(
@@ -158,7 +158,7 @@ class FileService:
                     pdf_file_uuid=result.uuid,
                     title=Path(f.filename).stem,
                     abstract="NO_ABSTRACT",
-                    doi=None,
+                    doi="NO_DOI",
                 )
                 await self.paper_crud.bulk_create_papers([paper])
 
@@ -200,7 +200,7 @@ class FileService:
             raise ValueError(validation_errors[0].message)
         
         file_uuid = uuid4()
-        storage_path = build_storage_path(paper.project_uuid, file_uuid)
+        storage_path = await asyncio.to_thread(build_storage_path, owner_uuid, content)
         await asyncio.to_thread(write_pdf_bytes, storage_path, content)
 
         file_data = FileCreate(
@@ -232,7 +232,9 @@ class FileService:
         return PaperRead.model_validate(updated_paper), old_storage_path
     
     async def cleanup_pdf_storage(self, storage_path: str) -> None:
-        await asyncio.to_thread(delete_pdf_bytes, storage_path)
+        count = await self.file_crud.count_files_with_storage_path(storage_path)
+        if count == 0:
+            await asyncio.to_thread(delete_pdf_bytes, storage_path)
     
     async def import_fulltext_from_endnote_xml(
         self,
@@ -304,7 +306,7 @@ class FileService:
                 continue
 
             file_uuid = uuid4()
-            storage_path = build_storage_path(project_uuid, file_uuid)
+            storage_path = await asyncio.to_thread(build_storage_path, owner_uuid, content)
             await asyncio.to_thread(write_pdf_bytes, storage_path, content)
             created_file = await self.file_crud.create_file_record(FileCreate(
                 uuid=file_uuid,

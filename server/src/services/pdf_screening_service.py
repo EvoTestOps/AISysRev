@@ -45,7 +45,7 @@ class PdfScreeningService:
         inclusion_criteria: list[str],
         exclusion_criteria: list[str],
     ) -> str:
-        inclusion_embedding, exclusion_embedding = await self.get_criteria_embeddings(
+        inclusion_embeddings, exclusion_embeddings = await self.get_criteria_embeddings(
             llm,
             provider_parameters,
             runtime_parameters,
@@ -64,17 +64,11 @@ class PdfScreeningService:
             owner_uuid,
         )
 
-        inclusion_chunks = top_k_chunks_by_similarity(
-            chunk_texts,
-            chunk_embeddings,
-            inclusion_embedding,
-        )
-        exclusion_chunks = top_k_chunks_by_similarity(
-            chunk_texts,
-            chunk_embeddings,
-            exclusion_embedding,
-        )
-        return "\n\n".join(merge_and_dedupe_chunks([inclusion_chunks, exclusion_chunks]))
+        chunk_lists = [
+            top_k_chunks_by_similarity(chunk_texts, chunk_embeddings, criteria_embedding, k=1)
+            for criteria_embedding in inclusion_embeddings + exclusion_embeddings
+        ]
+        return "\n\n".join(merge_and_dedupe_chunks(chunk_lists))
     
     async def get_criteria_embeddings(
         self,
@@ -86,30 +80,33 @@ class PdfScreeningService:
         owner_uuid: UUID,
         inclusion_criteria: list[str],
         exclusion_criteria: list[str],
-    ) -> tuple[list[float], list[float]]:
+    ) -> tuple[list[list[float]], list[list[float]]]:
         project = await self.project_crud.fetch_project_by_uuid(project_uuid, owner_uuid)
         if (
             project
-            and project.inclusion_criteria_embedding
-            and project.exclusion_criteria_embedding
+            and (project.inclusion_criteria_embedding or not inclusion_criteria)
+            and (project.exclusion_criteria_embedding or not exclusion_criteria)
         ):
-            return project.inclusion_criteria_embedding, project.exclusion_criteria_embedding
-        
+            return project.inclusion_criteria_embedding or [], project.exclusion_criteria_embedding or []
+
+        texts = inclusion_criteria + exclusion_criteria
         embeddings = await self.llm_service.embed(
             llm,
             provider_parameters,
             runtime_parameters,
-            texts=["\n".join(inclusion_criteria), "\n".join(exclusion_criteria)],
+            texts=texts,
             client=client,
-        )
-        inclusion_embedding, exclusion_embedding = embeddings[0], embeddings[1]
+        ) if texts else []
+        inclusion_embeddings = embeddings[:len(inclusion_criteria)]
+        exclusion_embeddings = embeddings[len(inclusion_criteria):]
+
         await self.project_crud.set_criteria_embeddings(
             project_uuid,
             owner_uuid,
-            inclusion_embedding,
-            exclusion_embedding,
+            inclusion_embeddings or None,
+            exclusion_embeddings or None,
         )
-        return inclusion_embedding, exclusion_embedding
+        return inclusion_embeddings, exclusion_embeddings
     
     async def get_chunks_with_embeddings(
         self,
@@ -133,7 +130,7 @@ class PdfScreeningService:
         
         pdf_bytes = await asyncio.to_thread(read_pdf_bytes, file_record.storage_path)
         pdf_text = await asyncio.to_thread(extract_pdf_text, pdf_bytes)
-        chunks = await asyncio.to_thread(chunk_text, pdf_text)
+        chunks = await asyncio.to_thread(chunk_text, pdf_text, chunk_size=1500, chunk_overlap=200)
         if not chunks:
             raise ValueError("PDF has no extractable text")
         

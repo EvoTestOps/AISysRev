@@ -42,6 +42,18 @@ class Settings:
         ]
         self.PDF_STORAGE_PATH: str = get_env("PDF_STORAGE_PATH", "/app/data/pdfs")
         self.MAX_PDF_UPLOAD_MB: int = int(get_env("MAX_PDF_UPLOAD_MB", "50"))
+        self.STORAGE_BACKEND: str = get_env("STORAGE_BACKEND", "local") # "local" or "s3"
+        self.S3_ENDPOINT_URL: str = get_env("S3_ENDPOINT_URL", "")
+        self.S3_BUCKET: str = get_env("S3_BUCKET", "")
+        self.S3_REGION: str = get_env("S3_REGION", "us-east-1")
+        self.S3_ACCESS_KEY_ID: str = get_env("S3_ACCESS_KEY_ID", "")
+        self.S3_SECRET_ACCESS_KEY: str = get_env("S3_SECRET_ACCESS_KEY", "")
+        if self.STORAGE_BACKEND == "s3" and not (
+            self.S3_ENDPOINT_URL and self.S3_BUCKET and self.S3_ACCESS_KEY_ID and self.S3_SECRET_ACCESS_KEY
+        ):
+            raise Exception(
+                "FATAL: STORAGE_BACKEND=s3 requires S3_ENDPOINT_URL, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY"
+            )
 
 
 
