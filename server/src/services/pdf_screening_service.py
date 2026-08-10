@@ -130,7 +130,7 @@ class PdfScreeningService:
         
         pdf_bytes = await asyncio.to_thread(read_pdf_bytes, file_record.storage_path)
         pdf_text = await asyncio.to_thread(extract_pdf_text, pdf_bytes)
-        chunks = await asyncio.to_thread(chunk_text, pdf_text, chunk_size=1500, chunk_overlap=200)
+        chunks = await asyncio.to_thread(chunk_text, pdf_text)
         if not chunks:
             raise ValueError("PDF has no extractable text")
         

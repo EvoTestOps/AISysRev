@@ -4,7 +4,10 @@ from src.schemas.file_service import EndNoteRecord
 
 
 def parse_endnote_xml(xml_bytes: bytes) -> list[EndNoteRecord]:
-    root = ET.fromstring(xml_bytes)
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError as e:
+        raise ValueError(f"Invalid EndNote XML file: {e}")
     records = []
     for record_el in root.findall(".//record"):
         doi = record_el.findtext("electronic-resource-num")

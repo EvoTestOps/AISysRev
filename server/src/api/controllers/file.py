@@ -196,6 +196,11 @@ async def download_file(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(ve)
         )
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found in storage"
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
