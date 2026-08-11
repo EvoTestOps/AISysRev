@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aisysrev-celery-dep
+  namespace: aisysrev
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: "*"
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:backend-staging","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aisysrev-celery
+  template:
+    metadata:
+      labels:
+        app: aisysrev-celery
+    spec:
+      containers:
+        - name: aisysrev
+          image: aisysrev:backend-staging
+          imagePullPolicy: Always
+          command: ["/app/.venv/bin/celery", "-A", "src.worker", "worker", "--loglevel=info", "--concurrency=2"]
+          env:
+           - name: APP_ENV
+             value: staging
+           - name: REDIS_URL
+             valueFrom:
+               configMapKeyRef:
+                 name: aisysrev-config
+                 key: REDIS_URL
+           - name: CELERY_BROKER_URL
+             valueFrom:
+               configMapKeyRef:
+                 name: aisysrev-config
+                 key: CELERY_BROKER_URL
+          envFrom:
+            - secretRef:
+                name: aisysrev-secret
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 500m
+            requests:
+              memory: 256Mi
+              cpu: 250m
+

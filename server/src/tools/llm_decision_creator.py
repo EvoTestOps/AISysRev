@@ -123,7 +123,9 @@ async def get_structured_response(
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
-        seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
+        seed_papers = await paper_service.fetch_papers_by_paper_uuids(
+            seed_paper_uuids, job_data.owner_uuid
+        )
         seed_paper_txt = create_few_shot_examples(seed_papers)
         prompt_text = few_shot_task_prompt.format(
             job_task_data.title,

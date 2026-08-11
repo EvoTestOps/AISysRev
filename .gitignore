@@ -4,3 +4,17 @@
 .vscode
 .coverage
 .vscode/settings.json
+
+fuzzing/specs/*.json
+fuzzing/restler/Compile/
+fuzzing/restler/Test/
+fuzzing/restler/FuzzLean/
+fuzzing/restler/Fuzz/
+fuzzing/restler/RestlerLogs/
+fuzzing/schemathesis/smoke/
+fuzzing/schemathesis/lean/
+fuzzing/schemathesis/full/
+fuzzing/evomaster/evomaster-tests/
+fuzzing/evomaster/evomaster.jar
+
+manifests/staging/secret.yaml

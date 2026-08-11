@@ -67,6 +67,9 @@ v1_router = APIRouter(prefix="/api/v1")
 if settings.APP_ENV == "test":
     v1_router.include_router(fixture_router)
 
+if settings.APP_ENV in ("dev", "test"):
+    v1_router.include_router(celery_test_router)
+
 v1_router.include_router(health_check_router)
 v1_router.include_router(project_router)
 v1_router.include_router(file_router)
@@ -74,7 +77,6 @@ v1_router.include_router(job_router)
 v1_router.include_router(jobtask_router)
 v1_router.include_router(paper_router)
 v1_router.include_router(setting_router)
-v1_router.include_router(celery_test_router)
 v1_router.include_router(llm_router)
 v1_router.include_router(result_router)
 v1_router.include_router(event_queue_router)
@@ -99,7 +101,7 @@ async def login_page():
         <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-gray">
             Dev Login
         </a>"""
-        if settings.APP_ENV != "prod"
+        if settings.APP_ENV in ("dev", "test")
         else ""
     )
     return f"""<!DOCTYPE html>

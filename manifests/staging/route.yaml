@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: aisysrev-route
+  namespace: aisysrev
+  labels:
+    app: aisysrev
+    type: external
+spec:
+  host: aisysrev-staging.ext.ocp-test-0.k8s.it.helsinki.fi
+  port:
+    targetPort: 9080
+  to:
+    kind: Service
+    name: frontend-service
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

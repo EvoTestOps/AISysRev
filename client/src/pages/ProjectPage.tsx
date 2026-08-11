@@ -998,6 +998,14 @@ export const ProjectPage = () => {
     }
   }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
 
+  if (loadingProjects) {
+    return (
+      <Layout title="">
+        <Skeleton />
+      </Layout>
+    );
+  }
+
   if (!project) {
     return <NotFoundPage />;
   }
@@ -1131,6 +1139,17 @@ export const ProjectPage = () => {
                                 />
                                 <span className="text-orange-600">
                                   Done with errors ({errorCount})
+                                </span>
+                              </>
+                            )}
+                            {status === JobStatus.FAILED && (
+                              <>
+                                <CircleAlert
+                                  size={14}
+                                  className="text-red-600"
+                                />
+                                <span className="text-red-600">
+                                  Screening failed
                                 </span>
                               </>
                             )}
@@ -1445,7 +1464,7 @@ export const ProjectPage = () => {
                 <div className="text-xs font-semibold text-slate-600 mb-1">Per-criteria logic</div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Inclusion:</span>
-                  <span className="font-mono font-medium text-slate-700">{project.criteria.inclusion_expression ?? "default (OR)"}</span>
+                  <span className="font-mono font-medium text-slate-700">{project.criteria.inclusion_expression ?? "default (AND)"}</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Exclusion:</span>

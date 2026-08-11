@@ -232,8 +232,8 @@ export const model = {
   }),
   // Loading state
   loading: {
-    projects: false,
-    providers: false,
+    projects: true,
+    providers: true,
     papers: {},
   },
   papers: {},

@@ -20,7 +20,6 @@ services:
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
-    privileged: true
     ports:
       - 127.0.0.1:6379:6379
     volumes: 

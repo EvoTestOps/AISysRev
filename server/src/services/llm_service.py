@@ -19,8 +19,11 @@ class LLMService:
 
     def get_llm(self, provider_name: str) -> type[LLMProvider]:
         Provider = next(
-            prov for prov in llm_providers if prov.provider_name == provider_name
+            (prov for prov in llm_providers if prov.provider_name == provider_name),
+            None
         )
+        if Provider is None:
+            raise ValueError(f"Unknown provider: {provider_name}")
         return Provider  # type: ignore
 
     async def call_llm(
