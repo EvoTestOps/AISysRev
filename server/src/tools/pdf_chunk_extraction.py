@@ -32,7 +32,9 @@ def top_k_chunks_by_similarity(
         return []
     embeddings_matrix = np.array(chunk_embeddings)
     criteria_vector = np.array(criteria_embedding)
-    similarities = embeddings_matrix @ criteria_vector
+    chunk_norms = np.linalg.norm(embeddings_matrix, axis=1)
+    criteria_norm = np.linalg.norm(criteria_vector)
+    similarities = (embeddings_matrix @ criteria_vector) / (chunk_norms * criteria_norm)
     top_k_indices = np.argsort(similarities)[::-1][:k]
     return [chunk_texts[i] for i in top_k_indices]
 
