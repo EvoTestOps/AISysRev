@@ -161,6 +161,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     rememberSelection,
     projectUuid,
     llmConfig,
+    screeningMode,
     onClose,
   ]);
 
