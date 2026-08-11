@@ -99,13 +99,13 @@ class PdfScreeningService:
         ) if texts else []
         inclusion_embeddings = embeddings[:len(inclusion_criteria)]
         exclusion_embeddings = embeddings[len(inclusion_criteria):]
-
-        await self.project_crud.set_criteria_embeddings(
-            project_uuid,
-            owner_uuid,
-            inclusion_embeddings or None,
-            exclusion_embeddings or None,
-        )
+        if llm.provider_name != "mock":
+            await self.project_crud.set_criteria_embeddings(
+                project_uuid,
+                owner_uuid,
+                inclusion_embeddings or None,
+                exclusion_embeddings or None,
+            )
         return inclusion_embeddings, exclusion_embeddings
     
     async def get_chunks_with_embeddings(
@@ -151,7 +151,8 @@ class PdfScreeningService:
             )
             for i, (chunk, embedding) in enumerate(zip(chunks, embeddings))
         ]
-        await self.pdf_chunk_embedding_crud.bulk_create_chunks(chunk_records, owner_uuid)
+        if llm.provider_name != "mock":
+            await self.pdf_chunk_embedding_crud.bulk_create_chunks(chunk_records, owner_uuid)
 
         return chunks, embeddings
         
