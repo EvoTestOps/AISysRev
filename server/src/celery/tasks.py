@@ -19,6 +19,7 @@ from src.schemas.jobtask import JobTaskStatus
 from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
+from src.services.pdf_screening_service import create_pdf_screening_service
 from src.tools.boolean_parser import (
     build_criteria_tree_with_expressions,
     compute_overall,
