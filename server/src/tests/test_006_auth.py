@@ -3,8 +3,8 @@ import uuid
 
 import pytest
 from fastapi import HTTPException
-from starlette.requests import Request
 from starlette.datastructures import Headers
+from starlette.requests import Request
 
 from src.core.auth import get_current_user
 from src.core.config import settings
@@ -40,9 +40,11 @@ async def test_unauthenticated_request(db_ctx):
 @pytest.mark.asyncio
 async def test_invalid_session(db_ctx):
     session_id = str(uuid.uuid4())
-    session_data = json.dumps({
-        "user_uuid": str(uuid.uuid4()),
-    })
+    session_data = json.dumps(
+        {
+            "user_uuid": str(uuid.uuid4()),
+        }
+    )
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
@@ -58,13 +60,16 @@ async def test_invalid_session(db_ctx):
 @pytest.mark.asyncio
 async def test_valid_session_returns_user(db_ctx):
     user_crud = db_ctx.crud(UserCrud)
-    user = await user_crud.create_user(UserCreate(sub="session-test-user", email="s@test.com"))
-    await db_ctx.commit()
+    user = await user_crud.create_user(
+        UserCreate(sub="session-test-user", email="s@test.com")
+    )
 
     session_id = str(uuid.uuid4())
-    session_data = json.dumps({
-        "user_uuid": str(user.uuid),
-    })
+    session_data = json.dumps(
+        {
+            "user_uuid": str(user.uuid),
+        }
+    )
     redis_client = get_redis_client()
     await redis_client.setex(
         f"session:{session_id}",
@@ -80,8 +85,9 @@ async def test_valid_session_returns_user(db_ctx):
 async def test_create_user_with_consent(db_ctx):
     service = create_user_service(db_ctx)
     consent = ConsentAccept(terms=True, privacy_policy=True, research=True)
-    user = await service.create_user_with_consent(sub="new-user", email="new@test.com", consent=consent)
-    await db_ctx.commit()
+    user = await service.create_user_with_consent(
+        sub="new-user", email="new@test.com", consent=consent
+    )
 
     assert isinstance(user, UserRead)
     assert user.sub == "new-user"
@@ -93,8 +99,9 @@ async def test_create_user_with_consent(db_ctx):
 async def test_create_user_with_consent_research_optional(db_ctx):
     service = create_user_service(db_ctx)
     consent = ConsentAccept(terms=True, privacy_policy=True, research=None)
-    user = await service.create_user_with_consent(sub="no-research-user", email="nr@test.com", consent=consent)
-    await db_ctx.commit()
+    user = await service.create_user_with_consent(
+        sub="no-research-user", email="nr@test.com", consent=consent
+    )
 
     assert user.consent_anonymized_research_usage is None
 
@@ -108,18 +115,22 @@ async def test_users_only_see_their_own_projects(db_ctx):
     user_b = await user_crud.create_user(UserCreate(sub="user-b", email="b@test.com"))
 
     for i in range(1, 4):
-        await project_crud.create_project(ProjectCreate(
-            name=f"User A Project {i}",
-            owner_uuid=user_a.uuid,
-            criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
-        ))
+        await project_crud.create_project(
+            ProjectCreate(
+                name=f"User A Project {i}",
+                owner_uuid=user_a.uuid,
+                criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
+            )
+        )
 
     for i in range(1, 3):
-        await project_crud.create_project(ProjectCreate(
-            name=f"User B Project {i}",
-            owner_uuid=user_b.uuid,
-            criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
-        ))
+        await project_crud.create_project(
+            ProjectCreate(
+                name=f"User B Project {i}",
+                owner_uuid=user_b.uuid,
+                criteria=Criteria(inclusion_criteria=["A"], exclusion_criteria=["B"]),
+            )
+        )
 
     projects_a = await project_crud.fetch_projects(user_a.uuid)
     projects_b = await project_crud.fetch_projects(user_b.uuid)
