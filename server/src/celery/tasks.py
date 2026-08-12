@@ -8,11 +8,6 @@ from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_
 from tenacity import retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from celery import Task
-from src.tools.boolean_parser import (
-    build_criteria_tree_with_expressions,
-    compute_overall,
-    extract_leaf_criteria,
-)
 from src.crud.jobtask_crud import JobTaskCrud
 from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
@@ -24,7 +19,11 @@ from src.schemas.jobtask import JobTaskStatus
 from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
-from src.services.pdf_screening_service import create_pdf_screening_service
+from src.tools.boolean_parser import (
+    build_criteria_tree_with_expressions,
+    compute_overall,
+    extract_leaf_criteria,
+)
 from src.tools.llm_decision_creator import (
     get_single_criterion_response,
     get_structured_response,
@@ -49,7 +48,6 @@ def process_job_task(self: Task, job_id: int, job_data: dict):
     job_data_unpacked = JobCreate.model_validate(job_data)
     logger.info("Running job task using asyncio, ID: %s", job_id)
     asyncio.run(process_job(self, job_id, job_data_unpacked))
-
 
 
 def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> AsyncClient:
@@ -201,7 +199,13 @@ async def _process_standard_task(
                 logger.exception("Failed to publish error %s", job_task_id)
         finally:
             await _update_progress(
-                celery_task, redis, job_id, job_data.owner_uuid, counter, counter_lock, update_interval
+                celery_task,
+                redis,
+                job_id,
+                job_data.owner_uuid,
+                counter,
+                counter_lock,
+                update_interval,
             )
 
 
@@ -314,7 +318,13 @@ async def _process_per_criteria_task(
 
         finally:
             await _update_progress(
-                celery_task, redis, job_id, job_data.owner_uuid, counter, counter_lock, update_interval
+                celery_task,
+                redis,
+                job_id,
+                job_data.owner_uuid,
+                counter,
+                counter_lock,
+                update_interval,
             )
 
 
@@ -324,6 +334,7 @@ async def process_job(
     job_data: JobCreate,
     max_concurrent_tasks: int = 20,
     max_retries: int = 3,
+    update_interval: int = 5,
 ):
     logger.info("process_job: Starting to process job %s", job_id)
     redis = get_redis_client()
@@ -334,7 +345,9 @@ async def process_job(
         jobtask_crud = db_ctx.crud(JobTaskCrud)
 
         logger.info("Fetching project by UUID %s", job_data.project_uuid)
-        project = await project_crud.fetch_project_by_uuid(job_data.project_uuid, job_data.owner_uuid)
+        project = await project_crud.fetch_project_by_uuid(
+            job_data.project_uuid, job_data.owner_uuid
+        )
         if project is None:
             raise RuntimeError("Project not found")
 
@@ -376,6 +389,7 @@ async def process_job(
                 counter=counter,
                 counter_lock=counter_lock,
                 client=client,
+                update_interval=update_interval,
             )
             for jt_id in job_task_ids
         ]
@@ -392,6 +406,7 @@ async def process_job(
                 counter=counter,
                 counter_lock=counter_lock,
                 client=client,
+                update_interval=update_interval,
             )
             for jt_id in job_task_ids
         ]
