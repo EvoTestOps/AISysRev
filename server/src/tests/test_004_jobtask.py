@@ -261,8 +261,6 @@ async def test_async_process_job_failure(
         jobtask_crud = db_ctx.crud(JobTaskCrud)
         tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job.id)
 
-        print(tasks[0].error)
-        print(tasks[1].error)
         done_count = sum(1 for t in tasks if t.status.value == JobTaskStatus.DONE.value)
         error_count = sum(
             1 for t in tasks if t.status.value == JobTaskStatus.ERROR.value

@@ -23,8 +23,6 @@ from src.tools.diagnostics.db_check import run_migration
 #     with TestClient(app) as client:
 #         yield client
 
-PROTECTED_TABLES = {"alembic_version"}
-
 
 @pytest_asyncio.fixture
 async def test_user_uuid(db_ctx):
@@ -181,11 +179,7 @@ async def reset_shared_redis():
 
 
 async def _truncate_all():
-    tables = [
-        f'"{t.name}"'
-        for t in Base.metadata.sorted_tables
-        if t.name not in PROTECTED_TABLES
-    ]
+    tables = [f'"{t.name}"' for t in Base.metadata.sorted_tables]
     if not tables:
         return
     async with engine.begin() as conn:
