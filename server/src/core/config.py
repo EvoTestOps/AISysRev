@@ -40,6 +40,9 @@ class Settings:
             "true",
             "yes",
         ]
+        self.STAGING_ALLOWED_EMAILS: list[str] = [
+            e.strip() for e in get_env("STAGING_ALLOWED_EMAILS", "").split(",") if e.strip()
+        ]
 
 
 
