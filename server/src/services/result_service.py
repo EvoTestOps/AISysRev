@@ -1,5 +1,5 @@
 import json
-from typing import List, Literal
+from typing import List
 from uuid import UUID
 
 import pandas as pd
@@ -9,6 +9,7 @@ from src.crud.result_crud import ResultCrud
 from src.db.db_context import DBContext
 from src.db.models.paper import HumanResult
 from src.schemas.llm import Criterion
+from src.schemas.project import ScreeningTarget
 
 criteria_adapter = TypeAdapter(List[Criterion])
 
@@ -32,7 +33,6 @@ ALL_COLUMNS = [
     "pc_binary_decision",
 ]
 
-ScreeningTarget = Literal["PAPER", "GITHUB_REPOSITORY"]
 
 GITHUB_REPO_COLUMNS = {
     "title": "repository_name",

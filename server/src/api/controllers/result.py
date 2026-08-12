@@ -1,5 +1,4 @@
 from uuid import UUID
-from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
@@ -7,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
+from src.schemas.project import ScreeningTarget
 from src.services.jobtask_service import create_jobtask_service
 from src.services.project_service import create_project_service
 from src.services.result_service import create_result_service
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/result/download_result_csv", status_code=200, tags=["Results"])
 async def download_result_csv(
     project_uuid: UUID,
-    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"],
+    screening_target: ScreeningTarget,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
@@ -41,7 +41,7 @@ async def download_result_csv(
 @router.get("/result/html", status_code=200, tags=["Results"])
 async def download_result_html(
     project_uuid: UUID,
-    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"],
+    screening_target: ScreeningTarget,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):

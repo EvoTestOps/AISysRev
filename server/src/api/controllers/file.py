@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List
 from uuid import UUID
 
 from fastapi import (
@@ -15,6 +15,7 @@ from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.schemas.file import FileReadWithPaperCount
+from src.schemas.project import ScreeningTarget
 from src.services.file_service import create_file_service
 
 router = APIRouter()
@@ -47,7 +48,7 @@ async def list_files(
 async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),
-    screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = Form("PAPER"),
+    screening_target: ScreeningTarget = Form(ScreeningTarget.PAPER),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):

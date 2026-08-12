@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import List
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -8,6 +8,7 @@ from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
 from src.schemas.file_service import FileError, ProcessedFiles
+from src.schemas.project import ScreeningTarget
 from src.services.paper_service import PaperCreate, PaperCrud
 from src.tools.csv_file_validation import validate_csv
 
@@ -26,7 +27,7 @@ class FileService:
         return [FileReadWithPaperCount(**row) for row in rows]  # type: ignore
 
     async def process_files(
-        self, project_uuid: UUID, files: List[UploadFile], owner_uuid: UUID, screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER"
+        self, project_uuid: UUID, files: List[UploadFile], owner_uuid: UUID, screening_target: ScreeningTarget = ScreeningTarget.PAPER
     ) -> ProcessedFiles:
         """
         Processes a list of uploaded files for a given project.

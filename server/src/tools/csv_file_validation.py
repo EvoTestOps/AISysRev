@@ -1,4 +1,4 @@
-from typing import BinaryIO, List, Optional, Literal
+from typing import BinaryIO, List, Optional
 
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
@@ -6,13 +6,14 @@ from pydantic import TypeAdapter, ValidationError
 from src.schemas.file_service import FileError
 from src.tools.csv_file_reader import read_csv_resilient
 from src.schemas.publication import PublicationRowData
+from src.schemas.project import ScreeningTarget
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
 GITHUB_REQUIRED_FIELDS = {"repository_name", "description", "html_url", "readme"}
 
 
 def validate_csv(
-    file_obj: BinaryIO, filename: str, screening_target: Literal["PAPER", "GITHUB_REPOSITORY"] = "PAPER",
+    file_obj: BinaryIO, filename: str, screening_target: ScreeningTarget = ScreeningTarget.PAPER,
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:
     errors: List[FileError] = []
     empty_abstract_count = 0
