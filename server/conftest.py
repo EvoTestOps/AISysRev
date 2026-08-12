@@ -4,21 +4,18 @@ from io import BytesIO
 import pytest
 import pytest_asyncio
 from fastapi import UploadFile
+from sqlalchemy import text
 from starlette.datastructures import Headers
 
 from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
+from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
-from src.crud.user_crud import UserCrud
-from src.schemas.user import UserCreate
-from src.schemas.job import (
-    JobCreate,
-    LLMModelConfig,
-    ZeroShotPromptingConfig,
-)
+from src.schemas.job import JobCreate, LLMModelConfig, ZeroShotPromptingConfig
+from src.schemas.llm import Criterion, Decision, LikertDecision, StructuredResponse
 from src.schemas.project import Criteria, ProjectCreate
-from src.schemas.llm import StructuredResponse, Criterion, Decision, LikertDecision
+from src.schemas.user import UserCreate
 from src.tools.diagnostics.db_check import run_migration
 
 # @pytest.fixture(scope="function")
@@ -32,7 +29,9 @@ async def test_user_uuid(db_ctx):
     user_crud = db_ctx.crud(UserCrud)
     user = await user_crud.get_user_by_sub("test-user")
     if not user:
-        user = await user_crud.create_user(UserCreate(sub="test-user", email="test@test.com"))
+        user = await user_crud.create_user(
+            UserCreate(sub="test-user", email="test@test.com")
+        )
         await db_ctx.commit()
     return user.uuid
 
@@ -164,8 +163,26 @@ async def db_ctx():
         await ctx.rollback()
 
 
+@pytest_asyncio.fixture
+async def committing_db():
+    await _truncate_all()
+    yield
+    await _truncate_all()
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def reset_shared_redis():
     yield
     from src.redis_client.client import close_shared_redis_client
+
     await close_shared_redis_client()
+
+
+async def _truncate_all():
+    tables = [f'"{t.name}"' for t in Base.metadata.sorted_tables]
+    if not tables:
+        return
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE")
+        )

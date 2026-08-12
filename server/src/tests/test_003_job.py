@@ -76,7 +76,6 @@ async def test_create_and_fetch_job_crud(db_ctx):
     assert fetched_job is not None
     assert job is not None
 
-    print(job.llm_config)
     # FIX: Does not currently return JobRead but raw data: should be fixed
     # assert isinstance(job, JobRead)
     assert job.project_uuid == job_data.project_uuid
