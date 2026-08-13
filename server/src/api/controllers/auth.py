@@ -47,7 +47,7 @@ async def callback(
         email = userinfo.get("email")
 
         if settings.APP_ENV == "staging" and email not in settings.STAGING_ALLOWED_EMAILS:
-            raise HTTPException(status_code=403, detail="Not authorized")
+            raise HTTPException(status_code=403, detail=f"Not authorized: {email!r}")
 
         user_crud = db_ctx.crud(UserCrud)
         existing_user = await user_crud.get_user_by_sub(sub)
