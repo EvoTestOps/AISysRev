@@ -73,7 +73,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
             />
             <span>
               I agree to the{" "}
-              <a href="/register_and_privacy_policy" target="_blank" rel="noreferrer" className="underline">
+              <a href="/register-and-privacy-policy" target="_blank" rel="noreferrer" className="underline">
                 Register and Privacy Policy
               </a>{" "}
               *

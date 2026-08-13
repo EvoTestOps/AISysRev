@@ -23,7 +23,7 @@ localhost:9443 {
 		reverse_proxy backend_prod:8080
 	}
 
-	handle /register_and_privacy_policy {
+	handle /register-and-privacy-policy {
 		reverse_proxy backend_prod:8080
 	}
 
