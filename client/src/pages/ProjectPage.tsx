@@ -1099,7 +1099,7 @@ export const ProjectPage = () => {
             {loadingProjects ? (
               <Skeleton />
             ) : (
-              <TruncatedFileNames files={fetchedFiles} maxLength={25} />
+              <TruncatedFileNames files={fetchedFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
