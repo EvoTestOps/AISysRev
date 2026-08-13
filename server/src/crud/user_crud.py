@@ -42,6 +42,23 @@ class UserCrud:
             await self.db.refresh(user)
         return user
 
+    async def update_consent_versions(self,
+        user_uuid: str,
+        terms_version: str,
+        privacy_policy_version: str,
+        accepted_at: datetime.datetime) -> Optional[User]:
+        stmt = select(User).where(User.uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+        if user:
+            user.terms_version_accepted = terms_version
+            user.terms_accepted_at = accepted_at
+            user.privacy_policy_version_accepted = privacy_policy_version
+            user.privacy_policy_accepted_at = accepted_at
+            await self.db.flush()
+            await self.db.refresh(user)
+        return user
+
     async def delete_user(self, user_uuid: str) -> bool:
         stmt = select(User).where(User.uuid == user_uuid)
         result = await self.db.execute(stmt)

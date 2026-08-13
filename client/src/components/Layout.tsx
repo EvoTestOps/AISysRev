@@ -44,7 +44,7 @@ export const Layout = ({
         <a href="/terms-and-conditions" target="_blank" rel="noreferrer" className="hover:text-slate-600 underline">
           Terms and Conditions
         </a>
-        <a href="/register_and_privacy_policy" className="hover:text-slate-600 underline">
+        <a href="/register-and-privacy-policy" target="_blank" rel="noreferrer" className="hover:text-slate-600 underline">
           Register and Privacy Policy
         </a>
       </footer>

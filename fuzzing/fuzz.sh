@@ -13,7 +13,7 @@ COMMON_EXCLUDE_PATHS=(
   "/api/v1/event-queue"
   "/api/v1/run-test-task"
   "/api/v1/task-status/{task_id}"
-  "/register_and_privacy_policy"
+  "/register-and-privacy-policy"
   "/terms-and-conditions"
 )
 

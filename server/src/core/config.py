@@ -54,6 +54,9 @@ class Settings:
             raise Exception(
                 "FATAL: STORAGE_BACKEND=s3 requires S3_ENDPOINT_URL, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY"
             )
+        self.STAGING_ALLOWED_EMAILS: list[str] = [
+            e.strip() for e in get_env("STAGING_ALLOWED_EMAILS", "").split(",") if e.strip()
+        ]
 
 
 

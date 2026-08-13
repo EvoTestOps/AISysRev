@@ -46,6 +46,9 @@ async def callback(
         sub = userinfo.get("sub")
         email = userinfo.get("email")
 
+        if settings.APP_ENV == "staging" and email not in settings.STAGING_ALLOWED_EMAILS:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
         user_crud = db_ctx.crud(UserCrud)
         existing_user = await user_crud.get_user_by_sub(sub)
 
@@ -108,7 +111,8 @@ async def accept_consent(
 
     data = json.loads(session_data)
     pending_sub = data.get("pending_sub")
-    if not pending_sub:
+    user_uuid = data.get("user_uuid")
+    if not pending_sub and not user_uuid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No pending consent for this session",
@@ -121,11 +125,14 @@ async def accept_consent(
         )
 
     user_service = create_user_service(db_ctx)
-    user = await user_service.create_user_with_consent(
-        sub=pending_sub,
-        email=data.get("pending_email"),
-        consent=consent,
-    )
+    if pending_sub:
+        user = await user_service.create_user_with_consent(
+            sub=pending_sub,
+            email=data.get("pending_email"),
+            consent=consent,
+        )
+    else:
+        user = await user_service.update_consent_versions(user_uuid)
     await db_ctx.commit()
 
     await redis_client.setex(
@@ -175,7 +182,7 @@ async def dev_login(
     return response
 
 
-@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead)
+@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead, response_model_exclude={"sub"})
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
 
