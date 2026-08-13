@@ -139,7 +139,7 @@ class FileService:
             if f.filename is None:
                 continue
 
-            content = await f.read()
+            content = await f.read(max_size_bytes + 1)
             validation_errors = validate_pdf(content, f.filename, max_size_bytes)
             if validation_errors:
                 errors.extend(validation_errors)
@@ -199,9 +199,9 @@ class FileService:
             raise ValueError("Missing filename")
         
         old_pdf_file_uuid = paper.pdf_file_uuid
-        
-        content = await file.read()
+
         max_size_bytes = settings.MAX_PDF_UPLOAD_MB * 1024 * 1024
+        content = await file.read(max_size_bytes + 1)
         validation_errors = validate_pdf(content, file.filename, max_size_bytes)
         if validation_errors:
             raise ValueError(validation_errors[0].message)
@@ -303,7 +303,7 @@ class FileService:
                 ))
                 continue
 
-            content = await pdf_file.read()
+            content = await pdf_file.read(max_size_bytes + 1)
             validation_errors = validate_pdf(content, clean_filename, max_size_bytes)
             if validation_errors:
                 unmatched.append(FulltextImportUnmatched(
