@@ -7,6 +7,7 @@ from fastapi import UploadFile
 
 from src.core.config import settings
 from src.crud.file_crud import FileCrud
+from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.file import FileCreate, FileReadWithPaperCount
@@ -31,9 +32,11 @@ class FileService:
         self,
         file_crud: FileCrud,
         paper_crud: PaperCrud,
+        project_crud: ProjectCrud,
     ):
         self.file_crud = file_crud
         self.paper_crud = paper_crud
+        self.project_crud = project_crud
 
     async def fetch_all(self, project_uuid: UUID, owner_uuid: UUID) -> List[FileReadWithPaperCount]:
         rows = await self.file_crud.fetch_files(project_uuid, owner_uuid)
@@ -124,6 +127,10 @@ class FileService:
         errors: List[FileError] = []
         valid_filenames: List[str] = []
         created_paper_count = 0
+
+        project = await self.project_crud.fetch_project_by_uuid(project_uuid, owner_uuid)
+        if project is None:
+            raise ValueError("Project not found")
 
         next_paper_id = await self.paper_crud.fetch_max_paper_id(project_uuid, owner_uuid) + 1
         max_size_bytes = settings.MAX_PDF_UPLOAD_MB * 1024 * 1024
@@ -339,4 +346,5 @@ class FileService:
 def create_file_service(db_ctx: DBContext) -> FileService:
     file_crud = db_ctx.crud(FileCrud)
     paper_crud = db_ctx.crud(PaperCrud)
-    return FileService(file_crud, paper_crud)
+    project_crud = db_ctx.crud(ProjectCrud)
+    return FileService(file_crud, paper_crud, project_crud)
