@@ -42,12 +42,12 @@ async def callback(
 ):
     try:
         token = await oauth.helsinki.authorize_access_token(request)
-        userinfo = token.get("userinfo")
+        userinfo = await oauth.helsinki.userinfo(token=token)
         sub = userinfo.get("sub")
         email = userinfo.get("email")
 
         if settings.APP_ENV == "staging" and email not in settings.STAGING_ALLOWED_EMAILS:
-            raise HTTPException(status_code=403, detail=f"Not authorized: {email!r}")
+            raise HTTPException(status_code=403, detail="Not authorized")
 
         user_crud = db_ctx.crud(UserCrud)
         existing_user = await user_crud.get_user_by_sub(sub)
