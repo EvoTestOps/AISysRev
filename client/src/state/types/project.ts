@@ -1,4 +1,5 @@
 import z from "zod";
+import { ScreeningTarget } from "../types";
 
 export const CriteriaModel = z.object({
   inclusion_criteria: z.array(z.string()),
@@ -27,6 +28,7 @@ export const ProjectModel = z.object({
   name: z.string(),
   criteria: CriteriaModel,
   preferences: ProjectPreferences.nullable(),
+  screening_target: z.nativeEnum(ScreeningTarget),
 });
 
 export const CreatedProjectModel = z.object({

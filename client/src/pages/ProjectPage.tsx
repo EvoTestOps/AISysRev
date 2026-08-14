@@ -63,6 +63,7 @@ import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
+import { ScreeningTarget } from "../state/types";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -70,6 +71,7 @@ type ActionComponentProps = {
   downloadCsv: () => unknown;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
+  screeningTarget: ScreeningTarget;
 };
 
 type ModelConfigurationProps = {
@@ -85,6 +87,8 @@ const fmt = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+
+
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -339,6 +343,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   downloadCsv,
   onPerCriteriaStats,
   hasMultiplePcJobs,
+  screeningTarget,
 }) => {
   return (
     <div className="flex flex-row gap-2">
@@ -364,6 +369,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
+            screening_target: screeningTarget,
           }).toString()}`}
           target="__blank"
           rel="noopener noreferrer"
@@ -478,6 +484,10 @@ export const ProjectPage = () => {
 
   const project = getProjectByUuid(projectUuid);
 
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemName = isGithubScreening ? "repository" : "paper";
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
   const tokenEstimation = useMemo<TokenEstimation | null>(() => {
     if (!projectUuid || papers.length === 0 || !project) {
       return null;
@@ -699,35 +709,36 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig());
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget));
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
 
   const createPerCriteriaJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig());
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget));
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
       try {
-        const res = await fileUploadToBackend(files, projectUuid);
+        const res = await fileUploadToBackend(files, projectUuid, screeningTarget);
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
         if ((res.empty_abstract_count ?? 0) > 0) {
-          toast.warn(`${res.empty_abstract_count} abstracts are empty - results will not be optimal`, { autoClose: 8000 })
+          const emptyFieldName = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY ? "readme" : "abstract";
+          toast.warn(`${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`, { autoClose: 8000 })
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
@@ -743,7 +754,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid],
+    [projectUuid, screeningTarget],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -789,14 +800,14 @@ export const ProjectPage = () => {
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
     if (papers.length === 0) {
-      toast.warn("No papers available.");
+      toast.warn(`No ${itemNamePlural} available.`);
       return;
     }
     const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${projectUuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished]);
+  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished, itemNamePlural]);
 
   const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
@@ -853,6 +864,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
+          screening_target: screeningTarget,
         }).toString()}`,
       );
       if (!response.ok) {
@@ -869,7 +881,7 @@ export const ProjectPage = () => {
       window.URL.revokeObjectURL(url);
     }
     dl().catch(console.error);
-  }, [projectUuid]);
+  }, [projectUuid, screeningTarget]);
 
   const hasPapers = papers && papers.length > 0;
 
@@ -918,6 +930,7 @@ export const ProjectPage = () => {
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}
+          screeningTarget={screeningTarget}
         />
       )}
     >
@@ -926,7 +939,7 @@ export const ProjectPage = () => {
           Screening tasks
         </TabButton>
         <TabButton href={`/project/${projectUuid}/papers/page/1`}>
-          List of papers
+          List of {itemNamePlural}
         </TabButton>
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -1005,7 +1018,7 @@ export const ProjectPage = () => {
                                   strokeWidth={2}
                                 />
                                 <span>
-                                  Screening paper {completedCount} of {totalCount}
+                                  Screening {itemName} {completedCount} of {totalCount}
                                 </span>
                               </>
                             )}
@@ -1074,7 +1087,7 @@ export const ProjectPage = () => {
         </div>
         <div className="flex flex-col gap-2">
           <SectionHeader
-            title="Step 1. Upload papers"
+            title={`Step 1. Upload ${itemNamePlural}`}
             selected={fetchedFiles.length !== 0}
           />
           <Card>
@@ -1086,7 +1099,7 @@ export const ProjectPage = () => {
             {loadingProjects ? (
               <Skeleton />
             ) : (
-              <TruncatedFileNames files={fetchedFiles} maxLength={25} />
+              <TruncatedFileNames files={fetchedFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
@@ -1094,7 +1107,7 @@ export const ProjectPage = () => {
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
-                <span>To create tasks, you must first upload papers.</span>
+                <span>To create tasks, you must first upload {itemNamePlural}.</span>
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
@@ -1369,6 +1382,7 @@ export const ProjectPage = () => {
             model_parameters: modelFormValues,
             provider_parameters: {},
           }}
+          screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
             fetchJobsForProject(projectUuid);
@@ -1384,6 +1398,7 @@ export const ProjectPage = () => {
           exclusionCriteria={exclusionCriteria || []}
           papers={papers}
           paperUuid={paperUuid}
+          screeningTarget={screeningTarget}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
         />

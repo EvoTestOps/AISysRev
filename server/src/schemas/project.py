@@ -1,9 +1,13 @@
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+class ScreeningTarget(str, Enum):
+    PAPER = "PAPER"
+    GITHUB_REPOSITORY = "GITHUB_REPOSITORY"
 
 class FewShotPreferences(BaseModel):
     inc_seed_papers: List[str]
@@ -55,6 +59,7 @@ class Criteria(BaseModel):
 class ProjectCreateRequest(BaseModel):
     name: str = Field(max_length=255)
     criteria: Criteria
+    screening_target: ScreeningTarget = ScreeningTarget.PAPER
 
     @field_validator("name")
     @classmethod
@@ -75,5 +80,6 @@ class ProjectRead(BaseModel):
     preferences: Optional[ProjectPreferences]
     created_at: datetime
     updated_at: datetime
+    screening_target: ScreeningTarget = ScreeningTarget.PAPER
 
     model_config = ConfigDict(from_attributes=True)

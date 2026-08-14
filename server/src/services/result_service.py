@@ -9,6 +9,7 @@ from src.crud.result_crud import ResultCrud
 from src.db.db_context import DBContext
 from src.db.models.paper import HumanResult
 from src.schemas.llm import Criterion
+from src.schemas.project import ScreeningTarget
 
 criteria_adapter = TypeAdapter(List[Criterion])
 
@@ -32,6 +33,17 @@ ALL_COLUMNS = [
     "pc_binary_decision",
 ]
 
+
+GITHUB_REPO_COLUMNS = {
+    "title": "repository_name",
+    "abstract": "readme",
+    "doi": "repository_url",
+}
+
+def rename_columns(df: pd.DataFrame, screening_target: ScreeningTarget) -> pd.DataFrame:
+    if screening_target == "GITHUB_REPOSITORY":
+        df = df.rename(columns=GITHUB_REPO_COLUMNS)
+    return df
 
 def _ie(x) -> bool | None:
     s = str(x).lower()
@@ -242,14 +254,16 @@ class ResultService:
     def __init__(self, result_crud: ResultCrud):
         self.result_crud = result_crud
 
-    async def generate_result_csv(self, project_uuid: UUID, owner_uuid: UUID) -> str:
+    async def generate_result_csv(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> str:
         rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
+        df = rename_columns(df, screening_target)
         return df.to_csv(index=False)
 
-    async def generate_html(self, project_uuid: UUID, owner_uuid: UUID) -> str:
+    async def generate_html(self, project_uuid: UUID, owner_uuid: UUID, screening_target: ScreeningTarget) -> str:
         rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
+        df = rename_columns(df, screening_target)
         return df.to_html(index=False)
 
     async def fetch_result(self, project_uuid: UUID, owner_uuid: UUID) -> list[dict]:

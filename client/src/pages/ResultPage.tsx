@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
 import { fetchResultFromBackend } from "../services/resultService";
-import { Result } from "../state/types";
+import { Result, ScreeningTarget } from "../state/types";
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Collapse from "@mui/material/Collapse";
@@ -17,13 +17,16 @@ import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import {useTypedStoreState} from "../state/store";
 
 function Row({
   paper,
   modelColumns,
+  isGithubScreening
 }: {
   paper: Result;
   modelColumns: string[];
+  isGithubScreening: boolean;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
   return (
@@ -38,7 +41,7 @@ function Row({
         <TableCell>
           {paper.doi && (
             <a
-              href={`https://doi.org/${paper.doi}`}
+              href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#1976d2", textDecoration: "underline" }}
@@ -71,7 +74,7 @@ function Row({
                 gutterBottom
                 sx={{ mt: 2 }}
               >
-                Abstract
+                {isGithubScreening ? "README" : "Abstract"}
               </Typography>
               <Typography variant="body2" gutterBottom>
                 {paper.abstract}
@@ -87,6 +90,10 @@ function Row({
 export const ResultPage = () => {
   const params = useParams<{ uuid: string }>();
   const { uuid } = params;
+  const getProjectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
+  const project = getProjectByUuid(uuid);
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   const [result, setResult] = useState<Result[]>([]);
 
   useEffect(() => {
@@ -110,8 +117,8 @@ export const ResultPage = () => {
           <TableHead>
             <TableRow>
               <TableCell />
-              <TableCell>Title</TableCell>
-              <TableCell>DOI</TableCell>
+              <TableCell>{isGithubScreening ? "Repository" : "Title"}</TableCell>
+              <TableCell>{isGithubScreening ? "Repository URL" : "DOI"}</TableCell>
               <TableCell>Human Result</TableCell>
             </TableRow>
           </TableHead>
@@ -121,6 +128,7 @@ export const ResultPage = () => {
                 key={`${paper.title}_${i}`}
                 paper={paper}
                 modelColumns={modelColumns}
+                isGithubScreening={isGithubScreening}
               />
             ))}
           </TableBody>

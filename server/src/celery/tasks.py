@@ -45,7 +45,7 @@ def test_task(name: str):
 
 @celery_app.task(name="tasks.process_job", bind=True)
 def process_job_task(self: Task, job_id: int, job_data: dict):
-    job_data_unpacked = JobCreate.model_validate(job_data, strict=True)
+    job_data_unpacked = JobCreate.model_validate(job_data)
     logger.info("Running job task using asyncio, ID: %s", job_id)
     asyncio.run(process_job(self, job_id, job_data_unpacked))
 

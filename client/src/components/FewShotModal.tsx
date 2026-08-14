@@ -23,9 +23,11 @@ import { useCallback, useState } from "react";
 import { AlertMessage } from "./AlertMessage";
 import { createJob } from "../services/jobService";
 import { Hr } from "./Hr";
+import { ScreeningTarget } from "../state/types";
 
 type FewShotModalProps = {
   onClose: () => void;
+  screeningTarget: ScreeningTarget;
   llmConfig: LlmConfig;
 };
 
@@ -83,6 +85,7 @@ const SeedPaper: React.FC<SeedPaperProps> = ({
 
 export const FewShotModal: React.FC<FewShotModalProps> = ({
   onClose,
+  screeningTarget,
   llmConfig,
 }) => {
   const [currentStep, setCurrentStep] = useState<
@@ -103,6 +106,11 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   // Default to true
   const [rememberSelection, setRememberSelection] = useState(true);
 
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+
+  const itemName = isGithubScreening ? "Repository" : "Title";
+
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
 
   const inclusionSeeds = [...papers].filter(
     (paper) => paper.human_result === JobTaskHumanResult.INCLUDE
@@ -134,7 +142,8 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     const promptingConfig = createFewShotPromptingConfig(
       selectedInclusionSeeds,
       selectedExclusionSeeds,
-      rememberSelection
+      rememberSelection,
+      screeningTarget,
     );
 
     try {
@@ -157,6 +166,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     selectedExclusionSeeds,
     rememberSelection,
     projectUuid,
+    screeningTarget,
     llmConfig,
     onClose,
   ]);
@@ -180,16 +190,16 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
         <div className="grid grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2 h-full">
           <H3>Few-shot screening</H3>
           <Description className="px-4 py-2 border-l-4 bg-blue-50 border-blue-400 text-blue-700 text-sm ">
-            <strong>Few-shot screening</strong> requires seed papers, which can
-            aid in LLM decision making. Below, you can select papers per
+            <strong>Few-shot screening</strong> requires seed {itemNamePlural}, which can
+            aid in LLM decision making. Below, you can select {itemNamePlural} per
             category (include / exclude), based on your manual evaluation
-            results. The papers are ordered by the probability of inclusion.
+            results. The {itemNamePlural} are ordered by the probability of inclusion.
           </Description>
           <H4>
             {currentStep === "INCLUSION_SEED" &&
-              "Inclusion seed papers" + " (" + inclusionSeeds.length + ")"}
+              "Inclusion seed " + itemNamePlural + " (" + inclusionSeeds.length + ")"}
             {currentStep === "EXCLUSION_SEED" &&
-              "Exclusion seed papers" + " (" + exclusionSeeds.length + ")"}
+              "Exclusion seed " + itemNamePlural + " (" + exclusionSeeds.length + ")"}
             {currentStep === "OVERVIEW" && "Overview"}
           </H4>
           <div
@@ -201,7 +211,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               currentStep === "EXCLUSION_SEED") && (
                 <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
                   <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
-                    Title
+                    {itemName}
                   </div>
                   <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
                     Score
@@ -223,7 +233,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                         className="flex flex-row gap-2 justify-between"
                       >
                         <div>
-                          <strong>Title:</strong> {paper.title}
+                          <strong>{itemName}:</strong> {paper.title}
                         </div>
                         <div>
                           <strong>Score: </strong>
@@ -253,7 +263,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                         className="flex flex-row gap-2 justify-between"
                       >
                         <div>
-                          <strong>Title:</strong> {paper.title}
+                          <strong>{itemName}:</strong> {paper.title}
                         </div>
                         <div>
                           <strong>Score: </strong>
@@ -273,7 +283,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
             {currentStep === "INCLUSION_SEED" &&
               sortedInclusionSeeds.length === 0 && (
                 <div className="grid grid-cols-[1fr_80px] gap-2 p-2">
-                  <AlertMessage message="No manually evaluated papers that are labelled as included. Please first manually evaluate the papers." />
+                  <AlertMessage message={`No manually evaluated ${itemNamePlural} that are labelled as included. Please first manually evaluate the ${itemNamePlural}.`} />
                   <div />
                 </div>
               )}
@@ -298,7 +308,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
             {currentStep === "EXCLUSION_SEED" &&
               sortedExclusionSeeds.length === 0 && (
                 <div className="grid grid-cols-[1fr_80px] gap-2 p-2">
-                  <AlertMessage message="No manually evaluated papers that are labelled as excluded. Please first manually evaluate the papers." />
+                  <AlertMessage message={`No manually evaluated ${itemNamePlural} that are labelled as excluded. Please first manually evaluate the ${itemNamePlural}.`} />
                   <div />
                 </div>
               )}
