@@ -215,10 +215,14 @@ export const PapersPage = () => {
                     renderOnZeroPageCount={null}
                     containerClassName="flex items-center gap-2 items-center content-center justify-center select-none"
                     pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
+                    pageLinkClassName="flex items-center justify-center w-full h-full"
                     activeClassName="bg-slate-600 hover:cursor-normal"
                     previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
+                    previousLinkClassName="flex items-center justify-center w-full h-full"
                     nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
+                    nextLinkClassName="flex items-center justify-center w-full h-full"
                     breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
+                    breakLinkClassName="flex items-center justify-center w-full h-full"
                     forcePage={currentPage - 1}
                   />
                 </Card>
