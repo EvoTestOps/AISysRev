@@ -42,7 +42,7 @@ async def callback(
 ):
     try:
         token = await oauth.helsinki.authorize_access_token(request)
-        userinfo = token.get("userinfo")
+        userinfo = await oauth.helsinki.userinfo(token=token)
         sub = userinfo.get("sub")
         email = userinfo.get("email")
 
