@@ -51,7 +51,7 @@ class ProjectService:
         return await self.project_crud.create_project(data)
 
     async def delete(self, uuid: UUID, owner_uuid: UUID) -> tuple[bool, list[str]]:
-        storage_paths = await self.file_crud.fetch_storage_paths_by_project(uuid)
+        storage_paths = await self.file_crud.fetch_storage_paths_by_project(uuid, owner_uuid)
         deleted = await self.project_crud.delete_project(uuid, owner_uuid)
         return deleted, storage_paths
     

@@ -66,10 +66,12 @@ class FileCrud:
         await self.db.delete(file)
         await self.db.flush()
 
-    async def fetch_storage_paths_by_project(self, project_uuid: UUID) -> List[str]:
+    async def fetch_storage_paths_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> List[str]:
         stmt = (
             select(File.storage_path)
+            .join(Project, Project.uuid == File.project_uuid)
             .where(File.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
             .where(File.storage_path.is_not(None))
         )
         result = await self.db.execute(stmt)
