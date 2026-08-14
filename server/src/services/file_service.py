@@ -19,6 +19,7 @@ from src.schemas.file_service import (
     ProcessedPdfFiles,
 )
 from src.schemas.paper import PaperRead
+from src.schemas.project import ScreeningTarget
 from src.services.paper_service import PaperCreate, PaperCrud
 from src.tools.csv_file_validation import validate_csv
 from src.tools.doi_normalizer import normalize_doi
@@ -43,7 +44,7 @@ class FileService:
         return [FileReadWithPaperCount(**row) for row in rows]  # type: ignore
 
     async def process_files(
-        self, project_uuid: UUID, files: List[UploadFile], owner_uuid: UUID
+        self, project_uuid: UUID, files: List[UploadFile], owner_uuid: UUID, screening_target: ScreeningTarget = ScreeningTarget.PAPER
     ) -> ProcessedFiles:
         """
         Processes a list of uploaded files for a given project.
@@ -72,7 +73,7 @@ class FileService:
                 continue
 
             df, validation_errors, file_empty_abstracts = validate_csv(
-                f.file, f.filename
+                f.file, f.filename, screening_target
             )
             if validation_errors or df is None:
                 errors.extend(validation_errors)

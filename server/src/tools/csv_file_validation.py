@@ -6,12 +6,14 @@ from pydantic import TypeAdapter, ValidationError
 from src.schemas.file_service import FileError
 from src.tools.csv_file_reader import read_csv_resilient
 from src.schemas.publication import PublicationRowData
+from src.schemas.project import ScreeningTarget
 
 REQUIRED_FIELDS = {"title", "abstract", "doi"}
+GITHUB_REQUIRED_FIELDS = {"repository_name", "description", "html_url", "readme"}
 
 
 def validate_csv(
-    file_obj: BinaryIO, filename: str
+    file_obj: BinaryIO, filename: str, screening_target: ScreeningTarget = ScreeningTarget.PAPER,
 ) -> tuple[Optional[pd.DataFrame], List[FileError], int]:
     errors: List[FileError] = []
     empty_abstract_count = 0
@@ -21,8 +23,12 @@ def validate_csv(
         raw = file_obj.read()
         df = read_csv_resilient(raw)
         df.columns = [str(c).strip().lower() for c in df.columns]
+        if screening_target == "GITHUB_REPOSITORY":
+            missing = GITHUB_REQUIRED_FIELDS - set(df.columns)
+        else:
+            missing = REQUIRED_FIELDS - set(df.columns)
 
-        missing = REQUIRED_FIELDS - set(df.columns)
+
         if missing:
             return (
                 None,
@@ -37,6 +43,31 @@ def validate_csv(
                 ],
                 0,
             )
+        if screening_target == "GITHUB_REPOSITORY":
+                empty_repository_names = (
+                    df["repository_name"]
+                    .fillna("")
+                    .astype(str)
+                    .str.strip()
+                    .eq("")
+                )
+
+                for row_index in df.index[empty_repository_names]:
+                    errors.append(
+                        FileError(
+                            file=filename,
+                            row=str(int(row_index) + 1),
+                            message="repository_name: Field must be non-empty",
+                        )
+                    )
+
+                df["title"] = (
+                    df["repository_name"].fillna("").astype(str).str.strip()
+                    + " - "
+                    + df["description"].fillna("").astype(str).str.strip()
+                )
+                df["abstract"] = df["readme"]
+                df["doi"] = df["html_url"]
 
         df = df.astype(object).where(df.notna(), None)
         empty_abstract_count = df["abstract"].isna().sum()
@@ -47,9 +78,16 @@ def validate_csv(
         try:
             adapter.validate_python(records)
         except ValidationError as e:
+            github_field_names = {
+                    "title": "repository_name",
+                    "abstract": "readme",
+                    "doi": "html_url",
+                }
             for err in e.errors():
                 row = int(err["loc"][0]) + 1
                 err_field = err["loc"][1]
+                if screening_target == "GITHUB_REPOSITORY":
+                    err_field = github_field_names.get(err_field, err_field)
                 errors.append(
                     FileError(
                         file=filename,

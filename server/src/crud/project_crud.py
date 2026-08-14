@@ -20,6 +20,7 @@ class ProjectCrud:
             Project.preferences,
             Project.created_at,
             Project.updated_at,
+            Project.screening_target,
         ).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         # TODO: Fix

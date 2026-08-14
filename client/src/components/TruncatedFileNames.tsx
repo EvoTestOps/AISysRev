@@ -5,11 +5,13 @@ import { FetchedFile } from "../state/types";
 type TruncatedFileNamesProps = {
   files: FetchedFile[];
   maxLength?: number;
+  itemNamePlural: string;
 };
 
 export const TruncatedFileNames: React.FC<TruncatedFileNamesProps> = ({
   files,
   maxLength = 20,
+  itemNamePlural,
 }) => {
   if (!files || files.length === 0) {
     return null;
@@ -26,7 +28,7 @@ export const TruncatedFileNames: React.FC<TruncatedFileNamesProps> = ({
         return (
           <Tooltip key={idx} title={file.filename} enterDelay={200}>
             <p className="text-sm font-medium">
-              {displayName} ({file.paper_count} papers)
+              {displayName} ({file.paper_count} {itemNamePlural})
             </p>
           </Tooltip>
         );

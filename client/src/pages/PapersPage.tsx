@@ -12,10 +12,12 @@ import { H6 } from "../components/Typography";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
 import { AlertMessage } from "../components/AlertMessage";
+import { ScreeningTarget } from "../state/types";
 
 export const PapersPage = () => {
   const params = useParams<{ projectUuid: string; page?: string }>();
   const { projectUuid } = params;
+
   const currentPage = Number(params.page ?? 1);
 
   const id = useId();
@@ -37,6 +39,10 @@ export const PapersPage = () => {
     (state) => state.getProjectByUuid
   );
   const project = getProjectByUuid(projectUuid);
+
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
 
   const getPapersForProject = useTypedStoreState(
     (state) => state.getPapersForProject
@@ -97,7 +103,7 @@ export const PapersPage = () => {
             Screening tasks
           </TabButton>
           <TabButton href={`/project/${projectUuid}/papers/page/1`} active>
-            List of papers
+            List of {itemNamePlural}
           </TabButton>
         </div>
         <div className="p-4 flex flex-row gap-2">
@@ -115,7 +121,7 @@ export const PapersPage = () => {
             data-testid="label-filter_out_evaluated"
             className="font-semibold select-none"
           >
-            Hide already evaluated papers ({alreadyEvaluatedPapers})
+            Hide already evaluated {itemNamePlural} ({alreadyEvaluatedPapers})
           </label>
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
@@ -178,6 +184,7 @@ export const PapersPage = () => {
                   <PaperCard
                     key={paper.uuid}
                     paper={paper}
+                    isGithubScreening={isGithubScreening}
                     data-testid={`paper-${paper.paper_id}`}
                   />
                 ))}
@@ -188,7 +195,7 @@ export const PapersPage = () => {
                 <AlertMessage
                   className="p-4"
                   data-testid="no-papers-text"
-                  message="No papers."
+                  message={`No ${itemNamePlural}.`}
                 />
               )}
             {!loadingPapers &&

@@ -65,6 +65,7 @@ import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
 import { importFulltextFromEndnoteXml } from "../services/fileService";
+import { ScreeningTarget } from "../state/types";
 
 type ActionComponentProps = {
   hasPapers: boolean;
@@ -75,6 +76,7 @@ type ActionComponentProps = {
   importingFulltext: boolean;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
+  screeningTarget: ScreeningTarget;
 };
 
 type ModelConfigurationProps = {
@@ -90,6 +92,8 @@ const fmt = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+
+
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -347,7 +351,9 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   importingFulltext,
   onPerCriteriaStats,
   hasMultiplePcJobs,
+  screeningTarget,
 }) => {
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   return (
     <div className="flex flex-row gap-2">
       {hasMultiplePcJobs && (
@@ -356,24 +362,28 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           <span>PC Agreement Stats</span>
         </Button>
       )}
-      <Button
-        variant="slate"
-        onClick={downloadMissingFulltextRis}
-        title="Download papers missing full text"
-        disabled={!hasPapers}
-      >
-        <Download />
-        <span>Download papers missing full text</span>
-      </Button>
-      <Button
-        variant="slate"
-        onClick={onImportFulltext}
-        title="Import full text (Zotero Export Folder)"
-        disabled={!hasPapers || importingFulltext}
-      >
-        <Download />
-        <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
-      </Button>
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={downloadMissingFulltextRis}
+          title="Download papers missing full text"
+          disabled={!hasPapers}
+        >
+          <Download />
+          <span>Download papers missing full text</span>
+        </Button>
+      )}
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={onImportFulltext}
+          title="Import full text (Zotero Export Folder)"
+          disabled={!hasPapers || importingFulltext}
+        >
+          <Download />
+          <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
+        </Button>
+      )}
       <Button
         variant="slate"
         onClick={downloadCsv}
@@ -390,6 +400,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
+            screening_target: screeningTarget,
           }).toString()}`}
           target="__blank"
           rel="noopener noreferrer"
@@ -505,6 +516,10 @@ export const ProjectPage = () => {
 
   const project = getProjectByUuid(projectUuid);
 
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemName = isGithubScreening ? "repository" : "paper";
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
   const tokenEstimation = useMemo<TokenEstimation | null>(() => {
     if (!projectUuid || papers.length === 0 || !project) {
       return null;
@@ -726,35 +741,36 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(), screeningMode);
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
 
   const createPerCriteriaJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(), screeningMode);
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
       try {
-        const res = await fileUploadToBackend(files, projectUuid);
+        const res = await fileUploadToBackend(files, projectUuid, screeningTarget);
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
         if ((res.empty_abstract_count ?? 0) > 0) {
-          toast.warn(`${res.empty_abstract_count} abstracts are empty - results will not be optimal`, { autoClose: 8000 })
+          const emptyFieldName = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY ? "readme" : "abstract";
+          toast.warn(`${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`, { autoClose: 8000 })
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
@@ -770,7 +786,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid],
+    [projectUuid, screeningTarget],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -816,14 +832,14 @@ export const ProjectPage = () => {
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
     if (papers.length === 0) {
-      toast.warn("No papers available.");
+      toast.warn(`No ${itemNamePlural} available.`);
       return;
     }
     const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${projectUuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished]);
+  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished, itemNamePlural]);
 
   const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
@@ -880,6 +896,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
+          screening_target: screeningTarget,
         }).toString()}`,
       );
       if (!response.ok) {
@@ -896,7 +913,7 @@ export const ProjectPage = () => {
       window.URL.revokeObjectURL(url);
     }
     dl().catch(console.error);
-  }, [projectUuid]);
+  }, [projectUuid, screeningTarget]);
 
   const downloadMissingFulltextRis = useCallback(() => {
     async function dl() {
@@ -1029,6 +1046,7 @@ export const ProjectPage = () => {
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}
+          screeningTarget={screeningTarget}
         />
       )}
     >
@@ -1037,7 +1055,7 @@ export const ProjectPage = () => {
           Screening tasks
         </TabButton>
         <TabButton href={`/project/${projectUuid}/papers/page/1`}>
-          List of papers
+          List of {itemNamePlural}
         </TabButton>
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -1121,7 +1139,7 @@ export const ProjectPage = () => {
                                   strokeWidth={2}
                                 />
                                 <span>
-                                  Screening paper {completedCount} of {totalCount}
+                                  Screening {itemName} {completedCount} of {totalCount}
                                 </span>
                               </>
                             )}
@@ -1190,7 +1208,7 @@ export const ProjectPage = () => {
         </div>
         <div className="flex flex-col gap-2">
           <SectionHeader
-            title="Step 1. Upload papers"
+            title={`Step 1. Upload ${itemNamePlural}`}
             selected={fetchedFiles.length !== 0}
           />
           <Card>
@@ -1203,7 +1221,7 @@ export const ProjectPage = () => {
               <Skeleton />
             ) : (
               <>
-              <TruncatedFileNames files={csvFiles} maxLength={25} />
+              <TruncatedFileNames files={csvFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
               {pdfFileCount > 0 && (
                 <p className="text-sm font-medium">{pdfFileCount} {pdfFileCount === 1 ? "PDF" : "PDFs"}</p>
               )}
@@ -1215,7 +1233,7 @@ export const ProjectPage = () => {
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
-                <span>To create tasks, you must first upload papers.</span>
+                <span>To create tasks, you must first upload {itemNamePlural}.</span>
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
@@ -1300,6 +1318,7 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
+            {!isGithubScreening && (
             <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Screening mode</span>
@@ -1307,7 +1326,7 @@ export const ProjectPage = () => {
                   <Info size={14} className="text-slate-400 cursor-help" />
                 </Tooltip>
               </div>
-              
+
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -1356,6 +1375,7 @@ export const ProjectPage = () => {
               {promptingStrategy === "PC" && (
                 <p className="text-xs text-amber-600 -mt-1">PDF/Automatic screening modes aren't available with per-criterion evaluation yet</p>)}
             </div>
+            )}
             <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
@@ -1552,6 +1572,7 @@ export const ProjectPage = () => {
             provider_parameters: {},
           }}
           screeningMode={screeningMode}
+          screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
             fetchJobsForProject(projectUuid);
@@ -1567,6 +1588,7 @@ export const ProjectPage = () => {
           exclusionCriteria={exclusionCriteria || []}
           papers={papers}
           paperUuid={paperUuid}
+          screeningTarget={screeningTarget}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
         />

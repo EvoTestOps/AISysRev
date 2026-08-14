@@ -23,6 +23,7 @@ class ProjectService:
                 preferences=row.preferences,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
+                screening_target=row.screening_target,
             )
             for row in rows
         ]

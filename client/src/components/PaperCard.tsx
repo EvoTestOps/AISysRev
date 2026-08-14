@@ -18,11 +18,12 @@ import { attachPdfToPaper } from "../services/fileService";
 
 type PaperCardProps = {
   paper: PaperWithModelEval;
+  isGithubScreening: boolean;
 };
 
 export const PaperCard: React.FC<
   React.PropsWithChildren<CardProps> & PaperCardProps
-> = ({ paper, ...rest }) => {
+> = ({ paper, isGithubScreening, ...rest }) => {
   const [open, setOpen] = useState(false);
 
   const getPaperPendingState = useTypedStoreState(
@@ -126,9 +127,9 @@ export const PaperCard: React.FC<
           <div className="text-sm pt-2 pb-2">
             {paper.doi && (
               <>
-                <strong>DOI:</strong>{" "}
+                <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                 <a
-                  href={`https://doi.org/${paper.doi}`}
+                  href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline text-blue-600 hover:text-blue-800"
@@ -151,6 +152,7 @@ export const PaperCard: React.FC<
               </a>
             </div>
           )}
+          {!isGithubScreening && (
           <div className="flex items-center gap-2 pb-2">
             <Button
               variant="slate"
@@ -161,6 +163,7 @@ export const PaperCard: React.FC<
               {uploadingPdf ? "Uploading..." : paper.pdf_file_uuid ? "Replace full text" : "Upload full text"}
             </Button>
           </div>
+          )}
           <input
             type="file"
             accept=".pdf"

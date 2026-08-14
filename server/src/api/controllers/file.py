@@ -18,6 +18,7 @@ from src.db.models.user import User
 from src.schemas.file import FileReadWithPaperCount
 from src.schemas.file_service import FulltextImportResult
 from src.schemas.paper import PaperRead
+from src.schemas.project import ScreeningTarget
 from src.services.file_service import create_file_service
 
 router = APIRouter()
@@ -50,6 +51,7 @@ async def list_files(
 async def process_csv(
     project_uuid: UUID = Form(...),
     files: List[UploadFile] = File(...),
+    screening_target: ScreeningTarget = Form(ScreeningTarget.PAPER),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
@@ -61,7 +63,7 @@ async def process_csv(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        result = await file_service.process_files(project_uuid, files, current_user.uuid)
+        result = await file_service.process_files(project_uuid, files, current_user.uuid, screening_target)
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:

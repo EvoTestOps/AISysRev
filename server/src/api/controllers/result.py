@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
+from src.schemas.project import ScreeningTarget
 from src.services.jobtask_service import create_jobtask_service
 from src.services.project_service import create_project_service
 from src.services.result_service import create_result_service
@@ -16,13 +17,14 @@ router = APIRouter()
 @router.get("/result/download_result_csv", status_code=200, tags=["Results"])
 async def download_result_csv(
     project_uuid: UUID,
+    screening_target: ScreeningTarget,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     result_service = create_result_service(db_ctx)
 
     try:
-        csv_content = await result_service.generate_result_csv(project_uuid, current_user.uuid)
+        csv_content = await result_service.generate_result_csv(project_uuid, current_user.uuid, screening_target)
         filename = f"project_{project_uuid}_results.csv"
         return Response(
             content=csv_content,
@@ -39,13 +41,14 @@ async def download_result_csv(
 @router.get("/result/html", status_code=200, tags=["Results"])
 async def download_result_html(
     project_uuid: UUID,
+    screening_target: ScreeningTarget,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     result_service = create_result_service(db_ctx)
 
     try:
-        content = await result_service.generate_html(project_uuid, current_user.uuid)
+        content = await result_service.generate_html(project_uuid, current_user.uuid, screening_target)
         return HTMLResponse(
             content=f"""
 <html>
