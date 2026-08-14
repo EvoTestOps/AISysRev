@@ -1303,7 +1303,7 @@ export const ProjectPage = () => {
             <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Screening mode</span>
-                <Tooltip title="Choose what content is used for screening papers.">
+                <Tooltip title="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest.">
                   <Info size={14} className="text-slate-400 cursor-help" />
                 </Tooltip>
               </div>
