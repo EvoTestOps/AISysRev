@@ -227,7 +227,7 @@ class FileService:
             old_file = await self.file_crud.fetch_file_by_uuid(old_pdf_file_uuid, owner_uuid)
             if old_file:
                 old_storage_path = old_file.storage_path
-                await self.file_crud.delete_file(old_file)
+                await self.file_crud.delete_file(old_file, owner_uuid)
 
         await publish_event(
             owner_uuid,

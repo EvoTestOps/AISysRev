@@ -62,9 +62,17 @@ class FileCrud:
         await self.db.refresh(new_file)
         return new_file
     
-    async def delete_file(self, file: File) -> None:
-        await self.db.delete(file)
-        await self.db.flush()
+    async def delete_file(self, file: File, owner_uuid: UUID) -> None:
+        stmt = (
+            select(File.uuid)
+            .join(Project, Project.uuid == File.project_uuid)
+            .where(File.uuid == file.uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        if result.scalar_one_or_none():
+            await self.db.delete(file)
+            await self.db.flush()
 
     async def fetch_storage_paths_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> List[str]:
         stmt = (
