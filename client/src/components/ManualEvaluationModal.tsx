@@ -22,6 +22,7 @@ import { AlertMessage } from "./AlertMessage";
 import { useTypedStoreActions } from "../state/store";
 
 type LLMResult = {
+  mode?: string;
   overall_decision: {
     reason: string;
     binary_decision: boolean;
@@ -39,12 +40,12 @@ type JobTaskReadWithLLMConfig = {
   abstract: string;
   paper_uuid: string;
   status:
-    | "NOT_STARTED"
-    | "PENDING"
-    | "RUNNING"
-    | "DONE"
-    | "ERROR"
-    | "CANCELLED";
+  | "NOT_STARTED"
+  | "PENDING"
+  | "RUNNING"
+  | "DONE"
+  | "ERROR"
+  | "CANCELLED";
   result: LLMResult | null;
   human_result: JobTaskHumanResult | null;
   status_metadata?: Record<string, any> | null;
@@ -96,7 +97,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     if (!paperUuid || !currentPaper) return;
 
     try {
-      addHumanResult({projectUuid: currentPaper.project_uuid, paperUuid, humanResult});
+      addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
       onEvaluated();
     } catch (error) {
       console.error("Error adding human result:", error);
@@ -111,6 +112,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     // TODO: Refactor with types and proper handling
     return data
       .filter((entry) => entry.status !== JobTaskStatus.ERROR)
+      // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
+      // skip to avoid erroring.
+      .filter((entry) => !entry.result || entry.result.mode !== "PER_CRITERIA")
       .map((entry) => {
         return {
           modelName: entry.llm_config ? entry.llm_config.model_name : "N/A",
