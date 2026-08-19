@@ -23,6 +23,8 @@ def _client():
             config=Config(
                 s3={"addressing_style": "path"},
                 retries={"mode": "standard"},
+                request_checksum_calculation="when_required",
+                response_checksum_validation="when_required",
             ),
         )
     return _s3_client
