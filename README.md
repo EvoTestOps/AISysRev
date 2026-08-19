@@ -21,6 +21,7 @@
     + [Data](#data)
     + [LLMs Access](#llms-access)
     + [LLM screening speed](#llm-screening-speed)
+  * [PDF Screening](#pdf-screening)
   * [System and software requirements](#system-and-software-requirements)
     + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
     + [Running the AISysRev application](#running-the-aisysrev-application)
@@ -105,6 +106,33 @@ The application is integrated with [OpenRouter](https://openrouter.ai/), which s
 ### LLM screening speed
 
 LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter. The screening speed depends on the model used.
+
+
+## PDF Screening
+
+AISysRev supports full-text PDF screening in addition to title-abstract screening.
+
+### Uploading PDFs
+
+PDFs can be attached to papers in two ways:
+
+- **Manual** - on a paper's card, click **Upload full text** and select a PDF file to upload.
+- **Bulk upload with Zotero/EndNote XML**
+  1. Click **Download papers missing full text** to export a RIS file containing all papers in the project that don't have a PDF attached.
+  2. Import the RIS file into [Zotero](https://www.zotero.org/) and use Find Full Text to retrieve full-text PDFs.
+  3. Export the Zotero collection with the automatically retrieved PDFs in EndNote XML format with Export notes and Export files checked.
+  4. In AISysRev, click **Import full text (Zotero Export Folder)** and select the exported folder. PDFs are attached to papers based on DOI.
+
+### Screening modes
+
+When creating a screening task, choose which screening mode to use:
+
+- **Abstract** - the paper's title and abstract are given to the LLM.
+- **PDF** - excerpts from the paper's full-text PDF are given to the LLM.
+- **Automatic** - uses **PDF** screening mode for papers with a PDF attached and **Abstract** for papers without a PDF attached.
+
+See [pdf_screening.md](docs/pdf_screening.md) for details on how **PDF** screening mode works.
+
 
 ## System and software requirements
 

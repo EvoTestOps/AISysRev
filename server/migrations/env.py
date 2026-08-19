@@ -10,7 +10,7 @@ from src.db.session import Base
 from src.core.config import settings
 
 # This is now required as SQLAlchemy's Mapped syntax makes Alembic to not properly register models
-from src.db.models import File, Job, JobTask, Paper, Project, Setting  # noqa: F401
+from src.db.models import File, Job, JobTask, Paper, PdfChunkEmbedding, Project, Setting  # noqa: F401
 
 load_dotenv()
 

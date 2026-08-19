@@ -1,16 +1,18 @@
 import { api } from "../services/api";
-import { LlmConfig, PromptingConfig } from "../state/types";
+import { LlmConfig, PromptingConfig, JobScreeningMode } from "../state/types";
 
 export const createJob = async (
   projectUuid: string,
   llmConfig: LlmConfig,
   promptingConfig: PromptingConfig,
+  screeningMode: JobScreeningMode,
 ) => {
   try {
     const res = await api.post("/api/v1/job", {
       project_uuid: projectUuid,
       llm_config: llmConfig,
       prompting_config: promptingConfig,
+      screening_mode: screeningMode,
     });
     // console.log("Job created successfully:", res.data);
     return res.data;

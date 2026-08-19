@@ -120,10 +120,10 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
 def _build_standard_pivot(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["inclusion_criteria"] = df["inclusion_criteria"].apply(
-        lambda v: criteria_adapter.validate_json(v) if v else []
+        lambda v: criteria_adapter.validate_json(v) if isinstance(v, str) and v else []
     )
     df["exclusion_criteria"] = df["exclusion_criteria"].apply(
-        lambda v: criteria_adapter.validate_json(v) if v else []
+        lambda v: criteria_adapter.validate_json(v) if isinstance(v, str) and v else []
     )
 
     df["inclusion_cols"] = df["inclusion_criteria"].apply(

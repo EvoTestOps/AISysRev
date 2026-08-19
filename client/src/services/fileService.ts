@@ -33,3 +33,40 @@ export const fileUploadToBackend = async (
     throw error;
   }
 };
+
+export const attachPdfToPaper = async (
+  paperUuid: string,
+  file: File,
+) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await api.post(`/api/v1/files/${paperUuid}/attach-pdf`, formData);
+    return res.data;
+  } catch (error) {
+    console.error("Backend attach PDF error", error);
+    throw error;
+  }
+};
+
+export const importFulltextFromEndnoteXml = async (
+  projectUuid: string,
+  xmlFile: File,
+  pdfFiles: File[],
+  pdfRelativePaths: string[],
+) => {
+  const formData = new FormData();
+  formData.append("project_uuid", projectUuid);
+  formData.append("xml_file", xmlFile);
+  pdfFiles.forEach((file) => formData.append("pdf_files", file));
+  pdfRelativePaths.forEach((path) => formData.append("pdf_relative_paths", path));
+
+  try {
+    const res = await api.post(`/api/v1/files/import-fulltext`, formData);
+    return res.data;
+  } catch (error) {
+    console.error("Backend import fulltext error", error);
+    throw error;
+  }
+};

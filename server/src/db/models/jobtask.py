@@ -57,6 +57,12 @@ class JobTask(Base, TimestampMixin):
         nullable=False,
     )
 
+    pdf_file_uuid: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("file.uuid", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     human_result: Mapped[JobTaskHumanResult | None] = mapped_column(

@@ -5,7 +5,15 @@ from src.celery.tasks import cancel_task
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
-from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStats, JobStatus
+from src.schemas.job import (
+    JobCreate,
+    JobRead,
+    JobReadWithStats,
+    JobScreeningMode,
+    JobStats,
+    JobStatus,
+    PerCriteriaPromptingConfig,
+)
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
@@ -29,6 +37,7 @@ class JobService:
                 project_uuid=row.project_uuid,
                 prompting_config=row.prompting_config,
                 llm_config=row.llm_config,
+                screening_mode=row.screening_mode,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
             )
@@ -70,6 +79,7 @@ class JobService:
             project_uuid=job.project_uuid,
             prompting_config=job.prompting_config,
             llm_config=job.llm_config,
+            screening_mode=job.screening_mode,
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
@@ -98,14 +108,23 @@ class JobService:
     async def create(self, job_data: JobCreate):
         logger.info("Creating new job", job_data)
 
+        if job_data.screening_mode in (
+            JobScreeningMode.PDF,
+            JobScreeningMode.AUTOMATIC,
+        ) and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
+            raise ValueError("PER_CRITERIA prompting with PDFs not possible yet")
+
         new_job = await self.job_crud.create_job(job_data)
-        await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid, job_data.owner_uuid)
+        await self.jobtask_service.bulk_create(
+            new_job.id, job_data.project_uuid, job_data.owner_uuid, job_data.screening_mode
+        )
 
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
             llm_config=new_job.llm_config,
             prompting_config=new_job.prompting_config,
+            screening_mode=new_job.screening_mode,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )

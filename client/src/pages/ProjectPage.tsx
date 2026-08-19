@@ -1,5 +1,5 @@
 import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
@@ -22,6 +22,7 @@ import {
   createZeroShotPromptingConfig,
   createPerCriteriaPromptingConfig,
   JobPromptingType,
+  JobScreeningMode,
   Provider,
   PerCriteriaStatsResponse
 } from "../state/types";
@@ -63,12 +64,16 @@ import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
+import { importFulltextFromEndnoteXml } from "../services/fileService";
 import { ScreeningTarget } from "../state/types";
 
 type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+  downloadMissingFulltextRis: () => unknown;
+  onImportFulltext: () => unknown;
+  importingFulltext: boolean;
   onPerCriteriaStats: () => void;
   hasMultiplePcJobs: boolean;
   screeningTarget: ScreeningTarget;
@@ -341,16 +346,42 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
   downloadCsv,
+  downloadMissingFulltextRis,
+  onImportFulltext,
+  importingFulltext,
   onPerCriteriaStats,
   hasMultiplePcJobs,
   screeningTarget,
 }) => {
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   return (
     <div className="flex flex-row gap-2">
       {hasMultiplePcJobs && (
         <Button variant="slate" onClick={onPerCriteriaStats} title="Per-criteria agreement statistics">
           <BarChart2 />
           <span>PC Agreement Stats</span>
+        </Button>
+      )}
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={downloadMissingFulltextRis}
+          title="Download papers missing full text"
+          disabled={!hasPapers}
+        >
+          <Download />
+          <span>Download papers missing full text</span>
+        </Button>
+      )}
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={onImportFulltext}
+          title="Import full text (Zotero Export Folder)"
+          disabled={!hasPapers || importingFulltext}
+        >
+          <Download />
+          <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
         </Button>
       )}
       <Button
@@ -450,6 +481,7 @@ export const ProjectPage = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
   const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS" | "PC">("ZS");
+  const [screeningMode, setScreeningMode] = useState<JobScreeningMode>(JobScreeningMode.TEXT);
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
@@ -709,25 +741,25 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget));
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
 
   const createPerCriteriaJob = useCallback(async () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget));
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningTarget]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
@@ -883,6 +915,84 @@ export const ProjectPage = () => {
     dl().catch(console.error);
   }, [projectUuid, screeningTarget]);
 
+  const downloadMissingFulltextRis = useCallback(() => {
+    async function dl() {
+      if (!projectUuid) return;
+      const response = await fetch(
+        `/api/v1/paper/${projectUuid}/missing_fulltext_ris`,
+      );
+      if (!response.ok) {
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${projectUuid}_missing_fulltext.ris`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }
+    dl().catch(console.error);
+  }, [projectUuid]);
+
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+  const [importingFulltext, setImportingFulltext] = useState(false);
+
+  const setFolderInputRef = useCallback((node: HTMLInputElement | null) => {
+    folderInputRef.current = node;
+    if (node) {
+      node.setAttribute("webkitdirectory", "true");
+    }
+  }, []);
+
+  const handleFolderSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (!projectUuid) return;
+
+    const fileArray = Array.from(files);
+    const xmlFile = fileArray.find((f) => f.name.toLowerCase().endsWith(".xml"));
+    const pdfFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+    const pdfRelativePaths = pdfFiles.map((f) => f.webkitRelativePath);
+
+    if (!xmlFile) {
+      toast.error("No XML file found in the selected folder");
+      e.target.value = "";
+      return;
+    }
+
+    setImportingFulltext(true);
+    try {
+      const result = await importFulltextFromEndnoteXml(
+        projectUuid,
+        xmlFile,
+        pdfFiles,
+        pdfRelativePaths,
+      );
+      toast.success(
+        `Matched ${result.matched_count} full text${result.matched_count === 1 ? "" : "s"}` +
+        (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
+      );
+      if (result.unmatched.length > 0) {
+        console.warn("Unmatched files:", result.unmatched);
+      }
+      await fetchPapers(projectUuid);
+      await fetchFiles();
+    } catch (error) {
+      console.error("Failed to import full text:", error);
+      toast.error("Failed to import full text");
+    } finally {
+      setImportingFulltext(false);
+      e.target.value = "";
+    }
+  };
+
+  const triggerFulltextImport = useCallback(() => {
+    folderInputRef.current?.click();
+  }, []);
+
   const hasPapers = papers && papers.length > 0;
 
   const hasMultiplePcJobs =
@@ -920,6 +1030,9 @@ export const ProjectPage = () => {
   const inclusionCriteria = project?.criteria.inclusion_criteria;
   const exclusionCriteria = project?.criteria.exclusion_criteria;
 
+  const csvFiles = fetchedFiles.filter((f) => f.mime_type !== "application/pdf");
+  const pdfFileCount = fetchedFiles.filter((f) => f.mime_type === "application/pdf").length;
+
   return (
     <Layout
       title={project?.name || ""}
@@ -927,6 +1040,9 @@ export const ProjectPage = () => {
         <ActionComponent
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
+          downloadMissingFulltextRis={downloadMissingFulltextRis}
+          onImportFulltext={triggerFulltextImport}
+          importingFulltext={importingFulltext}
           projectUuid={projectUuid}
           onPerCriteriaStats={handlePerCriteriaStats}
           hasMultiplePcJobs={hasMultiplePcJobs}
@@ -969,7 +1085,7 @@ export const ProjectPage = () => {
                     {job.prompting_config.screening_type ==
                       JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
                   </>
-                  <div className="flex items-center font-semibold">
+                  <div className="flex items-center gap-2 font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
                       <span className="text-sm text-nowrap">
                         {job.llm_config.model_name.length > 30
@@ -977,6 +1093,11 @@ export const ProjectPage = () => {
                           : job.llm_config.model_name}
                       </span>
                     </Tooltip>
+                    <span className="text-xs font-normal text-slate-500">
+                      {job.screening_mode === JobScreeningMode.TEXT && "Abstract"}
+                      {job.screening_mode === JobScreeningMode.PDF && "PDF"}
+                      {job.screening_mode === JobScreeningMode.AUTOMATIC && "Automatic"}
+                    </span>
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
@@ -1099,7 +1220,12 @@ export const ProjectPage = () => {
             {loadingProjects ? (
               <Skeleton />
             ) : (
-              <TruncatedFileNames files={fetchedFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
+              <>
+              <TruncatedFileNames files={csvFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
+              {pdfFileCount > 0 && (
+                <p className="text-sm font-medium">{pdfFileCount} {pdfFileCount === 1 ? "PDF" : "PDFs"}</p>
+              )}
+              </>
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
@@ -1192,6 +1318,64 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
+            {!isGithubScreening && (
+            <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">Screening mode</span>
+                <Tooltip title="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest.">
+                  <Info size={14} className="text-slate-400 cursor-help" />
+                </Tooltip>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.TEXT,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.TEXT,
+                    }
+                  )}
+                >
+                  <span>Abstract</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.PDF)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.PDF,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.PDF && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>PDF</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.AUTOMATIC,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.AUTOMATIC && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>Automatic</span>
+                </button>
+              </div>
+              {promptingStrategy === "PC" && (
+                <p className="text-xs text-amber-600 -mt-1">PDF/Automatic screening modes aren't available with per-criterion evaluation yet</p>)}
+            </div>
+            )}
             <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
@@ -1227,7 +1411,12 @@ export const ProjectPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setPromptingStrategy("PC")}
+                onClick={() => {
+                  setPromptingStrategy("PC");
+                  if (screeningMode !== JobScreeningMode.TEXT) {
+                    setScreeningMode(JobScreeningMode.TEXT);
+                  }
+                  }}
                 className={classNames(
                   "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
                   {
@@ -1382,6 +1571,7 @@ export const ProjectPage = () => {
             model_parameters: modelFormValues,
             provider_parameters: {},
           }}
+          screeningMode={screeningMode}
           screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
@@ -1434,6 +1624,13 @@ export const ProjectPage = () => {
           confirmButtonIcon={<Trash2 size={16} />}
         />
       )}
+      <input
+        type="file"
+        ref={setFolderInputRef}
+        multiple
+        onChange={handleFolderSelected}
+        className="hidden"
+      />
     </Layout>
   );
 };

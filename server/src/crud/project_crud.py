@@ -53,6 +53,25 @@ class ProjectCrud:
         stmt = select(Project).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
+    
+    async def set_criteria_embeddings(
+        self,
+        uuid: UUID,
+        owner_uuid: UUID,
+        inclusion_criteria_embedding: list[float],
+        exclusion_criteria_embedding: list[float],
+    ) -> bool:
+        stmt = (
+            update(Project)
+            .where(Project.uuid == uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .values(
+                inclusion_criteria_embedding=inclusion_criteria_embedding,
+                exclusion_criteria_embedding=exclusion_criteria_embedding,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.rowcount > 0
 
     async def create_project(self, project_data: ProjectCreate) -> Tuple[int, UUID]:
         new_project = Project(**project_data.model_dump())

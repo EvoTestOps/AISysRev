@@ -94,7 +94,7 @@ b) Each individual inclusion or exclusion criterion
 {0}
 \"\"\"
 
-**Abstract:**
+**{4}:**
 \"\"\"
 {1}
 \"\"\""""
@@ -172,7 +172,7 @@ Here are a few examples to aid in your decision making:
 {0}
 \"\"\"
 
-**Abstract:**
+**{5}:**
 \"\"\"
 {1}
 \"\"\""""

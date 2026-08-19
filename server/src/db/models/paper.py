@@ -5,6 +5,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     UniqueConstraint,
+    CheckConstraint,
     Enum as SAEnum,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -43,7 +44,13 @@ class Paper(Base, TimestampMixin):
     file_uuid: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("file.uuid", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
+    )
+
+    pdf_file_uuid: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("file.uuid", ondelete="CASCADE"),
+        nullable=True,
     )
 
     doi: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -59,4 +66,5 @@ class Paper(Base, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint("project_uuid", "paper_id", name="uq_project_paper_id"),
+        CheckConstraint("file_uuid IS NOT NULL OR pdf_file_uuid IS NOT NULL", name="ck_paper_has_source_file"),
     )

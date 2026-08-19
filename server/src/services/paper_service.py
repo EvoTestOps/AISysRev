@@ -4,12 +4,14 @@ from uuid import UUID
 
 from src.crud.paper_crud import PaperCrud
 from src.db.db_context import DBContext
+from src.schemas.job import JobScreeningMode
 from src.schemas.paper import (
     PaperCreate,
     PaperHumanResult,
     PaperRead,
     PaperReadWithAvgProbability,
 )
+from src.tools.ris_file_builder import build_ris_file
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,19 @@ class PaperService:
     async def fetch_papers(self, project_uuid: UUID, owner_uuid: UUID):
         papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid, owner_uuid)
         return [PaperRead.model_validate(paper) for paper in papers]
+    
+    async def fetch_papers_for_screening(
+        self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+    ):
+        papers = await self.paper_crud.fetch_papers_for_screening(
+            project_uuid, owner_uuid, screening_mode
+        )
+        return [PaperRead.model_validate(paper) for paper in papers]
+    
+    async def generate_missing_fulltext_ris(self, project_uuid: UUID, owner_uuid: UUID) -> str:
+        papers = await self.paper_crud.fetch_papers_missing_pdf(project_uuid, owner_uuid)
+        paper_reads = [PaperRead.model_validate(paper) for paper in papers]
+        return build_ris_file(paper_reads)
 
     async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> PaperRead | None:
         paper = await self.paper_crud.fetch_paper_by_uuid(uuid, owner_uuid)
@@ -39,6 +54,7 @@ class PaperService:
                 **paper.__dict__,  # or unpack via your ORM->schema adapter
                 avg_probability_decision=row["avg_probability_decision"],
                 error_messages=row["error_messages"] or None,
+                pdf_filename=row["pdf_filename"],
             )
             for row in rows
             # TODO: Fix

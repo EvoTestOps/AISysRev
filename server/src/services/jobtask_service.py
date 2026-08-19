@@ -3,6 +3,7 @@ from uuid import UUID
 from src.celery.tasks import process_job_task
 from src.crud.jobtask_crud import JobTaskCrud
 from src.db.db_context import DBContext
+from src.schemas.job import JobScreeningMode
 from src.schemas.jobtask import (
     JobTaskCreate,
     JobTaskHumanResult,
@@ -55,8 +56,10 @@ class JobTaskService:
                 result=task.result,
                 human_result=task.human_result,
                 status_metadata=task.status_metadata,
+                error=task.error,
                 llm_config=job.llm_config,
                 prompting_config=job.prompting_config,
+                screening_mode=job.screening_mode.value,
             )
             for task, job in job_tasks_with_jobs
         ]
@@ -72,10 +75,14 @@ class JobTaskService:
     async def add_human_result(self, uuid: UUID, owner_uuid: UUID, human_result: JobTaskHumanResult):
         await self.jobtask_crud.add_jobtask_human_result(uuid, owner_uuid, human_result)
 
-    async def bulk_create(self, job_id: int, project_uuid: UUID, owner_uuid: UUID):
-        papers = await self.paper_service.fetch_papers(project_uuid=project_uuid, owner_uuid=owner_uuid)
+    async def bulk_create(
+        self, job_id: int, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+    ):
+        papers = await self.paper_service.fetch_papers_for_screening(
+            project_uuid=project_uuid, owner_uuid=owner_uuid, screening_mode=screening_mode
+        )
         if len(papers) == 0:
-            raise RuntimeError("There are no papers for the given project.")
+            raise RuntimeError(f"There are no papers for the given project matching screening mode: {screening_mode}.")
         jobtasks = [
             JobTaskCreate(
                 job_id=job_id,
@@ -83,6 +90,7 @@ class JobTaskService:
                 title=paper.title,
                 abstract=paper.abstract,
                 paper_uuid=paper.uuid,
+                pdf_file_uuid=paper.pdf_file_uuid,
             )
             for paper in papers
         ]

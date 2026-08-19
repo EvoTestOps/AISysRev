@@ -20,4 +20,6 @@ class Project(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     criteria: Mapped[dict] = mapped_column(JSONB, nullable=False)
     preferences: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    inclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
+    exclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
     screening_target: Mapped[str] = mapped_column(String(32), nullable=False, default="PAPER")

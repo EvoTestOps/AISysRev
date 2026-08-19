@@ -107,3 +107,20 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
 
     async def get_available_models(self) -> List[Model]:
         return [Model(id="mock_001", created=0, object="model", owned_by="mock")]
+    
+    async def embed_async(
+        self,
+        client: AsyncClient,
+        texts: list[str],
+    ) -> list[list[float]]:
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
+        
+        jitter_ms = random.uniform(
+            -self.provider_parameters.delay_jitter,
+            self.provider_parameters.delay_jitter,
+        )
+        delay_ms = max(0.0, self.provider_parameters.delay + jitter_ms)
+        await asyncio.sleep(delay_ms / 1000.0)
+
+        return [[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8] for _ in texts]

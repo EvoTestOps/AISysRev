@@ -24,6 +24,12 @@ class JobStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class JobScreeningMode(str, Enum):
+    TEXT = "TEXT"
+    PDF = "PDF"
+    AUTOMATIC = "AUTOMATIC"
+
+
 class JobStats(BaseModel):
     total: int
     success: int
@@ -67,6 +73,7 @@ class JobCreateRequest(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode = JobScreeningMode.TEXT
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
@@ -79,6 +86,7 @@ class JobRead(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode
     created_at: datetime
     updated_at: datetime
 
@@ -91,6 +99,7 @@ class JobReadWithStats(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode
     created_at: datetime
     updated_at: datetime
 

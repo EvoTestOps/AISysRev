@@ -1,14 +1,16 @@
 from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.sqltypes import Float
 
+from src.db.models.file import File
 from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
+from src.schemas.job import JobScreeningMode
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
 
 
@@ -70,12 +72,13 @@ class PaperCrud:
             .label("error_messages")
         )
         stmt = (
-            select(Paper, avg_prob, error_messages)
+            select(Paper, avg_prob, error_messages, File.filename.label("pdf_filename"))
             .join(Project, Project.uuid == Paper.project_uuid)
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
+            .outerjoin(File, File.uuid == Paper.pdf_file_uuid)
             .where(Paper.project_uuid == project_uuid)
             .where(Project.owner_uuid == owner_uuid)
-            .group_by(Paper.id)
+            .group_by(Paper.id, File.filename)
         )
         result = await self.db.execute(stmt)
         # TODO: Fix
@@ -107,4 +110,62 @@ class PaperCrud:
         count = await self.db.execute(stmt)
         return count.scalar()
 
+    async def fetch_max_paper_id(self, project_uuid: UUID, owner_uuid: UUID) -> int:
+        stmt = (
+            select(func.coalesce(func.max(Paper.paper_id), 0))
+            .select_from(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar()
 
+    async def fetch_papers_for_screening(
+        self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+    ) -> Sequence[Paper]:
+        if screening_mode == JobScreeningMode.TEXT:
+            source_filter = Paper.file_uuid.isnot(None)
+        elif screening_mode == JobScreeningMode.PDF:
+            source_filter = Paper.pdf_file_uuid.isnot(None)
+        else:
+            source_filter = or_(Paper.file_uuid.isnot(None), Paper.pdf_file_uuid.isnot(None))
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .where(source_filter)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def set_paper_pdf_file_uuid(
+        self, paper_uuid: UUID, owner_uuid: UUID, pdf_file_uuid: UUID
+    ) -> Paper | None:
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.uuid == paper_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        paper = result.scalar_one_or_none()
+        if paper:
+            paper.pdf_file_uuid = pdf_file_uuid
+            await self.db.flush()
+            await self.db.refresh(paper)
+        return paper
+    
+    async def fetch_papers_missing_pdf(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> Sequence[Paper]:
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.project_uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .where(Paper.pdf_file_uuid.is_(None))
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

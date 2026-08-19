@@ -19,6 +19,7 @@ from src.schemas.jobtask import JobTaskStatus
 from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
+from src.services.pdf_screening_service import create_pdf_screening_service
 from src.tools.boolean_parser import (
     build_criteria_tree_with_expressions,
     compute_overall,
@@ -137,6 +138,7 @@ async def _process_standard_task(
 
                 llm_service = create_llm_service(task_db_ctx)
                 paper_service = create_paper_service(task_db_ctx)
+                pdf_screening_service = create_pdf_screening_service(task_db_ctx)
 
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.RUNNING
@@ -146,6 +148,7 @@ async def _process_standard_task(
                 llm_result = await get_structured_response(
                     llm_service,
                     paper_service,
+                    pdf_screening_service,
                     job_task,
                     job_data,
                     project_criteria,

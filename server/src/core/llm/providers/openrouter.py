@@ -143,3 +143,24 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
                     )
                     for model in models
                 ]
+    
+    async def embed_async(
+        self,
+        client: AsyncClient,
+        texts: list[str],
+    ) -> list[list[float]]:
+        if self.runtime_parameters.api_key is None:
+            raise RuntimeError("API Key is not defined")
+        
+        from openai import AsyncOpenAI
+
+        openai_client = AsyncOpenAI(
+            api_key=self.runtime_parameters.api_key,
+            base_url="https://openrouter.ai/api/v1",
+            http_client=client,
+        )
+        response = await openai_client.embeddings.create(
+            model="openai/text-embedding-3-small",
+            input=texts,
+        )
+        return [item.embedding for item in response.data]

@@ -14,6 +14,7 @@ import { useParams } from "wouter";
 import {
   createFewShotPromptingConfig,
   JobTaskHumanResult,
+  JobScreeningMode,
   LlmConfig,
   PaperWithModelEval,
 } from "../state/types";
@@ -29,6 +30,7 @@ type FewShotModalProps = {
   onClose: () => void;
   screeningTarget: ScreeningTarget;
   llmConfig: LlmConfig;
+  screeningMode: JobScreeningMode;
 };
 
 type SeedPaperProps = {
@@ -87,6 +89,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   onClose,
   screeningTarget,
   llmConfig,
+  screeningMode,
 }) => {
   const [currentStep, setCurrentStep] = useState<
     "INCLUSION_SEED" | "EXCLUSION_SEED" | "OVERVIEW"
@@ -147,7 +150,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     );
 
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig);
+      await createJob(projectUuid, llmConfig, promptingConfig, screeningMode);
       // const createdJob: CreatedJob = {
       //   uuid: res.uuid,
       //   project_uuid: res.project_uuid,
@@ -168,6 +171,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     projectUuid,
     screeningTarget,
     llmConfig,
+    screeningMode,
     onClose,
   ]);
 

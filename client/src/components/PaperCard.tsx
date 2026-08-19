@@ -5,13 +5,16 @@ import {
   X,
   CircleQuestionMark,
   Check,
+  FileText,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
 import { Card, CardProps } from "./Card";
 import { Button } from "./Button";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
+import { toast } from "react-toastify";
+import { attachPdfToPaper } from "../services/fileService";
 
 type PaperCardProps = {
   paper: PaperWithModelEval;
@@ -30,6 +33,31 @@ export const PaperCard: React.FC<
   const addHumanResult = useTypedStoreActions(
     (actions) => actions.addHumanResult
   );
+  const setPaperPdf = useTypedStoreActions((actions) => actions.setPaperPdf);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePdfSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPdf(true);
+    try {
+      const updatedPaper = await attachPdfToPaper(paper.uuid, file);
+      setPaperPdf({
+        projectUuid: paper.project_uuid,
+        paperUuid: paper.uuid,
+        pdfFileUuid: updatedPaper.pdf_file_uuid,
+        pdfFilename: file.name,
+      });
+      toast.success("Full text uploaded");
+    } catch (error) {
+      console.error("Failed to attach PDF:", error);
+      toast.error("Failed to upload full text");
+    } finally {
+      setUploadingPdf(false);
+      e.target.value = "";
+    }
+  };
   const hasErrors = (paper.error_messages?.length ?? 0) > 0;
 
   return (
@@ -48,12 +76,21 @@ export const PaperCard: React.FC<
           {paper.paper_id}
         </div>
         <div
-          className="text-sm font-semibold select-non text-left"
+          className="text-sm font-semibold select-none text-left flex items-center gap-1.5"
           title={paper.title}
         >
-          {paper.title.length > 80
-            ? paper.title.substring(0, 77) + "..."
-            : paper.title}
+          {paper.pdf_file_uuid && (
+            <FileText
+              size={14}
+              className="text-teal-600 shrink-0"
+              aria-label="Full text attached"
+            />
+          )}
+          <span className="truncate">
+            {paper.title.length > 80
+              ? paper.title.substring(0, 77) + "..."
+              : paper.title}
+          </span>
         </div>
         <div
           className={classNames("text-center text-sm select-none", {
@@ -95,13 +132,45 @@ export const PaperCard: React.FC<
                   href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover-underline text-blue-600 hover-underline"
+                  className="underline text-blue-600 hover:text-blue-800"
                 >
                   {paper.doi}
                 </a>
               </>
             )}
           </div>
+          {paper.pdf_file_uuid && paper.pdf_filename && (
+            <div className="text-sm pt-2 pb-2">
+              <strong>Full text:</strong>{" "}
+              <a
+                href={`/api/v1/files/${paper.pdf_file_uuid}/download`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-blue-600 hover:text-blue-800"
+              >
+                {paper.pdf_filename}
+              </a>
+            </div>
+          )}
+          {!isGithubScreening && (
+          <div className="flex items-center gap-2 pb-2">
+            <Button
+              variant="slate"
+              size="xs"
+              disabled={uploadingPdf}
+              onClick={() => pdfInputRef.current?.click()}
+            >
+              {uploadingPdf ? "Uploading..." : paper.pdf_file_uuid ? "Replace full text" : "Upload full text"}
+            </Button>
+          </div>
+          )}
+          <input
+            type="file"
+            accept=".pdf"
+            ref={pdfInputRef}
+            onChange={handlePdfSelected}
+            className="hidden"
+          />
           <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
             {paper.abstract}
           </div>

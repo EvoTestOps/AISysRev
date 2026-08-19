@@ -96,8 +96,10 @@ async def delete_project(
 ):
     projects = create_project_service(db_ctx)
     try:
-        await projects.delete(uuid, current_user.uuid)
+        deleted, storage_paths = await projects.delete(uuid, current_user.uuid)
         await db_ctx.commit()
+        if deleted:
+            await projects.cleanup_pdf_storage(storage_paths)
         return {"detail": "Project deleted successfully"}
     except HTTPException:
         raise

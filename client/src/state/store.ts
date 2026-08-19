@@ -82,6 +82,10 @@ interface PaperModel {
     StoreModel,
     { projectUuid: string; papers: Array<PaperWithModelEval> }
   >;
+  setPaperPdf: Action<
+    StoreModel,
+    { projectUuid: string; paperUuid: string; pdfFileUuid: string; pdfFilename: string }
+  >;
   setPaperPendingState: Action<
     StoreModel,
     { paperUuid: string; pending: boolean }
@@ -145,6 +149,14 @@ export const model = {
   }),
   setPapers: action((state, payload) => {
     state.papers[payload.projectUuid] = payload.papers;
+  }),
+  setPaperPdf: action((state, payload) => {
+    const papers = state.papers[payload.projectUuid];
+    const paper = papers?.find((p) => p.uuid === payload.paperUuid);
+    if (paper) {
+      paper.pdf_file_uuid = payload.pdfFileUuid;
+      paper.pdf_filename = payload.pdfFilename;
+    }
   }),
   setLoadingProjects: action((state, payload) => {
     state.loading.projects = payload;

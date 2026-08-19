@@ -72,9 +72,16 @@ export type CreatedJob = {
   project_uuid: string;
   prompting_config: PromptingConfig;
   llm_config: LlmConfig;
+  screening_mode: JobScreeningMode;
   created_at: string;
   updated_at: string;
 };
+
+export enum JobScreeningMode {
+  TEXT = "TEXT",
+  PDF = "PDF",
+  AUTOMATIC = "AUTOMATIC",
+}
 
 export enum JobPromptingType {
   ZERO_SHOT = "ZERO_SHOT",
@@ -134,6 +141,7 @@ export type JobWithStats = {
   project_uuid: string;
   prompting_config: PromptingConfig;
   llm_config: LlmConfig;
+  screening_mode: JobScreeningMode;
   created_at: Date | null;
   updated_at: Date | null;
   stats: JobStats;
@@ -143,7 +151,8 @@ export type Paper = {
   uuid: string;
   paper_id: number;
   project_uuid: string;
-  file_uuid: string;
+  file_uuid: string | null;
+  pdf_file_uuid: string | null;
   doi: string | null;
   title: string;
   abstract: string;
@@ -156,7 +165,9 @@ export type PaperWithModelEval = {
   uuid: string;
   paper_id: number;
   project_uuid: string;
-  file_uuid: string;
+  file_uuid: string | null;
+  pdf_file_uuid: string | null;
+  pdf_filename: string | null;
   doi: string | null;
   title: string;
   abstract: string;

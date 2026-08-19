@@ -35,6 +35,8 @@ services:
       - postgres
       - redis
       - celery
+    volumes:
+      - pdf_data:/app/data/pdfs
 
   postgres:
     image: postgres:14@sha256:caf49e3b10d377aa2cfee478591d623808527beb27125d38797b418013f72d81
@@ -83,6 +85,8 @@ services:
     depends_on:
       - redis
       - postgres
+    volumes:
+      - pdf_data:/app/data/pdfs
 
   flower:
     container_name: flower_prod
@@ -109,3 +113,4 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  pdf_data:
