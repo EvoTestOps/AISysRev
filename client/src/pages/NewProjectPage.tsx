@@ -217,7 +217,21 @@ export const NewProject = () => {
                   )
                 }
               />
-              <H6 className="select-none">GitHub repository screening</H6>
+              <div className="flex flex-col">
+                <H6 className="select-none">GitHub repository screening</H6>
+                <span className="text-sm font-normal">
+                  To get a CSV file with correct field names, use this tool{" "}
+                  <a
+                    href="https://github.com/EvoTestOps/github-query-tool/tree/main"
+                    target="_blank"
+                    rel="noopener norefferer"
+                    className="underline"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Github Query Tool
+                  </a>
+                </span>
+              </div>
           </label>
         </Card>
         <Card>
