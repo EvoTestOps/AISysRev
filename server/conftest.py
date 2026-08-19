@@ -1,5 +1,6 @@
 import asyncio
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
@@ -8,15 +9,18 @@ from sqlalchemy import text
 from starlette.datastructures import Headers
 
 from src.core.config import settings
+from src.crud.file_crud import FileCrud
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
+from src.schemas.file import FileCreate
 from src.schemas.job import JobCreate, LLMModelConfig, ZeroShotPromptingConfig
 from src.schemas.llm import Criterion, Decision, LikertDecision, StructuredResponse
 from src.schemas.project import Criteria, ProjectCreate
 from src.schemas.user import UserCreate
 from src.tools.diagnostics.db_check import run_migration
+from src.tools.pdf_storage import build_storage_path, write_pdf_bytes
 
 # @pytest.fixture(scope="function")
 # def test_client():
@@ -136,6 +140,28 @@ async def test_files_invalid():
         headers=Headers({"content-type": "text/plain"}),
     )
     yield [invalid_file1, invalid_file2, invalid_file3]
+
+
+@pytest.fixture
+def test_pdf_bytes():
+    fixture_path = Path(__file__).parent / "src" / "tests" / "fixtures" / "test.pdf"
+    return fixture_path.read_bytes()
+
+
+@pytest_asyncio.fixture
+async def test_pdf_file_uuid(db_ctx, test_project_uuid, test_user_uuid, test_pdf_bytes):
+    file_crud = db_ctx.crud(FileCrud)
+    storage_path = build_storage_path(test_user_uuid, test_pdf_bytes)
+    write_pdf_bytes(storage_path, test_pdf_bytes)
+    file_record = await file_crud.create_file_record(
+        FileCreate(
+            project_uuid=test_project_uuid,
+            filename="test.pdf",
+            mime_type="application/pdf",
+            storage_path=storage_path,
+        )
+    )
+    return file_record.uuid
 
 
 @pytest.fixture(scope="session", autouse=True)
