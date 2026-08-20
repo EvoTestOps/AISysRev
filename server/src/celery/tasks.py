@@ -14,8 +14,9 @@ from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem, publish_event
 from src.helpers.resolve_job_status import resolve_job_status
 from src.redis_client.client import get_redis_client
-from src.schemas.job import JobCreate, PerCriteriaPromptingConfig
+from src.schemas.job import JobCreate, JobScreeningMode, PerCriteriaPromptingConfig
 from src.schemas.jobtask import JobTaskStatus
+from src.schemas.llm import ProviderRuntimeParameters
 from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
@@ -363,6 +364,32 @@ async def process_job(
             criteria_tree = build_criteria_tree_with_expressions(
                 inc_list, exc_list, inc_expr, exc_expr
             )
+
+        if job_data.screening_mode in (JobScreeningMode.PDF, JobScreeningMode.AUTOMATIC):
+            try:
+                llm_service = create_llm_service(db_ctx)
+                pdf_screening_service = create_pdf_screening_service(db_ctx)
+                llm = llm_service.get_llm(job_data.llm_config.provider_name)
+                api_key = None
+                if llm.api_key_config_parameter is not None:
+                    api_key = await llm_service.setting_service.get_setting(
+                        llm.api_key_config_parameter.key, owner_uuid=job_data.owner_uuid, mask_secret=False
+                    )
+                await pdf_screening_service.get_criteria_embeddings(
+                    llm,
+                    job_data.llm_config.provider_parameters,
+                    ProviderRuntimeParameters(
+                        model=job_data.llm_config.model_name,
+                        api_key=api_key.value if api_key is not None else "Mock",
+                    ),
+                    client,
+                    job_data.project_uuid,
+                    job_data.owner_uuid,
+                    project_criteria["inclusion_criteria"],
+                    project_criteria["exclusion_criteria"],
+                )
+            except Exception:
+                logger.exception("Failed to precompute criteria embeddings for job %s", job_id)
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)
