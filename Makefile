@@ -6,6 +6,8 @@ start-dev:
 start-dev-debug:
 	DEBUG=true FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
 	DEBUG=true FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev up --watch --build
+manage-pg-dev:
+	docker compose -f docker-compose-dev.yml -p dev exec postgres psql -U your_username your_database_dev
 # TEST
 start-test:
 	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=http://localhost:3002 docker compose -f docker-compose-dev.yml -p test down -v

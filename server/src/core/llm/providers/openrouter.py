@@ -101,12 +101,16 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         logger.debug(
             "Sending prompt to OpenRouter model %s", self.runtime_parameters.model
         )
-        logger.debug("Prompt: %s", prompt)
+        # logger.debug("Prompt: %s", prompt)
         logger.debug("Model parameters: %s", model_cfg.model_dump())
 
         result = await agent.run(prompt)
 
-        logger.debug("Received structured response: %s", result.output)
+        logger.debug(
+            "Done sending prompt to OpenRouter model %s", self.runtime_parameters.model
+        )
+
+        # logger.debug("Received structured response: %s", result.output)
         return result.output
 
     async def get_available_models(self) -> List[Model]:
@@ -123,10 +127,11 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
             "response_format",
             "temperature",
             "top_p",
+            "tools"
         ]
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                f"https://openrouter.ai/api/v1/models?supported_parameters={','.join(required_parameters)}",
+                f"https://openrouter.ai/api/v1/models?supported_parameters={','.join(required_parameters)}&output_modalities=text&input_modalities=text",
                 headers={
                     "Authorization": f"Bearer {self.runtime_parameters.api_key}",
                     "Content-type": "application/json",
@@ -140,6 +145,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
                         created=model["created"],
                         object="model",
                         owned_by=model["canonical_slug"],
+                        metadata=model
                     )
                     for model in models
                 ]
