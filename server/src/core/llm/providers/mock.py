@@ -123,4 +123,4 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         delay_ms = max(0.0, self.provider_parameters.delay + jitter_ms)
         await asyncio.sleep(delay_ms / 1000.0)
 
-        return [[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8] for _ in texts]
+        return [[0.1] * 1536 for _ in texts]

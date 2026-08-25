@@ -26,7 +26,7 @@ async def test_get_criteria_embeddings_without_cache_and_does_not_cache_for_mock
 
     assert len(inclusion) == 3
     assert len(exclusion) == 3
-    assert inclusion[0] == [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    assert inclusion[0] == [0.1] * 1536
 
     project_crud = db_ctx.crud(ProjectCrud)
     project = await project_crud.fetch_project_by_uuid(test_project_uuid, test_user_uuid)
@@ -75,7 +75,7 @@ async def test_get_chunks_with_embeddings_without_cache_and_does_not_cache_for_m
     )
 
     assert len(chunks) > 0
-    assert all(e == [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8] for e in embeddings)
+    assert all(e == [0.1] * 1536 for e in embeddings)
 
     pdf_chunk_embedding_crud = db_ctx.crud(PdfChunkEmbeddingCrud)
     cached = await pdf_chunk_embedding_crud.fetch_chunks_by_pdf_file_uuid(
