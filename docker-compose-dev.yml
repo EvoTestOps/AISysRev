@@ -48,6 +48,7 @@ services:
     volumes:
       - ./server/migrations:/app/migrations
       - pdf_data:/app/data/pdfs
+      - ./logs/backend:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
       interval: 10s
@@ -108,7 +109,8 @@ services:
     ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
-      DEBUG: ${DEBUg:-false}
+      DEBUG: ${DEBUG:-false}
+      DEBUG_PORT: 5679
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
@@ -118,6 +120,7 @@ services:
       - redis
     volumes:
       - pdf_data:/app/data/pdfs
+      - ./logs/celery:/app/logs
 
   flower:
     container_name: flower_${APP_ENV:-dev}

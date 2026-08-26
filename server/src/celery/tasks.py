@@ -35,7 +35,7 @@ from src.worker import celery_app
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(name="tasks.test_task")
+@celery_app.task(name="tasks.test_task", result_expires=300)
 def test_task(name: str):
     import time
 
@@ -45,7 +45,7 @@ def test_task(name: str):
     return f"Hello, {name}!"
 
 
-@celery_app.task(name="tasks.process_job", bind=True)
+@celery_app.task(name="tasks.process_job", bind=True, ignore_result=True)
 def process_job_task(self: Task, job_id: int, job_data: dict):
     job_data_unpacked = JobCreate.model_validate(job_data)
     logger.info("Running job task using asyncio, ID: %s", job_id)

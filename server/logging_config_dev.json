@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "default": {
+      "()": "uvicorn.logging.DefaultFormatter",
+      "fmt": "%(levelprefix)s %(message)s",
+      "use_colors": null
+    },
+    "access": {
+      "()": "uvicorn.logging.AccessFormatter",
+      "fmt": "%(levelprefix)s %(client_addr)s - \"%(request_line)s\" %(status_code)s"
+    },
+    "file": {
+      "format": "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+    }
+  },
+  "handlers": {
+    "default": {
+      "formatter": "default",
+      "class": "logging.StreamHandler",
+      "stream": "ext://sys.stderr"
+    },
+    "access": {
+      "formatter": "access",
+      "class": "logging.StreamHandler",
+      "stream": "ext://sys.stdout"
+    },
+    "file": {
+      "formatter": "file",
+      "class": "logging.handlers.RotatingFileHandler",
+      "filename": "/app/logs/backend.log",
+      "maxBytes": 10485760,
+      "backupCount": 5
+    }
+  },
+  "loggers": {
+    "uvicorn": {
+      "handlers": ["default", "file"],
+      "level": "DEBUG",
+      "propagate": false
+    },
+    "uvicorn.error": {
+      "level": "DEBUG"
+    },
+    "uvicorn.access": {
+      "handlers": ["access", "file"],
+      "level": "DEBUG",
+      "propagate": false
+    }
+  },
+  "root": {
+    "handlers": ["default", "file"],
+    "level": "DEBUG"
+  }
+}

@@ -4,6 +4,7 @@
 .vscode
 .coverage
 .vscode/settings.json
+/logs/
 
 fuzzing/specs/*.json
 fuzzing/restler/Compile/
