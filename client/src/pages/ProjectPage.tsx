@@ -1094,7 +1094,8 @@ export const ProjectPage = () => {
                       </span>
                     </Tooltip>
                     <span className="text-xs font-normal text-slate-500">
-                      {job.screening_mode === JobScreeningMode.TEXT && "Abstract"}
+                      {job.screening_mode === JobScreeningMode.TEXT &&
+                        (job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY ? "GitHub" : "Abstract")}
                       {job.screening_mode === JobScreeningMode.PDF && "PDF"}
                       {job.screening_mode === JobScreeningMode.AUTOMATIC && "Automatic"}
                     </span>
