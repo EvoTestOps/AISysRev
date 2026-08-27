@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aisysrev-backend-dep
+  namespace: aisysrev
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: "*"
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:backend-production","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aisysrev-backend
+  template:
+    metadata:
+      labels:
+        app: aisysrev-backend
+    spec:
+      containers:
+        - name: aisysrev
+          image: aisysrev:backend-production
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+           - name: APP_ENV
+             value: production
+           - name: REDIS_URL
+             valueFrom:
+               configMapKeyRef:
+                 name: aisysrev-config
+                 key: REDIS_URL
+           - name: CELERY_BROKER_URL
+             valueFrom:
+               configMapKeyRef:
+                 name: aisysrev-config
+                 key: CELERY_BROKER_URL
+           - name: OIDC_ISSUER_URL
+             value: https://login.helsinki.fi
+           - name: FRONTEND_URL
+             value: https://aisysrev.ext.ocp-prod-0.k8s.it.helsinki.fi
+           - name: OIDC_REDIRECT_URI
+             value: https://aisysrev.ext.ocp-prod-0.k8s.it.helsinki.fi/api/v1/auth/callback
+          envFrom:
+            - secretRef:
+                name: aisysrev-secret
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            timeoutSeconds: 3
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /openapi.json
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 3
+            periodSeconds: 15
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 500m
+            requests:
+              memory: 256Mi
+              cpu: 250m
+

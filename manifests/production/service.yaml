@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: aisysrev
+spec:
+  selector:
+    app: aisysrev-backend
+  ports:
+    - protocol: TCP
+      port: 8080         
+      targetPort: 8080 
+  type: ClusterIP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: aisysrev
+spec:
+  selector:
+    app: aisysrev-redis
+  ports:
+    - protocol: TCP
+      port: 6379        
+      targetPort: 6379 
+  type: ClusterIP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: aisysrev
+spec:
+  selector:
+    app: aisysrev-frontend
+  ports:
+    - protocol: TCP
+      port: 9080         
+      targetPort: 9080 
+  type: ClusterIP
