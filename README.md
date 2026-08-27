@@ -53,7 +53,7 @@
 
 ## Introduction
 
-The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported from two sourced as a CSV from: 1) [Scopus](https://www.scopus.com/) and from 2) [Github](https://github.com/). For Github data see our tool [Github Repository Collector](https://github.com/EvoTestOps/github-repository-collector) that queries and collects github repository data.  
+The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported from two sourced as a CSV from: 1) [Scopus](https://www.scopus.com/) and from 2) [Github](https://github.com/). For Github data see our tool [Github Query Tool](https://github.com/EvoTestOps/github-query-tool) that queries and collects github repository data.
 
 Scopus data screening works like normal title-abstract screening for academic papers. For GitHub we apply the same logic. Title from GitHub project becomes the title and abstract is the project description + README.md contents. GitHub screening can be useful if one is interested in finding software tools that satisfy inclusion and exclusion rules. Our [paper](https://arxiv.org/abs/2606.16839) on tool discovery with LLMs.
 
@@ -92,7 +92,7 @@ The application is based on our research papers on this topic. Please consider c
 
 ### Data
 
-The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/) and [Github] with data exported by our custom [Github Repository Collector](https://github.com/EvoTestOps/github-repository-collector). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>. 
+The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/) and [Github] with data exported by our custom [Github Query Tool](https://github.com/EvoTestOps/github-query-tool). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>.
 
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
