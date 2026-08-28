@@ -18,3 +18,4 @@ fuzzing/evomaster/evomaster-tests/
 fuzzing/evomaster/evomaster.jar
 
 manifests/staging/secret.yaml
+manifests/production/secret.yaml
