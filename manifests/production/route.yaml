@@ -7,7 +7,7 @@ metadata:
     app: aisysrev
     type: external
 spec:
-  host: aisysrev.ext.ocp-prod-0.k8s.it.helsinki.fi
+  host: aisysrev.helsinki.fi
   port:
     targetPort: 9080
   to:

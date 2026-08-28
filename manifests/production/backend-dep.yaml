@@ -39,9 +39,9 @@ spec:
            - name: OIDC_ISSUER_URL
              value: https://login.helsinki.fi
            - name: FRONTEND_URL
-             value: https://aisysrev.ext.ocp-prod-0.k8s.it.helsinki.fi
+             value: https://aisysrev.helsinki.fi
            - name: OIDC_REDIRECT_URI
-             value: https://aisysrev.ext.ocp-prod-0.k8s.it.helsinki.fi/api/v1/auth/callback
+             value: https://aisysrev.helsinki.fi/api/v1/auth/callback
           envFrom:
             - secretRef:
                 name: aisysrev-secret
