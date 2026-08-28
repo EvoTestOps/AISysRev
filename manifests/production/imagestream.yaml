@@ -1,0 +1,28 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+
+metadata:
+  name: aisysrev
+  namespace: aisysrev
+  labels:
+    app: aisysrev
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+    - name: backend-production
+      from:
+        kind: DockerImage
+        name: quay.io/tike/aisysrev:backend-production
+      importPolicy:
+        scheduled: true
+      referencePolicy:
+        type: Local
+    - name: frontend-production
+      from:
+        kind: DockerImage
+        name: quay.io/tike/aisysrev:frontend-production
+      importPolicy:
+        scheduled: true
+      referencePolicy:
+        type: Local

@@ -4,9 +4,11 @@ import Skeleton from "react-loading-skeleton";
 import { Button } from "../components/Button";
 import { Layout } from "../components/Layout";
 import { useConfig } from "../config/config";
-import { CircleX, Pencil, Save, KeyRound } from "lucide-react";
+import { CircleX, Pencil, Save, KeyRound, Trash2 } from "lucide-react";
 import { Card } from "../components/Card";
+import { TabButton } from "../components/TabButton";
 import { H4 } from "../components/Typography";
+import { ConfirmationModal } from "../components/ConfirmationModal";
 
 type SettingEntryProps = {
   config_key: string;
@@ -46,10 +48,11 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
   config_key,
   description,
 }) => {
-  const { setting, loading, refresh, update } = useConfig(config_key);
+  const { setting, loading, refresh, update, remove } = useConfig(config_key);
 
   const [editMode, setEditMode] = useState(false);
   const [value, setValue] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const isSet = !loading && setting !== null;
   const canSave = !loading && value.trim() !== "" && value !== setting?.value;
@@ -59,6 +62,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
   }, [editMode]);
 
   return (
+    <>
     <div className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
@@ -110,6 +114,15 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
                     <Pencil />
                     <span>Update</span>
                   </div>
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowDeleteModal(true);
+                  }}
+                  variant="red"
+                >
+                  <Trash2 size={16} />
                 </Button>
               </>
             ) : (
@@ -178,6 +191,21 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
         )}
       </div>
     </div>
+    <ConfirmationModal
+      open={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+      onConfirm={async () => {
+        await remove();
+        setShowDeleteModal(false);
+        refresh();
+      }}
+      title="Delete API key"
+      description={`Are you sure you want to delete the ${title} key? This action cannot be undone.`}
+      confirmButtonLabel="Delete"
+      confirmButtonVariant="red"
+      confirmButtonIcon={<Trash2 size={16} />}
+    />
+    </>
   );
 };
 
@@ -222,6 +250,12 @@ export const SettingsPage = () => {
 
   return (
     <Layout title="Settings">
+      <div className="flex flex-row mb-4">
+        <TabButton href="/settings" active>
+          LLM Settings
+        </TabButton>
+        <TabButton href="/settings/account">Account</TabButton>
+      </div>
       <Card>
         <div className="border-b border-slate-200 bg-white px-6 py-5">
           <h1 className="text-xl font-semibold text-slate-900">Settings</h1>

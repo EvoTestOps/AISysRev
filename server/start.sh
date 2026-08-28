@@ -6,4 +6,4 @@ PORT=${PORT:-8080}
 : "${DB_URL:?DB_URL is not set}"
 ./migrate.sh
 
-uv run uvicorn src.main:app --host $HOST --port $PORT
+/app/.venv/bin/uvicorn src.main:app --host $HOST --port $PORT

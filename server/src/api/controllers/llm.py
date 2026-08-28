@@ -3,17 +3,20 @@ from src.core.llm.providers import llm_providers
 from pydantic import BaseModel
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
+from src.core.auth import get_current_user
 from src.core.llm.providers.provider import ConfigParameter, LLMProvider, Provider
+from src.db.db_context import DBContext, get_db_ctx
+from src.db.models.user import User
 from src.schemas.llm import ProviderRuntimeParameters
 from src.services.llm_service import create_llm_service
-
-from src.db.db_context import DBContext, get_db_ctx
 
 router = APIRouter()
 
 
 @router.get("/llm/providers", status_code=status.HTTP_200_OK, tags=["LLM"])
-async def get_providers() -> list[Provider]:
+async def get_providers(
+    current_user: User = Depends(get_current_user),
+) -> list[Provider]:
     return [
         Provider(
             title=provider.provider_title,
@@ -43,7 +46,9 @@ class ProviderConfigParamsResponse(BaseModel):
     response_model=dict[str, ProviderConfigParamsResponse],
     tags=["LLM"],
 )
-async def get_provider_config_params():
+async def get_provider_config_params(
+    current_user: User = Depends(get_current_user),
+):
     return {
         provider.provider_name: ProviderConfigParamsResponse(
             title=provider.provider_title,
@@ -59,15 +64,19 @@ async def get_available_models(
     provider: str,
     provider_parameters: Optional[Dict[str, Any]] = Body(None),
     db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
 ):
     llm_service = create_llm_service(db_ctx)
 
-    llm_class: type[LLMProvider] = llm_service.get_llm(provider)
+    try:
+        llm_class: type[LLMProvider] = llm_service.get_llm(provider)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
     api_key = None
 
     if llm_class.api_key_config_parameter is not None:
         setting = await llm_service.setting_service.get_setting(
-            llm_class.api_key_config_parameter.key, mask_secret=False
+            llm_class.api_key_config_parameter.key, owner_uuid=current_user.uuid, mask_secret=False
         )
         if setting is None:
             raise HTTPException(status_code=400, detail="API key missing")

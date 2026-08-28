@@ -21,6 +21,7 @@
     + [Data](#data)
     + [LLMs Access](#llms-access)
     + [LLM screening speed](#llm-screening-speed)
+  * [PDF Screening](#pdf-screening)
   * [System and software requirements](#system-and-software-requirements)
     + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
     + [Running the AISysRev application](#running-the-aisysrev-application)
@@ -52,7 +53,9 @@
 
 ## Introduction
 
-The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported as a CSV from [Scopus](https://www.scopus.com/). 
+The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported from two sourced as a CSV from: 1) [Scopus](https://www.scopus.com/) and from 2) [Github](https://github.com/). For Github data see our tool [Github Query Tool](https://github.com/EvoTestOps/github-query-tool) that queries and collects github repository data.
+
+Scopus data screening works like normal title-abstract screening for academic papers. For GitHub we apply the same logic. Title from GitHub project becomes the title and abstract is the project description + README.md contents. GitHub screening can be useful if one is interested in finding software tools that satisfy inclusion and exclusion rules. Our [paper](https://arxiv.org/abs/2606.16839) on tool discovery with LLMs.
 
 ## Features
 
@@ -63,6 +66,7 @@ The application allows you to:
 - Receive LLM evaluations as binary decisions (include/exclude), ordinal ratings (1-7), or inclusion probabilities (0–1)
 - Perform manual evaluation of titles and abstracts alongside LLM evaluations
 - Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc.
+All of the above steps are also done for Github repositories. 
 
 The application is based on our research papers on this topic. Please consider citing if you use the application [1–3](#references).
 
@@ -88,7 +92,7 @@ The application is based on our research papers on this topic. Please consider c
 
 ### Data
 
-The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>. 
+The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/) and [Github] with data exported by our custom [Github Query Tool](https://github.com/EvoTestOps/github-query-tool). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>.
 
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
@@ -102,6 +106,33 @@ The application is integrated with [OpenRouter](https://openrouter.ai/), which s
 ### LLM screening speed
 
 LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter. The screening speed depends on the model used.
+
+
+## PDF Screening
+
+AISysRev supports full-text PDF screening in addition to title-abstract screening.
+
+### Uploading PDFs
+
+PDFs can be attached to papers in two ways:
+
+- **Manual** - on a paper's card, click **Upload full text** and select a PDF file to upload.
+- **Bulk upload with Zotero/EndNote XML**
+  1. Click **Download papers missing full text** to export a RIS file containing all papers in the project that don't have a PDF attached.
+  2. Import the RIS file into [Zotero](https://www.zotero.org/) and use Find Full Text to retrieve full-text PDFs.
+  3. Export the Zotero collection with the automatically retrieved PDFs in EndNote XML format with Export notes and Export files checked.
+  4. In AISysRev, click **Import full text (Zotero Export Folder)** and select the exported folder. PDFs are attached to papers based on DOI.
+
+### Screening modes
+
+When creating a screening task, choose which screening mode to use:
+
+- **Abstract** - the paper's title and abstract are given to the LLM.
+- **PDF** - excerpts from the paper's full-text PDF are given to the LLM.
+- **Automatic** - uses **PDF** screening mode for papers with a PDF attached and **Abstract** for papers without a PDF attached.
+
+See [pdf_screening.md](docs/pdf_screening.md) for details on how **PDF** screening mode works.
+
 
 ## System and software requirements
 
@@ -198,14 +229,14 @@ See [Architecture.md](docs/Architecture.md)
 
 ### Getting started with development
 
-Open up the client: [http://localhost:3001](http://localhost:3001)
+Open up the client: [https://localhost:3001](https://localhost:3001)
 
 > [!NOTE]
 > `/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
-API: [http://localhost:3001/api/v1](http://localhost:3001/api/v1)
+API: [https://localhost:3001/api/v1](https://localhost:3001/api/v1)
 
-API docs: [http://localhost:3001/documentation](http://localhost:3001/docs)
+API docs: [https://localhost:3001/docs](https://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 

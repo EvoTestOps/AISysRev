@@ -11,10 +11,24 @@ let mockProject: {
   };
 };
 
-// TODO: Think of a better solution to reset and create fixtures
 test.beforeEach(async ({ request }) => {
   const fixtureRes = await request.post(`${prefix}/fixtures/reset`)
   expect(fixtureRes.status()).toBe(200)
+
+  await request.get(`${prefix}/auth/dev-login`);
+
+  const consentRes = await request.post(`${prefix}/auth/consent`, {
+    data: {
+      terms: true,
+      privacy_policy: true,
+      research: true,
+    },
+  });
+  expect(consentRes.status(), 'consent should be accepted').toBe(201);
+
+  const meRes = await request.get(`${prefix}/auth/me`);
+  expect(meRes.status(), 'should be authenticated after dev-login').toBe(200);
+
   const createRes = await request.post(`${prefix}/project`, {
     data: {
       name: 'Test Project',

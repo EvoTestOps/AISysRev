@@ -24,6 +24,8 @@ CMD ["npm", "run", "dev"]
 FROM python:3.14-alpine AS server-builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 COPY server/pyproject.toml /app/pyproject.toml
@@ -42,6 +44,7 @@ COPY server/. /app
 RUN chown -R app:app /app
 RUN chown app:app /app/start-dev.sh && chmod +x /app/start-dev.sh
 RUN chown app:app /app/migrate.sh && chmod +x /app/migrate.sh
+RUN mkdir -p /app/data/pdfs && chown app:app /app/data/pdfs
 
 EXPOSE 8080
 EXPOSE 5678
@@ -59,6 +62,7 @@ COPY --from=server-builder --chown=celeryuser:celerygroup /app/.venv /app/.venv
 COPY server/. /app
 RUN chown -R celeryuser:celerygroup /app
 RUN chown celeryuser:celerygroup /app/start-celery-dev.sh && chmod +x /app/start-celery-dev.sh
+RUN mkdir -p /app/data/pdfs && chown celeryuser:celerygroup /app/data/pdfs
 
 EXPOSE 8080
 EXPOSE 5678

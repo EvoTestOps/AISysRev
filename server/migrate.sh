@@ -1,4 +1,4 @@
 #!/bin/sh
 set -e
 : "${DB_URL:?DB_URL is not set}"
-uv run alembic upgrade head
+/app/.venv/bin/alembic upgrade head

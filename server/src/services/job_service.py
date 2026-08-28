@@ -5,7 +5,15 @@ from src.celery.tasks import cancel_task
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
-from src.schemas.job import JobCreate, JobRead, JobReadWithStats, JobStats, JobStatus
+from src.schemas.job import (
+    JobCreate,
+    JobRead,
+    JobReadWithStats,
+    JobScreeningMode,
+    JobStats,
+    JobStatus,
+    PerCriteriaPromptingConfig,
+)
 from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
@@ -21,24 +29,25 @@ class JobService:
         self.job_crud = job_crud
         self.jobtask_service = jobtask_service
 
-    async def fetch_all(self) -> list[JobRead]:
-        rows = await self.job_crud.fetch_jobs()
+    async def fetch_all(self, owner_uuid: UUID) -> list[JobRead]:
+        rows = await self.job_crud.fetch_jobs(owner_uuid)
         return [
             JobRead(
                 uuid=row.uuid,
                 project_uuid=row.project_uuid,
                 prompting_config=row.prompting_config,
                 llm_config=row.llm_config,
+                screening_mode=row.screening_mode,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
             )
             for row in rows
         ]
 
-    async def fetch_by_project(self, project_uuid: UUID) -> list[JobReadWithStats]:
-        jobs = await self.job_crud.fetch_jobs_by_project(project_uuid)
+    async def fetch_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> list[JobReadWithStats]:
+        jobs = await self.job_crud.fetch_jobs_by_project(project_uuid, owner_uuid)
         stats_rows = await self.jobtask_service.fetch_task_stats_by_project(
-            project_uuid
+            project_uuid, owner_uuid
         )
 
         stats_map = {row["job_uuid"]: row for row in stats_rows}
@@ -63,20 +72,21 @@ class JobService:
 
         return result
 
-    async def fetch_by_uuid(self, uuid: UUID) -> JobRead:
-        job = await self.job_crud.fetch_job_by_uuid(uuid)
+    async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> JobRead:
+        job = await self.job_crud.fetch_job_by_uuid(uuid, owner_uuid)
         return JobRead(
             uuid=job.uuid,
             project_uuid=job.project_uuid,
             prompting_config=job.prompting_config,
             llm_config=job.llm_config,
+            screening_mode=job.screening_mode,
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
 
-    async def fetch_job_tasks(self, job_uuid: UUID):
+    async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
         job_tasks = await self.jobtask_service.jobtask_crud.fetch_job_tasks_by_job_uuid(
-            job_uuid
+            job_uuid, owner_uuid
         )
 
         return [
@@ -98,27 +108,36 @@ class JobService:
     async def create(self, job_data: JobCreate):
         logger.info("Creating new job", job_data)
 
+        if job_data.screening_mode in (
+            JobScreeningMode.PDF,
+            JobScreeningMode.AUTOMATIC,
+        ) and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
+            raise ValueError("PER_CRITERIA prompting with PDFs not possible yet")
+
         new_job = await self.job_crud.create_job(job_data)
-        await self.jobtask_service.bulk_create(new_job.id, job_data.project_uuid)
+        await self.jobtask_service.bulk_create(
+            new_job.id, job_data.project_uuid, job_data.owner_uuid, job_data.screening_mode
+        )
 
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
             llm_config=new_job.llm_config,
             prompting_config=new_job.prompting_config,
+            screening_mode=new_job.screening_mode,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )
         task = await self.jobtask_service.start_job_tasks(
-            new_job.id, job_read.model_dump()
+            new_job.id, job_data.model_dump()
         )
 
         await self.job_crud.update_celery_task_id(new_job.uuid, UUID(task.id))
 
         return job_read
 
-    async def delete_job(self, job_uuid: UUID):
-        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
+    async def delete_job(self, job_uuid: UUID, owner_uuid: UUID):
+        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid, owner_uuid)
         job_id = job.get("id")
         task_id = job.get("celery_task_id")
 
@@ -127,10 +146,10 @@ class JobService:
         except RuntimeError:
             pass
 
-        await self.job_crud.delete_job(job_uuid)
+        await self.job_crud.delete_job(job_uuid, owner_uuid)
 
-    async def cancel_job(self, job_uuid: UUID):
-        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid)
+    async def cancel_job(self, job_uuid: UUID, owner_uuid: UUID):
+        job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid, owner_uuid)
         job_id = job.get("id")
         task_id = job.get("celery_task_id")
 

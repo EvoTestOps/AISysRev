@@ -24,19 +24,40 @@ class Settings:
 
         self.SECRET_KEY: str = get_env("SECRET_KEY", "yoursecretkey")
         self.ALGORITHM: str = "HS256"
-        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+        self.ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 5
+        self.CURRENT_TERMS_VERSION: str = "8.6.2026"
+        self.CURRENT_PRIVACY_POLICY_VERSION: str = "8.6.2026"
         self.REDIS_URL: str = get_env("REDIS_URL")
         self.CELERY_BROKER_URL: str = get_env("CELERY_BROKER_URL")
-        self.MINIO_ENDPOINT: str = get_env("MINIO_ENDPOINT")
-        self.MINIO_ROOT_USER: str = get_env("MINIO_ROOT_USER")
-        self.MINIO_ROOT_PASSWORD: str = get_env("MINIO_ROOT_PASSWORD")
-        self.MINIO_BUCKET: str = get_env("MINIO_BUCKET", "default-bucket")
+        self.OIDC_CLIENT_ID: str = get_env("OIDC_CLIENT_ID", "")
+        self.OIDC_CLIENT_SECRET: str = get_env("OIDC_CLIENT_SECRET", "")
+        self.OIDC_ISSUER_URL: str = get_env("OIDC_ISSUER_URL", "https://login.helsinki.fi")
+        self.OIDC_REDIRECT_URI: str = get_env("OIDC_REDIRECT_URI", "https://localhost:3001/api/v1/auth/callback")
+        self.FRONTEND_URL: str = get_env("FRONTEND_URL", "https://localhost:3001")
         self.RUN_MIGRATIONS: bool = get_env("RUN_MIGRATIONS", "false").lower() in [
             "y",
             "1",
             "true",
             "yes",
         ]
+        self.PDF_STORAGE_PATH: str = get_env("PDF_STORAGE_PATH", "/app/data/pdfs")
+        self.MAX_PDF_UPLOAD_MB: int = int(get_env("MAX_PDF_UPLOAD_MB", "50"))
+        self.STORAGE_BACKEND: str = get_env("STORAGE_BACKEND", "local") # "local" or "s3"
+        self.S3_ENDPOINT_URL: str = get_env("S3_ENDPOINT_URL", "")
+        self.S3_BUCKET: str = get_env("S3_BUCKET", "")
+        self.S3_REGION: str = get_env("S3_REGION", "us-east-1")
+        self.S3_ACCESS_KEY_ID: str = get_env("S3_ACCESS_KEY_ID", "")
+        self.S3_SECRET_ACCESS_KEY: str = get_env("S3_SECRET_ACCESS_KEY", "")
+        if self.STORAGE_BACKEND == "s3" and not (
+            self.S3_ENDPOINT_URL and self.S3_BUCKET and self.S3_ACCESS_KEY_ID and self.S3_SECRET_ACCESS_KEY
+        ):
+            raise Exception(
+                "FATAL: STORAGE_BACKEND=s3 requires S3_ENDPOINT_URL, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY"
+            )
+        self.STAGING_ALLOWED_EMAILS: list[str] = [
+            e.strip() for e in get_env("STAGING_ALLOWED_EMAILS", "").split(",") if e.strip()
+        ]
+
 
 
 settings = Settings()

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aisysrev-frontend-dep
+  namespace: aisysrev
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: "*"
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:frontend-staging","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aisysrev-frontend
+  template:
+    metadata:
+      labels:
+        app: aisysrev-frontend
+    spec:
+      containers:
+        - name: aisysrev
+          image: aisysrev:frontend-staging
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9080
+          volumeMounts:
+            - name: caddy-config
+              mountPath: /etc/caddy/Caddyfile
+              subPath: Caddyfile
+            - name: caddy-data
+              mountPath: /data
+            - name: caddy-config-dir
+              mountPath: /config
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9080
+            periodSeconds: 15
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 100m
+            requests:
+              memory: 64Mi
+              cpu: 50m
+      volumes:
+        - name: caddy-config
+          configMap:
+            name: caddy-config
+        - name: caddy-data
+          emptyDir: {}
+        - name: caddy-config-dir
+          emptyDir: {}

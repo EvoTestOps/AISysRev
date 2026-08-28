@@ -1,18 +1,33 @@
 from httpx import AsyncClient
 
-from src.core.prompts import few_shot_task_prompt, zero_shot_task_prompt, additional_instructions
+from src.core.prompts import (
+    additional_instructions,
+    few_shot_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+    github_additional_instructions,
+    github_zero_shot_task_prompt,
+    github_few_shot_task_prompt,
+    github_per_criteria_task_prompt,
+)
 from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
+    JobScreeningMode,
     ZeroShotPromptingConfig,
 )
-from src.schemas.llm import ProviderRuntimeParameters, StructuredResponse
+from src.schemas.llm import (
+    CriterionResponse,
+    ProviderRuntimeParameters,
+    StructuredResponse,
+)
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead
 from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
+from src.services.pdf_screening_service import PdfScreeningService
 
 
 def create_few_shot_examples(papers: list[PaperRead]):
@@ -42,6 +57,7 @@ def create_criteria(
 async def get_structured_response(
     llm_service: LLMService,
     paper_service: PaperService,
+    pdf_screening_service: PdfScreeningService,
     job_task_data: JobTask,
     job_data: JobCreate,
     inc_exc_criteria: Criteria,
@@ -52,25 +68,67 @@ async def get_structured_response(
         inc_exc_criteria["inclusion_criteria"],  # type: ignore
         inc_exc_criteria["exclusion_criteria"],  # type: ignore
     )
+    inclusion_criteria = inc_exc_criteria["inclusion_criteria"]
+    exclusion_criteria = inc_exc_criteria["exclusion_criteria"]
 
+    screening_target = getattr(
+    job_data.prompting_config,
+    "screening_target",
+    "PAPER",
+    )
+
+    is_github_screening = screening_target == "GITHUB_REPOSITORY"
+
+    used_additional_instructions = (
+        github_additional_instructions
+        if is_github_screening
+        else additional_instructions
+    )
     api_key: SettingRead | None = None
     cfg = job_data.prompting_config
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
         api_key = await llm_service.setting_service.get_setting(
-            llm.api_key_config_parameter.key, mask_secret=False
+            llm.api_key_config_parameter.key, owner_uuid=job_data.owner_uuid, mask_secret=False
         )
         if api_key is None:
             raise RuntimeError(
                 f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
             )
+    
+    abstract = job_task_data.abstract
+    content_label = "Abstract"
+    if job_data.screening_mode == JobScreeningMode.PDF or (
+        job_data.screening_mode == JobScreeningMode.AUTOMATIC and job_task_data.pdf_file_uuid is not None
+    ):
+        content_label = "Excerpts from the paper"
+        abstract = await pdf_screening_service.get_pdf_chunks_for_screening(
+            llm,
+            job_data.llm_config.provider_parameters,
+            ProviderRuntimeParameters(
+                model=job_data.llm_config.model_name,
+                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            ),
+            client,
+            job_data.project_uuid,
+            job_data.owner_uuid,
+            job_task_data.pdf_file_uuid,
+            inclusion_criteria,
+            exclusion_criteria,
+        )
 
     if isinstance(cfg, ZeroShotPromptingConfig):
-        prompt_text = zero_shot_task_prompt.format(
+        prompt_template = (
+            github_zero_shot_task_prompt
+            if is_github_screening
+            else zero_shot_task_prompt
+        )
+        prompt_text = prompt_template.format(
             job_task_data.title,
-            job_task_data.abstract,
+            abstract,
             criteria,
-            additional_instructions,
+            used_additional_instructions,
+            content_label,
         )
         result = await llm_service.call_llm(
             llm,
@@ -87,14 +145,23 @@ async def get_structured_response(
         return result
     elif isinstance(cfg, FewShotPromptingConfig):
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
-        seed_papers = await paper_service.fetch_papers_by_paper_uuids(seed_paper_uuids)
+        seed_papers = await paper_service.fetch_papers_by_paper_uuids(
+            seed_paper_uuids, job_data.owner_uuid
+        )
         seed_paper_txt = create_few_shot_examples(seed_papers)
-        prompt_text = few_shot_task_prompt.format(
+        prompt_template = (
+            github_few_shot_task_prompt
+            if is_github_screening
+            else few_shot_task_prompt
+        )
+
+        prompt_text = prompt_template.format(
             job_task_data.title,
-            job_task_data.abstract,
+            abstract,
             criteria,
-            additional_instructions,
+            used_additional_instructions,
             seed_paper_txt,
+            content_label,
         )
         result = await llm_service.call_llm(
             llm,
@@ -111,3 +178,50 @@ async def get_structured_response(
         return result
     else:
         raise RuntimeError("Unknown prompting type.")
+
+
+async def get_single_criterion_response(
+    llm_service: LLMService,
+    job_data: JobCreate,
+    title: str,
+    abstract: str,
+    criterion_description: str,
+    client: AsyncClient,
+) -> CriterionResponse:
+    llm = llm_service.get_llm(job_data.llm_config.provider_name)
+
+    api_key: SettingRead | None = None
+    if llm.api_key_config_parameter is not None:
+        api_key = await llm_service.setting_service.get_setting(
+            llm.api_key_config_parameter.key, owner_uuid=job_data.owner_uuid, mask_secret=False
+        )
+        if api_key is None:
+            raise RuntimeError(
+                f"API key {llm.api_key_config_parameter.key} for provider "
+                f"{job_data.llm_config.provider_name} is missing"
+            )
+    screening_target = getattr(
+        job_data.prompting_config,
+        "screening_target",
+        "PAPER",
+    )
+    prompt_template = (
+        github_per_criteria_task_prompt
+        if screening_target == "GITHUB_REPOSITORY"
+        else per_criteria_task_prompt
+    )
+    prompt_text = prompt_template.format(
+        title, abstract, criterion_description
+    )
+    return await llm_service.call_llm(
+        llm,
+        provider_parameters=job_data.llm_config.provider_parameters,
+        model_parameters=job_data.llm_config.model_parameters,
+        runtime_parameters=ProviderRuntimeParameters(
+            model=job_data.llm_config.model_name,
+            api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+        ),
+        response_schema=CriterionResponse,
+        user_prompt=prompt_text,
+        client=client,
+    )

@@ -30,18 +30,16 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
       RUN_MIGRATIONS: true
     depends_on:
       - postgres
-      - minio
       - redis
       - celery
+    volumes:
+      - pdf_data:/app/data/pdfs
 
   postgres:
-    image: postgres:alpine@sha256:fbe21607052bb5c298674f2fd8cf044a63aa3ddf50b81627f894f91f40f50bcb
+    image: postgres:14@sha256:caf49e3b10d377aa2cfee478591d623808527beb27125d38797b418013f72d81
     container_name: postgres_prod
     environment:
       POSTGRES_USER: your_username
@@ -61,29 +59,10 @@ services:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
     depends_on:
       - postgres
-  
-  minio:
-    image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
-    container_name: minio
-    environment:
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
-    command: server /data --console-address ":9001"
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 10s
-      retries: 2
 
   redis:
     image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
     container_name: redis_prod
-    privileged: true
     ports:
       - "127.0.0.1:6379:6379"
     volumes: 
@@ -103,12 +82,11 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
     depends_on:
       - redis
       - postgres
+    volumes:
+      - pdf_data:/app/data/pdfs
 
   flower:
     container_name: flower_prod
@@ -124,9 +102,6 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: your_username
-      MINIO_ROOT_PASSWORD: minio-secret-key
     ports:
       - 127.0.0.1:${FLOWER_PORT:-5555}:5555
     depends_on:
@@ -135,7 +110,7 @@ services:
 
 volumes:
   postgres_data:
-  minio_data:
   redis_data:
   caddy_data:
   caddy_config:
+  pdf_data:

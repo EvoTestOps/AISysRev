@@ -1,19 +1,12 @@
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
-
-
-class Setting(BaseModel):
-    id: int
-    uuid: str
-    name: str
-    value: str
-    secret: str
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class SettingCreate(BaseModel):
     uuid: UUID | None = None
+    owner_uuid: UUID
     name: str = Field(max_length=1024)
-    value: str = Field(max_length=16384)
+    value: str = Field(max_length=1024)
     secret: bool
 
     @field_validator("name", "value")
@@ -25,7 +18,8 @@ class SettingCreate(BaseModel):
 
 
 class SettingRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     uuid: UUID | None = None
     name: str = Field(max_length=1024)
-    value: str = Field(max_length=16384)
+    value: str = Field(max_length=1024)
     secret: bool

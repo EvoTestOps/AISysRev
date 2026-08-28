@@ -13,7 +13,7 @@ class ResultCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_result(self, project_uuid: UUID):
+    async def create_result(self, project_uuid: UUID, owner_uuid: UUID):
         stmt = (
             select(
                 Paper.title,
@@ -35,12 +35,20 @@ class ResultCrud:
                 JobTask.result["exclusion_criteria"].astext.label("exclusion_criteria"),
                 Job.prompting_config["screening_type"].astext.label("screening_type"),
                 JobTask.error.label("error"),
+                # PER_CRITERIA mode fields
+                JobTask.result["mode"].astext.label("result_mode"),
+                JobTask.result["criterion_results"].astext.label("criterion_results"),
+                JobTask.result["overall_probability"].astext.label(
+                    "pc_overall_probability"
+                ),
+                JobTask.result["binary_decision"].astext.label("pc_binary_decision"),
             )
             .select_from(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
             .outerjoin(JobTask, JobTask.paper_uuid == Paper.uuid)
             .outerjoin(Job, Job.id == JobTask.job_id)
             .where(Project.uuid == project_uuid)
+            .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
         return result.all()

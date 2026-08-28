@@ -5,11 +5,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.schemas.project import ScreeningTarget
+
 
 class JobPromptingType(str, Enum):
     ZERO_SHOT = "ZERO_SHOT"
     ONE_SHOT = "ONE_SHOT"
     FEW_SHOT = "FEW_SHOT"
+    PER_CRITERIA = "PER_CRITERIA"
 
 
 class JobStatus(str, Enum):
@@ -19,6 +22,12 @@ class JobStatus(str, Enum):
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+
+
+class JobScreeningMode(str, Enum):
+    TEXT = "TEXT"
+    PDF = "PDF"
+    AUTOMATIC = "AUTOMATIC"
 
 
 class JobStats(BaseModel):
@@ -37,37 +46,47 @@ class LLMModelConfig(BaseModel):
 
 # Define different configs for prompting strategies
 
-
 class ZeroShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
+    screening_type: Literal[JobPromptingType.ZERO_SHOT]  = JobPromptingType.ZERO_SHOT
+    screening_target: ScreeningTarget = ScreeningTarget.PAPER
 
 
 class FewShotPromptingConfig(BaseModel):
     screening_type: Literal[JobPromptingType.FEW_SHOT] = JobPromptingType.FEW_SHOT
+    screening_target: ScreeningTarget = ScreeningTarget.PAPER
     seed_paper_inc: List[str]
     seed_paper_exc: List[str]
     remember_selection: bool
 
 
+class PerCriteriaPromptingConfig(BaseModel):
+    screening_type: Literal[JobPromptingType.PER_CRITERIA] = JobPromptingType.PER_CRITERIA
+    screening_target: ScreeningTarget = ScreeningTarget.PAPER
+
 PromptingConfig = Annotated[
-    Union[ZeroShotPromptingConfig, FewShotPromptingConfig],
+    Union[ZeroShotPromptingConfig, FewShotPromptingConfig, PerCriteriaPromptingConfig],
     Field(discriminator="screening_type"),
 ]
 
 
-class JobCreate(BaseModel):
+class JobCreateRequest(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode = JobScreeningMode.TEXT
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
+
+class JobCreate(JobCreateRequest):
+    owner_uuid: UUID
 
 class JobRead(BaseModel):
     uuid: UUID
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode
     created_at: datetime
     updated_at: datetime
 
@@ -80,6 +99,7 @@ class JobReadWithStats(BaseModel):
     project_uuid: UUID
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
+    screening_mode: JobScreeningMode
     created_at: datetime
     updated_at: datetime
 

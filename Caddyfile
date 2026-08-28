@@ -15,6 +15,18 @@ localhost:9443 {
 		reverse_proxy backend_prod:8080
 	}
 
+	handle /login {
+		reverse_proxy backend_prod:8080
+	}
+
+	handle /logout {
+		reverse_proxy backend_prod:8080
+	}
+
+	handle /register-and-privacy-policy {
+		reverse_proxy backend_prod:8080
+	}
+
 	handle /openapi.json {
 		reverse_proxy backend_prod:8080
 	}

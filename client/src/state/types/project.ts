@@ -1,8 +1,11 @@
 import z from "zod";
+import { ScreeningTarget } from "../types";
 
 export const CriteriaModel = z.object({
   inclusion_criteria: z.array(z.string()),
   exclusion_criteria: z.array(z.string()),
+  inclusion_expression: z.string().optional().nullable(),
+  exclusion_expression: z.string().optional().nullable(),
 });
 
 export type Criteria = z.infer<typeof CriteriaModel>;
@@ -25,6 +28,7 @@ export const ProjectModel = z.object({
   name: z.string(),
   criteria: CriteriaModel,
   preferences: ProjectPreferences.nullable(),
+  screening_target: z.nativeEnum(ScreeningTarget),
 });
 
 export const CreatedProjectModel = z.object({

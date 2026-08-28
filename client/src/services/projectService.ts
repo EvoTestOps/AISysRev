@@ -11,6 +11,7 @@ import {
   DeletedProjectModel,
   ProjectModel,
 } from "../state/types/project";
+import {ScreeningTarget} from "../state/types";
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
@@ -35,11 +36,13 @@ export const fetch_project_by_uuid = async (uuid: string): Promise<Project> => {
 export const create_project = async (
   title: string,
   criteria: Criteria,
+  screeningTarget: ScreeningTarget,
 ): Promise<CreatedProject> => {
   try {
     const res = await api.post("/api/v1/project", {
       name: title,
       criteria: criteria,
+      screening_target: screeningTarget,
     });
     return CreatedProjectModel.parse(res.data);
   } catch (error) {

@@ -1,23 +1,26 @@
 import asyncio
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
 from fastapi import UploadFile
+from sqlalchemy import text
 from starlette.datastructures import Headers
 
 from src.core.config import settings
+from src.crud.file_crud import FileCrud
 from src.crud.project_crud import ProjectCrud
+from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
 from src.db.session import Base, engine
-from src.schemas.job import (
-    JobCreate,
-    LLMModelConfig,
-    ZeroShotPromptingConfig,
-)
+from src.schemas.file import FileCreate
+from src.schemas.job import JobCreate, LLMModelConfig, ZeroShotPromptingConfig
+from src.schemas.llm import Criterion, Decision, LikertDecision, StructuredResponse
 from src.schemas.project import Criteria, ProjectCreate
-from src.schemas.llm import StructuredResponse, Criterion, Decision, LikertDecision
+from src.schemas.user import UserCreate
 from src.tools.diagnostics.db_check import run_migration
+from src.tools.pdf_storage import build_storage_path, write_pdf_bytes
 
 # @pytest.fixture(scope="function")
 # def test_client():
@@ -26,10 +29,23 @@ from src.tools.diagnostics.db_check import run_migration
 
 
 @pytest_asyncio.fixture
-async def test_project_uuid(db_ctx):
+async def test_user_uuid(db_ctx):
+    user_crud = db_ctx.crud(UserCrud)
+    user = await user_crud.get_user_by_sub("test-user")
+    if not user:
+        user = await user_crud.create_user(
+            UserCreate(sub="test-user", email="test@test.com")
+        )
+        await db_ctx.commit()
+    return user.uuid
+
+
+@pytest_asyncio.fixture
+async def test_project_uuid(db_ctx, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Project for Job Test",
+        owner_uuid=test_user_uuid,
         criteria=Criteria(
             inclusion_criteria=["A", "B", "C"], exclusion_criteria=["D", "E", "F"]
         ),
@@ -43,9 +59,10 @@ async def test_project_uuid(db_ctx):
 
 
 @pytest.fixture
-def test_job_data(test_project_uuid):
+def test_job_data(test_project_uuid, test_user_uuid):
     return JobCreate(
         project_uuid=test_project_uuid,
+        owner_uuid=test_user_uuid,
         llm_config=LLMModelConfig(
             model_name="test-model",
             model_parameters={"temperature": 0, "top_p": 0.1},
@@ -125,6 +142,28 @@ async def test_files_invalid():
     yield [invalid_file1, invalid_file2, invalid_file3]
 
 
+@pytest.fixture
+def test_pdf_bytes():
+    fixture_path = Path(__file__).parent / "src" / "tests" / "fixtures" / "test.pdf"
+    return fixture_path.read_bytes()
+
+
+@pytest_asyncio.fixture
+async def test_pdf_file_uuid(db_ctx, test_project_uuid, test_user_uuid, test_pdf_bytes):
+    file_crud = db_ctx.crud(FileCrud)
+    storage_path = build_storage_path(test_user_uuid, test_pdf_bytes)
+    write_pdf_bytes(storage_path, test_pdf_bytes)
+    file_record = await file_crud.create_file_record(
+        FileCreate(
+            project_uuid=test_project_uuid,
+            filename="test.pdf",
+            mime_type="application/pdf",
+            storage_path=storage_path,
+        )
+    )
+    return file_record.uuid
+
+
 @pytest.fixture(scope="session", autouse=True)
 def reset_db():
     if settings.APP_ENV == "test" and settings.RUN_MIGRATIONS:
@@ -148,3 +187,28 @@ async def db_ctx():
     async with DBContext() as ctx:
         yield ctx
         await ctx.rollback()
+
+
+@pytest_asyncio.fixture
+async def committing_db():
+    await _truncate_all()
+    yield
+    await _truncate_all()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_shared_redis():
+    yield
+    from src.redis_client.client import close_shared_redis_client
+
+    await close_shared_redis_client()
+
+
+async def _truncate_all():
+    tables = [f'"{t.name}"' for t in Base.metadata.sorted_tables]
+    if not tables:
+        return
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE")
+        )

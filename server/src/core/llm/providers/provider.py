@@ -102,6 +102,13 @@ class LLMProvider(Generic[P, M], ABC):
     ) -> T:
         pass
 
+    async def embed_async(
+        self,
+        client: AsyncClient,
+        texts: list[str],
+    ) -> list[list[float]]:
+        raise RuntimeError(f"{self.provider_name} does not support embeddings")
+
 
 class Provider(BaseModel):
     name: str

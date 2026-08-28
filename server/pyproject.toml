@@ -8,12 +8,15 @@ dependencies = [
     "aiohttp>=3.13.2",
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
+    "authlib>=1.7.2",
     "celery[redis]>=5.6.0",
     "charset-normalizer>=3.4.4",
     "debugpy>=1.8.19",
     "fastapi[standard]>=0.124.4",
     "flower>=2.0.1",
-    "minio>=7.2.20",
+    "gwet-ac1",
+    "krippendorff>=0.8.2",
+    "itsdangerous>=2.2.0",
     "openai>=2.14.0",
     "pandas>=2.3.3",
     "pydantic>=2.12.5",
@@ -26,6 +29,9 @@ dependencies = [
     "ruff>=0.14.9",
     "sqlalchemy[asyncio]>=2.0.45",
     "uvicorn>=0.38.0",
+    "pypdf>=6.14.2",
+    "langchain-text-splitters>=1.1.2",
+    "boto3>=1.43.67",
 ]
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -70,3 +76,6 @@ formatter = "generic"
 [[tool.alembic.formatter_generic]]
 format = "%(levelname)-5.5s [%(name)s] %(message)s"
 datefmt = "%H:%M:%S"
+
+[tool.uv.sources]
+gwet-ac1 = { git = "https://github.com/EvoTestOps/gwet_ac1" }

@@ -1,5 +1,5 @@
 import { useParams, useRoute, useLocation, useSearch, Link } from "wouter";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
@@ -20,25 +20,37 @@ import {
   FetchedFile,
   LlmConfig,
   createZeroShotPromptingConfig,
+  createPerCriteriaPromptingConfig,
   JobPromptingType,
+  JobScreeningMode,
   Provider,
+  PerCriteriaStatsResponse
 } from "../state/types";
+import {
+  fetchPerCriteriaStats,
+} from "../services/resultService";
+import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { twMerge } from "tailwind-merge";
 import {
+  BarChart2,
   ChartCandlestick,
   CircleAlert,
   CircleCheck,
   CircleStop,
   Download,
   FileText,
+  Info,
+  ListChecks,
   Loader,
   Sparkles,
   Square,
   SquareCheckBig,
   Trash2,
   TriangleAlert,
+  User,
+  Users,
   XCircle
 } from "lucide-react";
 import { Card } from "../components/Card";
@@ -52,11 +64,19 @@ import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
 import { retrieve_models } from "../services/llmService";
+import { importFulltextFromEndnoteXml } from "../services/fileService";
+import { ScreeningTarget } from "../state/types";
 
 type ActionComponentProps = {
   hasPapers: boolean;
   projectUuid: string;
   downloadCsv: () => unknown;
+  downloadMissingFulltextRis: () => unknown;
+  onImportFulltext: () => unknown;
+  importingFulltext: boolean;
+  onPerCriteriaStats: () => void;
+  hasMultiplePcJobs: boolean;
+  screeningTarget: ScreeningTarget;
 };
 
 type ModelConfigurationProps = {
@@ -73,6 +93,8 @@ const fmt = new Intl.NumberFormat("en", {
   maximumFractionDigits: 1,
 });
 
+
+
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
   modelParametersSchema,
@@ -86,7 +108,7 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
     return null;
   }
   return isLlmSelected && modelParametersSchema ? (
-    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md">
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
@@ -109,9 +131,9 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
           aria-hidden="true"
         >
           <path
-            fill-rule="evenodd"
+            fillRule="evenodd"
             d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-            clip-rule="evenodd"
+            clipRule="evenodd"
           />
         </svg>
       </summary>
@@ -206,7 +228,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
     "rounded-lg p-2 h-8 bg-whitecursor-pointer text-sm border-1 border-slate-400 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 bg-white accent-slate-800",
   );
   return providerParametersSchema ? (
-    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-md w-full">
+    <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-sm w-full">
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
@@ -221,9 +243,9 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
           aria-hidden="true"
         >
           <path
-            fill-rule="evenodd"
+            fillRule="evenodd"
             d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-            clip-rule="evenodd"
+            clipRule="evenodd"
           />
         </svg>
       </summary>
@@ -324,9 +346,44 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   hasPapers,
   projectUuid,
   downloadCsv,
+  downloadMissingFulltextRis,
+  onImportFulltext,
+  importingFulltext,
+  onPerCriteriaStats,
+  hasMultiplePcJobs,
+  screeningTarget,
 }) => {
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   return (
     <div className="flex flex-row gap-2">
+      {hasMultiplePcJobs && (
+        <Button variant="slate" onClick={onPerCriteriaStats} title="Per-criteria agreement statistics">
+          <BarChart2 />
+          <span>PC Agreement Stats</span>
+        </Button>
+      )}
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={downloadMissingFulltextRis}
+          title="Download papers missing full text"
+          disabled={!hasPapers}
+        >
+          <Download />
+          <span>Download papers missing full text</span>
+        </Button>
+      )}
+      {!isGithubScreening && (
+        <Button
+          variant="slate"
+          onClick={onImportFulltext}
+          title="Import full text (Zotero Export Folder)"
+          disabled={!hasPapers || importingFulltext}
+        >
+          <Download />
+          <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
+        </Button>
+      )}
       <Button
         variant="slate"
         onClick={downloadCsv}
@@ -343,6 +400,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           )}
           href={`/api/v1/result/html?${new URLSearchParams({
             project_uuid: projectUuid,
+            screening_target: screeningTarget,
           }).toString()}`}
           target="__blank"
           rel="noopener noreferrer"
@@ -422,13 +480,15 @@ export const ProjectPage = () => {
   const [isLlmProviderSelected, setIsLlmProviderSelected] = useState(false);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLlmSelected, setIsLlmSelected] = useState(false);
-  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS">("ZS");
+  const [promptingStrategy, setPromptingStrategy] = useState<"ZS" | "FS" | "PC">("ZS");
+  const [screeningMode, setScreeningMode] = useState<JobScreeningMode>(JobScreeningMode.TEXT);
 
   const getPapers = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapers(projectUuid);
 
   const [jobToCancel, setJobToCancel] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [perCriteriaStatsData, setPerCriteriaStatsData] = useState<PerCriteriaStatsResponse | null>(null);
 
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
@@ -456,25 +516,34 @@ export const ProjectPage = () => {
 
   const project = getProjectByUuid(projectUuid);
 
+  const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemName = isGithubScreening ? "repository" : "paper";
+  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
   const tokenEstimation = useMemo<TokenEstimation | null>(() => {
-    if (!projectUuid || papers.length === 0) {
+    if (!projectUuid || papers.length === 0 || !project) {
       return null;
     }
     const INPUT_TOKENS_PER_PAPER = 1880;
     const OUTPUT_TOKENS_PER_PAPER = 1300;
     const FEW_SHOT_MULTIPLIER = 1.4;
 
-    const isFewShot = promptingStrategy !== "ZS";
-    const multiplier = isFewShot ? FEW_SHOT_MULTIPLIER : 1;
+    if (promptingStrategy === "PC") {
+      const criteriaCount =
+        (project.criteria.inclusion_criteria.length ?? 0) +
+        (project.criteria.exclusion_criteria.length ?? 0);
+      return {
+        estimated_input_tokens: Math.round(papers.length * INPUT_TOKENS_PER_PAPER * criteriaCount),
+        estimated_output_tokens: Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER),
+      };
+    }
 
-    const inputTokens = Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier);
-    const outputTokens = Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER);
-
+    const multiplier = promptingStrategy === "FS" ? FEW_SHOT_MULTIPLIER : 1;
     return {
-      estimated_input_tokens: inputTokens,
-      estimated_output_tokens: outputTokens,
+      estimated_input_tokens: Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier),
+      estimated_output_tokens: Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER),
     };
-  }, [projectUuid, papers.length, promptingStrategy])
+  }, [projectUuid, papers.length, promptingStrategy, project])
 
   useEffect(() => {
     if (project !== undefined) {
@@ -651,49 +720,57 @@ export const ProjectPage = () => {
 
   const currentTaskUuid = paperUuid ? paperToTaskMap[paperUuid] : undefined;
 
-  const createZeroShotJob = useCallback(async () => {
+  const buildLlmConfig = useCallback((): LlmConfig | null => {
     if (!selectedLlm) {
       toast.error("Please select a model before creating a task.");
-      return;
+      return null;
     }
     if (!selectedLlmProvider) {
       toast.error("Please select a provider before creating a task.");
-      return;
+      return null;
     }
-    const llmConfig: LlmConfig = {
+    return {
       model_name: selectedLlm.value,
       provider_name: selectedLlmProvider.value,
-      model_parameters: modelFormValues, // Form values contain all LLM-specific configuration what is needed
+      model_parameters: modelFormValues,
       provider_parameters: providerFormValues,
     };
+  }, [selectedLlm, selectedLlmProvider, modelFormValues, providerFormValues]);
 
-    const promptingConfig = createZeroShotPromptingConfig();
-
+  const createZeroShotJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig);
+      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget), screeningMode);
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
     }
-  }, [
-    selectedLlm,
-    selectedLlmProvider,
-    modelFormValues,
-    providerFormValues,
-    projectUuid,
-    fetchJobsForProject,
-  ]);
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
+
+  const createPerCriteriaJob = useCallback(async () => {
+    const llmConfig = buildLlmConfig();
+    if (!llmConfig) return;
+    try {
+      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget), screeningMode);
+      fetchJobsForProject(projectUuid);
+    } catch (e) {
+      console.error("Error creating job:", e);
+      toast.error("Error creating job");
+    }
+  }, [buildLlmConfig, projectUuid, fetchJobsForProject, screeningMode, screeningTarget]);
 
   const uploadFilesToBackend = useCallback(
     async (files: File[]) => {
       try {
-        const res = await fileUploadToBackend(files, projectUuid);
+        const res = await fileUploadToBackend(files, projectUuid, screeningTarget);
         if (res.valid_filenames?.length) {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
         if ((res.empty_abstract_count ?? 0) > 0) {
-          toast.warn(`${res.empty_abstract_count} abstracts are empty - results will not be optimal`, { autoClose: 8000 })
+          const emptyFieldName = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY ? "readme" : "abstract";
+          toast.warn(`${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`, { autoClose: 8000 })
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
@@ -709,7 +786,7 @@ export const ProjectPage = () => {
         throw e;
       }
     },
-    [projectUuid],
+    [projectUuid, screeningTarget],
   );
 
   const fetchFiles = useCallback(async () => {
@@ -755,14 +832,14 @@ export const ProjectPage = () => {
   const openManualEvaluation = useCallback(() => {
     if (evaluationFinished) return;
     if (papers.length === 0) {
-      toast.warn("No papers available.");
+      toast.warn(`No ${itemNamePlural} available.`);
       return;
     }
     const firstWithTask = papers.find((paper) => paperToTaskMap[paper.uuid]);
     const target = firstWithTask || papers[0];
     if (!target) return;
     navigate(`/project/${projectUuid}/evaluate?paperUuid=${target.uuid}`);
-  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished]);
+  }, [papers, paperToTaskMap, navigate, projectUuid, evaluationFinished, itemNamePlural]);
 
   const nextPaper = useCallback(async () => {
     if (!paperUuid) return;
@@ -819,6 +896,7 @@ export const ProjectPage = () => {
       const response = await fetch(
         `/api/v1/result/download_result_csv?${new URLSearchParams({
           project_uuid: projectUuid,
+          screening_target: screeningTarget,
         }).toString()}`,
       );
       if (!response.ok) {
@@ -835,15 +913,115 @@ export const ProjectPage = () => {
       window.URL.revokeObjectURL(url);
     }
     dl().catch(console.error);
+  }, [projectUuid, screeningTarget]);
+
+  const downloadMissingFulltextRis = useCallback(() => {
+    async function dl() {
+      if (!projectUuid) return;
+      const response = await fetch(
+        `/api/v1/paper/${projectUuid}/missing_fulltext_ris`,
+      );
+      if (!response.ok) {
+        return;
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `project_${projectUuid}_missing_fulltext.ris`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    }
+    dl().catch(console.error);
   }, [projectUuid]);
 
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+  const [importingFulltext, setImportingFulltext] = useState(false);
+
+  const setFolderInputRef = useCallback((node: HTMLInputElement | null) => {
+    folderInputRef.current = node;
+    if (node) {
+      node.setAttribute("webkitdirectory", "true");
+    }
+  }, []);
+
+  const handleFolderSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    if (!projectUuid) return;
+
+    const fileArray = Array.from(files);
+    const xmlFile = fileArray.find((f) => f.name.toLowerCase().endsWith(".xml"));
+    const pdfFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith(".pdf"));
+    const pdfRelativePaths = pdfFiles.map((f) => f.webkitRelativePath);
+
+    if (!xmlFile) {
+      toast.error("No XML file found in the selected folder");
+      e.target.value = "";
+      return;
+    }
+
+    setImportingFulltext(true);
+    try {
+      const result = await importFulltextFromEndnoteXml(
+        projectUuid,
+        xmlFile,
+        pdfFiles,
+        pdfRelativePaths,
+      );
+      toast.success(
+        `Matched ${result.matched_count} full text${result.matched_count === 1 ? "" : "s"}` +
+        (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
+      );
+      if (result.unmatched.length > 0) {
+        console.warn("Unmatched files:", result.unmatched);
+      }
+      await fetchPapers(projectUuid);
+      await fetchFiles();
+    } catch (error) {
+      console.error("Failed to import full text:", error);
+      toast.error("Failed to import full text");
+    } finally {
+      setImportingFulltext(false);
+      e.target.value = "";
+    }
+  };
+
+  const triggerFulltextImport = useCallback(() => {
+    folderInputRef.current?.click();
+  }, []);
+
   const hasPapers = papers && papers.length > 0;
+
+  const hasMultiplePcJobs =
+    jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA).length >= 2;
+
+  // TODO: Use redux
+  const handlePerCriteriaStats = useCallback(async () => {
+    try {
+      const data = await fetchPerCriteriaStats(projectUuid);
+      setPerCriteriaStatsData(data);
+    } catch (e) {
+      console.error("Error fetching agreement stats:", e);
+      toast.error("Failed to load agreement statistics.");
+    }
+  }, [projectUuid]);
 
   useEffect(() => {
     if (isLlmProviderSelected && !modelsLoaded) {
       fetchModels();
     }
   }, [fetchModels, isLlmProviderSelected, modelsLoaded]);
+
+  if (loadingProjects) {
+    return (
+      <Layout title="">
+        <Skeleton />
+      </Layout>
+    );
+  }
 
   if (!project) {
     return <NotFoundPage />;
@@ -852,6 +1030,9 @@ export const ProjectPage = () => {
   const inclusionCriteria = project?.criteria.inclusion_criteria;
   const exclusionCriteria = project?.criteria.exclusion_criteria;
 
+  const csvFiles = fetchedFiles.filter((f) => f.mime_type !== "application/pdf");
+  const pdfFileCount = fetchedFiles.filter((f) => f.mime_type === "application/pdf").length;
+
   return (
     <Layout
       title={project?.name || ""}
@@ -859,7 +1040,13 @@ export const ProjectPage = () => {
         <ActionComponent
           hasPapers={hasPapers}
           downloadCsv={downloadCsv}
+          downloadMissingFulltextRis={downloadMissingFulltextRis}
+          onImportFulltext={triggerFulltextImport}
+          importingFulltext={importingFulltext}
           projectUuid={projectUuid}
+          onPerCriteriaStats={handlePerCriteriaStats}
+          hasMultiplePcJobs={hasMultiplePcJobs}
+          screeningTarget={screeningTarget}
         />
       )}
     >
@@ -868,7 +1055,7 @@ export const ProjectPage = () => {
           Screening tasks
         </TabButton>
         <TabButton href={`/project/${projectUuid}/papers/page/1`}>
-          List of papers
+          List of {itemNamePlural}
         </TabButton>
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
@@ -895,8 +1082,10 @@ export const ProjectPage = () => {
                       JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
                     {job.prompting_config.screening_type ==
                       JobPromptingType.FEW_SHOT && <Badge text="FS" invert />}
+                    {job.prompting_config.screening_type ==
+                      JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
                   </>
-                  <div className="flex items-center font-semibold">
+                  <div className="flex items-center gap-2 font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
                       <span className="text-sm text-nowrap">
                         {job.llm_config.model_name.length > 30
@@ -904,6 +1093,12 @@ export const ProjectPage = () => {
                           : job.llm_config.model_name}
                       </span>
                     </Tooltip>
+                    <span className="text-xs font-normal text-slate-500">
+                      {job.screening_mode === JobScreeningMode.TEXT &&
+                        (job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY ? "GitHub" : "Abstract")}
+                      {job.screening_mode === JobScreeningMode.PDF && "PDF"}
+                      {job.screening_mode === JobScreeningMode.AUTOMATIC && "Automatic"}
+                    </span>
                   </div>
                   <div className="flex justify-end items-end w-full">
                     <div className="relative w-56 h-8">
@@ -945,7 +1140,7 @@ export const ProjectPage = () => {
                                   strokeWidth={2}
                                 />
                                 <span>
-                                  Screening paper {completedCount} of {totalCount}
+                                  Screening {itemName} {completedCount} of {totalCount}
                                 </span>
                               </>
                             )}
@@ -963,6 +1158,17 @@ export const ProjectPage = () => {
                                 />
                                 <span className="text-orange-600">
                                   Done with errors ({errorCount})
+                                </span>
+                              </>
+                            )}
+                            {status === JobStatus.FAILED && (
+                              <>
+                                <CircleAlert
+                                  size={14}
+                                  className="text-red-600"
+                                />
+                                <span className="text-red-600">
+                                  Screening failed
                                 </span>
                               </>
                             )}
@@ -1003,7 +1209,7 @@ export const ProjectPage = () => {
         </div>
         <div className="flex flex-col gap-2">
           <SectionHeader
-            title="Step 1. Upload papers"
+            title={`Step 1. Upload ${itemNamePlural}`}
             selected={fetchedFiles.length !== 0}
           />
           <Card>
@@ -1015,15 +1221,20 @@ export const ProjectPage = () => {
             {loadingProjects ? (
               <Skeleton />
             ) : (
-              <TruncatedFileNames files={fetchedFiles} maxLength={25} />
+              <>
+              <TruncatedFileNames files={csvFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
+              {pdfFileCount > 0 && (
+                <p className="text-sm font-medium">{pdfFileCount} {pdfFileCount === 1 ? "PDF" : "PDFs"}</p>
+              )}
+              </>
             )}
           </Card>
           <SectionHeader title="Step 2. Create task" />
-          <Card className="relative w-72">
+          <Card className="relative w-84">
             {fetchedFiles.length === 0 && (
               <div className="absolute select-none z-50 top-0 p-8 left-0 bg-gray-700 opacity-90 w-full h-full rounded-md flex items-center text-center text-white">
                 <CircleAlert strokeWidth={2} />
-                <span>To create tasks, you must first upload papers.</span>
+                <span>To create tasks, you must first upload {itemNamePlural}.</span>
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
@@ -1108,59 +1319,193 @@ export const ProjectPage = () => {
               modelParametersSchema={modelParametersSchema}
               setModelFormValue={setModelFormValue}
             />
-            <div className="inline-flex rounded-xl bg-slate-50 p-1 ring-1 gap-1 ring-slate-200">
+            {!isGithubScreening && (
+            <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">Screening mode</span>
+                <Tooltip title="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest.">
+                  <Info size={14} className="text-slate-400 cursor-help" />
+                </Tooltip>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.TEXT,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.TEXT,
+                    }
+                  )}
+                >
+                  <span>Abstract</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.PDF)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.PDF,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.PDF && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>PDF</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={promptingStrategy === "PC"}
+                  onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
+                  className={classNames(
+                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                    {
+                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.AUTOMATIC,
+                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.AUTOMATIC && promptingStrategy !== "PC",
+                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
+                    }
+                  )}
+                >
+                  <span>Automatic</span>
+                </button>
+              </div>
+              {promptingStrategy === "PC" && (
+                <p className="text-xs text-amber-600 -mt-1">PDF/Automatic screening modes aren't available with per-criterion evaluation yet</p>)}
+            </div>
+            )}
+            <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
+                <Tooltip title="Choose how criteria are evaluated during screening.">
+                  <Info size={14} className="text-slate-400 cursor-help" />
+                </Tooltip>
+              </div>
               <button
                 type="button"
-                className={twMerge(
-                  classNames(
-                    "rounded-lg px-3 py-2 text-sm  text-slate-900 hover:cursor-pointer",
-                    {
-                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
-                        promptingStrategy === "ZS",
-                      "opacity-20 hover:cursor-default":
-                        !isLlmProviderSelected || !isLlmSelected,
-                    },
-                  ),
-                )}
-                onClick={() => {
-                  if (isLlmProviderSelected && isLlmSelected) {
-                    setPromptingStrategy("ZS");
+                onClick={() => { if (promptingStrategy === "PC") setPromptingStrategy("ZS"); }}
+                className={classNames(
+                  "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
+                  {
+                    "border-blue-500 bg-blue-50/60": promptingStrategy !== "PC",
+                    "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy === "PC",
                   }
-                }}
-                aria-pressed={promptingStrategy === "ZS"}
+                )}
               >
-                Zero-shot
+                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
+                  "border-blue-500": promptingStrategy !== "PC",
+                  "border-slate-300": promptingStrategy === "PC",
+                })}>
+                  {promptingStrategy !== "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                </div>
+                <div className="flex-shrink-0 p-1.5 rounded-md bg-blue-100">
+                  <Sparkles size={16} className="text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">All criteria together</div>
+                  <div className="text-xs text-slate-500">One LLM call evaluates all criteria.</div>
+                  <div className="text-xs text-slate-500">Supports zero-shot and few-shot prompting.</div>
+                </div>
               </button>
               <button
                 type="button"
-                className={twMerge(
-                  classNames(
-                    "rounded-lg px-3 py-2 text-sm text-slate-900 hover:cursor-pointer",
-                    {
-                      "bg-blue-600 text-white font-medium shadow-sm hover:cursor-default":
-                        promptingStrategy === "FS",
-                      "opacity-20 hover:cursor-default":
-                        !isLlmProviderSelected || !isLlmSelected,
-                    },
-                  ),
-                )}
                 onClick={() => {
-                  if (isLlmProviderSelected && isLlmSelected) {
-                    setPromptingStrategy("FS");
+                  setPromptingStrategy("PC");
+                  if (screeningMode !== JobScreeningMode.TEXT) {
+                    setScreeningMode(JobScreeningMode.TEXT);
                   }
-                }}
-                aria-pressed={promptingStrategy === "FS"}
+                  }}
+                className={classNames(
+                  "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
+                  {
+                    "border-blue-500 bg-blue-50/60": promptingStrategy === "PC",
+                    "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy !== "PC",
+                  }
+                )}
               >
-                Few-shot
+                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
+                  "border-blue-500": promptingStrategy === "PC",
+                  "border-slate-300": promptingStrategy !== "PC",
+                })}>
+                  {promptingStrategy === "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                </div>
+                <div className="flex-shrink-0 p-1.5 rounded-md bg-purple-100">
+                  <ListChecks size={16} className="text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-800">One call per criterion</div>
+                  <div className="text-xs text-slate-500">Runs one LLM call for each criterion.</div>
+                  <div className="text-xs text-slate-500">Prompting strategy is fixed for this mode.</div>
+                </div>
               </button>
             </div>
+            {promptingStrategy !== "PC" && (
+              <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-700">Prompting strategy</span>
+                </div>
+                <p className="text-xs text-slate-500 -mt-1">Choose how examples are provided to the model.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPromptingStrategy("ZS")}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white": promptingStrategy === "ZS",
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "ZS",
+                      }
+                    )}
+                  >
+                    <User size={14} />
+                    <span>Zero-shot</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPromptingStrategy("FS")}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white": promptingStrategy === "FS",
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "FS",
+                      }
+                    )}
+                  >
+                    <Users size={14} />
+                    <span>Few-shot</span>
+                  </button>
+                </div>
+              </div>
+            )}
+            {promptingStrategy === "PC" && (
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-3">
+                <div className="text-xs font-semibold text-slate-600 mb-1">Per-criteria logic</div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Inclusion:</span>
+                  <span className="font-mono font-medium text-slate-700">{project.criteria.inclusion_expression ?? "default (AND)"}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Exclusion:</span>
+                  <span className="font-mono font-medium text-slate-700">{project.criteria.exclusion_expression ?? "default (OR)"}</span>
+                </div>
+              </div>
+            )}
             {tokenEstimation && (
-              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-2">
-                <div className="flex justify-between text-sm text-slate-500">
+              <div className="w-full flex flex-col gap-1 border border-slate-200 rounded-lg p-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xs font-semibold text-slate-600">Estimated usage</span>
+                  <Tooltip title="Values are approximate estimates.">
+                    <Info size={13} className="text-slate-400 cursor-help" />
+                  </Tooltip>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Input tokens:</span>
                   <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_input_tokens)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-slate-500">
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Output tokens:</span>
                   <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_output_tokens)}</span>
                 </div>
@@ -1172,6 +1517,8 @@ export const ProjectPage = () => {
                 onClick={() => {
                   if (promptingStrategy === "ZS") {
                     createZeroShotJob();
+                  } else if (promptingStrategy === "PC") {
+                    createPerCriteriaJob();
                   } else {
                     navigate(`/project/${projectUuid}/few_shot`);
                   }
@@ -1225,6 +1572,8 @@ export const ProjectPage = () => {
             model_parameters: modelFormValues,
             provider_parameters: {},
           }}
+          screeningMode={screeningMode}
+          screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
             fetchJobsForProject(projectUuid);
@@ -1240,8 +1589,16 @@ export const ProjectPage = () => {
           exclusionCriteria={exclusionCriteria || []}
           papers={papers}
           paperUuid={paperUuid}
+          screeningTarget={screeningTarget}
           onEvaluated={nextPaper}
           onClose={() => navigate(`/project/${projectUuid}`)}
+        />
+      )}
+      {perCriteriaStatsData && (
+        <PerCriteriaStatsModal
+          open={true}
+          onClose={() => setPerCriteriaStatsData(null)}
+          data={perCriteriaStatsData}
         />
       )}
       {jobToCancel && (
@@ -1268,6 +1625,13 @@ export const ProjectPage = () => {
           confirmButtonIcon={<Trash2 size={16} />}
         />
       )}
+      <input
+        type="file"
+        ref={setFolderInputRef}
+        multiple
+        onChange={handleFolderSelected}
+        className="hidden"
+      />
     </Layout>
   );
 };

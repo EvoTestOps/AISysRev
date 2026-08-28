@@ -19,8 +19,11 @@ class LLMService:
 
     def get_llm(self, provider_name: str) -> type[LLMProvider]:
         Provider = next(
-            prov for prov in llm_providers if prov.provider_name == provider_name
+            (prov for prov in llm_providers if prov.provider_name == provider_name),
+            None
         )
+        if Provider is None:
+            raise ValueError(f"Unknown provider: {provider_name}")
         return Provider  # type: ignore
 
     async def call_llm(
@@ -42,6 +45,22 @@ class LLMService:
             client=client,
         )
         return response_formatted
+    
+    async def embed(
+        self,
+        llm: type[LLMProvider],
+        provider_parameters: dict[str, Any],
+        runtime_parameters: ProviderRuntimeParameters,
+        texts: list[str],
+        client: AsyncClient,
+    ) -> list[list[float]]:
+        embedding = await llm(
+            provider_parameters, runtime_parameters
+        ).embed_async(
+            client=client,
+            texts=texts,
+        )
+        return embedding
 
 
 def create_llm_service(db_ctx: DBContext) -> LLMService:

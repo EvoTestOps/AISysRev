@@ -11,16 +11,19 @@ import { LlmModelCard } from "./LlmModelCard";
 import { CriteriaList } from "./CriteriaList";
 import { Button } from "./Button";
 import {
+  JobScreeningMode,
   JobTaskHumanResult,
   JobTaskStatus,
-  Paper,
+  PaperWithModelEval,
   PromptingConfig,
+  ScreeningTarget,
 } from "../state/types";
 import axios from "axios";
 import { AlertMessage } from "./AlertMessage";
 import { useTypedStoreActions } from "../state/store";
 
 type LLMResult = {
+  mode?: string;
   overall_decision: {
     reason: string;
     binary_decision: boolean;
@@ -38,26 +41,28 @@ type JobTaskReadWithLLMConfig = {
   abstract: string;
   paper_uuid: string;
   status:
-    | "NOT_STARTED"
-    | "PENDING"
-    | "RUNNING"
-    | "DONE"
-    | "ERROR"
-    | "CANCELLED";
+  | "NOT_STARTED"
+  | "PENDING"
+  | "RUNNING"
+  | "DONE"
+  | "ERROR"
+  | "CANCELLED";
   result: LLMResult | null;
   human_result: JobTaskHumanResult | null;
   status_metadata?: Record<string, any> | null;
   error: string | null;
   llm_config: Record<string, any> | null;
   prompting_config: Record<string, any> | null;
+  screening_mode: JobScreeningMode | null;
 };
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
-  papers: Paper[];
+  papers: PaperWithModelEval[];
   paperUuid: string | null;
+  screeningTarget: ScreeningTarget;
   onClose: () => void;
   onEvaluated: () => void;
 };
@@ -68,6 +73,7 @@ type ModelSuggestion = {
   likertScale: string | null;
   probability: number | null;
   screeningType: PromptingConfig["screening_type"];
+  screeningMode: JobScreeningMode | null;
 };
 
 export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
@@ -75,6 +81,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   exclusionCriteria,
   papers,
   paperUuid,
+  screeningTarget,
   onClose,
   onEvaluated,
 }) => {
@@ -87,11 +94,13 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
   const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult)
 
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+
   const handleAddHumanResult = useCallback((humanResult: JobTaskHumanResult) => {
     if (!paperUuid || !currentPaper) return;
 
     try {
-      addHumanResult({projectUuid: currentPaper.project_uuid, paperUuid, humanResult});
+      addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
       onEvaluated();
     } catch (error) {
       console.error("Error adding human result:", error);
@@ -106,6 +115,9 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
     // TODO: Refactor with types and proper handling
     return data
       .filter((entry) => entry.status !== JobTaskStatus.ERROR)
+      // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
+      // skip to avoid erroring.
+      .filter((entry) => !entry.result || entry.result.mode !== "PER_CRITERIA")
       .map((entry) => {
         return {
           modelName: entry.llm_config ? entry.llm_config.model_name : "N/A",
@@ -123,6 +135,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           screeningType: entry.prompting_config
             ? entry.prompting_config.screening_type
             : null,
+          screeningMode: entry.screening_mode,
         } satisfies ModelSuggestion;
       });
     /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -192,6 +205,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                   likertScale={suggestion.likertScale}
                   probability={suggestion.probability}
                   screeningType={suggestion.screeningType}
+                  screeningMode={suggestion.screeningMode}
                 />
               ))}
             </div>
@@ -200,7 +214,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           <div className="flex flex-col min-h-0">
             <div className="pr-10">
               <DialogTitle className="text-lg font-bold mb-3">
-                Paper #{currentPaper.paper_id}: {currentPaper.title}
+                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}: {currentPaper.title}
               </DialogTitle>
             </div>
             <div
@@ -209,14 +223,27 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             >
               {currentPaper.doi && (
                 <div className="text-sm pt-2 pb-2">
-                  <strong>DOI:</strong>{" "}
+                  <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                   <a
-                    href={encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                    href={isGithubScreening ? (/^https?:\/\//i.test(currentPaper.doi) ? currentPaper.doi : undefined) : encodeURI(`https://doi.org/${currentPaper.doi}`)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover-underline text-blue-600 hover-underline"
+                    className="underline text-blue-600 hover:text-blue-800"
                   >
                     {currentPaper.doi}
+                  </a>
+                </div>
+              )}
+              {currentPaper.pdf_file_uuid && currentPaper.pdf_filename && (
+                <div className="text-sm pt-2 pb-2">
+                  <strong>Full text:</strong>{" "}
+                  <a
+                    href={`/api/v1/files/${currentPaper.pdf_file_uuid}/download`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-blue-600 hover:text-blue-800"
+                  >
+                    {currentPaper.pdf_filename}
                   </a>
                 </div>
               )}

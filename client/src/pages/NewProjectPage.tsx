@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { toast } from "react-toastify";
 import { H6 } from "../components/Typography";
@@ -12,6 +12,7 @@ import { Card } from "../components/Card";
 import { useTypedStoreActions } from "../state/store";
 import { Button } from "../components/Button";
 import type { Criteria } from "../state/types/project";
+import { ScreeningTarget } from "../state/types";
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
@@ -19,22 +20,24 @@ export const NewProject = () => {
   const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
+  const [inclusionExpression, setInclusionExpression] = useState("");
+  const [exclusionExpression, setExclusionExpression] = useState("");
 
   const [, navigate] = useLocation();
 
   const handleInclusionSetup = useCallback(() => {
     if (inclusionCriteriaInput.trim() !== "") {
-      setInclusionCriteria([...inclusionCriteria, inclusionCriteriaInput]);
+      setInclusionCriteria((prev) => [...prev, inclusionCriteriaInput]);
       setInclusionCriteriaInput("");
     }
-  }, [inclusionCriteria, inclusionCriteriaInput]);
+  }, [inclusionCriteriaInput]);
 
   const handleExclusionSetup = useCallback(() => {
     if (exclusionCriteriaInput.trim() !== "") {
-      setExclusionCriteria([...exclusionCriteria, exclusionCriteriaInput]);
+      setExclusionCriteria((prev) => [...prev, exclusionCriteriaInput]);
       setExclusionCriteriaInput("");
     }
-  }, [exclusionCriteria, exclusionCriteriaInput]);
+  }, [exclusionCriteriaInput]);
 
   const deleteInclusionCriteria = useCallback((index: number) => {
     setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
@@ -48,6 +51,22 @@ export const NewProject = () => {
     (actions) => actions.refreshProjects,
   );
 
+  const criteriaIdMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    inclusionCriteria.forEach((desc, i) => { map[`IC${i + 1}`] = desc; });
+    return map;
+  }, [inclusionCriteria]);
+
+  const exclusionCriteriaIdMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    exclusionCriteria.forEach((desc, i) => { map[`EC${i + 1}`] = desc; });
+    return map;
+  }, [exclusionCriteria]);
+
+  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(
+    ScreeningTarget.PAPER,
+  );
+
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
       toast.error("Title is required");
@@ -59,16 +78,28 @@ export const NewProject = () => {
       const criteria: Criteria = {
         inclusion_criteria: inclusionCriteria,
         exclusion_criteria: exclusionCriteria,
+        ...(inclusionExpression.trim()
+          ? { inclusion_expression: inclusionExpression.trim() }
+          : {}),
+        ...(exclusionExpression.trim()
+          ? { exclusion_expression: exclusionExpression.trim() }
+          : {}),
       };
 
       try {
-        const res = await create_project(title, criteria);
-        // console.log("Project created, res: ", res);
+        const res = await create_project(title, criteria, screeningTarget);
         return { id: res.id, uuid: res.uuid };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.response?.data?.detail?.errors) {
           throw new Error(JSON.stringify(error.response.data.detail.errors));
+        }
+        if (Array.isArray(error.response?.data?.detail)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const msg = (error.response.data.detail as any[])
+            .map((e) => e.msg as string)
+            .join("\n");
+          throw new Error(msg);
         }
         throw error;
       }
@@ -76,37 +107,41 @@ export const NewProject = () => {
 
     async function handle() {
       let uuid: string | null = null;
-
       try {
         const res = await create();
-
         uuid = res.uuid;
         toast.success("Project created successfully!");
-
         if (uuid) {
           refreshProjects();
           navigate(`/project/${uuid}`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        const msg = typeof error?.message === "string" ? error.message : "";
         try {
-          const msg = typeof error?.message === "string" ? error.message : "";
           const parsed = JSON.parse(msg);
-
           if (Array.isArray(parsed)) {
             ExpandableToast(parsed);
           } else {
-            toast.error("Project creation failed (non-array error).");
+            toast.error("Project creation failed.");
           }
-        } catch (parseError) {
-          console.error("JSON parsing failed:", parseError);
-          toast.error(
-            `Project creation failed: ${error.message || "Unknown error"}`,
-          );
+        } catch {
+          toast.error(msg || "Project creation failed.");
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, refreshProjects, navigate]);
+  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, exclusionExpression, refreshProjects, navigate, screeningTarget]);
+
+  const handleReset = useCallback(() => {
+    setTitle("");
+    setInclusionCriteria([]);
+    setExclusionCriteria([]);
+    setInclusionCriteriaInput("");
+    setExclusionCriteriaInput("");
+    setInclusionExpression("");
+    setExclusionExpression("");
+    setScreeningTarget(ScreeningTarget.PAPER);
+  }, []);
 
   return (
     <Layout title="New Project">
@@ -169,17 +204,98 @@ export const NewProject = () => {
           </div>
         </Card>
         <Card>
+          <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-slate-800 cursor-pointer"
+                checked={screeningTarget === ScreeningTarget.GITHUB_REPOSITORY}
+                onChange={(event) =>
+                  setScreeningTarget(
+                    event.target.checked
+                      ? ScreeningTarget.GITHUB_REPOSITORY
+                      : ScreeningTarget.PAPER,
+                  )
+                }
+              />
+              <div className="flex flex-col">
+                <H6 className="select-none">GitHub repository screening</H6>
+                <span className="text-sm font-normal">
+                  To get a CSV file with correct field names, use this tool{" "}
+                  <a
+                    href="https://github.com/EvoTestOps/github-query-tool/tree/main"
+                    target="_blank"
+                    rel="noopener norefferer"
+                    className="underline"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    Github Query Tool
+                  </a>
+                </span>
+              </div>
+          </label>
+        </Card>
+        <Card>
+          <div className="flex flex-col gap-4">
+            <div>
+              <H6>Per-criteria logic <span className="font-normal text-gray-400">(optional)</span></H6>
+              <p className="text-sm text-gray-500 mt-1">
+                By default, a study is included only if it matches <span className="font-semibold text-gray-600">all</span> inclusion criteria (AND) and <span className="font-semibold text-gray-600">none</span> of the exclusion criteria (OR) — this is the standard approach for systematic reviews. Leave both fields blank to use this default.
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                To customize, define your own boolean logic below. Use AND, OR, and NOT — NOT flips a single criterion (e.g. <span className="font-mono">NOT IC1</span>). Use parentheses to group AND/OR sub-expressions.
+              </p>
+            </div>
+            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+              <H6 className="mt-2">Inclusion logic</H6>
+              <div className="flex flex-col gap-1">
+                {Object.keys(criteriaIdMap).length > 0 && (
+                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
+                    {Object.entries(criteriaIdMap).map(([id, desc]) => (
+                      <span key={id}>
+                        <span className="font-mono font-semibold text-gray-600">{id}</span>
+                        {" = "}
+                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
+                  placeholder="e.g. IC1 AND IC2"
+                  value={inclusionExpression}
+                  onChange={(e) => setInclusionExpression(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
+              <H6 className="mt-2">Exclusion logic</H6>
+              <div className="flex flex-col gap-1">
+                {Object.keys(exclusionCriteriaIdMap).length > 0 && (
+                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
+                    {Object.entries(exclusionCriteriaIdMap).map(([id, desc]) => (
+                      <span key={id}>
+                        <span className="font-mono font-semibold text-gray-600">{id}</span>
+                        {" = "}
+                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
+                  placeholder="e.g. EC1 OR EC2"
+                  value={exclusionExpression}
+                  onChange={(e) => setExclusionExpression(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </Card>
+        <Card>
           <div className="flex justify-between items-end gap-4">
-            <Button
-              variant="red"
-              onClick={() => {
-                setTitle("");
-                setInclusionCriteria([]);
-                setExclusionCriteria([]);
-                setInclusionCriteriaInput("");
-                setExclusionCriteriaInput("");
-              }}
-            >
+            <Button variant="red" onClick={handleReset}>
               <RotateCcw size={16} />
               <span>Reset</span>
             </Button>
