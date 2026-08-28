@@ -231,8 +231,8 @@ See [Architecture.md](docs/Architecture.md)
 
 Open up the client: [https://localhost:3001](https://localhost:3001)
 
-> [!INFO]
-> `/api` is internally proxied to the backend container, e.g. `https://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
+> [!NOTE]
+> `/api` is internally proxied to the backend container, e.g. `http://localhost:3001/api/v1/health` will be proxied to `http://localhost:8080/api/v1/health`.
 
 API: [https://localhost:3001/api/v1](https://localhost:3001/api/v1)
 
