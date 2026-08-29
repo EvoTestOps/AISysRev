@@ -14,7 +14,9 @@ class FileCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_files(self, project_uuid: UUID, owner_uuid: UUID) -> List[FileReadWithPaperCount]:
+    async def fetch_files(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> List[FileReadWithPaperCount]:
         stmt = (
             select(
                 File.uuid,
@@ -44,8 +46,10 @@ class FileCrud:
         result = await self.db.execute(stmt)
         # TODO: Fix
         return result.mappings().all()  # type: ignore
-    
-    async def fetch_file_by_uuid(self, file_uuid: UUID, owner_uuid: UUID) -> File | None:
+
+    async def fetch_file_by_uuid(
+        self, file_uuid: UUID, owner_uuid: UUID
+    ) -> File | None:
         stmt = (
             select(File)
             .join(Project, Project.uuid == File.project_uuid)
@@ -61,7 +65,7 @@ class FileCrud:
         await self.db.flush()
         await self.db.refresh(new_file)
         return new_file
-    
+
     async def delete_file(self, file: File, owner_uuid: UUID) -> None:
         stmt = (
             select(File.uuid)
@@ -74,7 +78,9 @@ class FileCrud:
             await self.db.delete(file)
             await self.db.flush()
 
-    async def fetch_storage_paths_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> List[str]:
+    async def fetch_storage_paths_by_project(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> List[str]:
         stmt = (
             select(File.storage_path)
             .join(Project, Project.uuid == File.project_uuid)

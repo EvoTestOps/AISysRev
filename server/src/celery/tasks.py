@@ -365,7 +365,10 @@ async def process_job(
                 inc_list, exc_list, inc_expr, exc_expr
             )
 
-        if job_data.screening_mode in (JobScreeningMode.PDF, JobScreeningMode.AUTOMATIC):
+        if job_data.screening_mode in (
+            JobScreeningMode.PDF,
+            JobScreeningMode.AUTOMATIC,
+        ):
             try:
                 llm_service = create_llm_service(db_ctx)
                 pdf_screening_service = create_pdf_screening_service(db_ctx)
@@ -373,7 +376,9 @@ async def process_job(
                 api_key = None
                 if llm.api_key_config_parameter is not None:
                     api_key = await llm_service.setting_service.get_setting(
-                        llm.api_key_config_parameter.key, owner_uuid=job_data.owner_uuid, mask_secret=False
+                        llm.api_key_config_parameter.key,
+                        owner_uuid=job_data.owner_uuid,
+                        mask_secret=False,
                     )
                 await pdf_screening_service.get_criteria_embeddings(
                     llm,
@@ -389,7 +394,9 @@ async def process_job(
                     project_criteria["exclusion_criteria"],
                 )
             except Exception:
-                logger.exception("Failed to precompute criteria embeddings for job %s", job_id)
+                logger.exception(
+                    "Failed to precompute criteria embeddings for job %s", job_id
+                )
 
         logger.info("Updating job task status to %s", JobTaskStatus.PENDING)
         await jobtask_crud.update_job_tasks_status(job_id, JobTaskStatus.PENDING)

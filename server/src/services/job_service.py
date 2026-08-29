@@ -44,7 +44,9 @@ class JobService:
             for row in rows
         ]
 
-    async def fetch_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> list[JobReadWithStats]:
+    async def fetch_by_project(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> list[JobReadWithStats]:
         jobs = await self.job_crud.fetch_jobs_by_project(project_uuid, owner_uuid)
         stats_rows = await self.jobtask_service.fetch_task_stats_by_project(
             project_uuid, owner_uuid
@@ -116,7 +118,10 @@ class JobService:
 
         new_job = await self.job_crud.create_job(job_data)
         await self.jobtask_service.bulk_create(
-            new_job.id, job_data.project_uuid, job_data.owner_uuid, job_data.screening_mode
+            new_job.id,
+            job_data.project_uuid,
+            job_data.owner_uuid,
+            job_data.screening_mode,
         )
 
         job_read = JobRead(

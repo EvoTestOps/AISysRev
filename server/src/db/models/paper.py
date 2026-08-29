@@ -1,17 +1,21 @@
 import enum
 import uuid
 from uuid import UUID as PyUUID
+
 from sqlalchemy import (
-    Text,
-    ForeignKey,
-    UniqueConstraint,
     CheckConstraint,
+    ForeignKey,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy import (
     Enum as SAEnum,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.session import Base
+
 from .mixins import TimestampMixin
 
 
@@ -66,5 +70,8 @@ class Paper(Base, TimestampMixin):
 
     __table_args__ = (
         UniqueConstraint("project_uuid", "paper_id", name="uq_project_paper_id"),
-        CheckConstraint("file_uuid IS NOT NULL OR pdf_file_uuid IS NOT NULL", name="ck_paper_has_source_file"),
+        CheckConstraint(
+            "file_uuid IS NOT NULL OR pdf_file_uuid IS NOT NULL",
+            name="ck_paper_has_source_file",
+        ),
     )

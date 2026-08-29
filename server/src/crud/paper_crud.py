@@ -23,7 +23,7 @@ class PaperCrud:
         self.db.add_all(db_objs)
         await self.db.flush()
         return db_objs
-    
+
     async def fetch_paper_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> Paper | None:
         stmt = (
             select(Paper)
@@ -34,8 +34,9 @@ class PaperCrud:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-
-    async def fetch_papers_by_project_uuid(self, project_uuid: UUID, owner_uuid: UUID) -> Sequence[Paper]:
+    async def fetch_papers_by_project_uuid(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> Sequence[Paper]:
         stmt = (
             select(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
@@ -99,7 +100,9 @@ class PaperCrud:
             paper.human_result = human_result
             await self.db.flush()
 
-    async def count_papers_with_human_results(self, project_uuid: UUID, owner_uuid: UUID) -> int:
+    async def count_papers_with_human_results(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> int:
         stmt = (
             select(func.count())
             .select_from(Paper)
@@ -129,7 +132,9 @@ class PaperCrud:
         elif screening_mode == JobScreeningMode.PDF:
             source_filter = Paper.pdf_file_uuid.isnot(None)
         else:
-            source_filter = or_(Paper.file_uuid.isnot(None), Paper.pdf_file_uuid.isnot(None))
+            source_filter = or_(
+                Paper.file_uuid.isnot(None), Paper.pdf_file_uuid.isnot(None)
+            )
         stmt = (
             select(Paper)
             .join(Project, Project.uuid == Paper.project_uuid)
@@ -156,7 +161,7 @@ class PaperCrud:
             await self.db.flush()
             await self.db.refresh(paper)
         return paper
-    
+
     async def fetch_papers_missing_pdf(
         self, project_uuid: UUID, owner_uuid: UUID
     ) -> Sequence[Paper]:

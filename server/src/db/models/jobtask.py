@@ -1,15 +1,20 @@
 import enum
 import uuid
 from uuid import UUID as PyUUID
+
 from sqlalchemy import (
-    Text,
-    ForeignKey,
     Enum as SAEnum,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import (
+    ForeignKey,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
-from src.schemas.jobtask import JobTaskHumanResult, JobTaskStatus
+
 from src.db.session import Base
+from src.schemas.jobtask import JobTaskHumanResult, JobTaskStatus
+
 from .mixins import TimestampMixin
 
 

@@ -1,4 +1,5 @@
 from io import BytesIO
+
 import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
@@ -10,11 +11,7 @@ def extract_pdf_text(pdf_bytes: bytes) -> str:
     return text.replace("\x00", "")
 
 
-def chunk_text(
-    text: str,
-    chunk_size: int = 500,
-    chunk_overlap: int = 100
-) -> list[str]:
+def chunk_text(text: str, chunk_size: int = 500, chunk_overlap: int = 100) -> list[str]:
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,

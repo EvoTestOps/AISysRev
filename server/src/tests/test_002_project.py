@@ -1,4 +1,5 @@
 import pytest
+
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
 from src.schemas.project import Criteria, ProjectCreate, ProjectRead

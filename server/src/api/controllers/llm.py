@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Optional
-from src.core.llm.providers import llm_providers
-from pydantic import BaseModel
+
 from fastapi import APIRouter, Body, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from src.core.auth import get_current_user
+from src.core.llm.providers import llm_providers
 from src.core.llm.providers.provider import ConfigParameter, LLMProvider, Provider
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
@@ -71,12 +72,16 @@ async def get_available_models(
     try:
         llm_class: type[LLMProvider] = llm_service.get_llm(provider)
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Unknown provider"
+        )
     api_key = None
 
     if llm_class.api_key_config_parameter is not None:
         setting = await llm_service.setting_service.get_setting(
-            llm_class.api_key_config_parameter.key, owner_uuid=current_user.uuid, mask_secret=False
+            llm_class.api_key_config_parameter.key,
+            owner_uuid=current_user.uuid,
+            mask_secret=False,
         )
         if setting is None:
             raise HTTPException(status_code=400, detail="API key missing")

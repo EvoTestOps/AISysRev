@@ -21,7 +21,9 @@ class JobTaskService:
         self.paper_service = paper_service
 
     async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
-        job_tasks = await self.jobtask_crud.fetch_job_tasks_by_job_uuid(job_uuid, owner_uuid)
+        job_tasks = await self.jobtask_crud.fetch_job_tasks_by_job_uuid(
+            job_uuid, owner_uuid
+        )
 
         return [
             JobTaskRead(
@@ -65,24 +67,36 @@ class JobTaskService:
         ]
 
     async def fetch_task_stats_by_project(self, project_uuid: UUID, owner_uuid: UUID):
-        stats = await self.jobtask_crud.fetch_tasks_stats_by_project(project_uuid, owner_uuid)
+        stats = await self.jobtask_crud.fetch_tasks_stats_by_project(
+            project_uuid, owner_uuid
+        )
         return stats
 
     async def fetch_task_stats_by_job(self, job_id: int):
         job_stats = await self.jobtask_crud.fetch_task_stats_by_job(job_id)
         return job_stats
 
-    async def add_human_result(self, uuid: UUID, owner_uuid: UUID, human_result: JobTaskHumanResult):
+    async def add_human_result(
+        self, uuid: UUID, owner_uuid: UUID, human_result: JobTaskHumanResult
+    ):
         await self.jobtask_crud.add_jobtask_human_result(uuid, owner_uuid, human_result)
 
     async def bulk_create(
-        self, job_id: int, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
+        self,
+        job_id: int,
+        project_uuid: UUID,
+        owner_uuid: UUID,
+        screening_mode: JobScreeningMode,
     ):
         papers = await self.paper_service.fetch_papers_for_screening(
-            project_uuid=project_uuid, owner_uuid=owner_uuid, screening_mode=screening_mode
+            project_uuid=project_uuid,
+            owner_uuid=owner_uuid,
+            screening_mode=screening_mode,
         )
         if len(papers) == 0:
-            raise RuntimeError(f"There are no papers for the given project matching screening mode: {screening_mode}.")
+            raise RuntimeError(
+                f"There are no papers for the given project matching screening mode: {screening_mode}."
+            )
         jobtasks = [
             JobTaskCreate(
                 job_id=job_id,

@@ -7,7 +7,13 @@ from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.event_queue import EventName, QueueItem, publish_event
-from src.schemas.job import FewShotPromptingConfig, JobCreate, JobCreateRequest, JobRead, JobReadWithStats
+from src.schemas.job import (
+    FewShotPromptingConfig,
+    JobCreate,
+    JobCreateRequest,
+    JobRead,
+    JobReadWithStats,
+)
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
 from src.services.project_service import ProjectPreferences, create_project_service
@@ -103,7 +109,9 @@ async def create_job(
         await db_ctx.commit()
         await publish_event(
             job_data.owner_uuid,
-            QueueItem(event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid}),
+            QueueItem(
+                event_name=EventName.JOB_CREATED, value={"uuid": create_job.uuid}
+            ),
         )
         return create_job
     except HTTPException:

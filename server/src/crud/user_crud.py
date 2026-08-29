@@ -29,7 +29,9 @@ class UserCrud:
         await self.db.refresh(user)
         return user
 
-    async def update_research_consent(self, user_uuid: str, value: bool) -> Optional[User]:
+    async def update_research_consent(
+        self, user_uuid: str, value: bool
+    ) -> Optional[User]:
         stmt = select(User).where(User.uuid == user_uuid)
         result = await self.db.execute(stmt)
         user = result.scalar_one_or_none()
@@ -42,11 +44,13 @@ class UserCrud:
             await self.db.refresh(user)
         return user
 
-    async def update_consent_versions(self,
+    async def update_consent_versions(
+        self,
         user_uuid: str,
         terms_version: str,
         privacy_policy_version: str,
-        accepted_at: datetime.datetime) -> Optional[User]:
+        accepted_at: datetime.datetime,
+    ) -> Optional[User]:
         stmt = select(User).where(User.uuid == user_uuid)
         result = await self.db.execute(stmt)
         user = result.scalar_one_or_none()

@@ -1,10 +1,12 @@
-import os
 import asyncio
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.engine.url import make_url
+import os
+
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import text
+from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import SQLAlchemyError
+
 from src.db.engine import engine
 
 url = make_url(engine.url)

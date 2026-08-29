@@ -63,7 +63,9 @@ async def process_csv(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only one file allowed per project",
             )
-        result = await file_service.process_files(project_uuid, files, current_user.uuid, screening_target)
+        result = await file_service.process_files(
+            project_uuid, files, current_user.uuid, screening_target
+        )
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:
@@ -89,16 +91,15 @@ async def process_pdfs(
 ):
     file_service = create_file_service(db_ctx)
     try:
-        result = await file_service.process_pdf_files(project_uuid, files, current_user.uuid)
+        result = await file_service.process_pdf_files(
+            project_uuid, files, current_user.uuid
+        )
         await db_ctx.commit()
         return result.__dict__
     except HTTPException as e:
         raise e
     except ValueError as ve:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(ve)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -132,10 +133,7 @@ async def attach_pdf_to_paper(
     except HTTPException:
         raise
     except ValueError as ve:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(ve)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -177,7 +175,7 @@ async def import_fulltext(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to import full text: {str(e)}",
         )
-    
+
 
 @router.get("/files/{file_uuid}/download", tags=["File"])
 async def download_file(
@@ -199,14 +197,10 @@ async def download_file(
     except HTTPException:
         raise
     except ValueError as ve:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(ve)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
     except FileNotFoundError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found in storage"
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found in storage"
         )
     except Exception as e:
         raise HTTPException(

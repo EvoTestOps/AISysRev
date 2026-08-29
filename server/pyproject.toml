@@ -41,11 +41,12 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.ruff]
-line-length = 100
+line-length = 88
 target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I"]
+ignore = ["E501"]
 
 [tool.ruff.format]
 quote-style = "double"

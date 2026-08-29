@@ -36,7 +36,9 @@ class ProjectService:
         prefs = await self.project_crud.get_project_preferences(uuid, owner_uuid)
         if prefs is None:
             # In case no preferences, create new
-            await self.project_crud.update_project_preferences(uuid, owner_uuid, preferences)
+            await self.project_crud.update_project_preferences(
+                uuid, owner_uuid, preferences
+            )
             return True
         else:
             # If prefs exist, apply over old
@@ -52,10 +54,12 @@ class ProjectService:
         return await self.project_crud.create_project(data)
 
     async def delete(self, uuid: UUID, owner_uuid: UUID) -> tuple[bool, list[str]]:
-        storage_paths = await self.file_crud.fetch_storage_paths_by_project(uuid, owner_uuid)
+        storage_paths = await self.file_crud.fetch_storage_paths_by_project(
+            uuid, owner_uuid
+        )
         deleted = await self.project_crud.delete_project(uuid, owner_uuid)
         return deleted, storage_paths
-    
+
     async def cleanup_pdf_storage(self, storage_paths: list[str]) -> None:
         paths_to_delete = []
         for storage_path in set(storage_paths):
