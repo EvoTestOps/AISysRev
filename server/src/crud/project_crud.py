@@ -26,8 +26,14 @@ class ProjectCrud:
         # TODO: Fix
         return result.mappings().all()  # type: ignore
 
-    async def get_project_preferences(self, uuid: UUID, owner_uuid: UUID) -> Optional[ProjectPreferences]:
-        stmt = select(Project.preferences).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
+    async def get_project_preferences(
+        self, uuid: UUID, owner_uuid: UUID
+    ) -> Optional[ProjectPreferences]:
+        stmt = (
+            select(Project.preferences)
+            .where(Project.uuid == uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
         result = await self.db.execute(stmt)
         row = result.mappings().one_or_none()
         if row is None:
@@ -49,11 +55,17 @@ class ProjectCrud:
         result = await self.db.execute(stmt)
         return result.rowcount > 0
 
-    async def fetch_project_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> ProjectRead | None:
-        stmt = select(Project).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
+    async def fetch_project_by_uuid(
+        self, uuid: UUID, owner_uuid: UUID
+    ) -> ProjectRead | None:
+        stmt = (
+            select(Project)
+            .where(Project.uuid == uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
-    
+
     async def set_criteria_embeddings(
         self,
         uuid: UUID,
@@ -80,7 +92,11 @@ class ProjectCrud:
         return new_project.id, new_project.uuid
 
     async def delete_project(self, uuid: UUID, owner_uuid: UUID) -> bool:
-        stmt = select(Project).where(Project.uuid == uuid).where(Project.owner_uuid == owner_uuid)
+        stmt = (
+            select(Project)
+            .where(Project.uuid == uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
         result = await self.db.execute(stmt)
         project = result.scalar_one_or_none()
 

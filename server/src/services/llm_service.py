@@ -20,7 +20,7 @@ class LLMService:
     def get_llm(self, provider_name: str) -> type[LLMProvider]:
         Provider = next(
             (prov for prov in llm_providers if prov.provider_name == provider_name),
-            None
+            None,
         )
         if Provider is None:
             raise ValueError(f"Unknown provider: {provider_name}")
@@ -45,7 +45,7 @@ class LLMService:
             client=client,
         )
         return response_formatted
-    
+
     async def embed(
         self,
         llm: type[LLMProvider],
@@ -54,9 +54,7 @@ class LLMService:
         texts: list[str],
         client: AsyncClient,
     ) -> list[list[float]]:
-        embedding = await llm(
-            provider_parameters, runtime_parameters
-        ).embed_async(
+        embedding = await llm(provider_parameters, runtime_parameters).embed_async(
             client=client,
             texts=texts,
         )

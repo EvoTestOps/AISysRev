@@ -32,12 +32,27 @@ dependencies = [
     "pypdf>=6.14.2",
     "langchain-text-splitters>=1.1.2",
     "boto3>=1.43.67",
+    "pgvector>=0.5.0",
 ]
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
 
 [tool.alembic]
 script_location = "%(here)s/migrations"

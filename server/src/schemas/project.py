@@ -5,9 +5,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+
 class ScreeningTarget(str, Enum):
     PAPER = "PAPER"
     GITHUB_REPOSITORY = "GITHUB_REPOSITORY"
+
 
 class FewShotPreferences(BaseModel):
     inc_seed_papers: List[str]

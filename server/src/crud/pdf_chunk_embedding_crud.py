@@ -14,7 +14,7 @@ from src.schemas.pdf_chunk_embedding import PdfChunkEmbeddingCreate
 class PdfChunkEmbeddingCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def fetch_chunks_by_pdf_file_uuid(
         self, pdf_file_uuid: UUID, owner_uuid: UUID
     ) -> Sequence[PdfChunkEmbedding]:
@@ -28,7 +28,7 @@ class PdfChunkEmbeddingCrud:
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
-    
+
     async def bulk_create_chunks(
         self, chunks: List[PdfChunkEmbeddingCreate], owner_uuid: UUID
     ) -> Sequence[PdfChunkEmbedding]:

@@ -95,7 +95,7 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
         async with AsyncOpenAI(api_key=self.runtime_parameters.api_key) as client:
             models = await client.models.list()
             return models.data
-    
+
     async def embed_async(
         self,
         client: AsyncClient,
@@ -103,7 +103,7 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
     ) -> list[list[float]]:
         if self.runtime_parameters.api_key is None:
             raise RuntimeError("API key is not defined")
-        
+
         from openai import AsyncOpenAI
 
         openai_client = AsyncOpenAI(
@@ -115,4 +115,3 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
             input=texts,
         )
         return [item.embedding for item in response.data]
-        

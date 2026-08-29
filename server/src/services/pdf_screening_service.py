@@ -32,7 +32,7 @@ class PdfScreeningService:
         self.pdf_chunk_embedding_crud = pdf_chunk_embedding_crud
         self.file_crud = file_crud
         self.llm_service = llm_service
-    
+
     async def get_pdf_chunks_for_screening(
         self,
         llm: type[LLMProvider],
@@ -65,11 +65,13 @@ class PdfScreeningService:
         )
 
         chunk_lists = [
-            top_k_chunks_by_similarity(chunk_texts, chunk_embeddings, criteria_embedding, k=1)
+            top_k_chunks_by_similarity(
+                chunk_texts, chunk_embeddings, criteria_embedding, k=1
+            )
             for criteria_embedding in inclusion_embeddings + exclusion_embeddings
         ]
         return "\n\n".join(merge_and_dedupe_chunks(chunk_lists))
-    
+
     async def get_criteria_embeddings(
         self,
         llm: type[LLMProvider],
@@ -81,24 +83,33 @@ class PdfScreeningService:
         inclusion_criteria: list[str],
         exclusion_criteria: list[str],
     ) -> tuple[list[list[float]], list[list[float]]]:
-        project = await self.project_crud.fetch_project_by_uuid(project_uuid, owner_uuid)
+        project = await self.project_crud.fetch_project_by_uuid(
+            project_uuid, owner_uuid
+        )
         if (
             project
             and (project.inclusion_criteria_embedding or not inclusion_criteria)
             and (project.exclusion_criteria_embedding or not exclusion_criteria)
         ):
-            return project.inclusion_criteria_embedding or [], project.exclusion_criteria_embedding or []
+            return (
+                project.inclusion_criteria_embedding or [],
+                project.exclusion_criteria_embedding or [],
+            )
 
         texts = inclusion_criteria + exclusion_criteria
-        embeddings = await self.llm_service.embed(
-            llm,
-            provider_parameters,
-            runtime_parameters,
-            texts=texts,
-            client=client,
-        ) if texts else []
-        inclusion_embeddings = embeddings[:len(inclusion_criteria)]
-        exclusion_embeddings = embeddings[len(inclusion_criteria):]
+        embeddings = (
+            await self.llm_service.embed(
+                llm,
+                provider_parameters,
+                runtime_parameters,
+                texts=texts,
+                client=client,
+            )
+            if texts
+            else []
+        )
+        inclusion_embeddings = embeddings[: len(inclusion_criteria)]
+        exclusion_embeddings = embeddings[len(inclusion_criteria) :]
         if llm.provider_name != "mock":
             await self.project_crud.set_criteria_embeddings(
                 project_uuid,
@@ -107,7 +118,7 @@ class PdfScreeningService:
                 exclusion_embeddings or None,
             )
         return inclusion_embeddings, exclusion_embeddings
-    
+
     async def get_chunks_with_embeddings(
         self,
         llm: type[LLMProvider],
@@ -117,23 +128,27 @@ class PdfScreeningService:
         pdf_file_uuid: UUID,
         owner_uuid: UUID,
     ) -> tuple[list[str], list[list[float]]]:
-        cached_chunks = await self.pdf_chunk_embedding_crud.fetch_chunks_by_pdf_file_uuid(
-            pdf_file_uuid,
-            owner_uuid,
+        cached_chunks = (
+            await self.pdf_chunk_embedding_crud.fetch_chunks_by_pdf_file_uuid(
+                pdf_file_uuid,
+                owner_uuid,
+            )
         )
         if cached_chunks:
-            return [c.chunk_text for c in cached_chunks], [c.embedding for c in cached_chunks]
-        
+            return [c.chunk_text for c in cached_chunks], [
+                c.embedding for c in cached_chunks
+            ]
+
         file_record = await self.file_crud.fetch_file_by_uuid(pdf_file_uuid, owner_uuid)
         if file_record is None or file_record.storage_path is None:
             raise ValueError("PDF file not found")
-        
+
         pdf_bytes = await asyncio.to_thread(read_pdf_bytes, file_record.storage_path)
         pdf_text = await asyncio.to_thread(extract_pdf_text, pdf_bytes)
         chunks = await asyncio.to_thread(chunk_text, pdf_text)
         if not chunks:
             raise ValueError("PDF has no extractable text")
-        
+
         embeddings = await self.llm_service.embed(
             llm,
             provider_parameters,
@@ -152,10 +167,12 @@ class PdfScreeningService:
             for i, (chunk, embedding) in enumerate(zip(chunks, embeddings))
         ]
         if llm.provider_name != "mock":
-            await self.pdf_chunk_embedding_crud.bulk_create_chunks(chunk_records, owner_uuid)
+            await self.pdf_chunk_embedding_crud.bulk_create_chunks(
+                chunk_records, owner_uuid
+            )
 
         return chunks, embeddings
-        
+
 
 def create_pdf_screening_service(db_ctx: DBContext) -> PdfScreeningService:
     return PdfScreeningService(

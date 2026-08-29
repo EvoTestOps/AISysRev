@@ -1,8 +1,9 @@
 import json
-from uuid import UUID
-from pydantic import BaseModel, field_validator
-from typing import Dict, Optional, Any
 from enum import Enum
+from typing import Any, Dict, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, field_validator
 
 
 class JobTaskHumanResult(str, Enum):

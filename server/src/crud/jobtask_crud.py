@@ -33,7 +33,9 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_job_tasks_by_job_uuid(self, job_uuid: UUID, owner_uuid: UUID) -> Sequence[JobTask]:
+    async def fetch_job_tasks_by_job_uuid(
+        self, job_uuid: UUID, owner_uuid: UUID
+    ) -> Sequence[JobTask]:
         stmt = (
             select(JobTask)
             .join(Job, JobTask.job_id == Job.id)
@@ -124,6 +126,7 @@ class JobTaskCrud:
     Sets status to CANCELLED for all unfinished job tasks.
     Should be called after canceling the job.
     """
+
     async def update_job_tasks_status_to_cancelled(self, job_id: int):
         stmt = (
             update(JobTask)
@@ -156,7 +159,9 @@ class JobTaskCrud:
         await self.db.execute(stmt)
         await self.db.flush()
 
-    async def fetch_per_criteria_tasks_by_project(self, project_uuid: UUID, owner_uuid: UUID):
+    async def fetch_per_criteria_tasks_by_project(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ):
         stmt = (
             select(
                 JobTask.paper_uuid,
@@ -187,6 +192,6 @@ class JobTaskCrud:
         )
         result = await self.db.execute(stmt)
         task = result.scalar_one_or_none()
-        if task:    
+        if task:
             task.human_result = human_result
             await self.db.flush()

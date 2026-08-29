@@ -60,12 +60,14 @@ async def test_invalid_session(db_ctx):
 @pytest.mark.asyncio
 async def test_valid_session_returns_user(db_ctx):
     user_crud = db_ctx.crud(UserCrud)
-    user = await user_crud.create_user(UserCreate(
-        sub="session-test-user",
-        email="s@test.com",
-        terms_version_accepted=settings.CURRENT_TERMS_VERSION,
-        privacy_policy_version_accepted=settings.CURRENT_PRIVACY_POLICY_VERSION,
-    ))
+    user = await user_crud.create_user(
+        UserCreate(
+            sub="session-test-user",
+            email="s@test.com",
+            terms_version_accepted=settings.CURRENT_TERMS_VERSION,
+            privacy_policy_version_accepted=settings.CURRENT_PRIVACY_POLICY_VERSION,
+        )
+    )
     await db_ctx.commit()
 
     session_id = str(uuid.uuid4())

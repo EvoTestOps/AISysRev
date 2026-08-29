@@ -30,7 +30,9 @@ async def test_file_service(
 ):
     service = create_file_service(db_ctx)
 
-    result = await service.process_files(test_project_uuid, [test_files_working[0]], test_user_uuid)
+    result = await service.process_files(
+        test_project_uuid, [test_files_working[0]], test_user_uuid
+    )
     assert len(result.valid_filenames) == 1
 
     files = await service.fetch_all(test_project_uuid, test_user_uuid)
@@ -50,9 +52,9 @@ async def test_files_service_invalid_data(
     errors_msgs = [
         "Missing required columns: title",
     ]
-    result = await service.process_files(test_project_uuid, [test_files_invalid[0]], test_user_uuid)
+    result = await service.process_files(
+        test_project_uuid, [test_files_invalid[0]], test_user_uuid
+    )
 
     assert len(result.errors) == 1
     assert result.errors[0].message in errors_msgs
-
-

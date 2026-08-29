@@ -1,21 +1,21 @@
-import uuid
 import json
+import uuid
 
+import redis.asyncio as redis
 from authlib.integrations.base_client import OAuthError
 from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, Depends, HTTPException, status
 from starlette.requests import Request
-from starlette.responses import RedirectResponse, JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from src.core.auth import get_current_user
 from src.core.config import settings
 from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
+from src.redis_client.client import get_shared_redis_client
 from src.schemas.user import ConsentAccept, ResearchConsentUpdate, UserRead
 from src.services.user_service import create_user_service
-from src.redis_client.client import get_shared_redis_client
-import redis.asyncio as redis
 
 router = APIRouter(tags=["Auth"])
 
@@ -46,7 +46,10 @@ async def callback(
         sub = userinfo.get("sub")
         email = userinfo.get("email")
 
-        if settings.APP_ENV == "staging" and email not in settings.STAGING_ALLOWED_EMAILS:
+        if (
+            settings.APP_ENV == "staging"
+            and email not in settings.STAGING_ALLOWED_EMAILS
+        ):
             raise HTTPException(status_code=403, detail="Not authorized")
 
         user_crud = db_ctx.crud(UserCrud)
@@ -55,8 +58,8 @@ async def callback(
         if existing_user:
             session_data = json.dumps({"user_uuid": str(existing_user.uuid)})
         else:
-            #New sign in: A user is created only after giving consent to the terms and privacy policy. 
-            #Until then, the sub and email are stored in Redis with a temporary session ID.
+            # New sign in: A user is created only after giving consent to the terms and privacy policy.
+            # Until then, the sub and email are stored in Redis with a temporary session ID.
             session_data = json.dumps({"pending_sub": sub, "pending_email": email})
 
         session_id = str(uuid.uuid4())
@@ -91,7 +94,9 @@ async def callback(
         )
 
 
-@router.post("/auth/consent", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/auth/consent", response_model=UserRead, status_code=status.HTTP_201_CREATED
+)
 async def accept_consent(
     consent: ConsentAccept,
     request: Request,
@@ -182,19 +187,28 @@ async def dev_login(
     return response
 
 
-@router.get("/auth/me", status_code=status.HTTP_200_OK, response_model=UserRead, response_model_exclude={"sub"})
+@router.get(
+    "/auth/me",
+    status_code=status.HTTP_200_OK,
+    response_model=UserRead,
+    response_model_exclude={"sub"},
+)
 async def me(current_user: User = Depends(get_current_user)):
     return UserRead.model_validate(current_user)
 
 
-@router.patch("/auth/me/research-consent", response_model=UserRead, status_code=status.HTTP_200_OK)
+@router.patch(
+    "/auth/me/research-consent", response_model=UserRead, status_code=status.HTTP_200_OK
+)
 async def update_research_consent(
     body: ResearchConsentUpdate,
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     user_service = create_user_service(db_ctx)
-    user = await user_service.update_research_consent(str(current_user.uuid), body.research)
+    user = await user_service.update_research_consent(
+        str(current_user.uuid), body.research
+    )
     await db_ctx.commit()
     return user
 

@@ -1,14 +1,14 @@
 import json
-import redis.asyncio as redis
 
+import redis.asyncio as redis
 from fastapi import Depends, HTTPException, status
 from starlette.requests import Request
 
+from src.core.config import settings
 from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.redis_client.client import get_shared_redis_client
-from src.core.config import settings
 
 
 async def get_current_user(
@@ -42,8 +42,9 @@ async def get_current_user(
         )
 
     if (
-        user.terms_version_accepted != settings.CURRENT_TERMS_VERSION 
-        or user.privacy_policy_version_accepted != settings.CURRENT_PRIVACY_POLICY_VERSION
+        user.terms_version_accepted != settings.CURRENT_TERMS_VERSION
+        or user.privacy_policy_version_accepted
+        != settings.CURRENT_PRIVACY_POLICY_VERSION
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Consent required"

@@ -7,4 +7,6 @@ start:
 migrate:
 	alembic upgrade head
 lint:
-	venv/bin/python3 -m mypy --install-types --non-interactive --explicit-package-bases
+	uv run ruff check
+lint-fix:
+	uv run ruff check --fix
