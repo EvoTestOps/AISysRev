@@ -29,7 +29,9 @@ def test_top_k_chunks_by_similarity_returns_most_similar_chunk():
     chunk_texts = ["a", "b", "c"]
     chunk_embeddings = [[0.5, 0.5], [1.0, 0.0], [0.0, 1.0]]
     criteria_embedding = [1.0, 0.0]
-    assert top_k_chunks_by_similarity(chunk_texts, chunk_embeddings, criteria_embedding, k=1) == ["b"]
+    assert top_k_chunks_by_similarity(
+        chunk_texts, chunk_embeddings, criteria_embedding, k=1
+    ) == ["b"]
 
 
 @pytest.mark.unit
@@ -70,4 +72,3 @@ def test_extract_pdf_text_returns_expected_text(test_pdf_bytes):
     text = extract_pdf_text(test_pdf_bytes)
     assert "Time Pressure: A Controlled Experiment of Test Case" in text
     assert "Table 2 shows examples of time pressure studies in other fields" in text
-

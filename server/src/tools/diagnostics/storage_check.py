@@ -26,4 +26,6 @@ async def check_storage_backend() -> None:
     except Exception as e:
         print(f"Storage backend check failed: {e}")
         raise
-    print(f"Storage backend: s3 ({settings.S3_ENDPOINT_URL}, bucket={settings.S3_BUCKET})")
+    print(
+        f"Storage backend: s3 ({settings.S3_ENDPOINT_URL}, bucket={settings.S3_BUCKET})"
+    )

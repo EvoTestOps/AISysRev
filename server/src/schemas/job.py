@@ -46,8 +46,9 @@ class LLMModelConfig(BaseModel):
 
 # Define different configs for prompting strategies
 
+
 class ZeroShotPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.ZERO_SHOT]  = JobPromptingType.ZERO_SHOT
+    screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
 
 
@@ -60,8 +61,11 @@ class FewShotPromptingConfig(BaseModel):
 
 
 class PerCriteriaPromptingConfig(BaseModel):
-    screening_type: Literal[JobPromptingType.PER_CRITERIA] = JobPromptingType.PER_CRITERIA
+    screening_type: Literal[JobPromptingType.PER_CRITERIA] = (
+        JobPromptingType.PER_CRITERIA
+    )
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
+
 
 PromptingConfig = Annotated[
     Union[ZeroShotPromptingConfig, FewShotPromptingConfig, PerCriteriaPromptingConfig],
@@ -80,6 +84,7 @@ class JobCreateRequest(BaseModel):
 
 class JobCreate(JobCreateRequest):
     owner_uuid: UUID
+
 
 class JobRead(BaseModel):
     uuid: UUID

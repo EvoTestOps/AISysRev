@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
 import traceback
+
+from fastapi import APIRouter, HTTPException, status
+
 from src.core.config import settings
 from src.db.engine import engine
 from src.db.session import Base

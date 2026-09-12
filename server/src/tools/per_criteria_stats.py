@@ -56,7 +56,7 @@ def compute_criterion_irr(
 
     ac1 = None
     try:
-        binary_df = pd.DataFrame(binary.T, columns=rater_ids) # type: ignore
+        binary_df = pd.DataFrame(binary.T, columns=rater_ids)  # type: ignore
         cac = CAC(binary_df, categ_labels=[0, 1])
         ac1 = round(float(cac.gwet_ac1().coeff_val), 4)
     except Exception:

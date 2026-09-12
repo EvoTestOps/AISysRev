@@ -29,7 +29,9 @@ async def test_get_criteria_embeddings_without_cache_and_does_not_cache_for_mock
     assert inclusion[0] == [0.1] * 1536
 
     project_crud = db_ctx.crud(ProjectCrud)
-    project = await project_crud.fetch_project_by_uuid(test_project_uuid, test_user_uuid)
+    project = await project_crud.fetch_project_by_uuid(
+        test_project_uuid, test_user_uuid
+    )
     assert project.inclusion_criteria_embedding is None
 
 
@@ -137,5 +139,5 @@ async def test_get_pdf_chunks_for_screening_returns_expected_chunks(
         'tise," Journal of Accounting Research, vol. 28, 1990, pp. 1-\n20. \n[60]  Fogelström,N.D., '
         'Barney,S., Aurum,A. and Hederstierna,A., \n"When product managers gamble with requirements: '
         'Atti- \ntudes to value and risk," in Requirements engineering: Foun- \ndation for software '
-        'quality, Springer, 2009, pp. 1-15. \n \n \n94'
+        "quality, Springer, 2009, pp. 1-15. \n \n \n94"
     )

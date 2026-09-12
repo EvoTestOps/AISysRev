@@ -14,7 +14,9 @@ class SettingCrud:
         self.db = db
 
     async def fetch_settings(self, owner_uuid: UUID) -> List[SettingRead]:
-        stmt = select(Setting.uuid, Setting.name, Setting.value, Setting.secret).where(Setting.owner_uuid == owner_uuid)
+        stmt = select(Setting.uuid, Setting.name, Setting.value, Setting.secret).where(
+            Setting.owner_uuid == owner_uuid
+        )
         settings = await self.db.execute(stmt)
         return [SettingRead(**s) for s in settings.mappings().all()]
 
@@ -27,7 +29,9 @@ class SettingCrud:
         return SettingRead(**row) if row else None
 
     async def delete_setting(self, name: str, owner_uuid: UUID) -> bool:
-        stmt = select(Setting).where(Setting.name == name, Setting.owner_uuid == owner_uuid)
+        stmt = select(Setting).where(
+            Setting.name == name, Setting.owner_uuid == owner_uuid
+        )
         result = await self.db.execute(stmt)
         row = result.scalar_one_or_none()
         if row is None:

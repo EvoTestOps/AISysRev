@@ -21,9 +21,11 @@ class PaperService:
         self.paper_crud = paper_crud
 
     async def fetch_papers(self, project_uuid: UUID, owner_uuid: UUID):
-        papers = await self.paper_crud.fetch_papers_by_project_uuid(project_uuid, owner_uuid)
+        papers = await self.paper_crud.fetch_papers_by_project_uuid(
+            project_uuid, owner_uuid
+        )
         return [PaperRead.model_validate(paper) for paper in papers]
-    
+
     async def fetch_papers_for_screening(
         self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
     ):
@@ -31,9 +33,13 @@ class PaperService:
             project_uuid, owner_uuid, screening_mode
         )
         return [PaperRead.model_validate(paper) for paper in papers]
-    
-    async def generate_missing_fulltext_ris(self, project_uuid: UUID, owner_uuid: UUID) -> str:
-        papers = await self.paper_crud.fetch_papers_missing_pdf(project_uuid, owner_uuid)
+
+    async def generate_missing_fulltext_ris(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> str:
+        papers = await self.paper_crud.fetch_papers_missing_pdf(
+            project_uuid, owner_uuid
+        )
         paper_reads = [PaperRead.model_validate(paper) for paper in papers]
         return build_ris_file(paper_reads)
 
@@ -41,8 +47,12 @@ class PaperService:
         paper = await self.paper_crud.fetch_paper_by_uuid(uuid, owner_uuid)
         return None if paper is None else PaperRead.model_validate(paper)
 
-    async def fetch_papers_by_paper_uuids(self, paper_uuids: List[str], owner_uuid: UUID):
-        papers = await self.paper_crud.fetch_papers_by_paper_uuids(paper_uuids, owner_uuid)
+    async def fetch_papers_by_paper_uuids(
+        self, paper_uuids: List[str], owner_uuid: UUID
+    ):
+        papers = await self.paper_crud.fetch_papers_by_paper_uuids(
+            paper_uuids, owner_uuid
+        )
         return [PaperRead.model_validate(paper) for paper in papers]
 
     async def fetch_papers_with_model_evals(self, project_uuid: UUID, owner_uuid: UUID):
@@ -81,11 +91,17 @@ class PaperService:
     #     logger.info("start_job_tasks: Processing job %s", job_id)
     #     return process_job_task.delay(job_id, job_data)
 
-    async def add_human_result(self, uuid: UUID, owner_uuid: UUID, human_result: PaperHumanResult):
+    async def add_human_result(
+        self, uuid: UUID, owner_uuid: UUID, human_result: PaperHumanResult
+    ):
         await self.paper_crud.add_paper_human_result(uuid, owner_uuid, human_result)
 
-    async def count_papers_with_human_result(self, project_uuid: UUID, owner_uuid: UUID) -> int:
-        return await self.paper_crud.count_papers_with_human_results(project_uuid, owner_uuid)
+    async def count_papers_with_human_result(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> int:
+        return await self.paper_crud.count_papers_with_human_results(
+            project_uuid, owner_uuid
+        )
 
 
 def create_paper_service(db_ctx: DBContext) -> PaperService:

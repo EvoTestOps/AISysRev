@@ -51,7 +51,9 @@ async def get_job_tasks_by_paper(
 ):
     jobtask_service = create_jobtask_service(db_ctx)
     try:
-        job_tasks = await jobtask_service.fetch_job_tasks_for_paper(paper_uuid, current_user.uuid)
+        job_tasks = await jobtask_service.fetch_job_tasks_for_paper(
+            paper_uuid, current_user.uuid
+        )
         if not job_tasks:
             return []
         return job_tasks
@@ -73,7 +75,9 @@ async def add_job_task_human_result(
 ):
     jobtask_service = create_jobtask_service(db_ctx)
     try:
-        await jobtask_service.add_human_result(uuid, current_user.uuid, result.human_result)
+        await jobtask_service.add_human_result(
+            uuid, current_user.uuid, result.human_result
+        )
         await db_ctx.commit()
         return {"detail": "Job task human result added successfully"}
     except HTTPException:

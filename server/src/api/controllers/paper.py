@@ -8,7 +8,6 @@ from src.db.models.user import User
 from src.schemas.paper import PaperHumanResultUpdate
 from src.services.paper_service import create_paper_service
 
-
 router = APIRouter()
 
 
@@ -42,7 +41,9 @@ async def get_project_papers_with_model_evals(
 ):
     papers = create_paper_service(db_ctx)
     try:
-        return await papers.fetch_papers_with_model_evals(project_uuid, current_user.uuid)
+        return await papers.fetch_papers_with_model_evals(
+            project_uuid, current_user.uuid
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -64,7 +65,9 @@ async def download_missing_fulltext_ris(
 ):
     papers = create_paper_service(db_ctx)
     try:
-        ris_content = await papers.generate_missing_fulltext_ris(project_uuid, current_user.uuid)
+        ris_content = await papers.generate_missing_fulltext_ris(
+            project_uuid, current_user.uuid
+        )
         filename = f"project_{project_uuid}_missing_fulltext.ris"
         return Response(
             content=ris_content,

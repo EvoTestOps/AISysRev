@@ -13,7 +13,9 @@ class SettingService:
     def __init__(self, setting_crud: SettingCrud):
         self.setting_crud = setting_crud
 
-    async def get_setting(self, name: str, owner_uuid: UUID, mask_secret=True) -> Optional[SettingRead]:
+    async def get_setting(
+        self, name: str, owner_uuid: UUID, mask_secret=True
+    ) -> Optional[SettingRead]:
         setting = await self.setting_crud.fetch_setting(name, owner_uuid)
 
         if not setting:
@@ -26,7 +28,9 @@ class SettingService:
     async def delete_setting(self, name: str, owner_uuid: UUID) -> bool:
         return await self.setting_crud.delete_setting(name, owner_uuid)
 
-    async def upsert_setting(self, name: str, value: str, owner_uuid: UUID, secret=True) -> UUID:
+    async def upsert_setting(
+        self, name: str, value: str, owner_uuid: UUID, secret=True
+    ) -> UUID:
         affected_rows, uuid = await self.setting_crud.upsert_setting(
             SettingCreate(name=name, value=value, owner_uuid=owner_uuid, secret=secret)
         )

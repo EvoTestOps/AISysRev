@@ -22,7 +22,7 @@ def validate_pdf(content: bytes, filename: str, max_size_bytes: int) -> List[Fil
             FileError(
                 file=filename,
                 row="file",
-                message=f"PDF exceeds maximum allowed size of {max_size_bytes // (1024 * 1024)} MB",
+                message=f"PDF exceeds maximum allowed size of {max_size_bytes // (1024 * 1024)} MB",  # noqa: E501
             )
         )
 

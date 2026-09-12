@@ -72,7 +72,7 @@ services:
       - celery
 
   postgres:
-    image: postgres:14@sha256:caf49e3b10d377aa2cfee478591d623808527beb27125d38797b418013f72d81
+    image: pgvector/pgvector:pg14@sha256:fb27b00a92028f4749bf18f3d31b18fc62510258326486fb8900653ab2701252
     container_name: postgres_${APP_ENV:-dev}
     environment:
       POSTGRES_USER: your_username
