@@ -5,7 +5,7 @@ import pytest
 from src.crud.job_crud import JobCrud
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
-from src.schemas.job import JobCreate, ZeroShotPromptingConfig, LLMModelConfig
+from src.schemas.job import JobCreate, LLMModelConfig, ZeroShotPromptingConfig
 from src.schemas.project import Criteria, ProjectCreate
 from src.schemas.user import UserCreate
 
@@ -48,7 +48,9 @@ def _make_job_create(
 
 @pytest.mark.asyncio
 async def test_fetch_jobs(db_ctx):
-    project_uuid, owner_uuid = await _create_owned_project(db_ctx, "test-fetch-jobs-owner")
+    project_uuid, owner_uuid = await _create_owned_project(
+        db_ctx, "test-fetch-jobs-owner"
+    )
 
     crud = db_ctx.crud(JobCrud)
     job_data = _make_job_create(project_uuid, owner_uuid)
@@ -64,7 +66,9 @@ async def test_fetch_jobs(db_ctx):
 
 @pytest.mark.asyncio
 async def test_create_and_fetch_job_crud(db_ctx):
-    project_uuid, owner_uuid = await _create_owned_project(db_ctx, "test-create-fetch-job-owner")
+    project_uuid, owner_uuid = await _create_owned_project(
+        db_ctx, "test-create-fetch-job-owner"
+    )
     job_data = _make_job_create(project_uuid, owner_uuid)
 
     crud = db_ctx.crud(JobCrud)

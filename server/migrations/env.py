@@ -1,16 +1,24 @@
 import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlalchemy import pool
 from alembic import context
 from dotenv import load_dotenv
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from src.db.session import Base
 from src.core.config import settings
 
 # This is now required as SQLAlchemy's Mapped syntax makes Alembic to not properly register models
-from src.db.models import File, Job, JobTask, Paper, PdfChunkEmbedding, Project, Setting  # noqa: F401
+from src.db.models import (  # noqa: F401
+    File,
+    Job,
+    JobTask,
+    Paper,
+    PdfChunkEmbedding,
+    Project,
+    Setting,
+)
+from src.db.session import Base
 
 load_dotenv()
 

@@ -64,7 +64,9 @@ def _make_job_create(
 
 @pytest.mark.asyncio
 async def test_create_jobtask(db_ctx, test_files_working):
-    project_uuid, owner_uuid = await _create_owned_project(db_ctx, "test-create-jobtask-owner")
+    project_uuid, owner_uuid = await _create_owned_project(
+        db_ctx, "test-create-jobtask-owner"
+    )
 
     file_service = create_file_service(db_ctx)
     jobtask_crud = db_ctx.crud(JobTaskCrud)
@@ -187,7 +189,7 @@ async def test_async_process_job(
 @pytest.mark.asyncio
 @patch("src.celery.tasks.get_structured_response", new_callable=AsyncMock)
 async def test_async_process_job_failure(
-    mock_get_structured_response, committing_db,  test_job_data, test_structured_response
+    mock_get_structured_response, committing_db, test_job_data, test_structured_response
 ):
     async with DBContext() as db_ctx:
         job_crud = db_ctx.crud(JobCrud)
@@ -250,7 +252,9 @@ async def test_async_process_job_failure(
     mock_get_structured_response.side_effect = fail_on_second_call
 
     # Would retry task if max_retries=0 wasn't set
-    await process_job(celery_task, job.id, test_job_data, max_retries=0, update_interval=1)
+    await process_job(
+        celery_task, job.id, test_job_data, max_retries=0, update_interval=1
+    )
 
     calls = celery_task.update_state.call_args_list
     progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]

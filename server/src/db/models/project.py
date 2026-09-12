@@ -1,9 +1,12 @@
 import uuid
 from uuid import UUID as PyUUID
-from sqlalchemy import Integer, String, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.db.session import Base
+
 from .mixins import TimestampMixin
 
 
@@ -20,6 +23,12 @@ class Project(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     criteria: Mapped[dict] = mapped_column(JSONB, nullable=False)
     preferences: Mapped[dict] = mapped_column(JSONB, nullable=True)
-    inclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
-    exclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(JSONB, nullable=True)
-    screening_target: Mapped[str] = mapped_column(String(32), nullable=False, default="PAPER")
+    inclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(
+        JSONB, nullable=True
+    )
+    exclusion_criteria_embedding: Mapped[list[float] | None] = mapped_column(
+        JSONB, nullable=True
+    )
+    screening_target: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PAPER"
+    )

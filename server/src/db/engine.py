@@ -1,7 +1,9 @@
-import os
 import logging
+import os
+
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine
+
 from src.core.config import settings
 
 logging.basicConfig()

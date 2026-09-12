@@ -32,7 +32,9 @@ class JobCrud:
 
         return result.mappings().all()  # type: ignore
 
-    async def fetch_jobs_by_project(self, project_uuid: UUID, owner_uuid: UUID) -> List[JobRead]:
+    async def fetch_jobs_by_project(
+        self, project_uuid: UUID, owner_uuid: UUID
+    ) -> List[JobRead]:
         stmt = (
             select(
                 Job.uuid,

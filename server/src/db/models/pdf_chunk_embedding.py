@@ -1,9 +1,12 @@
 import uuid
 from uuid import UUID as PyUUID
-from sqlalchemy import Integer, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+
+from sqlalchemy import ForeignKey, Integer, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.db.session import Base
+
 from .mixins import TimestampMixin
 
 

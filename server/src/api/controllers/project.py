@@ -86,9 +86,7 @@ async def create_new_project(
         )
 
 
-@router.delete(
-    "/project/{uuid}", status_code=status.HTTP_200_OK, tags=["Project"]
-)
+@router.delete("/project/{uuid}", status_code=status.HTTP_200_OK, tags=["Project"])
 async def delete_project(
     uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),

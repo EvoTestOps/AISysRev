@@ -1,7 +1,9 @@
 from src.schemas.job import JobStatus
 
 
-def resolve_job_status(total: int, success: int, failed: int, cancelled: int) -> JobStatus:
+def resolve_job_status(
+    total: int, success: int, failed: int, cancelled: int
+) -> JobStatus:
     if total == 0:
         return JobStatus.NOT_STARTED
 

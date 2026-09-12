@@ -1,9 +1,10 @@
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
+
 from src.core.readiness import startup_complete
+from src.tools.diagnostics.celery_check import check_celery_worker
 from src.tools.diagnostics.db_check import check_database_connection
 from src.tools.diagnostics.redis_check import check_redis_connection
-from src.tools.diagnostics.celery_check import check_celery_worker
 
 router = APIRouter()
 

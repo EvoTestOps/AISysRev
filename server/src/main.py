@@ -1,28 +1,30 @@
 from contextlib import asynccontextmanager
+
 import uvicorn
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, FastAPI
 from fastapi.logger import logger
 from fastapi.responses import FileResponse, HTMLResponse
 from starlette.middleware.sessions import SessionMiddleware
-from src.core.config import settings
-from src.core.readiness import startup_complete
+
+from src.api.controllers.auth import router as auth_router
+from src.api.controllers.event_queue import router as event_queue_router
+from src.api.controllers.file import router as file_router
 from src.api.controllers.fixture import router as fixture_router
 from src.api.controllers.health_check import router as health_check_router
-from src.api.controllers.project import router as project_router
-from src.api.controllers.file import router as file_router
 from src.api.controllers.job import router as job_router
-from src.api.controllers.llm import router as llm_router
 from src.api.controllers.jobtask import router as jobtask_router
+from src.api.controllers.llm import router as llm_router
 from src.api.controllers.paper import router as paper_router
-from src.api.controllers.setting import router as setting_router
-from src.api.controllers.auth import router as auth_router
+from src.api.controllers.project import router as project_router
 from src.api.controllers.result import router as result_router
-from src.api.controllers.event_queue import router as event_queue_router
+from src.api.controllers.setting import router as setting_router
+from src.core.config import settings
+from src.core.readiness import startup_complete
+from src.redis_client.client import close_shared_redis_client
 from src.tools.diagnostics.celery_check import router as celery_test_router
+from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.storage_check import check_storage_backend
-from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
-from src.redis_client.client import close_shared_redis_client
 
 
 @asynccontextmanager
@@ -84,9 +86,12 @@ v1_router.include_router(auth_router)
 
 app.include_router(v1_router)
 
+
 @app.get("/register-and-privacy-policy")
 async def privacy_policy_page():
-    return FileResponse("static/register-and-privacy-policy.pdf", media_type="application/pdf")
+    return FileResponse(
+        "static/register-and-privacy-policy.pdf", media_type="application/pdf"
+    )
 
 
 @app.get("/terms-and-conditions")
