@@ -93,5 +93,14 @@ formatter = "generic"
 format = "%(levelname)-5.5s [%(name)s] %(message)s"
 datefmt = "%H:%M:%S"
 
+[tool.mypy]
+python_version = "3.14"
+ignore_missing_imports = true
+
 [tool.uv.sources]
 gwet-ac1 = { git = "https://github.com/EvoTestOps/gwet_ac1" }
+
+[dependency-groups]
+dev = [
+    "mypy>=2.3.1",
+]
