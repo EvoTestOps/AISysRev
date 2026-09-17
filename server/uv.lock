@@ -804,8 +804,8 @@ name = "httpcore2"
 version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11" },
-    { name = "truststore" },
+    { name = "h11", marker = "sys_platform != 'emscripten'" },
+    { name = "truststore", marker = "sys_platform != 'emscripten'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/83/a896fc59940fc5a6e2aff3a4be1d92fa890112936803b331cae75a993c34/httpcore2-2.10.0.tar.gz", hash = "sha256:13c0cc3d1919d4f28457f60cd2c2abe04113a8af184ccf1142811beba936f9dc", size = 67427, upload-time = "2026-08-09T09:11:32.123Z" }
 wheels = [
@@ -1928,6 +1928,7 @@ dependencies = [
     { name = "itsdangerous" },
     { name = "krippendorff" },
     { name = "langchain-text-splitters" },
+    { name = "markupsafe" },
     { name = "openai" },
     { name = "pandas" },
     { name = "pgvector" },
@@ -1960,6 +1961,7 @@ requires-dist = [
     { name = "itsdangerous", specifier = ">=2.2.0" },
     { name = "krippendorff", specifier = ">=0.8.2" },
     { name = "langchain-text-splitters", specifier = ">=1.1.2" },
+    { name = "markupsafe", specifier = ">=3.0.3" },
     { name = "openai", specifier = ">=2.14.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pgvector", specifier = ">=0.5.0" },

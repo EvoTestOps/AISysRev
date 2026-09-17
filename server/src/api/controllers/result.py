@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import HTMLResponse
+from markupsafe import Markup, escape
 
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
@@ -53,18 +54,20 @@ async def download_result_html(
         content = await result_service.generate_html(
             project_uuid, current_user.uuid, screening_target
         )
+        safe_project_uuid = escape(str(project_uuid))
+        safe_content = Markup(content)
         return HTMLResponse(
             content=f"""
 <html>
     <head>
-        <title>Viewing results for Project {project_uuid}</title>
+        <title>Viewing results for Project {safe_project_uuid}</title>
         <style>
   table, th, td {{font-size:10pt; border:1px solid black; border-collapse:collapse; text-align:left;}}
   th, td {{padding: 5px;}}
 </style>
     </head>
     <body>
-        {content}
+        {safe_content}
     </body>
 </html>
     """

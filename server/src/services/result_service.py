@@ -270,7 +270,7 @@ class ResultService:
         rows = await self.result_crud.create_result(project_uuid, owner_uuid)
         df = create_dataframe(rows)  # type: ignore
         df = rename_columns(df, screening_target)
-        return df.to_html(index=False)
+        return df.to_html(index=False, escape=True)
 
     async def fetch_result(self, project_uuid: UUID, owner_uuid: UUID) -> list[dict]:
         rows = await self.result_crud.create_result(project_uuid, owner_uuid)
