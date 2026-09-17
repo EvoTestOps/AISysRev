@@ -5,7 +5,7 @@ description = "AISysRev server"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "aiohttp>=3.13.2",
+    "aiohttp>=3.14.3",
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
     "authlib>=1.7.2",
@@ -29,7 +29,7 @@ dependencies = [
     "ruff>=0.14.9",
     "sqlalchemy[asyncio]>=2.0.45",
     "uvicorn>=0.38.0",
-    "pypdf>=6.14.2",
+    "pypdf>=6.16.1",
     "langchain-text-splitters>=1.1.2",
     "boto3>=1.43.67",
     "pgvector>=0.5.0",
