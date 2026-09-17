@@ -29,6 +29,8 @@ from src.tools.diagnostics.storage_check import check_storage_backend
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print(f"Starting AISysRev version {settings.APP_VERSION}")
+
     print("Waiting for database connection...")
     await wait_for_db()
 
@@ -53,7 +55,7 @@ app = FastAPI(
     lifespan=lifespan,
     title="AISysRev",
     summary="Research-based title-abstract screening tool.",
-    version="1.0.0",
+    version=settings.APP_VERSION,
     terms_of_service="/terms-and-conditions",
     license_info={
         "name": "MIT License",

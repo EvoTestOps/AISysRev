@@ -5,6 +5,8 @@ broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery("worker", broker=broker_url, backend=broker_url)
 
+print(f"Starting Celery worker, version {settings.APP_VERSION}")
+
 celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",

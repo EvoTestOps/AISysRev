@@ -17,6 +17,7 @@ def get_env(name: str, default: Optional[str] = None) -> str:
 class Settings:
     def __init__(self):
         self.APP_ENV: str = get_env("APP_ENV", "dev")
+        self.APP_VERSION: str = get_env("APP_VERSION", "dev")
         self.DB_URL: str = get_env("DB_URL")
         if not self.DB_URL:
             raise ValueError("Database URL not set in environment")
