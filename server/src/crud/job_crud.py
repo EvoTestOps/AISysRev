@@ -51,7 +51,8 @@ class JobCrud:
             .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
-        return result.mappings().all()
+        # TODO: Fix
+        return result.mappings().all()  # type: ignore
 
     async def fetch_job_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> JobRead:
         stmt = (

@@ -83,5 +83,7 @@ class ProjectRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
+    inclusion_criteria_embedding: Optional[list[list[float]]] = None
+    exclusion_criteria_embedding: Optional[list[list[float]]] = None
 
     model_config = ConfigDict(from_attributes=True)

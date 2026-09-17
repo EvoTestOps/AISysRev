@@ -34,7 +34,7 @@ async def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN, detail="Consent required"
         )
 
-    crud = UserCrud(db_ctx.session)
+    crud = db_ctx.crud(UserCrud)
     user = await crud.get_user_by_uuid(data.get("user_uuid"))
     if not user:
         raise HTTPException(

@@ -89,7 +89,7 @@ class FileCrud:
             .where(File.storage_path.is_not(None))
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        return [path for path in result.scalars().all() if path is not None]
 
     async def count_files_with_storage_path(self, storage_path: str) -> int:
         stmt = (

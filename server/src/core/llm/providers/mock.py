@@ -69,12 +69,12 @@ class MockProvider(LLMProvider[MockProviderParams, MockModelParams]):
         await asyncio.sleep(delay_ms / 1000.0)
 
         if schema is CriterionResponse:
-            return CriterionResponse(
+            return CriterionResponse(  # type: ignore[return-value]
                 probability_decision=1.0,
                 reason="The criterion is met.",
             )
 
-        return StructuredResponse(
+        return StructuredResponse(  # type: ignore[return-value]
             overall_decision=Decision(
                 binary_decision=True,
                 probability_decision=1.0,

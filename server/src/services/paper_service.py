@@ -62,9 +62,9 @@ class PaperService:
         return [
             PaperReadWithAvgProbability(
                 **paper.__dict__,  # or unpack via your ORM->schema adapter
-                avg_probability_decision=row["avg_probability_decision"],
-                error_messages=row["error_messages"] or None,
-                pdf_filename=row["pdf_filename"],
+                avg_probability_decision=row["avg_probability_decision"],  # type: ignore
+                error_messages=row["error_messages"] or None,  # type: ignore
+                pdf_filename=row["pdf_filename"],  # type: ignore
             )
             for row in rows
             # TODO: Fix

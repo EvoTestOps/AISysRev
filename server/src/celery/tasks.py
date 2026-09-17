@@ -17,7 +17,6 @@ from src.redis_client.client import get_redis_client
 from src.schemas.job import JobCreate, JobScreeningMode, PerCriteriaPromptingConfig
 from src.schemas.jobtask import JobTaskStatus
 from src.schemas.llm import ProviderRuntimeParameters
-from src.schemas.project import Criteria
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
 from src.services.pdf_screening_service import create_pdf_screening_service
@@ -123,7 +122,7 @@ async def _process_standard_task(
     job_task_id: int,
     job_id: int,
     job_data: JobCreate,
-    project_criteria: Criteria,
+    project_criteria: dict,
     semaphore: asyncio.Semaphore,
     redis,
     counter: Dict[str, int],

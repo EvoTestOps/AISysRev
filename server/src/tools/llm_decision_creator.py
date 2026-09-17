@@ -23,7 +23,6 @@ from src.schemas.llm import (
     StructuredResponse,
 )
 from src.schemas.paper import PaperHumanResult, PaperRead
-from src.schemas.project import Criteria
 from src.schemas.setting import SettingRead
 from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
@@ -60,13 +59,12 @@ async def get_structured_response(
     pdf_screening_service: PdfScreeningService,
     job_task_data: JobTask,
     job_data: JobCreate,
-    inc_exc_criteria: Criteria,
+    inc_exc_criteria: dict,
     client: AsyncClient,
 ) -> StructuredResponse:
     criteria = create_criteria(
-        # TODO: Fix
-        inc_exc_criteria["inclusion_criteria"],  # type: ignore
-        inc_exc_criteria["exclusion_criteria"],  # type: ignore
+        inc_exc_criteria["inclusion_criteria"],
+        inc_exc_criteria["exclusion_criteria"],
     )
     inclusion_criteria = inc_exc_criteria["inclusion_criteria"]
     exclusion_criteria = inc_exc_criteria["exclusion_criteria"]
@@ -104,6 +102,8 @@ async def get_structured_response(
         job_data.screening_mode == JobScreeningMode.AUTOMATIC
         and job_task_data.pdf_file_uuid is not None
     ):
+        if job_task_data.pdf_file_uuid is None:
+            raise RuntimeError("PDF file UUID is required for PDF screening mode")
         content_label = "Excerpts from the paper"
         abstract = await pdf_screening_service.get_pdf_chunks_for_screening(
             llm,
