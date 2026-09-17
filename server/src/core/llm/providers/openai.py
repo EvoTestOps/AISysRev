@@ -78,8 +78,7 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
         agent = Agent(
             model,
             system_prompt=self.runtime_parameters.system_prompt,
-            retries=3,
-            output_retries=5,
+            retries={"tools": 3, "output": 5},
             output_type=ToolOutput(schema, name=schema.__name__.lower()),
         )
 

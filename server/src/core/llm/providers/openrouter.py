@@ -93,8 +93,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         agent = Agent(
             model,
             system_prompt=self.runtime_parameters.system_prompt,
-            retries=3,  # TODO: Maybe should be configurable
-            output_retries=5,
+            retries={"tools": 3, "output": 5},  # TODO: Maybe should be configurable
             output_type=ToolOutput(schema, name=schema.__name__.lower()),
         )
 
