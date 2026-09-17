@@ -6,6 +6,9 @@ export const AboutPage = () => (
   <Layout title="About AISysRev">
     <div className="flex flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
       <H1>AISysRev</H1>
+      <p className="text-sm text-gray-500">
+        Version: {import.meta.env.VITE_APP_VERSION ?? "dev"}
+      </p>
       <p>
         <a
           href="/docs"

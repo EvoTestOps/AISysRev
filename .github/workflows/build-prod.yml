@@ -37,6 +37,8 @@ jobs:
           file: ./Dockerfile
           target: server
           push: true
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
           tags: |
             quay.io/tike/aisysrev:backend-production
             quay.io/tike/aisysrev:backend-production-${{ github.sha }}
@@ -66,6 +68,8 @@ jobs:
           file: ./Dockerfile
           target: client
           push: true
+          build-args: |
+            APP_VERSION=${{ github.ref_name }}
           tags: |
             quay.io/tike/aisysrev:frontend-production
             quay.io/tike/aisysrev:frontend-production-${{ github.sha }}

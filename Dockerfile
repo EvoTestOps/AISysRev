@@ -1,4 +1,8 @@
+ARG APP_VERSION=dev
+
 FROM node:22-alpine@sha256:1b2479dd35a99687d6638f5976fd235e26c5b37e8122f786fcd5fe231d63de5b AS client-build
+ARG APP_VERSION
+ENV VITE_APP_VERSION=$APP_VERSION
 
 WORKDIR /app
 
@@ -40,6 +44,8 @@ RUN uv sync --locked --no-install-project --no-editable
 
 
 FROM python:3.14-alpine AS server
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN addgroup -S app && adduser -S app -G app
@@ -58,6 +64,9 @@ USER app
 CMD ["/bin/sh", "/app/start.sh"]
 
 FROM python:3.14-alpine AS celery
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
