@@ -42,6 +42,7 @@ jobs:
           tags: |
             quay.io/tike/aisysrev:backend-production
             quay.io/tike/aisysrev:backend-production-${{ github.sha }}
+            quay.io/tike/aisysrev:backend-${{ github.ref_name }}
 
   build-push-frontend:
     needs: run-tests
@@ -73,3 +74,4 @@ jobs:
           tags: |
             quay.io/tike/aisysrev:frontend-production
             quay.io/tike/aisysrev:frontend-production-${{ github.sha }}
+            quay.io/tike/aisysrev:frontend-${{ github.ref_name }}
