@@ -156,7 +156,6 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         openai_client = AsyncOpenAI(
             api_key=self.runtime_parameters.api_key,
             base_url="https://openrouter.ai/api/v1",
-            http_client=client,
         )
         response = await openai_client.embeddings.create(
             model="openai/text-embedding-3-small",

@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from src.celery.tasks import process_job_task
@@ -127,7 +128,7 @@ class JobTaskService:
 
         rater_job_uuids = sorted({str(t["job_uuid"]) for t in tasks})
 
-        crit_probs: dict[str, dict[str, dict[str, float]]] = {}
+        crit_probs: dict[str, dict[str, dict[str, Optional[float]]]] = {}
         for task in tasks:
             result = task["result"]
             if not result or result.get("mode") != "PER_CRITERIA":

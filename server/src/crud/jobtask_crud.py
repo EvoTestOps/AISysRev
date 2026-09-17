@@ -46,7 +46,7 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def fetch_job_task_by_id(self, job_task_id: int) -> JobTask:
+    async def fetch_job_task_by_id(self, job_task_id: int) -> JobTask | None:
         stmt = select(JobTask).where(JobTask.id == job_task_id)
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

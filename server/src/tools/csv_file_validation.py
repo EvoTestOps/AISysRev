@@ -82,7 +82,7 @@ def validate_csv(
             }
             for err in e.errors():
                 row = int(err["loc"][0]) + 1
-                err_field = err["loc"][1]
+                err_field = str(err["loc"][1])
                 if screening_target == "GITHUB_REPOSITORY":
                     err_field = github_field_names.get(err_field, err_field)
                 errors.append(

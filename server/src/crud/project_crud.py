@@ -1,7 +1,8 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple, cast
 from uuid import UUID
 
 from sqlalchemy import select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.project import Project
@@ -52,7 +53,7 @@ class ProjectCrud:
             .where(Project.owner_uuid == owner_uuid)
             .values(preferences=preferences.model_dump())
         )
-        result = await self.db.execute(stmt)
+        result = cast(CursorResult, await self.db.execute(stmt))
         return result.rowcount > 0
 
     async def fetch_project_by_uuid(
@@ -70,8 +71,8 @@ class ProjectCrud:
         self,
         uuid: UUID,
         owner_uuid: UUID,
-        inclusion_criteria_embedding: list[float],
-        exclusion_criteria_embedding: list[float],
+        inclusion_criteria_embedding: list[list[float]] | None,
+        exclusion_criteria_embedding: list[list[float]] | None,
     ) -> bool:
         stmt = (
             update(Project)
@@ -82,7 +83,7 @@ class ProjectCrud:
                 exclusion_criteria_embedding=exclusion_criteria_embedding,
             )
         )
-        result = await self.db.execute(stmt)
+        result = cast(CursorResult, await self.db.execute(stmt))
         return result.rowcount > 0
 
     async def create_project(self, project_data: ProjectCreate) -> Tuple[int, UUID]:

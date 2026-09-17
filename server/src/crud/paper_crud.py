@@ -4,11 +4,12 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
+from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.sqltypes import Float
 
 from src.db.models.file import File
 from src.db.models.jobtask import JobTask
-from src.db.models.paper import Paper
+from src.db.models.paper import HumanResult, Paper
 from src.db.models.project import Project
 from src.schemas.job import JobScreeningMode
 from src.schemas.paper import PaperCreate, PaperHumanResult, PaperReadWithAvgProbability
@@ -97,7 +98,7 @@ class PaperCrud:
         result = await self.db.execute(stmt)
         paper = result.scalar_one_or_none()
         if paper:
-            paper.human_result = human_result
+            paper.human_result = HumanResult(human_result.value)
             await self.db.flush()
 
     async def count_papers_with_human_results(
@@ -111,7 +112,7 @@ class PaperCrud:
             .where(Project.owner_uuid == owner_uuid)
         )
         count = await self.db.execute(stmt)
-        return count.scalar()
+        return count.scalar() or 0
 
     async def fetch_max_paper_id(self, project_uuid: UUID, owner_uuid: UUID) -> int:
         stmt = (
@@ -122,11 +123,12 @@ class PaperCrud:
             .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
-        return result.scalar()
+        return result.scalar() or 0
 
     async def fetch_papers_for_screening(
         self, project_uuid: UUID, owner_uuid: UUID, screening_mode: JobScreeningMode
     ) -> Sequence[Paper]:
+        source_filter: ColumnElement[bool]
         if screening_mode == JobScreeningMode.TEXT:
             source_filter = Paper.file_uuid.isnot(None)
         elif screening_mode == JobScreeningMode.PDF:

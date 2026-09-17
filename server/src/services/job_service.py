@@ -56,7 +56,7 @@ class JobService:
 
         result = []
         for job in jobs:
-            stats = stats_map.get(job["uuid"])
+            stats = stats_map.get(job["uuid"])  # type: ignore[index]
             total = stats["total_count"] if stats else 0
             success = stats["success_count"] if stats else 0
             failed = stats["failed_count"] if stats else 0
@@ -65,7 +65,7 @@ class JobService:
             job_status = resolve_job_status(total, success, failed, cancelled)
             result.append(
                 JobReadWithStats(
-                    **job,
+                    **job,  # type: ignore[arg-type]
                     stats=JobStats(
                         total=total, success=success, failed=failed, status=job_status
                     ),
