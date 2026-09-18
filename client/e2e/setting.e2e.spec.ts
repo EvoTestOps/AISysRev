@@ -1,12 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { resetFixtures } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
 test.describe("Settings page UI", () => {
   test.beforeEach(async ({ page }) => {
-    await resetFixtures(page.request);
     await loginAndConsentUI(page);
   });
 

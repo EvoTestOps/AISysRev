@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedProjectWithPapers } from "./helpers/seed";
+import { seedProjectWithPapers } from "./helpers/seed";
 import { createZeroShotMockJob, waitForJobCompletion } from "./helpers/job";
 
 const prefix = "/api/v1";
@@ -9,7 +9,6 @@ test.describe("Result API", () => {
   let projectUuid: string;
 
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
 
     const { project } = await seedProjectWithPapers(request, "Result Project", 2);

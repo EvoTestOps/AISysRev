@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedProjectWithPapers } from "./helpers/seed";
+import { seedProjectWithPapers, uniqueName } from "./helpers/seed";
 import { createZeroShotMockJob, waitForJobCompletion } from "./helpers/job";
 
 const prefix = "/api/v1";
@@ -10,12 +10,11 @@ test.describe("Job task API", () => {
   let jobUuid: string;
 
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
 
     const { project, papers } = await seedProjectWithPapers(
       request,
-      "Job Task Test Project",
+      uniqueName("Job Task Test Project"),
       1,
     );
     paperUuid = papers[0].uuid;

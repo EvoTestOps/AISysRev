@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedProjects } from "./helpers/seed";
+import { seedProjects, uniqueName } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
@@ -15,12 +15,12 @@ test.describe("Project API", () => {
   };
 
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
 
+    const projectName = uniqueName("Test Project");
     const createRes = await request.post(`${prefix}/project`, {
       data: {
-        name: "Test Project",
+        name: projectName,
         criteria: {
           inclusion_criteria: ["Test inclusion criteria"],
           exclusion_criteria: ["Test exclusion criteria"],
@@ -34,32 +34,29 @@ test.describe("Project API", () => {
     const projects = await listRes.json();
 
     const found = projects.find(
-      (p: { name: string }) => p.name === "Test Project",
+      (p: { name: string }) => p.name === projectName,
     );
     expect(found, "created project should be in list").toBeTruthy();
 
     mockProject = found;
   });
 
-  test("Fetch all projects returns 200 and an array with the mock project", async ({
+  test("Fetch all projects returns 200 and an array containing the mock project", async ({
     request,
   }) => {
     const res = await request.get(`${prefix}/project`);
     expect(res.status()).toBe(200);
 
     const data = await res.json();
-    expect(data.length).toBe(1);
     expect(Array.isArray(data)).toBe(true);
-    expect(data[0]).toHaveProperty("uuid");
-    expect(data[0]).toHaveProperty("name");
-    expect(data[0]).toHaveProperty("criteria");
-    expect(data[0].criteria).toHaveProperty("inclusion_criteria");
-    expect(data[0].criteria).toHaveProperty("exclusion_criteria");
+    expect(data.length).toBeGreaterThan(0);
 
-    const exists = data.some(
-      (p: { uuid: string }) => p.uuid === mockProject.uuid,
-    );
-    expect(exists).toBe(true);
+    const found = data.find((p: { uuid: string }) => p.uuid === mockProject.uuid);
+    expect(found, "created project should be in the list").toBeTruthy();
+    expect(found).toHaveProperty("name");
+    expect(found).toHaveProperty("criteria");
+    expect(found.criteria).toHaveProperty("inclusion_criteria");
+    expect(found.criteria).toHaveProperty("exclusion_criteria");
   });
 
   test("Fetch single project by UUID returns the correct record", async ({
@@ -83,7 +80,7 @@ test.describe("Project API", () => {
   }) => {
     const res = await request.post(`${prefix}/project`, {
       data: {
-        name: "Another Test Project",
+        name: uniqueName("Another Test Project"),
         criteria: {
           inclusion_criteria: ["New Test Inclusion Criteria"],
           exclusion_criteria: ["New Test Exclusion Criteria"],
@@ -115,14 +112,14 @@ test.describe("Project API", () => {
     const res = await request.post(`${prefix}/project/batch`, {
       data: [
         {
-          name: "Batch Project 1",
+          name: uniqueName("Batch Project 1"),
           criteria: {
             inclusion_criteria: ["IC1"],
             exclusion_criteria: ["EC1"],
           },
         },
         {
-          name: "Batch Project 2",
+          name: uniqueName("Batch Project 2"),
           criteria: {
             inclusion_criteria: ["IC2"],
             exclusion_criteria: ["EC2"],
@@ -142,7 +139,10 @@ test.describe("Project API", () => {
     request,
   }) => {
     const created = await seedProjects(request, [
-      { name: "Batch Delete Me", criteria: { inclusion_criteria: ["IC"], exclusion_criteria: ["EC"] } },
+      {
+        name: uniqueName("Batch Delete Me"),
+        criteria: { inclusion_criteria: ["IC"], exclusion_criteria: ["EC"] },
+      },
     ]);
 
     const res = await request.delete(`${prefix}/project/batch`, {

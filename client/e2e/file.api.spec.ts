@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedProjects } from "./helpers/seed";
+import { seedProjects } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
@@ -10,7 +10,6 @@ test.describe("File API", () => {
   let projectUuid: string;
 
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
     const [project] = await seedProjects(request, [
       {

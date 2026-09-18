@@ -1,17 +1,16 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { resetFixtures, seedProjectWithPapers } from "./helpers/seed";
+import { seedProjectWithPapers, uniqueName } from "./helpers/seed";
 
 test.describe("Manual evaluation modal", () => {
   test.beforeEach(async ({ page }) => {
-    await resetFixtures(page.request);
     await loginAndConsentUI(page);
   });
 
   test("Evaluate papers by clicking Include/Exclude/Unsure", async ({ page }) => {
     const { project, papers } = await seedProjectWithPapers(
       page.request,
-      "Manual Eval Project",
+      uniqueName("Manual Eval Project"),
       3,
     );
 
@@ -39,7 +38,7 @@ test.describe("Manual evaluation modal", () => {
   test("Evaluate a paper using keyboard shortcuts", async ({ page }) => {
     const { project, papers } = await seedProjectWithPapers(
       page.request,
-      "Manual Eval Keyboard Project",
+      uniqueName("Manual Eval Keyboard Project"),
       1,
     );
 

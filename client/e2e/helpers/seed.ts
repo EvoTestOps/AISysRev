@@ -1,6 +1,16 @@
+import { randomUUID } from "crypto";
 import { APIRequestContext, expect } from "@playwright/test";
 
 const prefix = "/api/v1";
+
+/**
+ * The dev-login user and its data persist for the whole test run (fixtures
+ * are only reset once, in global setup/teardown), so names must be unique
+ * per test to avoid colliding with leftover data from other tests.
+ */
+export function uniqueName(prefix: string): string {
+  return `${prefix} ${randomUUID()}`;
+}
 
 export type SeededProject = {
   id: number;

@@ -3,8 +3,16 @@ import { expect } from "@playwright/test";
 
 const prefix = "/api/v1";
 
+/**
+ * Playwright sets TEST_PARALLEL_INDEX per worker process, so each parallel
+ * worker logs in as its own isolated dev user instead of sharing one account.
+ */
+function workerId(): string {
+  return process.env.TEST_PARALLEL_INDEX ?? "0";
+}
+
 export async function loginAndConsent(request: APIRequestContext): Promise<void> {
-  await request.get(`${prefix}/auth/dev-login`);
+  await request.get(`${prefix}/auth/dev-login?worker=${workerId()}`);
 
   const consentRes = await request.post(`${prefix}/auth/consent`, {
     data: {

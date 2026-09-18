@@ -1,13 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedPapers, seedProjectWithPapers, seedProjects, uploadCsvPapers } from "./helpers/seed";
+import { seedPapers, seedProjectWithPapers, seedProjects, uploadCsvPapers } from "./helpers/seed";
 import { createZeroShotMockJob, waitForJobCompletion } from "./helpers/job";
 
 const prefix = "/api/v1";
 
 test.describe("Paper API", () => {
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
   });
 

@@ -1,19 +1,22 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { resetFixtures, seedProjectWithPapers } from "./helpers/seed";
+import { seedProjectWithPapers, uniqueName } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
 test.describe("Job UI (mock LLM)", () => {
   test.beforeEach(async ({ page }) => {
-    await resetFixtures(page.request);
     await loginAndConsentUI(page);
   });
 
   test("Create a zero-shot task with the mock provider and see it complete", async ({
     page,
   }) => {
-    const { project } = await seedProjectWithPapers(page.request, "UI Job Project", 2);
+    const { project } = await seedProjectWithPapers(
+      page.request,
+      uniqueName("UI Job Project"),
+      2,
+    );
 
     await page.goto(`/project/${project.uuid}`);
 

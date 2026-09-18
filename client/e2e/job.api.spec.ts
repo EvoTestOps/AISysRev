@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsent } from "./helpers/auth";
-import { resetFixtures, seedProjectWithPapers } from "./helpers/seed";
+import { seedProjectWithPapers, uniqueName } from "./helpers/seed";
 import { createZeroShotMockJob, mockLlmConfig, waitForJobCompletion } from "./helpers/job";
 
 const prefix = "/api/v1";
@@ -10,26 +10,28 @@ test.describe("Job API", () => {
   let mockCreateJob: { uuid: string; project_uuid: string };
 
   test.beforeEach(async ({ request }) => {
-    await resetFixtures(request);
     await loginAndConsent(request);
 
-    const { project } = await seedProjectWithPapers(request, "Test Project for Job", 1);
+    const { project } = await seedProjectWithPapers(
+      request,
+      uniqueName("Test Project for Job"),
+      1,
+    );
     mockProject = project;
     mockCreateJob = await createZeroShotMockJob(request, project.uuid);
     expect(mockCreateJob.project_uuid).toBe(mockProject.uuid);
   });
 
-  test("Fetch all jobs returns 200 and an array with the mock job", async ({
+  test("Fetch all jobs returns 200 and an array containing the mock job", async ({
     request,
   }) => {
     const res = await request.get(`${prefix}/job`);
     expect(res.status()).toBe(200);
 
     const data = await res.json();
-    expect(data.length).toBe(1);
     expect(Array.isArray(data)).toBe(true);
     expect(
-      data.some((job: { project_uuid: string }) => job.project_uuid === mockProject.uuid),
+      data.some((job: { uuid: string }) => job.uuid === mockCreateJob.uuid),
     ).toBe(true);
   });
 

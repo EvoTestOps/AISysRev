@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { resetFixtures, seedProjects } from "./helpers/seed";
+import { seedProjects, uniqueName } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
@@ -8,14 +8,13 @@ const VALID_CSV = "title,abstract,doi\nPaper One,Abstract one,10.1234/one\n";
 
 test.describe("File Upload UI", () => {
   test.beforeEach(async ({ page }) => {
-    await resetFixtures(page.request);
     await loginAndConsentUI(page);
   });
 
   test("Upload a CSV via the drop area and see papers listed", async ({ page }) => {
     const [project] = await seedProjects(page.request, [
       {
-        name: "UI Upload Project",
+        name: uniqueName("UI Upload Project"),
         criteria: { inclusion_criteria: ["IC1"], exclusion_criteria: ["EC1"] },
       },
     ]);

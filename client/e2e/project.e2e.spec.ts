@@ -1,19 +1,20 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { resetFixtures, seedProjects } from "./helpers/seed";
+import { seedProjects, uniqueName } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
 test.describe("Project UI", () => {
   test.beforeEach(async ({ page }) => {
-    await resetFixtures(page.request);
     await loginAndConsentUI(page);
   });
 
   test("Create a project without PDFs via the UI", async ({ page }) => {
+    const projectName = uniqueName("UI Created Project");
+
     await page.goto("/create");
 
-    await page.getByTestId("new-project-title-input").fill("UI Created Project");
+    await page.getByTestId("new-project-title-input").fill(projectName);
 
     const inclusionInput = page.getByTestId("new-project-inclusion-criteria-input");
     await inclusionInput.fill("Must be relevant");
@@ -30,7 +31,7 @@ test.describe("Project UI", () => {
     const res = await page.request.get(`${prefix}/project`);
     const projects = await res.json();
     expect(
-      projects.some((p: { name: string }) => p.name === "UI Created Project"),
+      projects.some((p: { name: string }) => p.name === projectName),
     ).toBe(true);
   });
 
@@ -39,7 +40,7 @@ test.describe("Project UI", () => {
   }) => {
     const [project] = await seedProjects(page.request, [
       {
-        name: "PDF Project",
+        name: uniqueName("PDF Project"),
         criteria: {
           inclusion_criteria: ["IC1"],
           exclusion_criteria: ["EC1"],

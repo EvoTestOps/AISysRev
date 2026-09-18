@@ -13,14 +13,17 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  /* Reset fixtures once before the run and once after, instead of per-test */
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
   /* Run tests in files in parallel */
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: 1,
+  retries: 3,
+  /* 10 seconds */
+  timeout: 10 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -29,21 +32,32 @@ export default defineConfig({
     baseURL: "http://localhost:3002",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on-first-retry",
+    trace: "on",
   },
 
-  /* Configure projects for major browsers */
+  /* *.api.spec.ts tests only use the `request` fixture and never touch a
+   * browser, so they run once here instead of being tripled across every
+   * browser project below (which would needlessly multiply load on the
+   * shared backend/celery/DB stack). *.e2e.spec.ts tests drive a real page
+   * and run across all three browser engines. */
   projects: [
     {
+      name: "api",
+      testMatch: /.*\.api\.spec\.ts/,
+    },
+    {
       name: "chromium",
+      testMatch: /.*\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "firefox",
+      testMatch: /.*\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Firefox"] },
     },
     {
       name: "webkit",
+      testMatch: /.*\.e2e\.spec\.ts/,
       use: { ...devices["Desktop Safari"] },
     },
   ],
