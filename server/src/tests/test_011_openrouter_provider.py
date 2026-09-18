@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 
@@ -7,6 +8,8 @@ from src.core.llm.providers.openrouter import (
     OpenRouterProviderParams,
 )
 from src.schemas.llm import ProviderRuntimeParameters
+from src.schemas.setting import SettingRead
+from src.services.llm_service import LLMService
 
 
 @pytest.mark.unit
@@ -174,3 +177,58 @@ async def test_get_available_models_uses_zdr_endpoint_and_filters_when_enabled()
 
     assert [m.id for m in models] == ["openai/gpt-4o"]
     assert "endpoints/zdr" in session.requested_urls[0]
+
+
+@pytest.mark.unit
+def test_apply_global_config_overrides_forces_zdr_when_setting_is_true():
+    result = OpenRouterProvider.apply_global_config_overrides(
+        {"zdr": False}, {"openrouter_force_zdr": "true"}
+    )
+    assert result == {"zdr": True}
+
+
+@pytest.mark.unit
+def test_apply_global_config_overrides_leaves_params_untouched_when_not_set():
+    result = OpenRouterProvider.apply_global_config_overrides(
+        {"zdr": False}, {}
+    )
+    assert result == {"zdr": False}
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_provider_parameters_applies_force_zdr_override():
+    owner_uuid = uuid4()
+    setting_service = MagicMock()
+
+    async def fake_get_setting(key, owner_uuid, mask_secret=False):
+        if key == "openrouter_force_zdr":
+            return SettingRead(name=key, value="true", secret=False)
+        return None
+
+    setting_service.get_setting = AsyncMock(side_effect=fake_get_setting)
+    llm_service = LLMService(setting_service)
+
+    result = await llm_service.resolve_provider_parameters(
+        OpenRouterProvider, {"zdr": False}, owner_uuid
+    )
+
+    assert result == {"zdr": True}
+    # The secret api_key config parameter must never be read through this path.
+    called_keys = [call.args[0] for call in setting_service.get_setting.await_args_list]
+    assert "openrouter_api_key" not in called_keys
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_provider_parameters_no_override_when_setting_missing():
+    owner_uuid = uuid4()
+    setting_service = MagicMock()
+    setting_service.get_setting = AsyncMock(return_value=None)
+    llm_service = LLMService(setting_service)
+
+    result = await llm_service.resolve_provider_parameters(
+        OpenRouterProvider, {"zdr": False}, owner_uuid
+    )
+
+    assert result == {"zdr": False}

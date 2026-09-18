@@ -96,6 +96,10 @@ async def get_structured_response(
                 f"API key {llm.api_key_config_parameter.key} for provider {job_data.llm_config.provider_name} is missing"
             )
 
+    provider_parameters = await llm_service.resolve_provider_parameters(
+        llm, job_data.llm_config.provider_parameters, job_data.owner_uuid
+    )
+
     abstract = job_task_data.abstract
     content_label = "Abstract"
     if job_data.screening_mode == JobScreeningMode.PDF or (
@@ -107,7 +111,7 @@ async def get_structured_response(
         content_label = "Excerpts from the paper"
         abstract = await pdf_screening_service.get_pdf_chunks_for_screening(
             llm,
-            job_data.llm_config.provider_parameters,
+            provider_parameters,
             ProviderRuntimeParameters(
                 model=job_data.llm_config.model_name,
                 api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
@@ -135,7 +139,7 @@ async def get_structured_response(
         )
         result = await llm_service.call_llm(
             llm,
-            provider_parameters=job_data.llm_config.provider_parameters,
+            provider_parameters=provider_parameters,
             model_parameters=job_data.llm_config.model_parameters,
             runtime_parameters=ProviderRuntimeParameters(
                 model=job_data.llm_config.model_name,
@@ -166,7 +170,7 @@ async def get_structured_response(
         )
         result = await llm_service.call_llm(
             llm,
-            provider_parameters=job_data.llm_config.provider_parameters,
+            provider_parameters=provider_parameters,
             model_parameters=job_data.llm_config.model_parameters,
             runtime_parameters=ProviderRuntimeParameters(
                 model=job_data.llm_config.model_name,
@@ -203,6 +207,9 @@ async def get_single_criterion_response(
                 f"API key {llm.api_key_config_parameter.key} for provider "
                 f"{job_data.llm_config.provider_name} is missing"
             )
+    provider_parameters = await llm_service.resolve_provider_parameters(
+        llm, job_data.llm_config.provider_parameters, job_data.owner_uuid
+    )
     screening_target = getattr(
         job_data.prompting_config,
         "screening_target",
@@ -216,7 +223,7 @@ async def get_single_criterion_response(
     prompt_text = prompt_template.format(title, abstract, criterion_description)
     return await llm_service.call_llm(
         llm,
-        provider_parameters=job_data.llm_config.provider_parameters,
+        provider_parameters=provider_parameters,
         model_parameters=job_data.llm_config.model_parameters,
         runtime_parameters=ProviderRuntimeParameters(
             model=job_data.llm_config.model_name,

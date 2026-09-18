@@ -95,8 +95,11 @@ async def get_available_models(
                 status_code=400,
                 detail="Provider parameters are required for this provider",
             )
+        resolved_provider_parameters = await llm_service.resolve_provider_parameters(
+            llm_class, provider_parameters, current_user.uuid
+        )
         try:
-            llm_instance = llm_class(provider_parameters, runtime_params)
+            llm_instance = llm_class(resolved_provider_parameters, runtime_params)
         except Exception as e:
             raise HTTPException(
                 status_code=400,
