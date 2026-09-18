@@ -42,6 +42,7 @@ async def delete_setting(
 class UpsertData(BaseModel):
     name: str = Field(max_length=1024)
     value: str = Field(max_length=1024)
+    secret: bool = True
 
     @field_validator("name", "value")
     @classmethod
@@ -59,7 +60,7 @@ async def upsert_setting(
 ):
     setting_service = create_setting_service(db_ctx)
     uuid = await setting_service.upsert_setting(
-        data.name, data.value, owner_uuid=current_user.uuid, secret=True
+        data.name, data.value, owner_uuid=current_user.uuid, secret=data.secret
     )
     await db_ctx.commit()
 

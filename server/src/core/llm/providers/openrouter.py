@@ -60,7 +60,26 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
         title="OpenRouter API key",
         description="OpenRouter API key is used to authenticate requests to the OpenRouter API.",
     )
-    config_parameters = [api_key_config_parameter]
+    force_zdr_config_parameter = ConfigParameter(
+        key="openrouter_force_zdr",
+        title="Force Zero Data Retention (ZDR)",
+        description=(
+            "When enabled, all OpenRouter requests use Zero Data Retention, "
+            "regardless of the per-job ZDR setting."
+        ),
+        type="boolean",
+        defaultValue=False,
+        secret=False,
+    )
+    config_parameters = [api_key_config_parameter, force_zdr_config_parameter]
+
+    @classmethod
+    def apply_global_config_overrides(
+        cls, provider_parameters: dict[str, Any], global_config: dict[str, str]
+    ) -> dict[str, Any]:
+        if global_config.get(cls.force_zdr_config_parameter.key) == "true":
+            return {**provider_parameters, "zdr": True}
+        return provider_parameters
 
     def _build_openrouter_provider_settings(self) -> OpenRouterProviderConfig:
         if self.provider_parameters is None:
