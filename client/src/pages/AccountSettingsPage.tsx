@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import Skeleton from "react-loading-skeleton";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
@@ -12,6 +13,7 @@ import { api } from "../services/api";
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [researchConsent, setResearchConsent] = useState<boolean>(false);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [saving, setSaving] = useState(false);
   const [, navigate] = useLocation();
 
@@ -19,8 +21,9 @@ export const AccountSettingsPage = () => {
     const controller = new AbortController();
     const fetchUser = async () => {
       try {
-        const user = await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
-        setResearchConsent(user.consent_anonymized_research_usage ?? false);
+        const res = await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
+        setResearchConsent(res.consent_anonymized_research_usage ?? false);
+        setLoadingUser(false);
       } catch (e) {
         if (!controller.signal.aborted) throw e;
       }
@@ -59,46 +62,43 @@ export const AccountSettingsPage = () => {
       <Card>
         <div className="border-b border-slate-200 bg-white px-6 py-5">
           <h1 className="text-xl font-semibold text-slate-900">Account</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Manage your account settings.
-          </p>
+          <p className="mt-1 text-sm text-slate-600">Manage your account settings.</p>
         </div>
         <div className="space-y-4 bg-slate-50 px-6 py-6">
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Research data consent
-            </p>
+            <p className="text-sm font-semibold text-slate-900">Research data consent</p>
             <p className="mt-1 text-sm text-slate-600 mb-4">
-              I consent to my anonymized usage data being used for academic
-              research about this tool. This is optional and will not affect
-              your use of the application. You can change your consent for this
-              at any time.
+              I consent to my anonymized usage data being used for academic research about this
+              tool. This is optional and will not affect your use of the application. You can change
+              your consent for this at any time.
             </p>
-            <button
-              role="switch"
-              data-testid="research-consent-switch"
-              aria-checked={researchConsent}
-              onClick={handleSaveResearchConsent}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                researchConsent ? "bg-slate-800" : "bg-slate-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  researchConsent ? "translate-x-6" : "translate-x-1"
+            {loadingUser ? (
+              <Skeleton width={44} height={24} borderRadius={999} />
+            ) : (
+              <button
+                role="switch"
+                data-testid="research-consent-switch"
+                aria-checked={researchConsent}
+                onClick={handleSaveResearchConsent}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:cursor-not-allowed ${
+                  researchConsent ? "bg-slate-800" : "bg-slate-300"
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    researchConsent ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            )}
           </div>
 
           <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-5">
-            <p className="text-sm font-semibold text-slate-900">
-              Delete account
-            </p>
+            <p className="text-sm font-semibold text-slate-900">Delete account</p>
             <p className="mt-1 text-sm text-slate-600 mb-4">
-              Permanently deletes your account and all your projects, papers and
-              jobs. Note that this action cannot be undone.
+              Permanently deletes your account and all your projects, papers and jobs. Note that
+              this action cannot be undone.
             </p>
             <Button
               variant="red"
