@@ -1,9 +1,9 @@
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}`);
+    const res = await legacyApi.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,7 +20,7 @@ export const fetchPapersWithModelEvalsForProject = async (
   projectUuid: string,
 ) => {
   try {
-    const res = await api.get(
+    const res = await legacyApi.get(
       `/api/v1/paper/${projectUuid}/with_model_evaluations`,
     );
     return res.data;

@@ -1,9 +1,9 @@
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 import { JobTaskHumanResult, JobTask } from "../state/types";
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}`);
+    const res = await legacyApi.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,7 +20,7 @@ export const fetchJobTasksFromBackend = async (
   jobId?: number,
 ) => {
   try {
-    const res = await api.get(`/api/v1/jobtask/${jobUuid}`);
+    const res = await legacyApi.get(`/api/v1/jobtask/${jobUuid}`);
     let id = jobId;
     if (!id && res.data.length > 0) {
       id = res.data[0].job_id;
@@ -37,7 +37,7 @@ export const fetchJobTasksFromBackend = async (
 
 export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/jobtask/${jobTaskUuid}`);
+    const res = await legacyApi.get(`/api/v1/jobtask/${jobTaskUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching job task by UUID:", error);

@@ -1,10 +1,13 @@
 import axios from "axios";
+import { createApi } from "./api/api.client";
 
 const getBaseUrl = () =>
   import.meta.env.VITE_API_BASE_URL !== undefined
     ? import.meta.env.VITE_API_BASE_URL
     : undefined;
 
-export const createApi = (baseURL = getBaseUrl()) => axios.create({ baseURL });
+// TODO: Refactor this out when code has been migrated
+export const createLegacyApi = (baseURL = getBaseUrl()) => axios.create({ baseURL });
 
-export const api = createApi();
+export const legacyApi = createLegacyApi()
+export const api = createApi(getBaseUrl());

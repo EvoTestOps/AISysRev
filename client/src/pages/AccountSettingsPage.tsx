@@ -7,7 +7,7 @@ import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
 import { TabButton } from "../components/TabButton";
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -19,7 +19,7 @@ export const AccountSettingsPage = () => {
     const controller = new AbortController();
     const fetchUser = async () => {
       try {
-        const res = await api.get("/api/v1/auth/me", { signal: controller.signal });
+        const res = await legacyApi.get("/api/v1/auth/me", { signal: controller.signal });
         setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
       } catch (e) {
         if (!controller.signal.aborted) throw e;

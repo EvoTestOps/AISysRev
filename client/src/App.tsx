@@ -14,7 +14,7 @@ import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
-import { api } from "./services/api";
+import { legacyApi } from "./services/api";
 import { Layout } from "./components/Layout";
 import { ConsentModal } from "./components/ConsentModal";
 
@@ -35,7 +35,7 @@ function App() {
     const controller = new AbortController();
     const checkSession = async () => {
       try {
-        await api.get("/api/v1/auth/me", { signal: controller.signal });
+        await legacyApi.get("/api/v1/auth/me", { signal: controller.signal });
         setConsentRequired(false);
         setIsAuthenticated(true);
       } catch (error) {

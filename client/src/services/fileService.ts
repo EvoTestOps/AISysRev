@@ -1,12 +1,14 @@
-import { api } from "../services/api";
+import { api, legacyApi } from "../services/api";
 import { ScreeningTarget } from "../state/types";
 
 export const fileFetchFromBackend = async (projectUuid: string) => {
   try {
-    // console.log("Fetching files for project UUID:", projectUuid);
-    const res = await api.get(`/api/v1/files/${projectUuid}`);
-    // console.log("Fetch successful:", res.data);
-    return res.data;
+    const res = await api.get("/api/v1/files/{project_uuid}", {
+      path: {
+        project_uuid: projectUuid
+      }
+    })
+    return res;
   } catch (error) {
     console.error("File fetch error: ", error);
     throw error;
@@ -26,7 +28,7 @@ export const fileUploadToBackend = async (
   files.forEach((file) => formData.append("files", file));
 
   try {
-    const res = await api.post(`/api/v1/files/upload`, formData);
+    const res = await legacyApi.post(`/api/v1/files/upload`, formData);
     return res.data;
   } catch (error) {
     console.error("Backend upload error", error);
@@ -42,7 +44,7 @@ export const attachPdfToPaper = async (
   formData.append("file", file);
 
   try {
-    const res = await api.post(`/api/v1/files/${paperUuid}/attach-pdf`, formData);
+    const res = await legacyApi.post(`/api/v1/files/${paperUuid}/attach-pdf`, formData);
     return res.data;
   } catch (error) {
     console.error("Backend attach PDF error", error);
@@ -63,7 +65,7 @@ export const importFulltextFromEndnoteXml = async (
   pdfRelativePaths.forEach((path) => formData.append("pdf_relative_paths", path));
 
   try {
-    const res = await api.post(`/api/v1/files/import-fulltext`, formData);
+    const res = await legacyApi.post(`/api/v1/files/import-fulltext`, formData);
     return res.data;
   } catch (error) {
     console.error("Backend import fulltext error", error);

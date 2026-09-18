@@ -1,5 +1,5 @@
 import z from "zod";
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 import type {
   CreatedProject,
   Criteria,
@@ -15,7 +15,7 @@ import {ScreeningTarget} from "../state/types";
 
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
-    const res = await api.get("/api/v1/project");
+    const res = await legacyApi.get("/api/v1/project");
     return z.array(ProjectModel).parse(res.data);
   } catch (error) {
     console.error("Fetching projects unsuccessful", error);
@@ -25,7 +25,7 @@ export const fetch_projects = async (): Promise<Project[]> => {
 
 export const fetch_project_by_uuid = async (uuid: string): Promise<Project> => {
   try {
-    const res = await api.get(`/api/v1/project/${uuid}`);
+    const res = await legacyApi.get(`/api/v1/project/${uuid}`);
     return ProjectModel.parse(res.data);
   } catch (error) {
     console.error("Fetching project by UUID unsuccessful", error);
@@ -39,7 +39,7 @@ export const create_project = async (
   screeningTarget: ScreeningTarget,
 ): Promise<CreatedProject> => {
   try {
-    const res = await api.post("/api/v1/project", {
+    const res = await legacyApi.post("/api/v1/project", {
       name: title,
       criteria: criteria,
       screening_target: screeningTarget,

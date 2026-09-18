@@ -24231,7 +24231,7 @@ class IsolationAgent(Agent):
         )
         
         # Check quarantine VLAN membership
-        quarantine_membership = self.switch_api.get_port_assignment(
+        quarantine_membership = self.switch_legacyApi.get_port_assignment(
             mac_address=entity.mac_address
         )
         
