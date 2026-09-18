@@ -89,6 +89,31 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
+    async def fetch_tasks_stats_by_owner(self, owner_uuid: UUID):
+        stmt = (
+            select(
+                Job.uuid.label("job_uuid"),
+                func.count(JobTask.id).label("total_count"),
+                func.coalesce(
+                    func.sum(case((JobTask.status == JobTaskStatus.DONE, 1), else_=0))
+                ).label("success_count"),
+                func.coalesce(
+                    func.sum(case((JobTask.status == JobTaskStatus.ERROR, 1), else_=0))
+                ).label("failed_count"),
+                func.coalesce(
+                    func.sum(
+                        case((JobTask.status == JobTaskStatus.CANCELLED, 1), else_=0)
+                    )
+                ).label("cancelled_count"),
+            )
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Project.id == Job.project_id)
+            .where(Project.owner_uuid == owner_uuid)
+            .group_by(Job.uuid)
+        )
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
     async def fetch_task_stats_by_job(self, job_id: int):
         stmt = (
             select(

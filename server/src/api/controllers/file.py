@@ -24,6 +24,24 @@ from src.services.file_service import create_file_service
 router = APIRouter()
 
 
+@router.delete("/files/batch", status_code=status.HTTP_200_OK, tags=["File"])
+async def delete_files_batch(
+    uuids: List[UUID],
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    file_service = create_file_service(db_ctx)
+    try:
+        deleted = await file_service.delete_batch(uuids, current_user.uuid)
+        await db_ctx.commit()
+        return {"deleted": [str(u) for u in deleted]}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to batch delete files: {str(e)}",
+        )
+
+
 @router.get(
     "/files/{project_uuid}",
     status_code=status.HTTP_200_OK,

@@ -63,6 +63,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
   return (
     <div>
       <div
+        data-testid="csv-file-drop-area"
         onClick={() => fileInputRef.current?.click()}
         onDragOver={(e) => {
           preventDefaults(e);
@@ -107,6 +108,7 @@ export const FileDropArea: React.FC<FileDropAreaProps> = ({ onFilesSelected }) =
 
       <input
         type="file"
+        data-testid="csv-file-input"
         accept=".csv"
         multiple={false}
         ref={fileInputRef}

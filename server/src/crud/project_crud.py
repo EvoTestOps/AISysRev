@@ -1,7 +1,7 @@
 from typing import Optional, Sequence, Tuple, cast
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -91,6 +91,26 @@ class ProjectCrud:
         self.db.add(new_project)
         await self.db.flush()
         return new_project.id, new_project.uuid
+
+    async def create_projects(
+        self, projects_data: list[ProjectCreate]
+    ) -> list[Project]:
+        values = [data.model_dump() for data in projects_data]
+        result = await self.db.execute(insert(Project).returning(Project), values)
+        return list(result.scalars().all())
+
+    async def delete_projects(self, uuids: list[UUID], owner_uuid: UUID) -> list[UUID]:
+        stmt = (
+            select(Project)
+            .where(Project.uuid.in_(uuids))
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        matched_projects = result.scalars().all()
+        deleted_uuids = [project.uuid for project in matched_projects]
+        for project in matched_projects:
+            await self.db.delete(project)
+        return deleted_uuids
 
     async def delete_project(self, uuid: UUID, owner_uuid: UUID) -> bool:
         stmt = (

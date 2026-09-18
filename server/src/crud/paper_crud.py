@@ -1,7 +1,7 @@
 from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import insert, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import cast, func
 from sqlalchemy.sql.elements import ColumnElement
@@ -20,10 +20,23 @@ class PaperCrud:
         self.db = db
 
     async def bulk_create_papers(self, papers: List[PaperCreate]):
-        db_objs = [Paper(**paper.model_dump()) for paper in papers]
-        self.db.add_all(db_objs)
-        await self.db.flush()
-        return db_objs
+        values = [paper.model_dump() for paper in papers]
+        result = await self.db.execute(insert(Paper).returning(Paper), values)
+        return list(result.scalars().all())
+
+    async def delete_papers(self, uuids: List[UUID], owner_uuid: UUID) -> List[UUID]:
+        stmt = (
+            select(Paper)
+            .join(Project, Project.uuid == Paper.project_uuid)
+            .where(Paper.uuid.in_(uuids))
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        matched_papers = result.scalars().all()
+        deleted_uuids = [paper.uuid for paper in matched_papers]
+        for paper in matched_papers:
+            await self.db.delete(paper)
+        return deleted_uuids
 
     async def fetch_paper_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> Paper | None:
         stmt = (
