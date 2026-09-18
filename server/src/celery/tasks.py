@@ -4,7 +4,11 @@ from typing import Dict
 from uuid import UUID
 
 from httpx import AsyncClient, HTTPStatusError
-from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_after
+from pydantic_ai.retries import (
+    AsyncHTTPX2TenacityTransport,
+    RetryConfig,
+    wait_retry_after,
+)
 from tenacity import retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from celery import Task
@@ -56,7 +60,7 @@ def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> Async
         if response.status_code in (429, 502, 503, 504):
             response.raise_for_status()
 
-    transport = AsyncTenacityTransport(
+    transport = AsyncHTTPX2TenacityTransport(
         config=RetryConfig(
             retry=retry_if_exception_type((HTTPStatusError, ConnectionError)),
             wait=wait_retry_after(
