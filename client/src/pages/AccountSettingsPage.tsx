@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import Skeleton from "react-loading-skeleton";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
@@ -12,6 +13,7 @@ import { api } from "../services/api";
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [researchConsent, setResearchConsent] = useState<boolean>(false);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [saving, setSaving] = useState(false);
   const [, navigate] = useLocation();
 
@@ -21,6 +23,7 @@ export const AccountSettingsPage = () => {
       try {
         const res = await api.get("/api/v1/auth/me", { signal: controller.signal });
         setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
+        setLoadingUser(false);
       } catch (e) {
         if (!controller.signal.aborted) throw e;
       }
@@ -74,21 +77,25 @@ export const AccountSettingsPage = () => {
               your use of the application. You can change your consent for this
               at any time.
             </p>
-            <button
-              role="switch"
-              aria-checked={researchConsent}
-              onClick={handleSaveResearchConsent}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                researchConsent ? "bg-slate-800" : "bg-slate-300"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  researchConsent ? "translate-x-6" : "translate-x-1"
+            {loadingUser ? (
+              <Skeleton width={44} height={24} borderRadius={999} />
+            ) : (
+              <button
+                role="switch"
+                aria-checked={researchConsent}
+                onClick={handleSaveResearchConsent}
+                disabled={saving}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:cursor-not-allowed ${
+                  researchConsent ? "bg-slate-800" : "bg-slate-300"
                 }`}
-              />
-            </button>
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    researchConsent ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            )}
           </div>
 
           <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-5">

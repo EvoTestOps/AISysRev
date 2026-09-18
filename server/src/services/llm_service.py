@@ -1,4 +1,5 @@
 from typing import Any, TypeVar
+from uuid import UUID
 
 from httpx import AsyncClient
 from pydantic import BaseModel
@@ -25,6 +26,28 @@ class LLMService:
         if Provider is None:
             raise ValueError(f"Unknown provider: {provider_name}")
         return Provider  # type: ignore
+
+    async def resolve_provider_parameters(
+        self,
+        llm: type[LLMProvider],
+        provider_parameters: dict[str, Any],
+        owner_uuid: UUID,
+    ) -> dict[str, Any]:
+        """
+        Merges a user's global (non-secret) config_parameters (e.g. a
+        "force ZDR" toggle set on the Settings page) into a job's
+        provider_parameters, letting providers override per-job settings.
+        """
+        global_config: dict[str, str] = {}
+        for param in llm.config_parameters:
+            if param is llm.api_key_config_parameter or param.secret:
+                continue
+            setting = await self.setting_service.get_setting(
+                param.key, owner_uuid=owner_uuid, mask_secret=False
+            )
+            if setting is not None:
+                global_config[param.key] = setting.value
+        return llm.apply_global_config_overrides(provider_parameters, global_config)
 
     async def call_llm(
         self,

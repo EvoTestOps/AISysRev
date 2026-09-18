@@ -110,6 +110,17 @@ class LLMProvider(Generic[P, M], ABC):
     ) -> list[list[float]]:
         raise RuntimeError(f"{self.provider_name} does not support embeddings")
 
+    @classmethod
+    def apply_global_config_overrides(
+        cls, provider_parameters: dict[str, Any], global_config: dict[str, str]
+    ) -> dict[str, Any]:
+        """
+        Hook for providers to let a user's global (non-secret) config_parameters
+        override per-job provider_parameters, e.g. forcing ZDR on regardless of
+        what a specific job requested. Default: no-op.
+        """
+        return provider_parameters
+
 
 class Provider(BaseModel):
     name: str
