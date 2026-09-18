@@ -2,9 +2,13 @@ from typing import Any, List, Type
 
 from httpx import AsyncClient
 from openai.types.model import Model
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.openrouter import OpenRouterModel, OpenRouterModelSettings
+from pydantic_ai.models.openrouter import (
+    OpenRouterModel,
+    OpenRouterModelSettings,
+    OpenRouterProviderConfig,
+)
 from pydantic_ai.output import ToolOutput
 from pydantic_ai.providers.openrouter import (
     OpenRouterProvider as PAI_OpenRouterProvider,
@@ -22,7 +26,14 @@ from src.schemas.llm import (
 
 
 class OpenRouterProviderParams(BaseModel):
-    pass
+    zdr: bool = Field(
+        default=False,
+        title="Zero Data Retention (ZDR)",
+        description=(
+            "Restrict routing to only providers that guarantee Zero Data "
+            "Retention. This may reduce the set of available models/providers."
+        ),
+    )
 
 
 class OpenRouterModelParams(BaseLLMParams):
@@ -51,6 +62,18 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
     )
     config_parameters = [api_key_config_parameter]
 
+    def _build_openrouter_provider_settings(self) -> OpenRouterProviderConfig:
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
+
+        openrouter_provider: OpenRouterProviderConfig = {
+            "require_parameters": True,
+            "data_collection": "deny",
+        }
+        if self.provider_parameters.zdr:
+            openrouter_provider["zdr"] = True
+        return openrouter_provider
+
     async def generate_answer_async(
         self,
         client: AsyncClient,
@@ -70,10 +93,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
             raise RuntimeError("Provider parameters needs to be defined")
 
         settings = OpenRouterModelSettings(
-            openrouter_provider={
-                "require_parameters": True,
-                "data_collection": "deny",
-            },
+            openrouter_provider=self._build_openrouter_provider_settings(),
             extra_headers={
                 "X-Title": "AISysRev",
                 "HTTP-Referer": "https://github.com/EvoTestOps/AISysRev",
@@ -123,16 +143,48 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
             "temperature",
             "top_p",
         ]
+        headers = {
+            "Authorization": f"Bearer {self.runtime_parameters.api_key}",
+            "Content-type": "application/json",
+        }
         async with aiohttp.ClientSession() as session:
+            if self.provider_parameters.zdr:
+                # /models has no ZDR filter; the dedicated ZDR endpoints list
+                # is the only way to restrict the model list to endpoints
+                # that guarantee Zero Data Retention.
+                async with session.get(
+                    "https://openrouter.ai/api/v1/endpoints/zdr",
+                    headers=headers,
+                ) as response:
+                    body = await response.json()
+                    endpoints = body["data"]
+
+                seen_model_ids: set[str] = set()
+                models: List[Model] = []
+                for endpoint in endpoints:
+                    model_id = endpoint["model_id"]
+                    if model_id in seen_model_ids:
+                        continue
+                    supported = endpoint.get("supported_parameters", [])
+                    if not all(param in supported for param in required_parameters):
+                        continue
+                    seen_model_ids.add(model_id)
+                    models.append(
+                        Model(
+                            id=model_id,
+                            created=0,
+                            object="model",
+                            owned_by=endpoint.get("provider_name", ""),
+                        )
+                    )
+                return models
+
             async with session.get(
                 f"https://openrouter.ai/api/v1/models?supported_parameters={','.join(required_parameters)}",
-                headers={
-                    "Authorization": f"Bearer {self.runtime_parameters.api_key}",
-                    "Content-type": "application/json",
-                },
+                headers=headers,
             ) as response:
                 body = await response.json()
-                models = body["data"]
+                models_data = body["data"]
                 return [
                     Model(
                         id=model["id"],
@@ -140,7 +192,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
                         object="model",
                         owned_by=model["canonical_slug"],
                     )
-                    for model in models
+                    for model in models_data
                 ]
 
     async def embed_async(
@@ -150,6 +202,8 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
     ) -> list[list[float]]:
         if self.runtime_parameters.api_key is None:
             raise RuntimeError("API Key is not defined")
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
 
         from openai import AsyncOpenAI
 
@@ -157,8 +211,13 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
             api_key=self.runtime_parameters.api_key,
             base_url="https://openrouter.ai/api/v1",
         )
+        extra_body: dict[str, Any] = {}
+        if self.provider_parameters.zdr:
+            extra_body["provider"] = {"zdr": True}
+
         response = await openai_client.embeddings.create(
             model="openai/text-embedding-3-small",
             input=texts,
+            extra_body=extra_body or None,
         )
         return [item.embedding for item in response.data]

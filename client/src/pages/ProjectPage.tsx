@@ -209,6 +209,7 @@ type ProviderConfigurationProps = {
   setProviderFormValue: React.Dispatch<
     React.SetStateAction<Record<string, unknown>>
   >;
+  setModelsLoaded: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
@@ -216,6 +217,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
   providerParametersSchema,
   providerFormValues,
   setProviderFormValue,
+  setModelsLoaded,
 }) => {
   if (
     providerParametersSchema === null ||
@@ -264,6 +266,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                 <span className="text-sm font-medium text-slate-600">
                   {providerFormValues[key] !== undefined &&
                     property.type !== "string" &&
+                    property.type !== "boolean" &&
                     providerFormValues[key] !== "" ? (
                     <>{providerFormValues[key]}</>
                   ) : (
@@ -271,6 +274,22 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                   )}
                 </span>
               </div>
+              {property.type === "boolean" && (
+                <input
+                  type="checkbox"
+                  disabled={modelSelected}
+                  className="h-4 w-4 rounded border-slate-400 accent-slate-800 disabled:cursor-not-allowed disabled:border-gray-200"
+                  data-testid={`property_${key}_input`}
+                  checked={Boolean(providerFormValues[key])}
+                  onChange={(e) => {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.checked,
+                    }));
+                    setModelsLoaded(false);
+                  }}
+                />
+              )}
               {property.type === "number" && (
                 <input
                   type="range"
@@ -288,6 +307,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -306,6 +326,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       ...vals,
                       [key]: e.target.value,
                     }));
+                    setModelsLoaded(false);
                   }}
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
@@ -326,6 +347,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1279,6 +1301,7 @@ export const ProjectPage = () => {
                   providerFormValues={providerFormValues}
                   setProviderFormValue={setProviderFormValue}
                   providerParametersSchema={providerParametersSchema}
+                  setModelsLoaded={setModelsLoaded}
                 />
               )}
             </div>
