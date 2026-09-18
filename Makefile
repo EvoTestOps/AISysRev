@@ -18,9 +18,6 @@ start-prod:
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod down
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod up --build
 
-start-services:
-	docker compose -f docker-compose-services.yml down -v
-	docker compose -f docker-compose-services.yml up --build
 # Create a new database migration based on model changes
 # Usage: make migration-create m="Add new table"
 # Migration commands here should only be run against the development environment

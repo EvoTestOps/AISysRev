@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:1b2479dd35a99687d6638f5976fd235e26c5b37e8122f786fcd5fe231d63de5b AS client
+FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS client
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM python:3.14-alpine AS server-builder
+FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS server-builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apk add --no-cache git
@@ -33,7 +33,7 @@ COPY server/uv.lock /app/uv.lock
 RUN uv sync --locked --no-install-project --no-editable
 
 
-FROM python:3.14-alpine AS server
+FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS server
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 RUN addgroup -S app && adduser -S app -G app
 
@@ -51,7 +51,7 @@ EXPOSE 5678
 USER app
 CMD ["/bin/sh", "/app/start-dev.sh"]
 
-FROM python:3.14-alpine AS celery
+FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS celery
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
