@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
-from src.core.auth import get_current_user
+from src.core.auth import get_current_user_without_held_db_session
 from src.db.models.user import User
 from src.event_queue import event_channel
 from src.redis_client.client import get_redis_client
@@ -16,7 +16,7 @@ KEEPALIVE_INTERVAL = 10
 @router.get("/event-queue", tags=["Event queue"])
 async def event_bus(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_without_held_db_session),
 ):
     channel = event_channel(current_user.uuid)
 

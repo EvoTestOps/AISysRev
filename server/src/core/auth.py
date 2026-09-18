@@ -11,10 +11,10 @@ from src.db.models.user import User
 from src.redis_client.client import get_shared_redis_client
 
 
-async def get_current_user(
+async def _resolve_current_user(
+    db_ctx: DBContext,
     request: Request,
-    db_ctx: DBContext = Depends(get_db_ctx),
-    redis_client: redis.Redis = Depends(get_shared_redis_client),
+    redis_client: redis.Redis,
 ) -> User:
     session_id = request.cookies.get("session_id")
     if not session_id:
@@ -51,3 +51,28 @@ async def get_current_user(
         )
 
     return user
+
+
+async def get_current_user(
+    request: Request,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
+) -> User:
+    return await _resolve_current_user(db_ctx, request, redis_client)
+
+
+async def get_current_user_without_held_db_session(
+    request: Request,
+    redis_client: redis.Redis = Depends(get_shared_redis_client),
+) -> User:
+    """Like get_current_user, but the DB session is closed immediately
+    instead of being held open for the lifetime of the response.
+
+    FastAPI only tears down a Depends(get_db_ctx) session after the *entire*
+    response finishes -- for a StreamingResponse (e.g. Server-Sent Events),
+    that means the connection's session stays open, idle in a transaction,
+    for as long as the stream stays open. Use this dependency for such
+    long-lived responses instead of get_current_user.
+    """
+    async with DBContext() as db_ctx:
+        return await _resolve_current_user(db_ctx, request, redis_client)
