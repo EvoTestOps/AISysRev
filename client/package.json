@@ -16,7 +16,7 @@
     "test:browser": "vitest --config=vitest.browser.config.ts"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
