@@ -194,7 +194,10 @@ type ProviderConfigurationProps = {
   modelSelected: boolean;
   providerParametersSchema?: Provider["provider_parameters_json_schema"];
   providerFormValues: Record<string, unknown>;
-  setProviderFormValue: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  setProviderFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+  setModelsLoaded: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
@@ -202,6 +205,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
   providerParametersSchema,
   providerFormValues,
   setProviderFormValue,
+  setModelsLoaded,
 }) => {
   if (
     providerParametersSchema === null ||
@@ -242,14 +246,31 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                 <label className="text-sm font-medium text-slate-700">{property.title}</label>
                 <span className="text-sm font-medium text-slate-600">
                   {providerFormValues[key] !== undefined &&
-                  property.type !== "string" &&
-                  providerFormValues[key] !== "" ? (
+                    property.type !== "string" &&
+                    property.type !== "boolean" &&
+                    providerFormValues[key] !== "" ? (
                     <>{providerFormValues[key]}</>
                   ) : (
                     ""
                   )}
                 </span>
               </div>
+              {property.type === "boolean" && (
+                <input
+                  type="checkbox"
+                  disabled={modelSelected}
+                  className="h-4 w-4 rounded border-slate-400 accent-slate-800 disabled:cursor-not-allowed disabled:border-gray-200"
+                  data-testid={`property_${key}_input`}
+                  checked={Boolean(providerFormValues[key])}
+                  onChange={(e) => {
+                    setProviderFormValue((vals) => ({
+                      ...vals,
+                      [key]: e.target.checked,
+                    }));
+                    setModelsLoaded(false);
+                  }}
+                />
+              )}
               {property.type === "number" && (
                 <input
                   type="range"
@@ -266,6 +287,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // @ts-expect-error Ok
@@ -283,6 +305,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       ...vals,
                       [key]: e.target.value,
                     }));
+                    setModelsLoaded(false);
                   }}
                   // @ts-expect-error Ok
                   value={providerFormValues[key]}
@@ -301,6 +324,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // @ts-expect-error Ok
@@ -1219,6 +1243,7 @@ export const ProjectPage = () => {
                   providerFormValues={providerFormValues}
                   setProviderFormValue={setProviderFormValue}
                   providerParametersSchema={providerParametersSchema}
+                  setModelsLoaded={setModelsLoaded}
                 />
               )}
             </div>
