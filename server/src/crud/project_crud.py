@@ -58,7 +58,7 @@ class ProjectCrud:
 
     async def fetch_project_by_uuid(
         self, uuid: UUID, owner_uuid: UUID
-    ) -> ProjectRead | None:
+    ) -> Project | None:
         stmt = (
             select(Project)
             .where(Project.uuid == uuid)

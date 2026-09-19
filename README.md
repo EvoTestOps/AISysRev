@@ -46,6 +46,7 @@
     + [Database Migrations (Alembic)](#database-migrations-alembic)
   * [Supported LLMs](#supported-llms)
   * [BibTeX Citation](#bibtex-citation)
+  * [AI disclaimer](#ai-disclaimer)
   * [License](#license)
   * [References](#references)
 
@@ -326,6 +327,10 @@ Please use the following BibTeX citation to cite our work:
   pages={142–146}, 
   language={en} }
 ```
+
+## AI disclaimer
+
+Parts of AISysRev may have been developed with AI-assisted coding tools, including "vibe coding". Where AI assistance was used, the correctness and code style of the resulting code were reviewed.
 
 ## License
 
