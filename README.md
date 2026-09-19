@@ -212,10 +212,11 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 See [Architecture.md](docs/Architecture.md)
 
 ## Development requirements
-- Node.js v22 LTS
+- Node.js v24 LTS
 - Python 3.14
 - Docker, with Compose plugin installed
-- UV: https://docs.astral.sh/uv/getting-started/installation/
+- UV v0.12.17 or later: https://docs.astral.sh/uv/getting-started/installation/
+  - Updating uv: `uv self update`
 
 ## Running in development mode
 

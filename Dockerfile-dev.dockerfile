@@ -22,7 +22,7 @@ EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
 FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS server-builder
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 RUN apk add --no-cache git
 
@@ -34,7 +34,7 @@ RUN uv sync --locked --no-install-project --no-editable
 
 
 FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS server
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 RUN addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
@@ -52,7 +52,7 @@ USER app
 CMD ["/bin/sh", "/app/start-dev.sh"]
 
 FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS celery
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 

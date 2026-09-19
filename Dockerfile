@@ -32,7 +32,7 @@ COPY --from=client-build /app/dist /srv
 RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
 FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS server-builder
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 RUN apk add --no-cache git
 
@@ -47,7 +47,7 @@ FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eead
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 RUN addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
@@ -67,7 +67,7 @@ FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eead
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 RUN addgroup -S celerygroup && adduser -S celeryuser -G celerygroup
 
