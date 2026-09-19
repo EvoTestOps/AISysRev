@@ -25,7 +25,7 @@ Whenever you change a version that appears in several places, search for the old
 
 ## Dependabot
 
-Configured in [.github/dependabot.yml](.github/dependabot.yml). Every week it checks these ecosystems:
+Configured in [.github/dependabot.yml](../.github/dependabot.yml). Every week it checks these ecosystems:
 
 | Ecosystem | Directory | Covers |
 | --- | --- | --- |
