@@ -14,7 +14,7 @@ graph TD
     end
 
     subgraph Data ["Data"]
-        Postgres[("PostgreSQL + pgvector")]
+        Postgres[("PostgreSQL")]
         Redis[("Redis")]
         Storage[("PDF storage<br/>volume or S3")]
     end
@@ -42,7 +42,7 @@ graph TD
 | Frontend | Caddy serves the built React app and reverse-proxies backend routes (`/api`, `/login`, `/logout`, `/register-and-privacy-policy`, `/openapi.json`, `/docs`). In development the Vite dev server does both jobs. |
 | Backend | FastAPI application. Runs database migrations on startup when `RUN_MIGRATIONS=true`. |
 | Celery | Runs the screening jobs in the background: LLM calls, and for PDF screening the text extraction and embeddings. |
-| PostgreSQL | Main database, using the `pgvector` image because PDF chunk embeddings are stored in it. |
+| PostgreSQL | Main database, see [database.md](database.md). It must be the `pgvector` image, because a migration enables the `vector` extension. Embeddings are currently stored as JSONB, though. |
 | Redis | Celery broker, and pub/sub channel that carries live progress events (published by the API and the workers) to the browser through the backend. |
 | PDF storage | Uploaded PDFs. By default a Docker volume (`pdf_data`) mounted into the backend and Celery containers (`STORAGE_BACKEND=local`). With `STORAGE_BACKEND=s3` any S3-compatible service is used instead, configured with the `S3_*` variables. No S3 service is part of the compose stacks. |
 | Flower | Celery monitoring UI. |

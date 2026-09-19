@@ -25,16 +25,16 @@
   * [System and software requirements](#system-and-software-requirements)
     + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
     + [Running the AISysRev application](#running-the-aisysrev-application)
-      - [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl-)
-      - [Windows (non-WSL)](#windows--non-wsl-)
+      - [MacOS, Linux and Windows (WSL)](#macos-linux-and-windows-wsl)
+      - [Windows (non-WSL)](#windows-non-wsl)
   * [Technology](#technology)
     + [Front-end](#front-end)
     + [Back-end](#back-end)
     + [System design](#system-design)
   * [Development requirements](#development-requirements)
   * [Running in development mode](#running-in-development-mode)
-    + [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl--1)
-    + [Windows (non-WSL)](#windows--non-wsl--1)
+    + [MacOS, Linux and Windows (WSL)](#macos-linux-and-windows-wsl-1)
+    + [Windows (non-WSL)](#windows-non-wsl-1)
     + [Getting started with development](#getting-started-with-development)
   * [Other documentation](#other-documentation)
   * [Mock data](#mock-data)
@@ -43,11 +43,9 @@
     + [Server](#server)
   * [Makefile Commands](#makefile-commands)
     + [Development](#development)
-    + [Database Migrations (Alembic)](#database-migrations--alembic-)
+    + [Database Migrations (Alembic)](#database-migrations-alembic)
   * [Supported LLMs](#supported-llms)
   * [BibTeX Citation](#bibtex-citation)
-    + [Conference proceedings](#conference-proceedings)
-    + [Preprint](#preprint)
   * [License](#license)
   * [References](#references)
 
@@ -245,6 +243,7 @@ Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=yo
 ## Other documentation
 
 - [docs/README.md](docs/README.md): index of all documentation
+- [CONTRIBUTING.md](CONTRIBUTING.md): development workflow and documentation rules
 - [docs/architecture.md](docs/architecture.md): system design and ports
 - [docs/pdf-screening.md](docs/pdf-screening.md): how PDF screening works
 - [docs/local-models.md](docs/local-models.md): using local LLMs

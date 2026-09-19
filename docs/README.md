@@ -16,10 +16,25 @@ For an overview of the project and how to run it, see the [main README](../READM
 | --- | --- |
 | [architecture.md](architecture.md) | Services, request flow and port mapping |
 | [database.md](database.md) | Database diagram |
+| [../CONTRIBUTING.md](../CONTRIBUTING.md) | Development workflow, checks and documentation rules |
 | [maintenance.md](maintenance.md) | Upgrading dependencies and Docker images, Dependabot |
 | [manual-installation.md](manual-installation.md) | Running the client and server without Docker |
 | [../server/README.md](../server/README.md) | Server layout and commands |
 | [../fuzzing/README.md](../fuzzing/README.md) | API fuzzing tools |
+
+## When to update what
+
+Update the docs in the same pull request as the change that makes them wrong.
+
+| If you change... | Update... |
+| --- | --- |
+| Compose files, `Caddyfile`, ports or services | [architecture.md](architecture.md) (diagram and port table) |
+| SQLAlchemy models, or a migration that changes tables | [database.md](database.md) |
+| PDF screening behavior | [pdf-screening.md](pdf-screening.md) |
+| Makefile targets, run commands or supported setup | [../README.md](../README.md) |
+| Server layout or environment variables | [../server/README.md](../server/README.md) |
+| Node, Python, uv or base image versions | every place listed in [maintenance.md](maintenance.md#where-versions-are-defined) |
+| A new doc file | the index above |
 
 ## Images
 
