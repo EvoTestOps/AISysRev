@@ -153,6 +153,7 @@ export const NewProject = () => {
             </H6>
             <input
               type="text"
+              data-testid="new-project-title-input"
               className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none"
               placeholder="Enter project title"
               value={title}
@@ -179,6 +180,7 @@ export const NewProject = () => {
                 value={inclusionCriteriaInput}
                 setCriteriaInput={setInclusionCriteriaInput}
                 handleSetup={handleInclusionSetup}
+                testId="new-project-inclusion-criteria-input"
               />
             </div>
           </div>
@@ -199,6 +201,7 @@ export const NewProject = () => {
                 value={exclusionCriteriaInput}
                 setCriteriaInput={setExclusionCriteriaInput}
                 handleSetup={handleExclusionSetup}
+                testId="new-project-exclusion-criteria-input"
               />
             </div>
           </div>
@@ -295,11 +298,15 @@ export const NewProject = () => {
         </Card>
         <Card>
           <div className="flex justify-between items-end gap-4">
-            <Button variant="red" onClick={handleReset}>
+            <Button
+              variant="red"
+              onClick={handleReset}
+              data-testid="new-project-reset-button"
+            >
               <RotateCcw size={16} />
               <span>Reset</span>
             </Button>
-            <Button onClick={handleCreate}>
+            <Button onClick={handleCreate} data-testid="new-project-create-button">
               <span>Create</span>
             </Button>
           </div>

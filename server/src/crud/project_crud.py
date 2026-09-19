@@ -1,19 +1,19 @@
 from typing import Optional, Sequence, Tuple, cast
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import RowMapping, insert, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.project import Project
-from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+from src.schemas.project import ProjectCreate, ProjectPreferences
 
 
 class ProjectCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_projects(self, owner_uuid: UUID) -> Sequence[ProjectRead]:
+    async def fetch_projects(self, owner_uuid: UUID) -> Sequence[RowMapping]:
         stmt = select(
             Project.uuid,
             Project.name,
@@ -24,8 +24,7 @@ class ProjectCrud:
             Project.screening_target,
         ).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
-        # TODO: Fix
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
     async def get_project_preferences(
         self, uuid: UUID, owner_uuid: UUID
@@ -58,7 +57,7 @@ class ProjectCrud:
 
     async def fetch_project_by_uuid(
         self, uuid: UUID, owner_uuid: UUID
-    ) -> ProjectRead | None:
+    ) -> Project | None:
         stmt = (
             select(Project)
             .where(Project.uuid == uuid)
@@ -91,6 +90,26 @@ class ProjectCrud:
         self.db.add(new_project)
         await self.db.flush()
         return new_project.id, new_project.uuid
+
+    async def create_projects(
+        self, projects_data: list[ProjectCreate]
+    ) -> list[Project]:
+        values = [data.model_dump() for data in projects_data]
+        result = await self.db.execute(insert(Project).returning(Project), values)
+        return list(result.scalars().all())
+
+    async def delete_projects(self, uuids: list[UUID], owner_uuid: UUID) -> list[UUID]:
+        stmt = (
+            select(Project)
+            .where(Project.uuid.in_(uuids))
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        matched_projects = result.scalars().all()
+        deleted_uuids = [project.uuid for project in matched_projects]
+        for project in matched_projects:
+            await self.db.delete(project)
+        return deleted_uuids
 
     async def delete_project(self, uuid: UUID, owner_uuid: UUID) -> bool:
         stmt = (

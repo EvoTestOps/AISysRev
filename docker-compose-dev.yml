@@ -5,7 +5,7 @@ services:
       VITE_APP_ENV: ${APP_ENV:-dev}
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile-dev.dockerfile
       target: client
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-3000}:3000"
@@ -26,7 +26,7 @@ services:
     container_name: backend_${APP_ENV:-dev}
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile-dev.dockerfile
       target: server
     ports: 
       - "127.0.0.1:5678:5678"
@@ -103,7 +103,7 @@ services:
     container_name: celery_${APP_ENV:-dev}
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile-dev.dockerfile
       target: celery
     ports: ["127.0.0.1:5679:5679"]
     environment:
@@ -123,7 +123,7 @@ services:
     container_name: flower_${APP_ENV:-dev}
     build:
       context: .
-      dockerfile: Dockerfile-dev
+      dockerfile: Dockerfile-dev.dockerfile
       target: server
     command: uv run celery -A src.worker flower --port=5555
     environment:

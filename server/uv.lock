@@ -3,10 +3,10 @@ revision = 3
 requires-python = ">=3.14"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version < '3.15' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version < '3.15' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.15' and sys_platform == 'win32'",
+    "python_full_version < '3.15' and sys_platform == 'emscripten'",
     "python_full_version < '3.15' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
@@ -871,8 +871,8 @@ name = "httpcore2"
 version = "2.10.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "sys_platform != 'emscripten'" },
-    { name = "truststore", marker = "sys_platform != 'emscripten'" },
+    { name = "h11" },
+    { name = "truststore" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/83/a896fc59940fc5a6e2aff3a4be1d92fa890112936803b331cae75a993c34/httpcore2-2.10.0.tar.gz", hash = "sha256:13c0cc3d1919d4f28457f60cd2c2abe04113a8af184ccf1142811beba936f9dc", size = 67427, upload-time = "2026-08-09T09:11:32.123Z" }
 wheels = [
@@ -2150,6 +2150,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "flower" },
     { name = "gwet-ac1" },
+    { name = "httpx2" },
     { name = "itsdangerous" },
     { name = "krippendorff" },
     { name = "langchain-text-splitters" },
@@ -2188,6 +2189,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.124.4" },
     { name = "flower", specifier = ">=2.0.1" },
     { name = "gwet-ac1", git = "https://github.com/EvoTestOps/gwet_ac1" },
+    { name = "httpx2", specifier = ">=2.10.0" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
     { name = "krippendorff", specifier = ">=0.8.2" },
     { name = "langchain-text-splitters", specifier = ">=1.1.2" },

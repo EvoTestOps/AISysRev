@@ -25,28 +25,28 @@
   * [System and software requirements](#system-and-software-requirements)
     + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
     + [Running the AISysRev application](#running-the-aisysrev-application)
-      - [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl-)
-      - [Windows (non-WSL)](#windows--non-wsl-)
+      - [MacOS, Linux and Windows (WSL)](#macos-linux-and-windows-wsl)
+      - [Windows (non-WSL)](#windows-non-wsl)
   * [Technology](#technology)
     + [Front-end](#front-end)
     + [Back-end](#back-end)
     + [System design](#system-design)
   * [Development requirements](#development-requirements)
   * [Running in development mode](#running-in-development-mode)
-    + [MacOS, Linux and Windows (WSL)](#macos--linux-and-windows--wsl--1)
-    + [Windows (non-WSL)](#windows--non-wsl--1)
+    + [MacOS, Linux and Windows (WSL)](#macos-linux-and-windows-wsl-1)
+    + [Windows (non-WSL)](#windows-non-wsl-1)
     + [Getting started with development](#getting-started-with-development)
+  * [Other documentation](#other-documentation)
   * [Mock data](#mock-data)
   * [Tests](#tests)
     + [Client](#client)
     + [Server](#server)
   * [Makefile Commands](#makefile-commands)
     + [Development](#development)
-    + [Database Migrations (Alembic)](#database-migrations--alembic-)
+    + [Database Migrations (Alembic)](#database-migrations-alembic)
   * [Supported LLMs](#supported-llms)
   * [BibTeX Citation](#bibtex-citation)
-    + [Conference proceedings](#conference-proceedings)
-    + [Preprint](#preprint)
+  * [AI disclaimer](#ai-disclaimer)
   * [License](#license)
   * [References](#references)
 
@@ -92,7 +92,7 @@ The application is based on our research papers on this topic. Please consider c
 
 ### Data
 
-The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/) and [Github] with data exported by our custom [Github Query Tool](https://github.com/EvoTestOps/github-query-tool). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>.
+The tool has been developed and tested with CSV data exported from [Scopus](https://www.scopus.com/) and [Github](https://github.com/) with data exported by our custom [Github Query Tool](https://github.com/EvoTestOps/github-query-tool). Support for [Web of Science](https://www.webofscience.com/) can be achieved by editing the columns headers to match the ones from Scopus. The minimum required fields are: <kbd>Document title</kbd>, <kbd>DOI</kbd>, <kbd>Abstract</kbd>, <kbd>Authors</kbd>, and <kbd>Source title</kbd>.
 
 <img width="60%" height="60%" alt="image" src="https://github.com/user-attachments/assets/beff785a-c91a-4179-9fb4-163e4102ce83" />
 
@@ -131,7 +131,7 @@ When creating a screening task, choose which screening mode to use:
 - **PDF** - excerpts from the paper's full-text PDF are given to the LLM.
 - **Automatic** - uses **PDF** screening mode for papers with a PDF attached and **Abstract** for papers without a PDF attached.
 
-See [pdf_screening.md](docs/pdf_screening.md) for details on how **PDF** screening mode works.
+See [pdf-screening.md](docs/pdf-screening.md) for details on how **PDF** screening mode works.
 
 
 ## System and software requirements
@@ -179,13 +179,13 @@ If you want to develop the app, run:
 make start-dev
 ```
 > [!NOTE]
-> The startup of the app may a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
+> The startup of the app may take a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
 
 After startup, open the application:
 
 If you ran `start-prod`, navigate to [https://localhost:3000](https://localhost:3000) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning).
 
-If you used `make start-dev`, navigate to [http://localhost:3001](http://localhost:3001)
+If you used `make start-dev`, navigate to [https://localhost:3001](https://localhost:3001) (the dev server uses a self-signed certificate, so you can bypass the browser warning).
 
 
 #### Windows (non-WSL)
@@ -209,13 +209,14 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 
 ### System design
 
-See [Architecture.md](docs/Architecture.md)
+See [architecture.md](docs/architecture.md)
 
 ## Development requirements
-- Node.js v22 LTS
+- Node.js v24 LTS
 - Python 3.14
 - Docker, with Compose plugin installed
-- UV: https://docs.astral.sh/uv/getting-started/installation/
+- UV v0.12.17 or later: https://docs.astral.sh/uv/getting-started/installation/
+  - Updating uv: `uv self update`
 
 ## Running in development mode
 
@@ -240,6 +241,16 @@ API docs: [https://localhost:3001/docs](https://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 
+## Other documentation
+
+- [docs/README.md](docs/README.md): index of all documentation
+- [CONTRIBUTING.md](CONTRIBUTING.md): development workflow and documentation rules
+- [docs/architecture.md](docs/architecture.md): system design and ports
+- [docs/pdf-screening.md](docs/pdf-screening.md): how PDF screening works
+- [docs/local-models.md](docs/local-models.md): using local LLMs
+- [fuzzing/README.md](fuzzing/README.md): API fuzzing tools
+- [docs/maintenance.md](docs/maintenance.md): upgrading dependencies and Docker images
+
 ## Mock data
 
 Mock data is located in `data/mock` -folder.
@@ -257,8 +268,11 @@ Run in [client/](./client/):
 
 Run in repository root: 
 
-- `make backend-test` (`./backend-test.bat` for Windows non-WSL) for backend tests
-- `make backend-test-html` (`./backend-test-html.bat` for Windows non-WSL) for backend tests and HTML coverage report
+- `make backend-unit` for backend unit tests only
+- `make backend-test` for all backend tests
+- `make backend-test-html` for all backend tests and an HTML coverage report
+
+Windows (non-WSL) users need to run the equivalent `docker compose` commands from the [Makefile](Makefile) manually, since only `start-dev.bat` and `start-prod.bat` are provided.
 
 ## Makefile Commands
 
@@ -269,8 +283,14 @@ The project includes a `Makefile` for common development and database operations
 | Command           | Description                                                                   |
 | ----------------- | ----------------------------------------------------------------------------- |
 | `make start-dev`  | Start dev containers with live reloading and build on startup (default setup) |
+| `make start-dev-debug` | Same as `start-dev`, with the backend debugger enabled                   |
 | `make start-test` | Start test containers and rebuild images (isolated test environment)          |
+| `make start-test-debug` | Same as `start-test`, with the backend debugger enabled                 |
 | `make start-prod` | Start production container and rebuild images                                 |
+| `make backend-unit` | Run backend unit tests                                                      |
+| `make backend-test` | Run all backend tests                                                       |
+| `make backend-test-html` | Run all backend tests and create an HTML coverage report               |
+| `make extract-caddy-ca` | Copy the production Caddy root CA to `./caddy-local-root.crt` so you can trust it locally |
 
 > **Note:** Run all commands from the project root.  
 > Containers are isolated by environment using the Docker Compose `-p` flag.
@@ -292,26 +312,25 @@ Currently, we support models provided via Openrouter, OpenAI or via a local prov
 
 Please use the following BibTeX citation to cite our work:
 
-### Conference proceedings
-
-Coming soon.
-
-### Preprint
-
 ```
-@misc{huotalaAISysRevLLMbasedTool2025,
-	title = {{AISysRev} -- {LLM}-based {Tool} for {Title}-abstract {Screening}},
-	url = {http://arxiv.org/abs/2510.06708},
-	doi = {10.48550/arXiv.2510.06708},
-	publisher = {arXiv},
-	author = {Huotala, Aleksi and Kuutila, Miikka and Turtio, Olli-Pekka and Mäntylä, Mika},
-	month = oct,
-	year = {2025},
-	note = {arXiv:2510.06708 [cs]},
-	keywords = {Computer Science - Artificial Intelligence, Computer Science - Software Engineering}
-}
+@inproceedings{huotalaAISysRevLLMbasedTool2026, 
+  address={Concordia University Montreal QC Canada}, 
+  title={AISysRev - LLM-based Tool for Title-abstract Screening}, 
+  ISBN={9798400726361}, 
+  url={https://dl.acm.org/doi/10.1145/3803437.3806408}, 
+  DOI={10.1145/3803437.3806408}, 
+  booktitle={Proceedings of the 34th ACM International Conference on the Foundations of Software Engineering}, 
+  publisher={ACM}, 
+  author={Huotala, Aleksi and Kuutila, Miikka and Turtio, Olli-Pekka and Sipilä, Simo and Mäntylä, Mika}, 
+  year={2026},
+  month=july, 
+  pages={142–146}, 
+  language={en} }
 ```
 
+## AI disclaimer
+
+Parts of AISysRev may have been developed with AI-assisted coding tools, including "vibe coding". Where AI assistance was used, the correctness and code style of the resulting code were reviewed.
 
 ## License
 
@@ -321,4 +340,7 @@ MIT
 
 [1]  Huotala, A., Kuutila, M., Ralph, P., & Mäntylä, M. (2024). The promise and challenges of using llms to accelerate the screening process of systematic reviews. Proceedings of the 28th International Conference on Evaluation and Assessment in Software Engineering, 262–271. [https://doi.org/10.1145/3661167.3661172](https://doi.org/10.1145/3661167.3661172)
 
-[2] Huotala A, Kuutila M, Mäntylä M. SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews. In Proceedings of the The 19th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement (ESEM) 2025 Oct 218 (pp. 1-12) [https://arxiv.org/abs/2507.19027](https://arxiv.org/abs/2507.19027)
+[2] Huotala A, Kuutila M, Mäntylä M. SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews. In Proceedings of the The 19th ACM/IEEE International Symposium on Empirical Software Engineering and Measurement (ESEM) 2025 Oct (pp. 1-12) [https://arxiv.org/abs/2507.19027](https://arxiv.org/abs/2507.19027)
+
+[3] Huotala A, Kuutila M, Turtio Olli-Pekka, Sipilä S, Mäntylä M. AISysRev: LLM-based Tool for Title-abstract Screening. In FSE Companion '26: Proceedings of the 34th ACM International Conference on the Foundations of Software Engineering 2026 Jul (pp. 142-146) [https://doi.org/10.1145/3803437.3806408](https://doi.org/10.1145/3803437.3806408)
+

@@ -1,13 +1,13 @@
-from typing import List
+from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import RowMapping, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.file import File
 from src.db.models.paper import Paper
 from src.db.models.project import Project
-from src.schemas.file import FileCreate, FileReadWithPaperCount
+from src.schemas.file import FileCreate
 
 
 class FileCrud:
@@ -16,7 +16,7 @@ class FileCrud:
 
     async def fetch_files(
         self, project_uuid: UUID, owner_uuid: UUID
-    ) -> List[FileReadWithPaperCount]:
+    ) -> Sequence[RowMapping]:
         stmt = (
             select(
                 File.uuid,
@@ -44,8 +44,7 @@ class FileCrud:
             )
         )
         result = await self.db.execute(stmt)
-        # TODO: Fix
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
     async def fetch_file_by_uuid(
         self, file_uuid: UUID, owner_uuid: UUID
@@ -65,6 +64,22 @@ class FileCrud:
         await self.db.flush()
         await self.db.refresh(new_file)
         return new_file
+
+    async def delete_files(
+        self, file_uuids: List[UUID], owner_uuid: UUID
+    ) -> List[UUID]:
+        stmt = (
+            select(File)
+            .join(Project, Project.uuid == File.project_uuid)
+            .where(File.uuid.in_(file_uuids))
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        result = await self.db.execute(stmt)
+        matched_files = result.scalars().all()
+        deleted_uuids = [f.uuid for f in matched_files]
+        for f in matched_files:
+            await self.db.delete(f)
+        return deleted_uuids
 
     async def delete_file(self, file: File, owner_uuid: UUID) -> None:
         stmt = (

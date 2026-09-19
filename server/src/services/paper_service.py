@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID
 
 from src.crud.paper_crud import PaperCrud
+from src.crud.project_crud import ProjectCrud
 from src.db.db_context import DBContext
 from src.schemas.job import JobScreeningMode
 from src.schemas.paper import (
@@ -17,8 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class PaperService:
-    def __init__(self, paper_crud: PaperCrud):
+    def __init__(self, paper_crud: PaperCrud, project_crud: ProjectCrud):
         self.paper_crud = paper_crud
+        self.project_crud = project_crud
 
     async def fetch_papers(self, project_uuid: UUID, owner_uuid: UUID):
         papers = await self.paper_crud.fetch_papers_by_project_uuid(
@@ -103,6 +105,22 @@ class PaperService:
             project_uuid, owner_uuid
         )
 
+    async def create_batch(
+        self, papers: list[PaperCreate], owner_uuid: UUID
+    ) -> list[PaperRead]:
+        project_uuids = {paper.project_uuid for paper in papers}
+        for project_uuid in project_uuids:
+            project = await self.project_crud.fetch_project_by_uuid(
+                project_uuid, owner_uuid
+            )
+            if project is None:
+                raise ValueError(f"Project {project_uuid} not found")
+        created = await self.paper_crud.bulk_create_papers(papers)
+        return [PaperRead.model_validate(paper) for paper in created]
+
+    async def delete_batch(self, uuids: list[UUID], owner_uuid: UUID) -> list[UUID]:
+        return await self.paper_crud.delete_papers(uuids, owner_uuid)
+
 
 def create_paper_service(db_ctx: DBContext) -> PaperService:
-    return PaperService(db_ctx.crud(PaperCrud))
+    return PaperService(db_ctx.crud(PaperCrud), db_ctx.crud(ProjectCrud))

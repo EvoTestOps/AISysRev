@@ -51,6 +51,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
           <label className="flex items-start gap-2 text-sm text-slate-900 cursor-pointer">
             <input
               type="checkbox"
+              data-testid="consent-terms-checkbox"
               checked={terms}
               onChange={(e) => setTerms(e.target.checked)}
               className="mt-0.5 cursor-pointer"
@@ -67,6 +68,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
           <label className="flex items-start gap-2 text-sm text-slate-900 cursor-pointer">
             <input
               type="checkbox"
+              data-testid="consent-privacy-policy-checkbox"
               checked={privacyPolicy}
               onChange={(e) => setPrivacyPolicy(e.target.checked)}
               className="mt-0.5 cursor-pointer"
@@ -83,6 +85,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
           <label className="flex items-start gap-2 text-sm text-slate-900 cursor-pointer mt-4">
             <input
               type="checkbox"
+              data-testid="consent-research-checkbox"
               checked={research}
               onChange={(e) => setResearch(e.target.checked)}
               className="mt-0.5 cursor-pointer"
@@ -101,7 +104,12 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
         </div>
 
         <div className="flex justify-end">
-          <Button variant="slate" onClick={handleAccept} disabled={!canSubmit}>
+          <Button
+            variant="slate"
+            onClick={handleAccept}
+            disabled={!canSubmit}
+            data-testid="consent-accept-button"
+          >
             Accept and continue
           </Button>
         </div>

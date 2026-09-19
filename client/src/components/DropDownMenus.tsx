@@ -21,6 +21,7 @@ export type TextProps = {
   onSelect: (value?: DropdownOption) => void;
   isSelected: boolean;
   setSelected: (isSelected: boolean) => void;
+  testId?: string;
 };
 
 export const DropdownMenuEllipsis: React.FC<EllipsisProps> = ({ items }) => {
@@ -66,11 +67,13 @@ export const DropdownMenuText: React.FC<TextProps> = ({
   onSelect,
   isSelected,
   setSelected,
+  testId,
 }) => {
   return (
     <Menu as="div" className="w-full relative text-center">
       <MenuButton
         disabled={disabled}
+        data-testid={testId}
         className={classNames(
           "w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm not-disabled:hover:bg-gray-100 focus:outline-none focus:ring-0 cursor-pointer disabled:opacity-20 disabled:cursor-not-allowed select-none text-sm",
           {
@@ -93,6 +96,7 @@ export const DropdownMenuText: React.FC<TextProps> = ({
             key={option.value}
             value={option.value}
             as="button"
+            data-testid={testId ? `${testId}-option-${option.value}` : undefined}
             disabled={disabled}
             onClick={() => {
               onSelect(option);

@@ -378,6 +378,7 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           variant="slate"
           onClick={onImportFulltext}
           title="Import full text (Zotero Export Folder)"
+          data-testid="import-fulltext-button"
           disabled={!hasPapers || importingFulltext}
         >
           <Download />
@@ -1075,7 +1076,11 @@ export const ProjectPage = () => {
             const status = job.stats.status;
 
             return (
-              <Card key={job.uuid} className="flex-row justify-between">
+              <Card
+                key={job.uuid}
+                data-testid={`job-card-${job.uuid}`}
+                className="flex-row justify-between"
+              >
                 <div className="grid grid-cols-[50px_1fr_auto_auto] gap-4 w-full">
                   <>
                     {job.prompting_config.screening_type ==
@@ -1131,7 +1136,10 @@ export const ProjectPage = () => {
                               )}
                             />
                           )}
-                          <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
+                          <div
+                            data-testid={`job-status-${job.uuid}`}
+                            className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none"
+                          >
                             {status === JobStatus.RUNNING && (
                               <>
                                 <Loader
@@ -1243,6 +1251,7 @@ export const ProjectPage = () => {
               </label>
               <DropdownMenuText
                 disabled={false}
+                testId="llm-provider-dropdown"
                 options={providers.map((provider) => ({
                   name: provider.title,
                   value: provider.name,
@@ -1300,6 +1309,7 @@ export const ProjectPage = () => {
               <div className="flex flex-col items-start gap-1 w-full">
                 <DropdownMenuText
                   disabled={!isLlmProviderSelected || fetchedFiles.length === 0}
+                  testId="llm-model-dropdown"
                   options={[
                     ...availableModels.map((model) => ({
                       name: model.id,
@@ -1331,6 +1341,7 @@ export const ProjectPage = () => {
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
+                  data-testid="screening-mode-abstract-button"
                   onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
                   className={classNames(
                     "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
@@ -1344,6 +1355,7 @@ export const ProjectPage = () => {
                 </button>
                 <button
                   type="button"
+                  data-testid="screening-mode-pdf-button"
                   disabled={promptingStrategy === "PC"}
                   onClick={() => setScreeningMode(JobScreeningMode.PDF)}
                   className={classNames(
@@ -1359,6 +1371,7 @@ export const ProjectPage = () => {
                 </button>
                 <button
                   type="button"
+                  data-testid="screening-mode-automatic-button"
                   disabled={promptingStrategy === "PC"}
                   onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
                   className={classNames(
@@ -1386,6 +1399,7 @@ export const ProjectPage = () => {
               </div>
               <button
                 type="button"
+                data-testid="evaluation-mode-all-criteria-button"
                 onClick={() => { if (promptingStrategy === "PC") setPromptingStrategy("ZS"); }}
                 className={classNames(
                   "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
@@ -1412,6 +1426,7 @@ export const ProjectPage = () => {
               </button>
               <button
                 type="button"
+                data-testid="evaluation-mode-per-criterion-button"
                 onClick={() => {
                   setPromptingStrategy("PC");
                   if (screeningMode !== JobScreeningMode.TEXT) {
@@ -1451,6 +1466,7 @@ export const ProjectPage = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
+                    data-testid="prompting-strategy-zero-shot-button"
                     onClick={() => setPromptingStrategy("ZS")}
                     className={classNames(
                       "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
@@ -1465,6 +1481,7 @@ export const ProjectPage = () => {
                   </button>
                   <button
                     type="button"
+                    data-testid="prompting-strategy-few-shot-button"
                     onClick={() => setPromptingStrategy("FS")}
                     className={classNames(
                       "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
@@ -1529,6 +1546,7 @@ export const ProjectPage = () => {
                   !isLlmSelected
                 }
                 title="Create zero-shot task"
+                data-testid="create-task-button"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"
               >
                 <Sparkles />
@@ -1545,6 +1563,7 @@ export const ProjectPage = () => {
             variant="green"
             className="px-6 text-md font-bold rounded-xl"
             onClick={showEvaluationResults}
+            data-testid="show-evaluation-results-button"
           >
             Show evaluation results
           </Button>
@@ -1555,6 +1574,7 @@ export const ProjectPage = () => {
               className="px-6 text-md font-bold rounded-lg "
               onClick={openManualEvaluation}
               disabled={!canStartManualEvaluation}
+              data-testid="start-manual-evaluation-button"
             >
               <div className="flex flex-row gap-2">
                 <ChartCandlestick />
@@ -1627,6 +1647,7 @@ export const ProjectPage = () => {
       )}
       <input
         type="file"
+        data-testid="fulltext-import-folder-input"
         ref={setFolderInputRef}
         multiple
         onChange={handleFolderSelected}

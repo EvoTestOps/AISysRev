@@ -53,12 +53,27 @@ class ProjectService:
     async def create(self, data: ProjectCreate):
         return await self.project_crud.create_project(data)
 
+    async def create_batch(self, data: list[ProjectCreate]) -> list[tuple[int, UUID]]:
+        projects = await self.project_crud.create_projects(data)
+        return [(project.id, project.uuid) for project in projects]
+
     async def delete(self, uuid: UUID, owner_uuid: UUID) -> tuple[bool, list[str]]:
         storage_paths = await self.file_crud.fetch_storage_paths_by_project(
             uuid, owner_uuid
         )
         deleted = await self.project_crud.delete_project(uuid, owner_uuid)
         return deleted, storage_paths
+
+    async def delete_batch(
+        self, uuids: list[UUID], owner_uuid: UUID
+    ) -> tuple[list[UUID], list[str]]:
+        storage_paths: list[str] = []
+        for uuid in uuids:
+            storage_paths.extend(
+                await self.file_crud.fetch_storage_paths_by_project(uuid, owner_uuid)
+            )
+        deleted_uuids = await self.project_crud.delete_projects(uuids, owner_uuid)
+        return deleted_uuids, storage_paths
 
     async def cleanup_pdf_storage(self, storage_paths: list[str]) -> None:
         paths_to_delete = []

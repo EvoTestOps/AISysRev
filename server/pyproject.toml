@@ -14,6 +14,7 @@ dependencies = [
     "debugpy>=1.8.19",
     "fastapi[standard]>=0.124.4",
     "flower>=2.0.1",
+    "httpx2>=2.10.0",
     "gwet-ac1",
     "krippendorff>=0.8.2",
     "itsdangerous>=2.2.0",

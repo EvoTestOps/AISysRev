@@ -2,15 +2,16 @@ import pytest
 
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
+from src.db.db_context import DBContext
 from src.schemas.project import Criteria, ProjectCreate, ProjectRead
 from src.schemas.user import UserCreate
 
 
 @pytest.mark.asyncio
-async def test_fetch_projects_crud(db_ctx):
+async def test_fetch_projects_crud(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     user = await user_crud.create_user(
-        UserCreate(sub="test-owner", email="test@test.com", name="Test User")
+        UserCreate(sub="test-owner", email="test@test.com")
     )
 
     crud = db_ctx.crud(ProjectCrud)
@@ -30,7 +31,7 @@ async def test_fetch_projects_crud(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_project_crud(db_ctx, test_user_uuid):
+async def test_create_and_fetch_project_crud(db_ctx: DBContext, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Test",
@@ -59,7 +60,7 @@ async def test_create_and_fetch_project_crud(db_ctx, test_user_uuid):
 
 
 @pytest.mark.asyncio
-async def test_delete_project_crud(db_ctx, test_user_uuid):
+async def test_delete_project_crud(db_ctx: DBContext, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="To Be Deleted",

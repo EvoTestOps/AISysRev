@@ -63,17 +63,22 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
 
   return (
     <>
-    <div className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      data-testid={`setting-entry-${config_key}`}
+      className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <span className="truncate text-sm font-semibold text-slate-900">
             {loading ? <Skeleton width={160} /> : title}
           </span>
           {!loading && (
-            <StatusPill
-              kind={isSet ? "set" : "missing"}
-              label={isSet ? "Key set" : "Not set"}
-            />
+            <span data-testid={`setting-status-${config_key}`}>
+              <StatusPill
+                kind={isSet ? "set" : "missing"}
+                label={isSet ? "Key set" : "Not set"}
+              />
+            </span>
           )}
         </div>
 
@@ -109,6 +114,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
                     setEditMode(true);
                   }}
                   variant="green"
+                  data-testid={`setting-update-button-${config_key}`}
                 >
                   <div className="flex flex-row items-center gap-2 font-semibold">
                     <Pencil />
@@ -121,6 +127,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
                     setShowDeleteModal(true);
                   }}
                   variant="red"
+                  data-testid={`setting-delete-button-${config_key}`}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -132,6 +139,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
                   setEditMode(true);
                 }}
                 variant="green"
+                data-testid={`setting-set-value-button-${config_key}`}
               >
                 Set value
               </Button>
@@ -144,6 +152,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
               <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="password"
+                data-testid={`setting-value-input-${config_key}`}
                 className="w-full rounded-xl border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-900 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 focus:ring-4 focus:ring-slate-200/60"
                 placeholder="Paste or type value..."
                 disabled={loading}
@@ -156,6 +165,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
               <Button
                 variant="green"
                 disabled={!canSave}
+                data-testid={`setting-save-button-${config_key}`}
                 onClick={(e) => {
                   e.preventDefault();
                   if (value.trim() !== "") {
@@ -174,6 +184,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
               <Button
                 variant="red"
                 disabled={loading}
+                data-testid={`setting-cancel-button-${config_key}`}
                 onClick={(e) => {
                   e.preventDefault();
                   refresh();
@@ -204,6 +215,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
       confirmButtonLabel="Delete"
       confirmButtonVariant="red"
       confirmButtonIcon={<Trash2 size={16} />}
+      confirmButtonTestId={`setting-confirm-delete-button-${config_key}`}
     />
     </>
   );
