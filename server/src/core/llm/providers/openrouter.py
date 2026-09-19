@@ -1,6 +1,6 @@
 from typing import Any, List, Type
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from openai.types.model import Model
 from pydantic import BaseModel
 from pydantic_ai import Agent

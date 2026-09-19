@@ -86,57 +86,6 @@ async def create_new_project(
         )
 
 
-@router.post("/project/batch", status_code=status.HTTP_201_CREATED, tags=["Project"])
-async def create_projects_batch(
-    request_data: list[ProjectCreateRequest],
-    db_ctx: DBContext = Depends(get_db_ctx),
-    current_user: User = Depends(get_current_user),
-):
-    projects = create_project_service(db_ctx)
-    try:
-        project_data = [
-            ProjectCreate(**item.model_dump(), owner_uuid=current_user.uuid)
-            for item in request_data
-        ]
-        created = await projects.create_batch(project_data)
-        await db_ctx.commit()
-        for _, new_uuid in created:
-            await publish_event(
-                current_user.uuid,
-                QueueItem(
-                    event_name=EventName.PROJECT_CREATED, value={"uuid": new_uuid}
-                ),
-            )
-        return [{"id": pid, "uuid": str(puuid)} for pid, puuid in created]
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Batch project creation failed: {str(e)}",
-        )
-
-
-@router.delete("/project/batch", status_code=status.HTTP_200_OK, tags=["Project"])
-async def delete_projects_batch(
-    uuids: list[UUID],
-    db_ctx: DBContext = Depends(get_db_ctx),
-    current_user: User = Depends(get_current_user),
-):
-    projects = create_project_service(db_ctx)
-    try:
-        deleted_uuids, storage_paths = await projects.delete_batch(
-            uuids, current_user.uuid
-        )
-        await db_ctx.commit()
-        if deleted_uuids:
-            await projects.cleanup_pdf_storage(storage_paths)
-        return {"deleted": [str(u) for u in deleted_uuids]}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to batch delete projects: {str(e)}",
-        )
-
-
 @router.delete("/project/{uuid}", status_code=status.HTTP_200_OK, tags=["Project"])
 async def delete_project(
     uuid: UUID,

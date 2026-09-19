@@ -2,7 +2,7 @@ import asyncio
 import random
 from typing import Any, List
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from openai.types.model import Model
 from pydantic import BaseModel, Field
 

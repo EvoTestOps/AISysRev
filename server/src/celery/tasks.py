@@ -3,7 +3,7 @@ import logging
 from typing import Dict
 from uuid import UUID
 
-from httpx import AsyncClient, HTTPStatusError
+from httpx2 import AsyncClient, HTTPStatusError
 from pydantic_ai.retries import (
     AsyncHTTPX2TenacityTransport,
     RetryConfig,
