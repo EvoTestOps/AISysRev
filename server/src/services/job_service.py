@@ -138,8 +138,8 @@ class JobService:
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
-            llm_config=new_job.llm_config,
-            prompting_config=new_job.prompting_config,
+            llm_config=job_data.llm_config,
+            prompting_config=job_data.prompting_config,
             screening_mode=new_job.screening_mode,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,

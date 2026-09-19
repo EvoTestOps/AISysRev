@@ -10,6 +10,7 @@ from src.core.auth import get_current_user
 from src.core.config import settings
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
+from src.db.db_context import DBContext
 from src.redis_client.client import get_redis_client
 from src.schemas.project import Criteria, ProjectCreate
 from src.schemas.user import ConsentAccept, UserCreate, UserRead
@@ -30,7 +31,7 @@ def make_request(cookies: dict = {}):
 
 
 @pytest.mark.asyncio
-async def test_unauthenticated_request(db_ctx):
+async def test_unauthenticated_request(db_ctx: DBContext):
     request = make_request()
     with pytest.raises(HTTPException) as exc_info:
         await get_current_user(request, db_ctx, get_redis_client())
@@ -38,7 +39,7 @@ async def test_unauthenticated_request(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_invalid_session(db_ctx):
+async def test_invalid_session(db_ctx: DBContext):
     session_id = str(uuid.uuid4())
     session_data = json.dumps(
         {
@@ -58,7 +59,7 @@ async def test_invalid_session(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_valid_session_returns_user(db_ctx):
+async def test_valid_session_returns_user(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     user = await user_crud.create_user(
         UserCreate(
@@ -88,7 +89,7 @@ async def test_valid_session_returns_user(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_consent(db_ctx):
+async def test_create_user_with_consent(db_ctx: DBContext):
     service = create_user_service(db_ctx)
     consent = ConsentAccept(terms=True, privacy_policy=True, research=True)
     user = await service.create_user_with_consent(
@@ -102,7 +103,7 @@ async def test_create_user_with_consent(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_create_user_with_consent_research_optional(db_ctx):
+async def test_create_user_with_consent_research_optional(db_ctx: DBContext):
     service = create_user_service(db_ctx)
     consent = ConsentAccept(terms=True, privacy_policy=True, research=None)
     user = await service.create_user_with_consent(
@@ -113,7 +114,7 @@ async def test_create_user_with_consent_research_optional(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_users_only_see_their_own_projects(db_ctx):
+async def test_users_only_see_their_own_projects(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     project_crud = db_ctx.crud(ProjectCrud)
 

@@ -1,19 +1,19 @@
 from typing import Optional, Sequence, Tuple, cast
 from uuid import UUID
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import RowMapping, insert, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.project import Project
-from src.schemas.project import ProjectCreate, ProjectPreferences, ProjectRead
+from src.schemas.project import ProjectCreate, ProjectPreferences
 
 
 class ProjectCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_projects(self, owner_uuid: UUID) -> Sequence[ProjectRead]:
+    async def fetch_projects(self, owner_uuid: UUID) -> Sequence[RowMapping]:
         stmt = select(
             Project.uuid,
             Project.name,
@@ -24,8 +24,7 @@ class ProjectCrud:
             Project.screening_target,
         ).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
-        # TODO: Fix
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
     async def get_project_preferences(
         self, uuid: UUID, owner_uuid: UUID

@@ -138,7 +138,7 @@ async def _process_standard_task(
         try:
             async with DBContext() as task_db_ctx:
                 jobtask_crud = task_db_ctx.crud(JobTaskCrud)
-                job_task = await jobtask_crud.fetch_job_task_by_id(job_task_id)
+                job_task = await jobtask_crud.fetch_job_task_by_id_or_throw(job_task_id)
 
                 llm_service = create_llm_service(task_db_ctx)
                 paper_service = create_paper_service(task_db_ctx)
@@ -231,7 +231,7 @@ async def _process_per_criteria_task(
         try:
             async with DBContext() as db_ctx:
                 jobtask_crud = db_ctx.crud(JobTaskCrud)
-                job_task = await jobtask_crud.fetch_job_task_by_id(job_task_id)
+                job_task = await jobtask_crud.fetch_job_task_by_id_or_throw(job_task_id)
                 llm_service = create_llm_service(db_ctx)
 
                 await jobtask_crud.update_job_task_status(

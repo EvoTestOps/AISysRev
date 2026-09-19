@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import AsyncGenerator
 from io import BytesIO
 from pathlib import Path
 
@@ -29,7 +30,7 @@ from src.tools.pdf_storage import build_storage_path, write_pdf_bytes
 
 
 @pytest_asyncio.fixture
-async def test_user_uuid(db_ctx):
+async def test_user_uuid(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     user = await user_crud.get_user_by_sub("test-user")
     if not user:
@@ -41,7 +42,7 @@ async def test_user_uuid(db_ctx):
 
 
 @pytest_asyncio.fixture
-async def test_project_uuid(db_ctx, test_user_uuid):
+async def test_project_uuid(db_ctx: DBContext, test_user_uuid):
     crud = db_ctx.crud(ProjectCrud)
     project_data = ProjectCreate(
         name="Project for Job Test",
@@ -149,7 +150,9 @@ def test_pdf_bytes():
 
 
 @pytest_asyncio.fixture
-async def test_pdf_file_uuid(db_ctx, test_project_uuid, test_user_uuid, test_pdf_bytes):
+async def test_pdf_file_uuid(
+    db_ctx: DBContext, test_project_uuid, test_user_uuid, test_pdf_bytes
+):
     file_crud = db_ctx.crud(FileCrud)
     storage_path = build_storage_path(test_user_uuid, test_pdf_bytes)
     write_pdf_bytes(storage_path, test_pdf_bytes)
@@ -183,7 +186,7 @@ async def db_session():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def db_ctx():
+async def db_ctx() -> AsyncGenerator[DBContext, None]:
     async with DBContext() as ctx:
         yield ctx
         await ctx.rollback()

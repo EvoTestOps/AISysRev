@@ -1,13 +1,13 @@
-from typing import List
+from typing import List, Sequence
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import RowMapping, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.file import File
 from src.db.models.paper import Paper
 from src.db.models.project import Project
-from src.schemas.file import FileCreate, FileReadWithPaperCount
+from src.schemas.file import FileCreate
 
 
 class FileCrud:
@@ -16,7 +16,7 @@ class FileCrud:
 
     async def fetch_files(
         self, project_uuid: UUID, owner_uuid: UUID
-    ) -> List[FileReadWithPaperCount]:
+    ) -> Sequence[RowMapping]:
         stmt = (
             select(
                 File.uuid,
@@ -44,8 +44,7 @@ class FileCrud:
             )
         )
         result = await self.db.execute(stmt)
-        # TODO: Fix
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
     async def fetch_file_by_uuid(
         self, file_uuid: UUID, owner_uuid: UUID

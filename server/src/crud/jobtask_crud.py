@@ -51,6 +51,12 @@ class JobTaskCrud:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def fetch_job_task_by_id_or_throw(self, job_task_id: int) -> JobTask:
+        job_task = await self.fetch_job_task_by_id(job_task_id)
+        if job_task is None:
+            raise ValueError(f"Job task with id {job_task_id} not found")
+        return job_task
+
     async def fetch_job_tasks_by_paper_uuid(
         self, paper_uuid: UUID, owner_uuid: UUID
     ) -> Sequence[Row[Tuple[JobTask, Job]]]:
