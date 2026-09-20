@@ -1,15 +1,39 @@
-server/.env
-server/__pycache__
-server/**/__pycache__
-server/venv
-server/.venv
-server/.mypy_cache
-server/.pytest_cache
-server/.ruff_cache
-server/htmlcov
-server/.coverage
-server/.env*
+# This file is shared by Dockerfile and Dockerfile-dev.dockerfile.
+# The dev image runs the backend tests, so tests, conftest.py, pytest.ini and
+# .coveragerc must stay in the build context.
+
+# VCS, editor and OS files
+.git
+.github
+.vscode
+.claude
+**/.DS_Store
+
+# Python caches and bytecode
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+
+# Python virtualenvs (the image builds its own in /app/.venv)
+**/venv
+**/.venv
+
+# Coverage output
+**/.coverage
+**/.coverage.*
+**/htmlcov
+
+# Env files and secrets
+**/.env
+**/.env.*
+
+# Client build output, deps and test artifacts
+**/node_modules
 client/dist
-client/node_modules
+client/coverage
 client/playwright-report
 client/test-results
