@@ -32,7 +32,7 @@ export default defineConfig({
     baseURL: "http://localhost:3002",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: "on",
+    trace: "on-first-retry",
   },
 
   /* *.api.spec.ts tests only use the `request` fixture and never touch a

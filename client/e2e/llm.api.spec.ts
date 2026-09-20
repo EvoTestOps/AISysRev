@@ -31,7 +31,7 @@ test.describe("LLM API", () => {
     expect(res.status()).toBe(200);
     const models = await res.json();
     expect(Array.isArray(models)).toBe(true);
-    expect(models.some((m: { id: string }) => m.id === "mock_001")).toBe(true);
+    expect(models.some((m: { id: string }) => m.id === "mock-small")).toBe(true);
   });
 
   test("Unknown provider returns 404", async ({ request }) => {
