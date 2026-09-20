@@ -36,8 +36,7 @@ FROM ghcr.io/astral-sh/uv:0.12.17 AS uv
 FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS python-base
 
 FROM python-base AS server-builder
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+ENV UV_LINK_MODE=copy
 COPY --from=uv /uv /uvx /bin/
 
 RUN apk add --no-cache git
@@ -47,7 +46,7 @@ WORKDIR /app
 COPY server/pyproject.toml /app/pyproject.toml
 COPY server/uv.lock /app/uv.lock
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project --no-editable
+    uv sync --locked --no-dev --no-install-project --no-editable
 
 
 FROM python-base AS runtime
