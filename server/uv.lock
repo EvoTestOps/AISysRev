@@ -2240,7 +2240,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "authlib", specifier = ">=1.8.0" },
     { name = "boto3", specifier = ">=1.43.96" },
-    { name = "celery", extras = ["redis"], specifier = ">=5.6.0" },
+    { name = "celery", extras = ["redis"], specifier = ">=5.6.3" },
     { name = "charset-normalizer", specifier = ">=3.5.1" },
     { name = "debugpy", specifier = ">=1.8.22" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.124.4" },
