@@ -675,28 +675,49 @@ export const ProjectPage = () => {
   }, [defaultProviderValues]);
 
   // One useConfig call per entry in GLOBAL_PROVIDER_OVERRIDES.
-  const { setting: openrouterForceZdrSetting } = useConfig(
-    GLOBAL_PROVIDER_OVERRIDES[0].settingKey,
-  );
+  const {
+    setting: openrouterForceZdrSetting,
+    loading: openrouterForceZdrLoading,
+  } = useConfig(GLOBAL_PROVIDER_OVERRIDES[0].settingKey);
   const globalOverrideSettingValues = useMemo<Record<string, string | undefined>>(
     () => ({
       [GLOBAL_PROVIDER_OVERRIDES[0].settingKey]: openrouterForceZdrSetting?.value,
     }),
     [openrouterForceZdrSetting],
   );
+  const globalOverridesLoading = openrouterForceZdrLoading;
 
   const forcedBooleanKeys = useMemo(() => {
     const keys: Record<string, boolean> = {};
+    // Don't apply defaults until the stored values are known, otherwise a
+    // default-on override would flash on (and stick in the form) for a user who
+    // has explicitly turned it off.
+    if (globalOverridesLoading) {
+      return keys;
+    }
     for (const override of GLOBAL_PROVIDER_OVERRIDES) {
-      if (
-        selectedLlmProvider?.value === override.providerName &&
-        globalOverrideSettingValues[override.settingKey] === "true"
-      ) {
+      if (selectedLlmProvider?.value !== override.providerName) {
+        continue;
+      }
+      // Same fallback the backend uses: an unset setting takes the config
+      // parameter's default.
+      const defaultValue = configParameters?.find(
+        (param) => param.key === override.settingKey,
+      )?.defaultValue;
+      const value =
+        globalOverrideSettingValues[override.settingKey] ??
+        (defaultValue == null ? undefined : String(defaultValue));
+      if (value === "true") {
         keys[override.providerParameterKey] = true;
       }
     }
     return keys;
-  }, [selectedLlmProvider, globalOverrideSettingValues]);
+  }, [
+    selectedLlmProvider,
+    globalOverrideSettingValues,
+    globalOverridesLoading,
+    configParameters,
+  ]);
 
   useEffect(() => {
     const forcedKeys = Object.keys(forcedBooleanKeys);
@@ -1390,14 +1411,18 @@ export const ProjectPage = () => {
             </div>
             {isLlmProviderSelected &&
               configParameters &&
-              configParameters.map((param, i) => (
-                <ConfigKeyCheck
-                  key={`${param.key}_${i}`}
-                  config_key={param.key}
-                  should_show
-                  title={param.title}
-                />
-              ))}
+              // Only secrets (API keys) are required to be set; non-secret
+              // parameters such as toggles fall back to their default.
+              configParameters
+                .filter((param) => param.secret)
+                .map((param, i) => (
+                  <ConfigKeyCheck
+                    key={`${param.key}_${i}`}
+                    config_key={param.key}
+                    should_show
+                    title={param.title}
+                  />
+                ))}
             <label className="text-sm font-medium text-slate-700">Model</label>
             {!modelsLoaded && (
               <div className="w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm bg-gray-100 focus:outline-none focus:ring-0 opacity-80 select-none text-sm" />
