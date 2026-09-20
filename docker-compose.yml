@@ -53,7 +53,7 @@ services:
 
   adminer:
     container_name: adminer_prod
-    image: adminer:5.3.0@sha256:6bc678e77abcd8c7f34133f4903a4be485ec38b17df3d40a845ee56af0fcb32a
+    image: adminer:5.5.0@sha256:a1e730bf95a18f1d7c38b409ab58a39d57d07bdb090614b81f5c7b37c6021b96
     restart: always
     ports:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
