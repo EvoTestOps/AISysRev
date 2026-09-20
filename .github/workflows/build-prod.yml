@@ -37,6 +37,8 @@ jobs:
           file: ./Dockerfile
           target: server
           push: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
           build-args: |
             APP_VERSION=${{ github.ref_name }}
           tags: |
@@ -69,6 +71,8 @@ jobs:
           file: ./Dockerfile
           target: client
           push: true
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
           build-args: |
             APP_VERSION=${{ github.ref_name }}
           tags: |
