@@ -13,6 +13,13 @@ from src.services.setting_service import SettingService, create_setting_service
 T = TypeVar("T", bound=BaseModel)
 
 
+def _config_value_to_str(value: str | int | float | bool) -> str:
+    # Settings are stored as strings, and booleans as "true"/"false".
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
 class LLMService:
     def __init__(self, setting_service: SettingService, mock: bool = False):
         self._mock = mock
@@ -37,11 +44,17 @@ class LLMService:
         Merges a user's global (non-secret) config_parameters (e.g. a
         "force ZDR" toggle set on the Settings page) into a job's
         provider_parameters, letting providers override per-job settings.
+
+        A parameter the user has not set falls back to the parameter's
+        defaultValue (if it has one), so the default applies exactly as if the
+        user had saved it.
         """
         global_config: dict[str, str] = {}
         for param in llm.config_parameters:
             if param is llm.api_key_config_parameter or param.secret:
                 continue
+            if param.defaultValue is not None:
+                global_config[param.key] = _config_value_to_str(param.defaultValue)
             setting = await self.setting_service.get_setting(
                 param.key, owner_uuid=owner_uuid, mask_secret=False
             )

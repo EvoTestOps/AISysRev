@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from src.api.controllers.llm import get_available_models
 from src.core.llm.providers.openrouter import (
     OpenRouterProvider,
     OpenRouterProviderParams,
@@ -189,9 +190,7 @@ def test_apply_global_config_overrides_forces_zdr_when_setting_is_true():
 
 @pytest.mark.unit
 def test_apply_global_config_overrides_leaves_params_untouched_when_not_set():
-    result = OpenRouterProvider.apply_global_config_overrides(
-        {"zdr": False}, {}
-    )
+    result = OpenRouterProvider.apply_global_config_overrides({"zdr": False}, {})
     assert result == {"zdr": False}
 
 
@@ -232,3 +231,185 @@ async def test_resolve_provider_parameters_no_override_when_setting_missing():
     )
 
     assert result == {"zdr": False}
+
+
+class _ForceZdrByDefaultProvider(OpenRouterProvider):
+    force_zdr_config_parameter = (
+        OpenRouterProvider.force_zdr_config_parameter.model_copy(
+            update={"defaultValue": True}
+        )
+    )
+    config_parameters = [
+        OpenRouterProvider.api_key_config_parameter,
+        force_zdr_config_parameter,
+    ]
+
+
+def _llm_service_with_stored_setting(stored: str | None) -> LLMService:
+    setting_service = MagicMock()
+
+    async def fake_get_setting(key, owner_uuid, mask_secret=False):
+        if key == "openrouter_force_zdr" and stored is not None:
+            return SettingRead(name=key, value=stored, secret=False)
+        return None
+
+    setting_service.get_setting = AsyncMock(side_effect=fake_get_setting)
+    return LLMService(setting_service)
+
+
+@pytest.mark.unit
+def test_force_zdr_is_off_by_default():
+    assert OpenRouterProvider.force_zdr_config_parameter.defaultValue is False
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_provider_parameters_applies_default_when_setting_missing():
+    result = await _llm_service_with_stored_setting(None).resolve_provider_parameters(
+        _ForceZdrByDefaultProvider, {"zdr": False}, uuid4()
+    )
+
+    assert result == {"zdr": True}
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_provider_parameters_stored_setting_beats_default():
+    result = await _llm_service_with_stored_setting(
+        "false"
+    ).resolve_provider_parameters(_ForceZdrByDefaultProvider, {"zdr": False}, uuid4())
+
+    assert result == {"zdr": False}
+
+
+# --- /llm/{provider}/models: the force-ZDR setting is read on every request ----
+
+_REQUIRED_PARAMETERS = ["structured_outputs", "response_format", "temperature", "top_p"]
+
+# Satisfies both OpenRouter listings: /models (id) and /endpoints/zdr (model_id).
+_LISTING_BODY = {
+    "data": [
+        {
+            "id": "openai/gpt-4o",
+            "created": 123,
+            "canonical_slug": "openai/gpt-4o",
+            "model_id": "openai/gpt-4o",
+            "provider_name": "OpenAI",
+            "supported_parameters": _REQUIRED_PARAMETERS,
+        }
+    ]
+}
+
+
+async def _list_models_via_endpoint(
+    stored_force_zdr: str | None, client_provider_parameters: dict
+) -> tuple[_MockSession, list[str]]:
+    """Runs the real models endpoint. Returns the OpenRouter session (to see which
+    listing was requested) and the setting keys read while serving the request."""
+    setting_service = MagicMock()
+
+    async def fake_get_setting(key, owner_uuid, mask_secret=False):
+        if key == "openrouter_api_key":
+            return SettingRead(name=key, value="k", secret=True)
+        if key == "openrouter_force_zdr" and stored_force_zdr is not None:
+            return SettingRead(name=key, value=stored_force_zdr, secret=False)
+        return None
+
+    setting_service.get_setting = AsyncMock(side_effect=fake_get_setting)
+    session = _MockSession(_LISTING_BODY)
+
+    with (
+        patch(
+            "src.api.controllers.llm.create_llm_service",
+            return_value=LLMService(setting_service),
+        ),
+        patch("aiohttp.ClientSession", return_value=session),
+    ):
+        await get_available_models(
+            provider="openrouter",
+            provider_parameters=client_provider_parameters,
+            db_ctx=MagicMock(),
+            current_user=MagicMock(uuid=uuid4()),
+        )
+
+    keys_read = [call.args[0] for call in setting_service.get_setting.await_args_list]
+    return session, keys_read
+
+
+def _used_zdr_listing(session: _MockSession) -> bool:
+    assert len(session.requested_urls) == 1
+    return "endpoints/zdr" in session.requested_urls[0]
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+@pytest.mark.parametrize("client_parameters", [{}, {"zdr": False}])
+async def test_models_endpoint_reads_force_zdr_setting_and_applies_it(
+    client_parameters,
+):
+    session, keys_read = await _list_models_via_endpoint("true", client_parameters)
+
+    # Whatever the client sent, the stored setting decides.
+    assert "openrouter_force_zdr" in keys_read
+    assert _used_zdr_listing(session)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_uses_default_when_setting_is_unset():
+    session, keys_read = await _list_models_via_endpoint(None, {"zdr": False})
+
+    assert "openrouter_force_zdr" in keys_read
+    assert not _used_zdr_listing(session)  # default is off
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_applies_default_on_when_setting_is_unset(monkeypatch):
+    monkeypatch.setattr(
+        OpenRouterProvider,
+        "force_zdr_config_parameter",
+        _ForceZdrByDefaultProvider.force_zdr_config_parameter,
+    )
+    monkeypatch.setattr(
+        OpenRouterProvider,
+        "config_parameters",
+        [
+            OpenRouterProvider.api_key_config_parameter,
+            _ForceZdrByDefaultProvider.force_zdr_config_parameter,
+        ],
+    )
+
+    session, _ = await _list_models_via_endpoint(None, {"zdr": False})
+
+    assert _used_zdr_listing(session)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_user_setting_overwrites_default(monkeypatch):
+    monkeypatch.setattr(
+        OpenRouterProvider,
+        "force_zdr_config_parameter",
+        _ForceZdrByDefaultProvider.force_zdr_config_parameter,
+    )
+    monkeypatch.setattr(
+        OpenRouterProvider,
+        "config_parameters",
+        [
+            OpenRouterProvider.api_key_config_parameter,
+            _ForceZdrByDefaultProvider.force_zdr_config_parameter,
+        ],
+    )
+
+    session, _ = await _list_models_via_endpoint("false", {"zdr": False})
+
+    assert not _used_zdr_listing(session)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_honours_per_job_zdr_when_not_forced():
+    session, _ = await _list_models_via_endpoint("false", {"zdr": True})
+
+    assert _used_zdr_listing(session)
