@@ -17,6 +17,13 @@ start-test-debug:
 start-prod:
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod down
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod up --build
+# Build only the prod backend image (server target of Dockerfile).
+# The same image runs the API, the celery worker and flower.
+build-prod-backend:
+	APP_ENV=prod docker compose -f docker-compose.yml -p prod build backend
+# Build only the prod frontend image (client target of Dockerfile)
+build-prod-frontend:
+	APP_ENV=prod docker compose -f docker-compose.yml -p prod build frontend
 
 # Create a new database migration based on model changes
 # Usage: make migration-create m="Add new table"
