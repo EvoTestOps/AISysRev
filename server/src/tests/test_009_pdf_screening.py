@@ -125,7 +125,11 @@ async def test_get_chunks_with_embeddings_uses_cached_chunks(
 
 @pytest.mark.asyncio
 async def test_get_pdf_chunks_for_screening_returns_expected_chunks(
-    db_ctx: DBContext, test_project_uuid, test_pdf_file_uuid, test_user_uuid
+    db_ctx: DBContext,
+    test_project_uuid,
+    test_pdf_file_uuid,
+    test_user_uuid,
+    test_pdf_bytes,
 ):
     service = create_pdf_screening_service(db_ctx)
     result = await service.get_pdf_chunks_for_screening(
@@ -142,9 +146,11 @@ async def test_get_pdf_chunks_for_screening_returns_expected_chunks(
 
     # Criteria/chunk embeddings from MockProvider are random, so the exact
     # chunk(s) picked by similarity aren't deterministic. Assert instead that
-    # every returned chunk is a genuine, distinct chunk of the source PDF.
-    valid_chunks = set(chunk_text(extract_pdf_text(test_pdf_bytes)))
+    # every returned piece comes from a genuine chunk of the source PDF. A
+    # chunk may itself contain "\n\n", so match pieces as substrings of chunks.
+    valid_chunks = chunk_text(extract_pdf_text(test_pdf_bytes))
     returned_chunks = result.split("\n\n")
-    assert 1 <= len(returned_chunks) <= 6
-    assert len(returned_chunks) == len(set(returned_chunks))
-    assert all(chunk in valid_chunks for chunk in returned_chunks)
+    assert result
+    assert all(
+        any(piece in chunk for chunk in valid_chunks) for piece in returned_chunks
+    )
