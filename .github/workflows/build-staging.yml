@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: build-staging
+  cancel-in-progress: false
+
 jobs:
   run-tests:
     uses: ./.github/workflows/tests.yml
