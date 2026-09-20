@@ -183,6 +183,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
       <DialogPanel className="relative bg-white shadow-2xl rounded-xl w-full h-full overflow-hidden">
         <CircleX
           onClick={onClose}
+          data-testid="manual-evaluation-close-button"
           className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
@@ -256,6 +257,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 <Button
                   variant="red"
                   onClick={() => handleAddHumanResult(JobTaskHumanResult.EXCLUDE)}
+                  data-testid="manual-evaluation-exclude-button"
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <X />
@@ -265,6 +267,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 <Button
                   variant="yellow"
                   onClick={() => handleAddHumanResult(JobTaskHumanResult.UNSURE)}
+                  data-testid="manual-evaluation-unsure-button"
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <CircleQuestionMark />
@@ -274,6 +277,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 <Button
                   variant="green"
                   onClick={() => handleAddHumanResult(JobTaskHumanResult.INCLUDE)}
+                  data-testid="manual-evaluation-include-button"
                 >
                   <div className="flex flex-row gap-2 items-center font-semibold">
                     <Check />

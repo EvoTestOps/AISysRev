@@ -2,12 +2,13 @@ import pytest
 
 from src.crud.setting_crud import SettingCrud
 from src.crud.user_crud import UserCrud
+from src.db.db_context import DBContext
 from src.schemas.setting import SettingCreate
 from src.schemas.user import UserCreate
 
 
 @pytest.mark.asyncio
-async def test_users_only_see_their_own_api_keys(db_ctx):
+async def test_users_only_see_their_own_api_keys(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     setting_crud = db_ctx.crud(SettingCrud)
 
@@ -26,6 +27,7 @@ async def test_users_only_see_their_own_api_keys(db_ctx):
     result_a = await setting_crud.fetch_setting(
         "openai_api_key", owner_uuid=user_a.uuid
     )
+    assert result_a is not None
     assert result_a.value == "api_key_a"
 
     cross = await setting_crud.fetch_setting("openai_api_key", owner_uuid=user_b.uuid)
@@ -33,7 +35,7 @@ async def test_users_only_see_their_own_api_keys(db_ctx):
 
 
 @pytest.mark.asyncio
-async def test_users_can_only_delete_their_own_api_keys(db_ctx):
+async def test_users_can_only_delete_their_own_api_keys(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     setting_crud = db_ctx.crud(SettingCrud)
 
@@ -61,11 +63,12 @@ async def test_users_can_only_delete_their_own_api_keys(db_ctx):
     result_a = await setting_crud.fetch_setting(
         "openai_api_key", owner_uuid=user_a.uuid
     )
+    assert result_a is not None
     assert result_a.value == "api_key_a"
 
 
 @pytest.mark.asyncio
-async def tests_same_api_key_name_different_users(db_ctx):
+async def tests_same_api_key_name_different_users(db_ctx: DBContext):
     user_crud = db_ctx.crud(UserCrud)
     setting_crud = db_ctx.crud(SettingCrud)
 
@@ -96,9 +99,11 @@ async def tests_same_api_key_name_different_users(db_ctx):
     result_a = await setting_crud.fetch_setting(
         "openai_api_key", owner_uuid=user_a.uuid
     )
+    assert result_a is not None
     assert result_a.value == "api_key_a"
 
     result_b = await setting_crud.fetch_setting(
         "openai_api_key", owner_uuid=user_b.uuid
     )
+    assert result_b is not None
     assert result_b.value == "api_key_b"

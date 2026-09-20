@@ -6,6 +6,7 @@ type CriteriaInputProps = {
   value: string;
   setCriteriaInput: (val: string) => void;
   handleSetup: () => void;
+  testId?: string;
 };
 
 export const CriteriaInput: React.FC<CriteriaInputProps> = (props) => {
@@ -13,6 +14,7 @@ export const CriteriaInput: React.FC<CriteriaInputProps> = (props) => {
     <div className="grid grid-cols-[1fr_78px] items-center gap-4 h-10">
       <input
         type="text"
+        data-testid={props.testId}
         className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none"
         placeholder={props.placeholder}
         value={props.value}

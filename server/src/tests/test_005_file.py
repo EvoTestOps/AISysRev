@@ -1,12 +1,15 @@
 import pytest
 
 from src.crud.file_crud import FileCrud
+from src.db.db_context import DBContext
 from src.schemas.file import FileCreate
 from src.services.file_service import create_file_service
 
 
 @pytest.mark.asyncio
-async def test_create_and_fetch_file_record(db_ctx, test_project_uuid, test_user_uuid):
+async def test_create_and_fetch_file_record(
+    db_ctx: DBContext, test_project_uuid, test_user_uuid
+):
     crud = db_ctx.crud(FileCrud)
 
     file_data = FileCreate(
@@ -26,7 +29,7 @@ async def test_create_and_fetch_file_record(db_ctx, test_project_uuid, test_user
 
 @pytest.mark.asyncio
 async def test_file_service(
-    db_ctx, test_project_uuid, test_files_working, test_user_uuid
+    db_ctx: DBContext, test_project_uuid, test_files_working, test_user_uuid
 ):
     service = create_file_service(db_ctx)
 
@@ -45,7 +48,7 @@ async def test_file_service(
 
 @pytest.mark.asyncio
 async def test_files_service_invalid_data(
-    db_ctx, test_project_uuid, test_files_invalid, test_user_uuid
+    db_ctx: DBContext, test_project_uuid, test_files_invalid, test_user_uuid
 ):
     service = create_file_service(db_ctx)
 

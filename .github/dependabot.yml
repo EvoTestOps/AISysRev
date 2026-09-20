@@ -1,0 +1,55 @@
+version: 2
+
+updates:
+  # Client (React/Vite/Playwright) npm dependencies
+  - package-ecosystem: npm
+    directory: /client
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  # Server (FastAPI/Celery) Python dependencies, managed with uv
+  - package-ecosystem: uv
+    directory: /server
+    schedule:
+      interval: weekly
+    groups:
+      uv:
+        update-types: [minor, patch]
+
+  # Base images in Dockerfile and Dockerfile-dev.dockerfile, plus the image
+  # references in the Kubernetes/OpenShift manifests. Images are pinned by
+  # digest, so without this they would never be updated.
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /manifests/staging
+      - /manifests/production
+    schedule:
+      interval: weekly
+    groups:
+      docker:
+        update-types: [minor, patch]
+    ignore:
+      # Locally built images referenced by the manifests, not on a registry
+      - dependency-name: aisysrev
+
+  # Images in docker-compose.yml and docker-compose-dev.yml (postgres, redis, adminer)
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      docker-compose:
+        update-types: [minor, patch]
+
+  # Actions used in .github/workflows
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        update-types: [minor, patch]

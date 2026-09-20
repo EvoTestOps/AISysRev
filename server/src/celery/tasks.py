@@ -3,8 +3,12 @@ import logging
 from typing import Dict
 from uuid import UUID
 
-from httpx import AsyncClient, HTTPStatusError
-from pydantic_ai.retries import AsyncTenacityTransport, RetryConfig, wait_retry_after
+from httpx2 import AsyncClient, HTTPStatusError
+from pydantic_ai.retries import (
+    AsyncHTTPX2TenacityTransport,
+    RetryConfig,
+    wait_retry_after,
+)
 from tenacity import retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from celery import Task
@@ -56,7 +60,7 @@ def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> Async
         if response.status_code in (429, 502, 503, 504):
             response.raise_for_status()
 
-    transport = AsyncTenacityTransport(
+    transport = AsyncHTTPX2TenacityTransport(
         config=RetryConfig(
             retry=retry_if_exception_type((HTTPStatusError, ConnectionError)),
             wait=wait_retry_after(
@@ -134,7 +138,7 @@ async def _process_standard_task(
         try:
             async with DBContext() as task_db_ctx:
                 jobtask_crud = task_db_ctx.crud(JobTaskCrud)
-                job_task = await jobtask_crud.fetch_job_task_by_id(job_task_id)
+                job_task = await jobtask_crud.fetch_job_task_by_id_or_throw(job_task_id)
 
                 llm_service = create_llm_service(task_db_ctx)
                 paper_service = create_paper_service(task_db_ctx)
@@ -227,7 +231,7 @@ async def _process_per_criteria_task(
         try:
             async with DBContext() as db_ctx:
                 jobtask_crud = db_ctx.crud(JobTaskCrud)
-                job_task = await jobtask_crud.fetch_job_task_by_id(job_task_id)
+                job_task = await jobtask_crud.fetch_job_task_by_id_or_throw(job_task_id)
                 llm_service = create_llm_service(db_ctx)
 
                 await jobtask_crud.update_job_task_status(

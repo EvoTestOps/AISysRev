@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar, Generic, List, Literal, Optional, Type, TypeVar, Union
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from pydantic import BaseModel, Field
 
 from src.schemas.llm import ProviderRuntimeParameters

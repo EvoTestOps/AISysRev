@@ -1,7 +1,7 @@
 import asyncio
 from uuid import UUID
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 from src.core.llm.providers.provider import LLMProvider
 from src.crud.file_crud import FileCrud

@@ -73,6 +73,9 @@ class JobTaskService:
         )
         return stats
 
+    async def fetch_task_stats_by_owner(self, owner_uuid: UUID):
+        return await self.jobtask_crud.fetch_tasks_stats_by_owner(owner_uuid)
+
     async def fetch_task_stats_by_job(self, job_id: int):
         job_stats = await self.jobtask_crud.fetch_task_stats_by_job(job_id)
         return job_stats

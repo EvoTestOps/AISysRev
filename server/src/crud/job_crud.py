@@ -1,22 +1,23 @@
-from typing import List
+from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import RowMapping, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.job import Job
 from src.db.models.project import Project
-from src.schemas.job import JobCreate, JobRead
+from src.schemas.job import JobCreate
 
 
 class JobCrud:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def fetch_jobs(self, owner_uuid: UUID) -> List[JobRead]:
+    async def fetch_jobs(self, owner_uuid: UUID) -> Sequence[RowMapping]:
         stmt = (
             select(
                 Job.uuid,
+                Job.id,
                 Project.uuid.label("project_uuid"),
                 Job.llm_config,
                 Job.prompting_config,
@@ -28,13 +29,11 @@ class JobCrud:
             .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
-        # TODO: Fix
-
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
     async def fetch_jobs_by_project(
         self, project_uuid: UUID, owner_uuid: UUID
-    ) -> List[JobRead]:
+    ) -> Sequence[RowMapping]:
         stmt = (
             select(
                 Job.uuid,
@@ -51,10 +50,9 @@ class JobCrud:
             .where(Project.owner_uuid == owner_uuid)
         )
         result = await self.db.execute(stmt)
-        # TODO: Fix
-        return result.mappings().all()  # type: ignore
+        return result.mappings().all()
 
-    async def fetch_job_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> JobRead:
+    async def fetch_job_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> RowMapping:
         stmt = (
             select(
                 Job.uuid,
@@ -73,8 +71,7 @@ class JobCrud:
         job = result.mappings().one_or_none()
         if not job:
             raise ValueError(f"Job with uuid {uuid} not found")
-        # TODO: Fix
-        return job  # type: ignore
+        return job
 
     # Quick fix to not mess with fetch_job_by_uuid()
     async def fetch_job_by_uuid_with_ids(self, uuid: UUID, owner_uuid: UUID):

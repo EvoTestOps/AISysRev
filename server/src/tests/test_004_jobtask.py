@@ -26,7 +26,7 @@ from src.services.file_service import create_file_service
 from src.services.job_service import create_job_service
 
 
-async def _create_owned_project(db_ctx, sub: str) -> tuple[UUID, UUID]:
+async def _create_owned_project(db_ctx: DBContext, sub: str) -> tuple[UUID, UUID]:
     user_crud = db_ctx.crud(UserCrud)
     user = await user_crud.create_user(UserCreate(sub=sub, email=f"{sub}@test.com"))
 
@@ -63,7 +63,7 @@ def _make_job_create(
 
 
 @pytest.mark.asyncio
-async def test_create_jobtask(db_ctx, test_files_working):
+async def test_create_jobtask(db_ctx: DBContext, test_files_working):
     project_uuid, owner_uuid = await _create_owned_project(
         db_ctx, "test-create-jobtask-owner"
     )
@@ -88,7 +88,9 @@ async def test_create_jobtask(db_ctx, test_files_working):
 
 
 @pytest.mark.asyncio
-async def test_create_job_transaction_rollback(db_ctx, test_files_working, monkeypatch):
+async def test_create_job_transaction_rollback(
+    db_ctx: DBContext, test_files_working, monkeypatch
+):
     project_uuid, owner_uuid = await _create_owned_project(
         db_ctx, "test-job-transaction-rollback-owner"
     )

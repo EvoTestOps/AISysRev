@@ -76,6 +76,7 @@ export const AccountSettingsPage = () => {
             </p>
             <button
               role="switch"
+              data-testid="research-consent-switch"
               aria-checked={researchConsent}
               onClick={handleSaveResearchConsent}
               disabled={saving}
@@ -103,6 +104,7 @@ export const AccountSettingsPage = () => {
               variant="red"
               size="sm"
               onClick={() => setShowDeleteModal(true)}
+              data-testid="delete-account-button"
             >
               <Trash2 size={16} />
               Delete account
@@ -119,6 +121,7 @@ export const AccountSettingsPage = () => {
         confirmButtonLabel="Delete account"
         confirmButtonVariant="red"
         confirmButtonIcon={<Trash2 size={16} />}
+        confirmButtonTestId="confirm-delete-account-button"
       />
     </Layout>
   );

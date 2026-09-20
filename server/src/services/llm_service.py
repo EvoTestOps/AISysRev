@@ -1,6 +1,6 @@
 from typing import Any, TypeVar
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from pydantic import BaseModel
 
 from src.core.llm.providers import llm_providers

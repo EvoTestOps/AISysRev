@@ -1,4 +1,3 @@
-import enum
 import uuid
 from uuid import UUID as PyUUID
 
@@ -8,21 +7,9 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.session import Base
-from src.schemas.job import LLMModelConfig, PromptingConfig
+from src.schemas.job import JobScreeningMode
 
 from .mixins import TimestampMixin
-
-
-class JobPromptingType(enum.Enum):
-    ZERO_SHOT = "ZERO_SHOT"
-    ONE_SHOT = "ONE_SHOT"
-    FEW_SHOT = "FEW_SHOT"
-
-
-class JobScreeningMode(enum.Enum):
-    TEXT = "TEXT"
-    PDF = "PDF"
-    AUTOMATIC = "AUTOMATIC"
 
 
 class Job(Base, TimestampMixin):
@@ -36,8 +23,8 @@ class Job(Base, TimestampMixin):
     project_id: Mapped[int] = mapped_column(
         ForeignKey("project.id", ondelete="CASCADE"), nullable=False
     )
-    llm_config: Mapped[LLMModelConfig] = mapped_column(JSONB, nullable=False)
-    prompting_config: Mapped[PromptingConfig] = mapped_column(JSONB, nullable=False)
+    llm_config: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    prompting_config: Mapped[dict] = mapped_column(JSONB, nullable=False)
     screening_mode: Mapped[JobScreeningMode] = mapped_column(
         SAEnum(JobScreeningMode, name="jobscreeningmode"),
         default=JobScreeningMode.TEXT,

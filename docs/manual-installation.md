@@ -12,10 +12,11 @@ git clone git@github.com:EvoTestOps/TitleAbstractScreening.git
 cd TitleAbstractScreening/client
 ```
 
-### Use the Node Version 22:
+### Use the Node Version 24:
 ```bash
-nvm use 22
+nvm use 24
 ```
+Some times you need to install the Node binary by running `nvm install`.
 
 ### Install Dependencies:
 ```bash

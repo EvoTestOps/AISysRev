@@ -16,6 +16,7 @@ type ConfirmationModalProps = {
   confirmButtonLabel: string;
   confirmButtonVariant: "green" | "yellow" | "red" | "purple" | "gray" | "slate";
   confirmButtonIcon: React.ReactNode;
+  confirmButtonTestId?: string;
 };
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -27,6 +28,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   confirmButtonLabel,
   confirmButtonVariant,
   confirmButtonIcon,
+  confirmButtonTestId,
 }) => {
 
   return (
@@ -61,6 +63,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           <Button
             variant={confirmButtonVariant}
             onClick={onConfirm}
+            data-testid={confirmButtonTestId}
           >
             <div className="flex items-center justify-center gap-2 font-semibold">
               {confirmButtonIcon}

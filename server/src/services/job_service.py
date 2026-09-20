@@ -29,20 +29,31 @@ class JobService:
         self.job_crud = job_crud
         self.jobtask_service = jobtask_service
 
-    async def fetch_all(self, owner_uuid: UUID) -> list[JobRead]:
+    async def fetch_all(self, owner_uuid: UUID) -> list[JobReadWithStats]:
         rows = await self.job_crud.fetch_jobs(owner_uuid)
-        return [
-            JobRead(
-                uuid=row.uuid,
-                project_uuid=row.project_uuid,
-                prompting_config=row.prompting_config,
-                llm_config=row.llm_config,
-                screening_mode=row.screening_mode,
-                created_at=row.created_at,
-                updated_at=row.updated_at,
+        stats_rows = await self.jobtask_service.fetch_task_stats_by_owner(owner_uuid)
+
+        stats_map = {row["job_uuid"]: row for row in stats_rows}
+
+        result = []
+        for row in rows:
+            stats = stats_map.get(row["uuid"])  # type: ignore[index]
+            total = stats["total_count"] if stats else 0
+            success = stats["success_count"] if stats else 0
+            failed = stats["failed_count"] if stats else 0
+            cancelled = stats["cancelled_count"] if stats else 0
+
+            job_status = resolve_job_status(total, success, failed, cancelled)
+            result.append(
+                JobReadWithStats(
+                    **row,  # type: ignore[arg-type]
+                    stats=JobStats(
+                        total=total, success=success, failed=failed, status=job_status
+                    ),
+                )
             )
-            for row in rows
-        ]
+
+        return result
 
     async def fetch_by_project(
         self, project_uuid: UUID, owner_uuid: UUID
@@ -127,8 +138,8 @@ class JobService:
         job_read = JobRead(
             uuid=new_job.uuid,
             project_uuid=job_data.project_uuid,
-            llm_config=new_job.llm_config,
-            prompting_config=new_job.prompting_config,
+            llm_config=job_data.llm_config,
+            prompting_config=job_data.prompting_config,
             screening_mode=new_job.screening_mode,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
@@ -143,8 +154,8 @@ class JobService:
 
     async def delete_job(self, job_uuid: UUID, owner_uuid: UUID):
         job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid, owner_uuid)
-        job_id = job.get("id")
-        task_id = job.get("celery_task_id")
+        job_id: int = job["id"]
+        task_id: UUID | None = job["celery_task_id"]
 
         try:
             await self._cancel_running_job(job_id, task_id)
@@ -155,15 +166,15 @@ class JobService:
 
     async def cancel_job(self, job_uuid: UUID, owner_uuid: UUID):
         job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid, owner_uuid)
-        job_id = job.get("id")
-        task_id = job.get("celery_task_id")
+        job_id: int = job["id"]
+        task_id: UUID | None = job["celery_task_id"]
 
         await self._cancel_running_job(job_id, task_id)
         await self.jobtask_service.set_unfinished_to_cancelled(job_id)
 
         return {f"task {task_id} cancelled"}
 
-    async def _cancel_running_job(self, job_id: int, celery_task_id: UUID):
+    async def _cancel_running_job(self, job_id: int, celery_task_id: UUID | None):
         job_stats = await self.jobtask_service.fetch_task_stats_by_job(job_id)
 
         total = job_stats["total_count"] if job_stats else 0
@@ -183,7 +194,8 @@ class JobService:
         elif job_status in completed_statuses:
             raise RuntimeError(f"Task already completed with status: {job_status}")
 
-        cancel_task(celery_task_id)
+        if celery_task_id is not None:
+            cancel_task(celery_task_id)
 
 
 def create_job_service(db_ctx: DBContext) -> JobService:

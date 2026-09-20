@@ -379,6 +379,11 @@ class FileService:
         content = await asyncio.to_thread(read_pdf_bytes, file_record.storage_path)
         return file_record.filename, file_record.mime_type, content
 
+    async def delete_batch(
+        self, file_uuids: List[UUID], owner_uuid: UUID
+    ) -> List[UUID]:
+        return await self.file_crud.delete_files(file_uuids, owner_uuid)
+
 
 def create_file_service(db_ctx: DBContext) -> FileService:
     file_crud = db_ctx.crud(FileCrud)

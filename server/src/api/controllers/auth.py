@@ -152,14 +152,17 @@ async def accept_consent(
 @router.get("/auth/dev-login")
 async def dev_login(
     request: Request,
+    worker: str | None = None,
     db_ctx: DBContext = Depends(get_db_ctx),
     redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
     if settings.APP_ENV not in ("dev", "test"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    sub = "dev-user"
-    email = "dev@dev.local"
+    # `worker` lets parallel test runners (e.g. Playwright workers) each log
+    # in as their own isolated dev user instead of sharing "dev-user".
+    sub = f"dev-user-{worker}" if worker else "dev-user"
+    email = f"dev-{worker}@dev.local" if worker else "dev@dev.local"
 
     user_crud = db_ctx.crud(UserCrud)
     existing_user = await user_crud.get_user_by_sub(sub)
