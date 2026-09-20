@@ -16,7 +16,7 @@ spec:
       serviceAccountName: redis
       containers:
         - name: redis
-          image: redis:7.4.5-alpine@sha256:0c0142c3cd69bc030ea09fecfa1c1c0c7d0e7d6081be6bb4957804f23d2cf57a
+          image: redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
           ports:
             - containerPort: 6379
           volumeMounts:
