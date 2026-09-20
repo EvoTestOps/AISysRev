@@ -24,7 +24,7 @@ test.describe("Job UI (mock LLM)", () => {
     await page.getByTestId("llm-provider-dropdown-option-mock").click();
 
     await page.getByTestId("llm-model-dropdown").click();
-    await page.getByTestId("llm-model-dropdown-option-mock_001").click();
+    await page.getByTestId("llm-model-dropdown-option-mock-small").click();
 
     await page.getByTestId("prompting-strategy-zero-shot-button").click();
 

@@ -4,7 +4,7 @@ const prefix = "/api/v1";
 
 export const mockLlmConfig = {
   provider_name: "mock",
-  model_name: "mock_001",
+  model_name: "mock-small",
   provider_parameters: {},
   model_parameters: {},
 };
