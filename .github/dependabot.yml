@@ -6,6 +6,7 @@ updates:
     directory: /client
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
     groups:
       npm:
         update-types: [minor, patch]
@@ -15,6 +16,7 @@ updates:
     directory: /server
     schedule:
       interval: weekly
+    open-pull-requests-limit: 2
     groups:
       uv:
         update-types: [minor, patch]
@@ -29,6 +31,7 @@ updates:
       - /manifests/production
     schedule:
       interval: weekly
+    open-pull-requests-limit: 1
     groups:
       docker:
         update-types: [minor, patch]
@@ -41,6 +44,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 1
     groups:
       docker-compose:
         update-types: [minor, patch]
@@ -50,6 +54,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 1
     groups:
       github-actions:
         update-types: [minor, patch]
