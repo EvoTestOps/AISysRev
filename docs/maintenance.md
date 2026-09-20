@@ -112,18 +112,17 @@ Pin to the most specific tag you can (`python:3.14.7-alpine`, `caddy:2.11.4-alpi
 Per image:
 
 - **Node** (`node:*-alpine`): appears twice in the Dockerfiles (`client-build` in `Dockerfile`, `client` in `Dockerfile-dev.dockerfile`). Keep the major in sync with `.nvmrc`.
-- **Python** (`python:*-alpine`): 3 stages in each Dockerfile, all must use the identical tag+digest. A patch bump (3.14.x) only needs the Dockerfiles. A minor bump (3.14 to 3.15) also needs `server/.python-version`, `requires-python`, `[tool.mypy] python_version`, `[tool.ruff] target-version`, the README, and a full `uv lock --upgrade` since wheels for all dependencies must exist for the new version. Alpine uses musl, so a package without musl wheels will compile from source and can fail to build. Check the Docker build early.
-- **uv** (`ghcr.io/astral-sh/uv:<version>`): pinned to an exact version (not `latest`) in every stage of both Dockerfiles. Update all of them, plus the `setup-uv` `version:` in every job in `tests.yml`, plus the "UV vX or later" line in the README. Release notes: https://github.com/astral-sh/uv/releases. A new uv can change lockfile formatting, so run `uv lock` and commit any diff.
+- **Python** (`python:*-alpine`): appears once in each Dockerfile (the `python-base` stage). A patch bump (3.14.x) only needs the Dockerfiles. A minor bump (3.14 to 3.15) also needs `server/.python-version`, `requires-python`, `[tool.mypy] python_version`, `[tool.ruff] target-version`, the README, and a full `uv lock --upgrade` since wheels for all dependencies must exist for the new version. Alpine uses musl, so a package without musl wheels will compile from source and can fail to build. Check the Docker build early.
+- **uv** (`ghcr.io/astral-sh/uv:<version>`): pinned to an exact version (not `latest`) in the `uv` stage of both Dockerfiles. Update both, plus the `setup-uv` `version:` in every job in `tests.yml`, plus the "UV vX or later" line in the README. Release notes: https://github.com/astral-sh/uv/releases. A new uv can change lockfile formatting, so run `uv lock` and commit any diff.
 - **Caddy** (`caddy:*-alpine`): the `client` stage of `Dockerfile`. The `Caddyfile` in the repo root is copied in, so check it still loads (`docker run --rm -v $PWD/Caddyfile:/etc/caddy/Caddyfile caddy:<ver> caddy validate --config /etc/caddy/Caddyfile`).
 - **Postgres** (`pgvector/pgvector:pg14`): a **major** version change (pg14 to pg15+) cannot reuse an existing data directory. It needs a dump/restore or `pg_upgrade`, and the manifests/volumes in production must be planned separately. Only bump the digest for the same major. In dev, `postgres-init-scripts/` is mounted on first init (`docker-compose-dev.yml`), so check they still work.
 - **Redis** (`redis:7.4.x-alpine`): used by Celery. Update all three places (`docker-compose.yml`, `docker-compose-dev.yml`, `manifests/{staging,production}/redis-dep.yaml`) together.
 - **Adminer**: dev/admin tool, low risk.
 
-After changing a Dockerfile, build every target that the workflows build:
+After changing a Dockerfile, build every target that the workflows build. The `server` image also runs the Celery worker and Flower (compose and the Kubernetes manifests override the command):
 
 ```sh
 docker build --target server  -t aisysrev-server .
-docker build --target celery  -t aisysrev-celery .
 docker build --target client  -t aisysrev-client .
 ```
 

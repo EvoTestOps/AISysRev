@@ -1,3 +1,8 @@
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile
+  target: server
+
 services:
   frontend:
     container_name: frontend_prod
@@ -19,10 +24,8 @@ services:
 
   backend:
     container_name: backend_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: server
+    build: *backend-build
+    image: aisysrev-backend:prod
     ports: ["127.0.0.1:5678:5678"] # Debug port
     environment:
       PYTHONPATH: /app
@@ -85,10 +88,9 @@ services:
 
   celery:
     container_name: celery_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: celery
+    build: *backend-build
+    image: aisysrev-backend:prod
+    command: ["/bin/sh", "/app/start-celery.sh"]
     ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
@@ -107,10 +109,8 @@ services:
 
   flower:
     container_name: flower_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: server
+    build: *backend-build
+    image: aisysrev-backend:prod
     command: /app/.venv/bin/celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app

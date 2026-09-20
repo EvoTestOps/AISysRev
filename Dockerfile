@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-install-project --no-editable
 
 
-FROM python-base AS runtime
+FROM python-base AS server
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
@@ -65,11 +65,5 @@ RUN chmod +x /app/migrate.sh
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-FROM runtime AS server
 USER app
 CMD ["/bin/sh", "/app/start.sh"]
-
-FROM runtime AS celery
-EXPOSE 8080
-USER app
-CMD ["/bin/sh", "/app/start-celery.sh"]

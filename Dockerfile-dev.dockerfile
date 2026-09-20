@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project --no-editable
 
 
-FROM python-base AS runtime
+FROM python-base AS server
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
@@ -57,8 +57,4 @@ EXPOSE 8080
 EXPOSE 5678
 USER app
 
-FROM runtime AS server
 CMD ["/bin/sh", "/app/start-dev.sh"]
-
-FROM runtime AS celery
-CMD ["/bin/sh", "/app/start-celery-dev.sh"]
