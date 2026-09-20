@@ -12,7 +12,7 @@ dependencies = [
     "celery[redis]>=5.6.3",
     "charset-normalizer>=3.5.1",
     "debugpy>=1.8.22",
-    "fastapi[standard]>=0.124.4",
+    "fastapi[standard]>=0.141.1",
     "flower>=2.1.0",
     "httpx2>=2.13.0",
     "gwet-ac1",
