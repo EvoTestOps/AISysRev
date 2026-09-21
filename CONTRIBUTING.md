@@ -65,6 +65,10 @@ Read the generated file in `server/migrations/versions/` before committing it, s
 
 Dependabot opens weekly upgrade PRs. Review them, and do manual upgrades, as described in [docs/maintenance.md](docs/maintenance.md). Commit lockfile changes (`client/package-lock.json`, `server/uv.lock`) together with the manifest change.
 
+## Releasing
+
+Production images are published when a `vX.Y.Z` tag is pushed. See [docs/releasing.md](docs/releasing.md) for how to tag and create a GitHub release.
+
 ## Documentation
 
 Update the docs in the same pull request as the change that makes them wrong. The docs have drifted before because nothing tied them to the code.

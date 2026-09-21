@@ -168,5 +168,5 @@ Finally, smoke-test the images the way they get deployed with `make start-prod` 
 ## Releasing the upgrade
 
 - Open a PR against `main`. CI runs lint, typecheck, unit, backend, build and e2e jobs.
-- Merging to `main` runs the tests and pushes staging images (`build-staging.yml`). Tags matching `v*.*.*` push production images (`build-prod.yml`). Let an upgrade run on staging before tagging a production release.
+- Merging to `main` runs the tests and pushes staging images (`build-staging.yml`). Tags matching `v*.*.*` push production images (`build-prod.yml`). Let an upgrade run on staging before tagging a production release (see [releasing.md](releasing.md)).
 - Mention notable major-version upgrades and any manual steps (e.g. Postgres major upgrade) in the PR description.
