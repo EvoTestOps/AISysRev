@@ -86,6 +86,10 @@ def _llm_service(needs_api_key: bool = False, stored_key: str | None = None):
     service = MagicMock()
     service.get_llm.return_value = provider
     service.call_llm = AsyncMock(return_value=object())
+    # No global overrides: hand back the job's provider parameters unchanged.
+    service.resolve_provider_parameters = AsyncMock(
+        side_effect=lambda _llm, provider_parameters, _owner_uuid: provider_parameters
+    )
     service.setting_service.get_setting = AsyncMock(
         return_value=(
             SettingRead(name=API_KEY_NAME, value=stored_key, secret=True)
