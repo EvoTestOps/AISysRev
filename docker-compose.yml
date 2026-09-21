@@ -1,3 +1,8 @@
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile
+  target: server
+
 services:
   frontend:
     container_name: frontend_prod
@@ -14,14 +19,13 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - backend
+      backend:
+        condition: service_started
 
   backend:
     container_name: backend_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: server
+    build: *backend-build
+    image: aisysrev-backend:prod
     ports: ["127.0.0.1:5678:5678"] # Debug port
     environment:
       PYTHONPATH: /app
@@ -32,9 +36,12 @@ services:
       REDIS_URL: redis://redis_prod:6379/0
       RUN_MIGRATIONS: true
     depends_on:
-      - postgres
-      - redis
-      - celery
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
     volumes:
       - pdf_data:/app/data/pdfs
 
@@ -49,7 +56,12 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   adminer:
     container_name: adminer_prod
@@ -58,7 +70,8 @@ services:
     ports:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   redis:
     image: redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
@@ -67,13 +80,17 @@ services:
       - "127.0.0.1:6379:6379"
     volumes: 
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   celery:
     container_name: celery_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: celery
+    build: *backend-build
+    image: aisysrev-backend:prod
+    command: ["/bin/sh", "/app/start-celery.sh"]
     ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
@@ -83,18 +100,18 @@ services:
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     volumes:
       - pdf_data:/app/data/pdfs
 
   flower:
     container_name: flower_prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: server
-    command: uv run celery -A src.worker flower --port=5555
+    build: *backend-build
+    image: aisysrev-backend:prod
+    command: /app/.venv/bin/celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
       APP_ENV: prod
@@ -105,8 +122,10 @@ services:
     ports:
       - 127.0.0.1:${FLOWER_PORT:-5555}:5555
     depends_on:
-      - redis
-      - celery
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
 
 volumes:
   postgres_data:

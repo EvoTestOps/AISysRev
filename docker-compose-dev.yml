@@ -1,3 +1,8 @@
+x-backend-build: &backend-build
+  context: .
+  dockerfile: Dockerfile-dev.dockerfile
+  target: server
+
 services:
   frontend:
     container_name: frontend_${APP_ENV:-dev}
@@ -20,14 +25,13 @@ services:
         - action: rebuild
           path: package.json
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
   backend:
     container_name: backend_${APP_ENV:-dev}
-    build:
-      context: .
-      dockerfile: Dockerfile-dev.dockerfile
-      target: server
+    build: *backend-build
+    image: aisysrev-backend:${APP_ENV:-dev}
     ports: 
       - "127.0.0.1:5678:5678"
       - "127.0.0.1:8090:8080"
@@ -49,7 +53,7 @@ services:
       - ./server/migrations:/app/migrations
       - pdf_data:/app/data/pdfs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health', timeout=5)"]
       interval: 10s
       timeout: 20s
       retries: 3
@@ -67,9 +71,12 @@ services:
         - action: rebuild
           path: server/pyproject.toml
     depends_on:
-      - postgres
-      - redis
-      - celery
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
 
   postgres:
     image: pgvector/pgvector:pg14@sha256:fb27b00a92028f4749bf18f3d31b18fc62510258326486fb8900653ab2701252
@@ -83,6 +90,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres-init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   adminer:
     container_name: adminer_${APP_ENV:-dev}
@@ -98,34 +111,37 @@ services:
       - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   celery:
     container_name: celery_${APP_ENV:-dev}
-    build:
-      context: .
-      dockerfile: Dockerfile-dev.dockerfile
-      target: celery
+    build: *backend-build
+    image: aisysrev-backend:${APP_ENV:-dev}
+    command: ["/bin/sh", "/app/start-celery-dev.sh"]
     ports: ["127.0.0.1:5679:5679"]
     environment:
       PYTHONPATH: /app
-      DEBUG: ${DEBUg:-false}
+      DEBUG: ${DEBUG:-false}
       APP_ENV: ${APP_ENV:-dev}
       SECRET_KEY: yoursecretkey
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_${APP_ENV:-dev}:5432/your_database_${APP_ENV:-dev}"
       CELERY_BROKER_URL: redis://redis_${APP_ENV:-dev}:6379/0
       REDIS_URL: redis://redis_${APP_ENV:-dev}:6379/0
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     volumes:
       - pdf_data:/app/data/pdfs
 
   flower:
     container_name: flower_${APP_ENV:-dev}
-    build:
-      context: .
-      dockerfile: Dockerfile-dev.dockerfile
-      target: server
-    command: uv run celery -A src.worker flower --port=5555
+    build: *backend-build
+    image: aisysrev-backend:${APP_ENV:-dev}
+    command: /app/.venv/bin/celery -A src.worker flower --port=5555
     environment:
       PYTHONPATH: /app
       APP_ENV: ${APP_ENV:-dev}
@@ -137,8 +153,10 @@ services:
     ports:
       - 127.0.0.1:${FLOWER_PORT:-5555}:5555
     depends_on:
-      - redis
-      - celery
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
 
 volumes:
   postgres_data:
