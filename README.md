@@ -17,12 +17,14 @@
   * [Introduction](#introduction)
   * [Features](#features)
     + [Title-abstract screening](#title-abstract-screening)
+    + [Full-text screening](#full-text-screening)
+      - [Uploading PDFs](#uploading-pdfs)
+      - [Screening modes](#screening-modes)
   * [Showcase](#showcase)
   * [Getting started](#getting-started)
     + [Data](#data)
     + [LLMs Access](#llms-access)
     + [LLM screening speed](#llm-screening-speed)
-  * [PDF Screening](#pdf-screening)
   * [System and software requirements](#system-and-software-requirements)
     + [Verifying Docker setup and environment](#verifying-docker-setup-and-environment)
     + [Running the AISysRev application](#running-the-aisysrev-application)
@@ -67,13 +69,15 @@ AISysRev focuses on study selection. The table below shows which steps of the sy
 | SR protocol definition           | ❌ Not supported     | Inclusion/exclusion criteria are defined per screening task, but there is no protocol editor.                                           |
 | Automated search                 | ❌ Not supported     | Import search results as CSV from Scopus or from our [Github Query Tool](https://github.com/EvoTestOps/github-query-tool).              |
 | Study selection (title-abstract) | ✅ Supported         | LLM-based and manual screening. See [Title-abstract screening](#title-abstract-screening).                                              |
-| Study selection (full-text)      | 🟡 Partially supported | LLM screening using excerpts from uploaded PDFs. See [PDF Screening](#pdf-screening).                                                 |
+| Study selection (full-text)      | ✅ Supported         | LLM screening using the passages of an uploaded PDF that best match each criterion. See [Full-text screening](#full-text-screening) and [pdf-screening.md](docs/pdf-screening.md). |
 | Quality assessment               | ❌ Not supported     |                                                                                                                                         |
 | Data extraction                  | ❌ Not supported     |                                                                                                                                         |
 | Meta-analysis                    | ❌ Not supported     |                                                                                                                                         |
 | Final report                     | ❌ Not supported     | Screening results can be exported to CSV.                                                                                               |
 
 In the future, we plan to expand the feature set to cover more steps of the systematic review process.
+
+The application is based on our research papers on this topic. Please consider citing if you use the application [1–3](#references).
 
 ### Title-abstract screening
 
@@ -86,7 +90,30 @@ The application allows you to:
 - Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc.
 All of the above steps are also done for Github repositories. 
 
-The application is based on our research papers on this topic. Please consider citing if you use the application [1–3](#references).
+### Full-text screening
+
+AISysRev supports full-text screening of PDFs in addition to title-abstract screening. For each criterion, the most relevant passage of the PDF is retrieved and given to the LLM. Full-text screening requires the OpenAI or OpenRouter provider, because the passages are found with embeddings.
+
+#### Uploading PDFs
+
+PDFs can be attached to papers in two ways:
+
+- **Manual** - on a paper's card, click **Upload full text** and select a PDF file to upload.
+- **Bulk upload with Zotero/EndNote XML**
+  1. Click **Download papers missing full text** to export a RIS file containing all papers in the project that don't have a PDF attached.
+  2. Import the RIS file into [Zotero](https://www.zotero.org/) and use Find Full Text to retrieve full-text PDFs.
+  3. Export the Zotero collection with the automatically retrieved PDFs in EndNote XML format with Export notes and Export files checked.
+  4. In AISysRev, click **Import full text (Zotero Export Folder)** and select the exported folder. PDFs are attached to papers based on DOI.
+
+#### Screening modes
+
+When creating a screening task, choose which screening mode to use:
+
+- **Abstract** - the paper's title and abstract are given to the LLM.
+- **PDF** - excerpts from the paper's full-text PDF are given to the LLM.
+- **Automatic** - uses **PDF** screening mode for papers with a PDF attached and **Abstract** for papers without a PDF attached.
+
+See [pdf-screening.md](docs/pdf-screening.md) for details on how **PDF** screening mode works, including its limitations.
 
 ## Showcase
 
@@ -124,32 +151,6 @@ The application is integrated with [OpenRouter](https://openrouter.ai/), which s
 ### LLM screening speed
 
 LLM calls are parallelized, and you should achieve a screening speed exceeding 100 papers per minute when using OpenRouter. The screening speed depends on the model used.
-
-
-## PDF Screening
-
-AISysRev supports full-text PDF screening in addition to title-abstract screening.
-
-### Uploading PDFs
-
-PDFs can be attached to papers in two ways:
-
-- **Manual** - on a paper's card, click **Upload full text** and select a PDF file to upload.
-- **Bulk upload with Zotero/EndNote XML**
-  1. Click **Download papers missing full text** to export a RIS file containing all papers in the project that don't have a PDF attached.
-  2. Import the RIS file into [Zotero](https://www.zotero.org/) and use Find Full Text to retrieve full-text PDFs.
-  3. Export the Zotero collection with the automatically retrieved PDFs in EndNote XML format with Export notes and Export files checked.
-  4. In AISysRev, click **Import full text (Zotero Export Folder)** and select the exported folder. PDFs are attached to papers based on DOI.
-
-### Screening modes
-
-When creating a screening task, choose which screening mode to use:
-
-- **Abstract** - the paper's title and abstract are given to the LLM.
-- **PDF** - excerpts from the paper's full-text PDF are given to the LLM.
-- **Automatic** - uses **PDF** screening mode for papers with a PDF attached and **Abstract** for papers without a PDF attached.
-
-See [pdf-screening.md](docs/pdf-screening.md) for details on how **PDF** screening mode works.
 
 
 ## System and software requirements
