@@ -16,6 +16,7 @@
 - [AISysRev - LLM-based Tool for Title-abstract Screening](#aisysrev---llm-based-tool-for-title-abstract-screening)
   * [Introduction](#introduction)
   * [Features](#features)
+    + [Title-abstract screening](#title-abstract-screening)
   * [Showcase](#showcase)
   * [Getting started](#getting-started)
     + [Data](#data)
@@ -53,11 +54,28 @@
 
 ## Introduction
 
-The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, only one step is supported: title–abstract screening. Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported from two sourced as a CSV from: 1) [Scopus](https://www.scopus.com/) and from 2) [Github](https://github.com/). For Github data see our tool [Github Query Tool](https://github.com/EvoTestOps/github-query-tool) that queries and collects github repository data.
+The AISysRev web-application offers research-backed and AI-based support for Systematic Literature Reviews. Currently, the main supported step is title–abstract screening (see the [feature table](#features)). Although the application runs in a web browser, all data is stored locally on your machine. LLMs are accessed through [OpenRouter](https://openrouter.ai/), [OpenAI](https://platform.openai.com/docs/api-reference) or through a local provider (OpenAI SDK). Data for screening can be imported from two sourced as a CSV from: 1) [Scopus](https://www.scopus.com/) and from 2) [Github](https://github.com/). For Github data see our tool [Github Query Tool](https://github.com/EvoTestOps/github-query-tool) that queries and collects github repository data.
 
 Scopus data screening works like normal title-abstract screening for academic papers. For GitHub we apply the same logic. Title from GitHub project becomes the title and abstract is the project description + README.md contents. GitHub screening can be useful if one is interested in finding software tools that satisfy inclusion and exclusion rules. Our [paper](https://arxiv.org/abs/2606.16839) on tool discovery with LLMs.
 
 ## Features
+
+AISysRev focuses on study selection. The table below shows which steps of the systematic review process the application supports.
+
+| Systematic review step           | Status               | Notes                                                                                                                                   |
+| -------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| SR protocol definition           | ❌ Not supported     | Inclusion/exclusion criteria are defined per screening task, but there is no protocol editor.                                           |
+| Automated search                 | ❌ Not supported     | Import search results as CSV from Scopus or from our [Github Query Tool](https://github.com/EvoTestOps/github-query-tool).              |
+| Study selection (title-abstract) | ✅ Supported         | LLM-based and manual screening. See [Title-abstract screening](#title-abstract-screening).                                              |
+| Study selection (full-text)      | 🟡 Partially supported | LLM screening using excerpts from uploaded PDFs. See [PDF Screening](#pdf-screening).                                                 |
+| Quality assessment               | ❌ Not supported     |                                                                                                                                         |
+| Data extraction                  | ❌ Not supported     |                                                                                                                                         |
+| Meta-analysis                    | ❌ Not supported     |                                                                                                                                         |
+| Final report                     | ❌ Not supported     | Screening results can be exported to CSV.                                                                                               |
+
+In the future, we plan to expand the feature set to cover more steps of the systematic review process.
+
+### Title-abstract screening
 
 The application allows you to:
 - Import a CSV file with paper titles and abstracts. You can also use our [Demo CSV file](data/Demo_TimePressure_5_papers.csv)
