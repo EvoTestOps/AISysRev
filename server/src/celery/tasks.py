@@ -383,9 +383,12 @@ async def process_job(
                         owner_uuid=job_data.owner_uuid,
                         mask_secret=False,
                     )
+                provider_parameters = await llm_service.resolve_provider_parameters(
+                    llm, job_data.llm_config.provider_parameters, job_data.owner_uuid
+                )
                 await pdf_screening_service.get_criteria_embeddings(
                     llm,
-                    job_data.llm_config.provider_parameters,
+                    provider_parameters,
                     ProviderRuntimeParameters(
                         model=job_data.llm_config.model_name,
                         api_key=api_key.value if api_key is not None else "Mock",

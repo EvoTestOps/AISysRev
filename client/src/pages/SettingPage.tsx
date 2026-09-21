@@ -221,6 +221,60 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
   );
 };
 
+type SettingToggleEntryProps = {
+  config_key: string;
+  title: string;
+  description: string | null;
+  defaultValue: boolean;
+};
+
+const SettingToggleEntry: React.FC<SettingToggleEntryProps> = ({
+  title,
+  config_key,
+  description,
+  defaultValue,
+}) => {
+  const { setting, loading, update } = useConfig(config_key);
+
+  const enabled = (setting?.value ?? String(defaultValue)) === "true";
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="truncate text-sm font-semibold text-slate-900">
+            {loading ? <Skeleton width={160} /> : title}
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          {loading ? <Skeleton width={260} /> : (description ?? "")}
+        </p>
+      </div>
+      {loading ? (
+        <Skeleton width={44} height={24} borderRadius={999} />
+      ) : (
+        <button
+          role="switch"
+          aria-checked={enabled}
+          data-testid={`setting_${config_key}_toggle`}
+          onClick={() => {
+            update({ value: enabled ? "false" : "true", secret: false });
+          }}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+            enabled ? "bg-slate-800" : "bg-slate-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              enabled ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+      )}
+    </div>
+  );
+};
+
 const ConfigParameterSchema = z.object({
   key: z.string(),
   title: z.string(),
@@ -295,14 +349,24 @@ export const SettingsPage = () => {
                 </div>
 
                 <div className="space-y-3 p-5">
-                  {entry.config_parameters.map((setting) => (
-                    <SettingEntry
-                      key={setting.key}
-                      title={setting.title}
-                      config_key={setting.key}
-                      description={setting.description}
-                    />
-                  ))}
+                  {entry.config_parameters.map((setting) =>
+                    setting.type === "boolean" ? (
+                      <SettingToggleEntry
+                        key={setting.key}
+                        title={setting.title}
+                        config_key={setting.key}
+                        description={setting.description}
+                        defaultValue={Boolean(setting.defaultValue)}
+                      />
+                    ) : (
+                      <SettingEntry
+                        key={setting.key}
+                        title={setting.title}
+                        config_key={setting.key}
+                        description={setting.description}
+                      />
+                    ),
+                  )}
                 </div>
               </section>
             );

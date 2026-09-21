@@ -21,7 +21,9 @@ type SettingCreate = {
 
 export function useConfig(name: string) {
   const [setting, setSetting] = useState<SettingRead | null>(null);
-  const [loading, setLoading] = useState(false);
+  // Starts loading: the initial fetch is kicked off on mount, and consumers must
+  // not mistake "not fetched yet" for "not set".
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
