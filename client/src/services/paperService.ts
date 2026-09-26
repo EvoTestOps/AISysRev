@@ -1,10 +1,10 @@
 import { AxiosError } from "axios";
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}`);
+    const res = await legacyApi.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
     const e = error as AxiosError;
@@ -18,7 +18,7 @@ export const fetchPapersForProject = async (projectUuid: string) => {
 
 export const fetchPapersWithModelEvalsForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}/with_model_evaluations`);
+    const res = await legacyApi.get(`/api/v1/paper/${projectUuid}/with_model_evaluations`);
     return res.data;
   } catch (error: unknown) {
     const e = error as AxiosError;
@@ -32,7 +32,7 @@ export const fetchPapersWithModelEvalsForProject = async (projectUuid: string) =
 
 export const addPaperHumanResult = async (paperUuid: string, result: JobTaskHumanResult) => {
   try {
-    const res = await api.patch(`/api/v1/paper/${paperUuid}`, {
+    const res = await legacyApi.patch(`/api/v1/paper/${paperUuid}`, {
       human_result: result,
     });
     return res.data;

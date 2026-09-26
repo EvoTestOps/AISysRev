@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { api } from "./api";
+import { legacyApi } from "./api";
 
 // OpenRouter API model listing response schema
 // Backend filters this list to show only the ones that support JSON, temperature, seed and top_p.
@@ -57,7 +57,7 @@ export const retrieve_models = async (
   Array<{ id: string; created: number; object: "model"; owned_by: string }>
 > => {
   try {
-    const res = await api.post(`/api/v1/llm/${provider}/models`, {
+    const res = await legacyApi.post(`/api/v1/llm/${provider}/models`, {
       provider_parameters,
     });
     // TODO: Data validation

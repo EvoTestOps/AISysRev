@@ -1,4 +1,4 @@
-import { api } from "../services/api";
+import { legacyApi } from "../services/api";
 import { LlmConfig, PromptingConfig, JobScreeningMode } from "../state/types";
 
 export const createJob = async (
@@ -8,7 +8,7 @@ export const createJob = async (
   screeningMode: JobScreeningMode,
 ) => {
   try {
-    const res = await api.post("/api/v1/job", {
+    const res = await legacyApi.post("/api/v1/job", {
       project_uuid: projectUuid,
       llm_config: llmConfig,
       prompting_config: promptingConfig,
@@ -24,7 +24,7 @@ export const createJob = async (
 
 export const fetchJobsForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/job?project=${projectUuid}`);
+    const res = await legacyApi.get(`/api/v1/job?project=${projectUuid}`);
     return res.data;
   } catch (error) {
     console.error("Error fetching jobs:", error);
@@ -34,7 +34,7 @@ export const fetchJobsForProject = async (projectUuid: string) => {
 
 export const cancelJob = async (jobUuid: string) => {
   try {
-    const res = await api.post(`/api/v1/job/${jobUuid}/cancel`);
+    const res = await legacyApi.post(`/api/v1/job/${jobUuid}/cancel`);
     return res.data;
   } catch (error) {
     console.error("Canceling task unsuccessful:", error);
@@ -44,7 +44,7 @@ export const cancelJob = async (jobUuid: string) => {
 
 export const deleteJob = async (jobUuid: string) => {
   try {
-    const res = await api.delete(`/api/v1/job/${jobUuid}`);
+    const res = await legacyApi.delete(`/api/v1/job/${jobUuid}`);
     return res.data;
   } catch (error) {
     console.error("Task deletion unsuccessful:", error);

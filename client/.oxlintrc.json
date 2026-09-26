@@ -6,7 +6,9 @@
   "ignorePatterns": [
     "dist",
     "coverage",
-    "node_modules"
+    "node_modules",
+    "src/services/api/client.ts",
+    "src/services/api/client.types.d.ts"
   ],
   "overrides": [
     {
