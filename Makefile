@@ -61,6 +61,17 @@ backend-test:
 backend-test-html:
 	make backend-test REPORT="--cov-report=html"
 
+# Export the backend's OpenAPI spec to client/openapi.json without running the server,
+# then generate the typed frontend API client from it.
+# APP_ENV=dev matches the routes of the dev server; the connection URLs are required but never used.
+openapi:
+	APP_ENV=dev \
+	DB_URL=postgresql+asyncpg://openapi:openapi@localhost/openapi \
+	REDIS_URL=redis://localhost \
+	CELERY_BROKER_URL=redis://localhost \
+	uv run --directory server python -c "import json; from src.main import app; json.dump(app.openapi(), open('../client/openapi.json', 'w'))"
+	npm --prefix client run generate:api
+
 # Extract Caddy root CA from production app to trust it locally
 extract-caddy-ca:
 	docker compose -f docker-compose.yml -p prod cp frontend:/data/caddy/pki/authorities/local/root.crt ./caddy-local-root.crt 
