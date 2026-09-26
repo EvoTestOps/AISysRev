@@ -1,20 +1,17 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { ProcessedFiles } from "../services/api/client";
 
-
-type ValidationError = {
-  file: string;
-  row: number;
-  message: string;
-};
-
-const ToastContent = ({ parsed }: { parsed: ValidationError[] }) => {
+const ToastContent = ({ parsed }: { parsed: ProcessedFiles["errors"] }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <div onClick={() => setExpanded(!expanded)} className="cursor-pointer">
       {!expanded ? (
-        <span><strong>Errors occurred!</strong><br /> Click to see validation errors.</span>
+        <span>
+          <strong>Errors occurred!</strong>
+          <br /> Click to see validation errors.
+        </span>
       ) : (
         <div className="max-h-64 overflow-y-auto text-sm">
           <strong>Validation errors:</strong>
@@ -31,7 +28,7 @@ const ToastContent = ({ parsed }: { parsed: ValidationError[] }) => {
   );
 };
 
-export const ExpandableToast = (parsed: ValidationError[]) => {
+export const ExpandableToast = (parsed: ProcessedFiles["errors"]) => {
   toast.error(<ToastContent parsed={parsed} />, {
     autoClose: 10000,
     closeOnClick: false,

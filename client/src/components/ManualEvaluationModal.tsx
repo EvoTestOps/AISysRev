@@ -1,9 +1,4 @@
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Description,
-} from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Description } from "@headlessui/react";
 import { useEffect, useCallback, useState } from "react";
 import { Check, CircleQuestionMark, CircleX, X } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
@@ -13,19 +8,19 @@ import {
   JobScreeningMode,
   JobTaskHumanResult,
   JobTaskStatus,
-  PaperWithModelEval,
   PromptingConfig,
   ScreeningTarget,
 } from "../state/types";
 import { api } from "../services/api";
 import { AlertMessage } from "./AlertMessage";
 import { useTypedStoreActions } from "../state/store";
+import { PaperReadWithAvgProbability } from "../services/api/client";
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
-  papers: PaperWithModelEval[];
+  papers: PaperReadWithAvgProbability[];
   paperUuid: string | null;
   screeningTarget: ScreeningTarget;
   onClose: () => void;
@@ -53,24 +48,25 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
   // TODO: Refactor this to use redux
-  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
-    [],
-  );
+  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>([]);
 
-  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult)
+  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult);
 
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
 
-  const handleAddHumanResult = useCallback((humanResult: JobTaskHumanResult) => {
-    if (!paperUuid || !currentPaper) return;
+  const handleAddHumanResult = useCallback(
+    (humanResult: JobTaskHumanResult) => {
+      if (!paperUuid || !currentPaper) return;
 
-    try {
-      addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
-      onEvaluated();
-    } catch (error) {
-      console.error("Error adding human result:", error);
-    }
-  }, [paperUuid, currentPaper, onEvaluated, addHumanResult])
+      try {
+        addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
+        onEvaluated();
+      } catch (error) {
+        console.error("Error adding human result:", error);
+      }
+    },
+    [paperUuid, currentPaper, onEvaluated, addHumanResult],
+  );
 
   // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
@@ -90,7 +86,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             likertScale: decision ? decision.likert_decision : null,
             probability: decision ? decision.probability_decision : null,
             // The generated string literals match the values of the app's enums
-            screeningType: entry.prompting_config.screening_type as PromptingConfig["screening_type"],
+            screeningType: entry.prompting_config
+              .screening_type as PromptingConfig["screening_type"],
             screeningMode: entry.screening_mode as JobScreeningMode,
           } satisfies ModelSuggestion,
         ];
@@ -112,12 +109,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         handleAddHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
         handleAddHumanResult(JobTaskHumanResult.UNSURE);
-      } else if (
-        e.key === "n" ||
-        e.key === "N" ||
-        e.key === "e" ||
-        e.key === "E"
-      ) {
+      } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
         handleAddHumanResult(JobTaskHumanResult.EXCLUDE);
       } else if (e.key === "Escape") {
         onClose();
@@ -144,16 +136,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
           <div className="flex flex-col min-h-0">
-            <DialogTitle className="text-base font-semibold mb-4">
-              Model suggestions
-            </DialogTitle>
+            <DialogTitle className="text-base font-semibold mb-4">Model suggestions</DialogTitle>
             <div
               className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
               scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              {modelSuggestions.length === 0 && (
-                <AlertMessage message="No model suggestions." />
-              )}
+              {modelSuggestions.length === 0 && <AlertMessage message="No model suggestions." />}
               {modelSuggestions.map((suggestion, i) => (
                 <LlmModelCard
                   key={i}
@@ -171,7 +159,8 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           <div className="flex flex-col min-h-0">
             <div className="pr-10">
               <DialogTitle className="text-lg font-bold mb-3">
-                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}: {currentPaper.title}
+                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}:{" "}
+                {currentPaper.title}
               </DialogTitle>
             </div>
             <div
@@ -182,7 +171,13 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
                 <div className="text-sm pt-2 pb-2">
                   <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                   <a
-                    href={isGithubScreening ? (/^https?:\/\//i.test(currentPaper.doi) ? currentPaper.doi : undefined) : encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                    href={
+                      isGithubScreening
+                        ? /^https?:\/\//i.test(currentPaper.doi)
+                          ? currentPaper.doi
+                          : undefined
+                        : encodeURI(`https://doi.org/${currentPaper.doi}`)
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline text-blue-600 hover:text-blue-800"

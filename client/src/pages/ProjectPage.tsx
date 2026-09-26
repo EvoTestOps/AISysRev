@@ -515,7 +515,7 @@ export const ProjectPage = () => {
       fetchPapers(projectUuid);
     }
     fetchModels();
-  // oxlint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [project, projectUuid, fetchPapers]);
 
   useEffect(() => {

@@ -1,38 +1,30 @@
 import classNames from "classnames";
-import {
-  ChevronDown,
-  ChevronUp,
-  X,
-  CircleQuestionMark,
-  Check,
-  FileText,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, X, CircleQuestionMark, Check, FileText } from "lucide-react";
 import { useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { JobTaskHumanResult, PaperWithModelEval } from "../state/types";
+import { JobTaskHumanResult } from "../state/types";
 import { Card, CardProps } from "./Card";
 import { Button } from "./Button";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { toast } from "react-toastify";
 import { attachPdfToPaper } from "../services/fileService";
+import { PaperReadWithAvgProbability } from "../services/api/client";
 
 type PaperCardProps = {
-  paper: PaperWithModelEval;
+  paper: PaperReadWithAvgProbability;
   isGithubScreening: boolean;
 };
 
-export const PaperCard: React.FC<
-  React.PropsWithChildren<CardProps> & PaperCardProps
-> = ({ paper, isGithubScreening, ...rest }) => {
+export const PaperCard: React.FC<React.PropsWithChildren<CardProps> & PaperCardProps> = ({
+  paper,
+  isGithubScreening,
+  ...rest
+}) => {
   const [open, setOpen] = useState(false);
 
-  const getPaperPendingState = useTypedStoreState(
-    (actions) => actions.getPaperPendingState
-  );
+  const getPaperPendingState = useTypedStoreState((actions) => actions.getPaperPendingState);
   const isPending = getPaperPendingState(paper.uuid);
-  const addHumanResult = useTypedStoreActions(
-    (actions) => actions.addHumanResult
-  );
+  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult);
   const setPaperPdf = useTypedStoreActions((actions) => actions.setPaperPdf);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -65,16 +57,14 @@ export const PaperCard: React.FC<
       <button
         className={twMerge(
           classNames(
-            "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
-          )
+            "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50",
+          ),
         )}
         onClick={() => {
           setOpen(!open);
         }}
       >
-        <div className="text-sm font-semibold select-none text-left">
-          {paper.paper_id}
-        </div>
+        <div className="text-sm font-semibold select-none text-left">{paper.paper_id}</div>
         <div
           className="text-sm font-semibold select-none text-left flex items-center gap-1.5"
           title={paper.title}
@@ -87,9 +77,7 @@ export const PaperCard: React.FC<
             />
           )}
           <span className="truncate">
-            {paper.title.length > 80
-              ? paper.title.substring(0, 77) + "..."
-              : paper.title}
+            {paper.title.length > 80 ? paper.title.substring(0, 77) + "..." : paper.title}
           </span>
         </div>
         <div
@@ -129,7 +117,13 @@ export const PaperCard: React.FC<
               <>
                 <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                 <a
-                  href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
+                  href={
+                    isGithubScreening
+                      ? /^https?:\/\//i.test(paper.doi)
+                        ? paper.doi
+                        : undefined
+                      : `https://doi.org/${paper.doi}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline text-blue-600 hover:text-blue-800"
@@ -153,16 +147,20 @@ export const PaperCard: React.FC<
             </div>
           )}
           {!isGithubScreening && (
-          <div className="flex items-center gap-2 pb-2">
-            <Button
-              variant="slate"
-              size="xs"
-              disabled={uploadingPdf}
-              onClick={() => pdfInputRef.current?.click()}
-            >
-              {uploadingPdf ? "Uploading..." : paper.pdf_file_uuid ? "Replace full text" : "Upload full text"}
-            </Button>
-          </div>
+            <div className="flex items-center gap-2 pb-2">
+              <Button
+                variant="slate"
+                size="xs"
+                disabled={uploadingPdf}
+                onClick={() => pdfInputRef.current?.click()}
+              >
+                {uploadingPdf
+                  ? "Uploading..."
+                  : paper.pdf_file_uuid
+                    ? "Replace full text"
+                    : "Upload full text"}
+              </Button>
+            </div>
           )}
           <input
             type="file"
@@ -171,9 +169,7 @@ export const PaperCard: React.FC<
             onChange={handlePdfSelected}
             className="hidden"
           />
-          <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">
-            {paper.abstract}
-          </div>
+          <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">{paper.abstract}</div>
           <div className="flex flex-wrap justify-center gap-2">
             <Button
               variant="red"
