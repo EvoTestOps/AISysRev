@@ -89,13 +89,11 @@ export const NewProject = () => {
       try {
         const res = await create_project(title, criteria, screeningTarget);
         return { id: res.id, uuid: res.uuid };
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.response?.data?.detail?.errors) {
           throw new Error(JSON.stringify(error.response.data.detail.errors));
         }
         if (Array.isArray(error.response?.data?.detail)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const msg = (error.response.data.detail as any[])
             .map((e) => e.msg as string)
             .join("\n");
@@ -115,7 +113,6 @@ export const NewProject = () => {
           refreshProjects();
           navigate(`/project/${uuid}`);
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         const msg = typeof error?.message === "string" ? error.message : "";
         try {

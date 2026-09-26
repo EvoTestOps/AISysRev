@@ -3,16 +3,17 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { H6 } from "../components/Typography";
-import { DropdownMenuText, DropdownOption, DropdownMenuEllipsis } from "../components/DropDownMenus";
+import {
+  DropdownMenuText,
+  DropdownOption,
+  DropdownMenuEllipsis,
+} from "../components/DropDownMenus";
 import { FileDropArea } from "../components/FileDropArea";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { TruncatedFileNames } from "../components/TruncatedFileNames";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { createJob } from "../services/jobService";
-import {
-  fileUploadToBackend,
-  fileFetchFromBackend,
-} from "../services/fileService";
+import { fileUploadToBackend, fileFetchFromBackend } from "../services/fileService";
 import { JobStatus, TokenEstimation } from "../state/types";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { Button } from "../components/Button";
@@ -24,11 +25,9 @@ import {
   JobPromptingType,
   JobScreeningMode,
   Provider,
-  PerCriteriaStatsResponse
+  PerCriteriaStatsResponse,
 } from "../state/types";
-import {
-  fetchPerCriteriaStats,
-} from "../services/resultService";
+import { fetchPerCriteriaStats } from "../services/resultService";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
@@ -51,7 +50,7 @@ import {
   TriangleAlert,
   User,
   Users,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import { Card } from "../components/Card";
 import { TabButton } from "../components/TabButton";
@@ -83,17 +82,13 @@ type ModelConfigurationProps = {
   isLlmSelected: boolean;
   modelParametersSchema?: Provider["model_parameters_json_schema"];
   modelFormValues: Record<string, unknown>;
-  setModelFormValue: React.Dispatch<
-    React.SetStateAction<Record<string, unknown>>
-  >;
+  setModelFormValue: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 };
 
 const fmt = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
-
-
 
 const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   isLlmSelected,
@@ -116,10 +111,11 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
             {Object.keys(modelParametersSchema.properties).map((key) => {
               const property = modelParametersSchema.properties[key];
               return (
-                <span key={`property_${property.title}`}>{`${property.title}: ${modelFormValues[key] !== undefined &&
+                <span key={`property_${property.title}`}>{`${property.title}: ${
+                  modelFormValues[key] !== undefined &&
                   modelFormValues[key] !== "" &&
                   modelFormValues[key]
-                  }`}</span>
+                }`}</span>
               );
             })}
           </div>
@@ -141,17 +137,11 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
         {Object.keys(modelParametersSchema.properties).map((key) => {
           const property = modelParametersSchema.properties[key];
           return (
-            <div
-              className="flex flex-col justify-between gap-1"
-              key={`property_${key}`}
-            >
+            <div className="flex flex-col justify-between gap-1" key={`property_${key}`}>
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">
-                  {property.title}
-                </label>
+                <label className="text-sm font-medium text-slate-700">{property.title}</label>
                 <span className="text-sm font-medium text-slate-600">
-                  {modelFormValues[key] !== undefined &&
-                    modelFormValues[key] !== "" ? (
+                  {modelFormValues[key] !== undefined && modelFormValues[key] !== "" ? (
                     <>{modelFormValues[key]}</>
                   ) : (
                     ""
@@ -172,7 +162,6 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
                       [key]: e.target.value,
                     }));
                   }}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
                   value={modelFormValues[key]}
                 />
@@ -188,7 +177,6 @@ const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
                       [key]: e.target.value,
                     }));
                   }}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
                   value={modelFormValues[key]}
                 />
@@ -206,9 +194,7 @@ type ProviderConfigurationProps = {
   modelSelected: boolean;
   providerParametersSchema?: Provider["provider_parameters_json_schema"];
   providerFormValues: Record<string, unknown>;
-  setProviderFormValue: React.Dispatch<
-    React.SetStateAction<Record<string, unknown>>
-  >;
+  setProviderFormValue: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 };
 
 const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
@@ -232,9 +218,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
-          <div className="mt-0.5 text-xs text-slate-500 flex gap-2">
-            Provider configuration.
-          </div>
+          <div className="mt-0.5 text-xs text-slate-500 flex gap-2">Provider configuration.</div>
         </div>
         <svg
           className="h-4 w-4 text-slate-500 transition-transform duration-200 group-open:rotate-180"
@@ -253,18 +237,13 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
         {Object.keys(providerParametersSchema.properties).map((key) => {
           const property = providerParametersSchema.properties[key];
           return (
-            <div
-              className="flex flex-col justify-between gap-1 w-full"
-              key={`property_${key}`}
-            >
+            <div className="flex flex-col justify-between gap-1 w-full" key={`property_${key}`}>
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-slate-700">
-                  {property.title}
-                </label>
+                <label className="text-sm font-medium text-slate-700">{property.title}</label>
                 <span className="text-sm font-medium text-slate-600">
                   {providerFormValues[key] !== undefined &&
-                    property.type !== "string" &&
-                    providerFormValues[key] !== "" ? (
+                  property.type !== "string" &&
+                  providerFormValues[key] !== "" ? (
                     <>{providerFormValues[key]}</>
                   ) : (
                     ""
@@ -281,8 +260,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                   max={property.maximum}
                   step={0.1}
                   onChange={(e) => {
-                    const val =
-                      e.target.value === "" ? "" : parseFloat(e.target.value);
+                    const val = e.target.value === "" ? "" : parseFloat(e.target.value);
                     if (!Number.isNaN(val)) {
                       setProviderFormValue((vals) => ({
                         ...vals,
@@ -290,7 +268,6 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       }));
                     }
                   }}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
                   value={providerFormValues[key]}
                 />
@@ -307,7 +284,6 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       [key]: e.target.value,
                     }));
                   }}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
                   value={providerFormValues[key]}
                 />
@@ -319,8 +295,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                   className={cx}
                   data-testid={`property_${key}_input`}
                   onChange={(e) => {
-                    const val =
-                      e.target.value === "" ? "" : parseInt(e.target.value, 10);
+                    const val = e.target.value === "" ? "" : parseInt(e.target.value, 10);
                     if (!Number.isNaN(val)) {
                       setProviderFormValue((vals) => ({
                         ...vals,
@@ -328,7 +303,6 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       }));
                     }
                   }}
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                   // @ts-expect-error Ok
                   value={providerFormValues[key]}
                 />
@@ -357,7 +331,11 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
   return (
     <div className="flex flex-row gap-2">
       {hasMultiplePcJobs && (
-        <Button variant="slate" onClick={onPerCriteriaStats} title="Per-criteria agreement statistics">
+        <Button
+          variant="slate"
+          onClick={onPerCriteriaStats}
+          title="Per-criteria agreement statistics"
+        >
           <BarChart2 />
           <span>PC Agreement Stats</span>
         </Button>
@@ -382,15 +360,12 @@ const ActionComponent: React.FC<ActionComponentProps> = ({
           disabled={!hasPapers || importingFulltext}
         >
           <Download />
-          <span>{importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}</span>
+          <span>
+            {importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}
+          </span>
         </Button>
       )}
-      <Button
-        variant="slate"
-        onClick={downloadCsv}
-        title="Download CSV"
-        disabled={!hasPapers}
-      >
+      <Button variant="slate" onClick={downloadCsv} title="Download CSV" disabled={!hasPapers}>
         <Download />
         <span>Download CSV</span>
       </Button>
@@ -433,9 +408,7 @@ const SectionHeader: React.FC<{
     <H6 className="select-none">{title}</H6>
     <span>
       {selected === false && <Square size={20} strokeWidth={3} />}
-      {selected === true && (
-        <SquareCheckBig size={20} strokeWidth={3} className="text-green-500" />
-      )}
+      {selected === true && <SquareCheckBig size={20} strokeWidth={3} className="text-green-500" />}
     </span>
   </div>
 );
@@ -446,11 +419,7 @@ type ConfigKeyCheckProps = {
   should_show: boolean;
 };
 
-const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({
-  config_key,
-  should_show,
-  title,
-}) => {
+const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({ config_key, should_show, title }) => {
   const { loading, setting } = useConfig(config_key);
   return !loading && setting == null && should_show ? (
     <div>
@@ -489,7 +458,9 @@ export const ProjectPage = () => {
 
   const [jobToCancel, setJobToCancel] = useState<string | null>(null);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
-  const [perCriteriaStatsData, setPerCriteriaStatsData] = useState<PerCriteriaStatsResponse | null>(null);
+  const [perCriteriaStatsData, setPerCriteriaStatsData] = useState<PerCriteriaStatsResponse | null>(
+    null,
+  );
 
   const cancelJob = useTypedStoreActions((actions) => actions.cancelJob);
   const deleteJob = useTypedStoreActions((actions) => actions.deleteJob);
@@ -499,21 +470,14 @@ export const ProjectPage = () => {
     Array<{ id: string; created: number; object: "model"; owned_by: string }>
   >([]);
 
-
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
-  const getProjectByUuid = useTypedStoreState(
-    (state) => state.getProjectByUuid,
-  );
+  const getProjectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
   const providers = useTypedStoreState((state) => state.providers);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
 
-  const fetchJobsForProject = useTypedStoreActions(
-    (actions) => actions.fetchJobsForProject,
-  );
-  const jobs = useTypedStoreState(
-    (state) => state.jobsByProject[projectUuid] || [],
-  );
+  const fetchJobsForProject = useTypedStoreActions((actions) => actions.fetchJobsForProject);
+  const jobs = useTypedStoreState((state) => state.jobsByProject[projectUuid] || []);
 
   const project = getProjectByUuid(projectUuid);
 
@@ -544,15 +508,15 @@ export const ProjectPage = () => {
       estimated_input_tokens: Math.round(papers.length * INPUT_TOKENS_PER_PAPER * multiplier),
       estimated_output_tokens: Math.round(papers.length * OUTPUT_TOKENS_PER_PAPER),
     };
-  }, [projectUuid, papers.length, promptingStrategy, project])
+  }, [projectUuid, papers.length, promptingStrategy, project]);
 
   useEffect(() => {
     if (project !== undefined) {
       fetchPapers(projectUuid);
     }
     fetchModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project, projectUuid]);
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [project, projectUuid, fetchPapers]);
 
   useEffect(() => {
     if (projectUuid) {
@@ -565,13 +529,11 @@ export const ProjectPage = () => {
     return new URLSearchParams(search).get("paperUuid");
   }, [search]);
 
-  const [selectedLlmProvider, setSelectedLlmProvider] = useState<
-    DropdownOption | undefined
-  >(undefined);
-
-  const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(
+  const [selectedLlmProvider, setSelectedLlmProvider] = useState<DropdownOption | undefined>(
     undefined,
   );
+
+  const [selectedLlm, setSelectedLlm] = useState<DropdownOption | undefined>(undefined);
   const provider = providers.find((p) => p.name === selectedLlmProvider?.value);
 
   const configParameters = provider?.config_parameters;
@@ -581,43 +543,33 @@ export const ProjectPage = () => {
     if (!providerParametersSchema) {
       return {};
     }
-    return Object.keys(providerParametersSchema.properties).reduce(
-      (prev, curr) => {
-        const defaultVal = providerParametersSchema.properties[curr].default;
-        return {
-          ...prev,
-          [curr]: defaultVal === undefined ? undefined : defaultVal,
-        };
-      },
-      {},
-    );
+    return Object.keys(providerParametersSchema.properties).reduce((prev, curr) => {
+      const defaultVal = providerParametersSchema.properties[curr].default;
+      return {
+        ...prev,
+        [curr]: defaultVal === undefined ? undefined : defaultVal,
+      };
+    }, {});
   }, [providerParametersSchema]);
   const defaultModelValues = useMemo(() => {
     if (!modelParametersSchema) {
       return {};
     }
-    return Object.keys(modelParametersSchema.properties).reduce(
-      (prev, curr) => {
-        const defaultVal = modelParametersSchema.properties[curr].default;
-        return {
-          ...prev,
-          [curr]: defaultVal === undefined ? undefined : defaultVal,
-        };
-      },
-      {},
-    );
+    return Object.keys(modelParametersSchema.properties).reduce((prev, curr) => {
+      const defaultVal = modelParametersSchema.properties[curr].default;
+      return {
+        ...prev,
+        [curr]: defaultVal === undefined ? undefined : defaultVal,
+      };
+    }, {});
   }, [modelParametersSchema]);
 
-  const [modelFormValues, setModelFormValue] = useState<
-    Record<string, unknown>
-  >({});
+  const [modelFormValues, setModelFormValue] = useState<Record<string, unknown>>({});
   useEffect(() => {
     setModelFormValue(defaultModelValues);
   }, [defaultModelValues]);
 
-  const [providerFormValues, setProviderFormValue] = useState<
-    Record<string, unknown>
-  >({});
+  const [providerFormValues, setProviderFormValue] = useState<Record<string, unknown>>({});
   useEffect(() => {
     setProviderFormValue(defaultProviderValues);
   }, [defaultProviderValues]);
@@ -642,13 +594,15 @@ export const ProjectPage = () => {
         setJobToCancel(null);
       })
       .catch((error: unknown) => {
-        toast.error(`Error canceling task: ${error instanceof Error ? error.message : String(error)}`);
-      })
-  }, [jobToCancel, projectUuid, cancelJob])
+        toast.error(
+          `Error canceling task: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
+  }, [jobToCancel, projectUuid, cancelJob]);
 
   const handleCancelModalClose = useCallback(() => {
     setJobToCancel(null);
-  }, [])
+  }, []);
 
   const handleTaskDelete = useCallback(() => {
     if (!jobToDelete) {
@@ -660,30 +614,27 @@ export const ProjectPage = () => {
         setJobToDelete(null);
       })
       .catch((error: unknown) => {
-        toast.error(`Error deleting task: ${error instanceof Error ? error.message : String(error)}`);
-      })
-  }, [jobToDelete, projectUuid, deleteJob])
+        toast.error(
+          `Error deleting task: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
+  }, [jobToDelete, projectUuid, deleteJob]);
 
   const handleDeleteModalClose = useCallback(() => {
     setJobToDelete(null);
-  }, [])
-
+  }, []);
 
   const fetchModels = useCallback(() => {
     async function fetch_models() {
       if (selectedLlmProvider && selectedLlmProvider.value) {
         try {
           setModelsLoaded(false);
-          const models = await retrieve_models(
-            selectedLlmProvider.value,
-            providerFormValues,
-          );
+          const models = await retrieve_models(selectedLlmProvider.value, providerFormValues);
           setAvailableModels(models);
           setModelsLoaded(true);
         } catch (error) {
           console.error(
-            "Failed to fetch available models for provider " +
-            selectedLlmProvider.value,
+            "Failed to fetch available models for provider " + selectedLlmProvider.value,
             error,
           );
         }
@@ -693,11 +644,7 @@ export const ProjectPage = () => {
   }, [providerFormValues, selectedLlmProvider]);
 
   const paperToTaskMap = useMemo(() => {
-    if (
-      papers.length === 0 ||
-      jobs.length === 0 ||
-      pendingTasks.length === 0
-    ) {
+    if (papers.length === 0 || jobs.length === 0 || pendingTasks.length === 0) {
       return {};
     }
 
@@ -742,7 +689,12 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createZeroShotPromptingConfig(screeningTarget), screeningMode);
+      await createJob(
+        projectUuid,
+        llmConfig,
+        createZeroShotPromptingConfig(screeningTarget),
+        screeningMode,
+      );
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
@@ -754,7 +706,12 @@ export const ProjectPage = () => {
     const llmConfig = buildLlmConfig();
     if (!llmConfig) return;
     try {
-      await createJob(projectUuid, llmConfig, createPerCriteriaPromptingConfig(screeningTarget), screeningMode);
+      await createJob(
+        projectUuid,
+        llmConfig,
+        createPerCriteriaPromptingConfig(screeningTarget),
+        screeningMode,
+      );
       fetchJobsForProject(projectUuid);
     } catch (e) {
       console.error("Error creating job:", e);
@@ -770,8 +727,12 @@ export const ProjectPage = () => {
           toast.success(`${res.valid_filenames.length} file(s) uploaded`);
         }
         if ((res.empty_abstract_count ?? 0) > 0) {
-          const emptyFieldName = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY ? "readme" : "abstract";
-          toast.warn(`${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`, { autoClose: 8000 })
+          const emptyFieldName =
+            screeningTarget === ScreeningTarget.GITHUB_REPOSITORY ? "readme" : "abstract";
+          toast.warn(
+            `${res.empty_abstract_count} ${emptyFieldName}s are empty - results will not be optimal`,
+            { autoClose: 8000 },
+          );
         }
         if (res.errors?.length) {
           ExpandableToast(res.errors);
@@ -849,40 +810,23 @@ export const ProjectPage = () => {
       for (let i = idx + 1; i < papers.length; i++) {
         const candidate = papers[i];
         if (jobs.length === 0 || paperToTaskMap[candidate.uuid]) {
-          navigate(
-            `/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`,
-          );
+          navigate(`/project/${projectUuid}/evaluate?paperUuid=${candidate.uuid}`);
           return;
         }
       }
     }
     navigate(`/project/${projectUuid}`);
     toast.success("Manual evaluation finished.");
-  }, [
-    paperUuid,
-    papers,
-    jobs.length,
-    paperToTaskMap,
-    navigate,
-    projectUuid,
-  ]);
+  }, [paperUuid, papers, jobs.length, paperToTaskMap, navigate, projectUuid]);
 
   useEffect(() => {
     if (evaluateViewMatch && !paperUuid && papers.length > 0) {
-      const first =
-        papers.find((paper) => paperToTaskMap[paper.uuid]) || papers[0];
+      const first = papers.find((paper) => paperToTaskMap[paper.uuid]) || papers[0];
       navigate(`/project/${projectUuid}/evaluate?paperUuid=${first.uuid}`, {
         replace: true,
       });
     }
-  }, [
-    evaluateViewMatch,
-    paperUuid,
-    papers,
-    paperToTaskMap,
-    navigate,
-    projectUuid,
-  ]);
+  }, [evaluateViewMatch, paperUuid, papers, paperToTaskMap, navigate, projectUuid]);
 
   const canStartManualEvaluation = papers.length > 0;
 
@@ -919,9 +863,7 @@ export const ProjectPage = () => {
   const downloadMissingFulltextRis = useCallback(() => {
     async function dl() {
       if (!projectUuid) return;
-      const response = await fetch(
-        `/api/v1/paper/${projectUuid}/missing_fulltext_ris`,
-      );
+      const response = await fetch(`/api/v1/paper/${projectUuid}/missing_fulltext_ris`);
       if (!response.ok) {
         return;
       }
@@ -974,7 +916,7 @@ export const ProjectPage = () => {
       );
       toast.success(
         `Matched ${result.matched_count} full text${result.matched_count === 1 ? "" : "s"}` +
-        (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
+          (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
       );
       if (result.unmatched.length > 0) {
         console.warn("Unmatched files:", result.unmatched);
@@ -997,7 +939,8 @@ export const ProjectPage = () => {
   const hasPapers = papers && papers.length > 0;
 
   const hasMultiplePcJobs =
-    jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA).length >= 2;
+    jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA)
+      .length >= 2;
 
   // TODO: Use redux
   const handlePerCriteriaStats = useCallback(async () => {
@@ -1061,18 +1004,13 @@ export const ProjectPage = () => {
       </div>
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
-          {jobs.length === 0 && (
-            <AlertMessage message="No screening tasks." />
-          )}
+          {jobs.length === 0 && <AlertMessage message="No screening tasks." />}
           {jobs.map((job) => {
             const successCount = job.stats.success;
             const errorCount = job.stats.failed;
             const totalCount = job.stats.total;
             const completedCount = successCount + errorCount;
-            const progress =
-              totalCount === 0
-                ? 0
-                : Math.round((completedCount / totalCount) * 100);
+            const progress = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
             const status = job.stats.status;
 
             return (
@@ -1083,12 +1021,15 @@ export const ProjectPage = () => {
               >
                 <div className="grid grid-cols-[50px_1fr_auto_auto] gap-4 w-full">
                   <>
-                    {job.prompting_config.screening_type ==
-                      JobPromptingType.ZERO_SHOT && <Badge text="ZS" invert />}
-                    {job.prompting_config.screening_type ==
-                      JobPromptingType.FEW_SHOT && <Badge text="FS" invert />}
-                    {job.prompting_config.screening_type ==
-                      JobPromptingType.PER_CRITERIA && <Badge text="PC" invert />}
+                    {job.prompting_config.screening_type == JobPromptingType.ZERO_SHOT && (
+                      <Badge text="ZS" invert />
+                    )}
+                    {job.prompting_config.screening_type == JobPromptingType.FEW_SHOT && (
+                      <Badge text="FS" invert />
+                    )}
+                    {job.prompting_config.screening_type == JobPromptingType.PER_CRITERIA && (
+                      <Badge text="PC" invert />
+                    )}
                   </>
                   <div className="flex items-center gap-2 font-semibold">
                     <Tooltip title={job.llm_config.model_name} enterDelay={50}>
@@ -1100,7 +1041,9 @@ export const ProjectPage = () => {
                     </Tooltip>
                     <span className="text-xs font-normal text-slate-500">
                       {job.screening_mode === JobScreeningMode.TEXT &&
-                        (job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY ? "GitHub" : "Abstract")}
+                        (job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY
+                          ? "GitHub"
+                          : "Abstract")}
                       {job.screening_mode === JobScreeningMode.PDF && "PDF"}
                       {job.screening_mode === JobScreeningMode.AUTOMATIC && "Automatic"}
                     </span>
@@ -1110,10 +1053,7 @@ export const ProjectPage = () => {
                       {status === JobStatus.CANCELLED ? (
                         <div className="absolute inset-0 flex gap-2 items-center justify-center text-xs font-semibold select-none">
                           <>
-                            <TriangleAlert
-                              size={14}
-                              className="text-orange-600"
-                            />
+                            <TriangleAlert size={14} className="text-orange-600" />
                             <span className="text-orange-600">
                               Task Cancelled ({completedCount}/{totalCount})
                             </span>
@@ -1130,8 +1070,7 @@ export const ProjectPage = () => {
                                 {
                                   "[&::-webkit-progress-bar]:bg-yellow-200 [&::-webkit-progress-value]:bg-yellow-400":
                                     progress < 100,
-                                  "[&::-webkit-progress-value]:bg-green-400":
-                                    progress === 100,
+                                  "[&::-webkit-progress-value]:bg-green-400": progress === 100,
                                 },
                               )}
                             />
@@ -1142,11 +1081,7 @@ export const ProjectPage = () => {
                           >
                             {status === JobStatus.RUNNING && (
                               <>
-                                <Loader
-                                  className="animate-spin"
-                                  size={16}
-                                  strokeWidth={2}
-                                />
+                                <Loader className="animate-spin" size={16} strokeWidth={2} />
                                 <span>
                                   Screening {itemName} {completedCount} of {totalCount}
                                 </span>
@@ -1160,10 +1095,7 @@ export const ProjectPage = () => {
                             )}
                             {status === JobStatus.PARTIAL_SUCCESS && (
                               <>
-                                <TriangleAlert
-                                  size={14}
-                                  className="text-orange-600"
-                                />
+                                <TriangleAlert size={14} className="text-orange-600" />
                                 <span className="text-orange-600">
                                   Done with errors ({errorCount})
                                 </span>
@@ -1171,13 +1103,8 @@ export const ProjectPage = () => {
                             )}
                             {status === JobStatus.FAILED && (
                               <>
-                                <CircleAlert
-                                  size={14}
-                                  className="text-red-600"
-                                />
-                                <span className="text-red-600">
-                                  Screening failed
-                                </span>
+                                <CircleAlert size={14} className="text-red-600" />
+                                <span className="text-red-600">Screening failed</span>
                               </>
                             )}
                           </div>
@@ -1230,10 +1157,16 @@ export const ProjectPage = () => {
               <Skeleton />
             ) : (
               <>
-              <TruncatedFileNames files={csvFiles} maxLength={25} itemNamePlural={itemNamePlural}/>
-              {pdfFileCount > 0 && (
-                <p className="text-sm font-medium">{pdfFileCount} {pdfFileCount === 1 ? "PDF" : "PDFs"}</p>
-              )}
+                <TruncatedFileNames
+                  files={csvFiles}
+                  maxLength={25}
+                  itemNamePlural={itemNamePlural}
+                />
+                {pdfFileCount > 0 && (
+                  <p className="text-sm font-medium">
+                    {pdfFileCount} {pdfFileCount === 1 ? "PDF" : "PDFs"}
+                  </p>
+                )}
               </>
             )}
           </Card>
@@ -1246,9 +1179,7 @@ export const ProjectPage = () => {
               </div>
             )}
             <div className="flex flex-col items-start gap-2">
-              <label className="text-sm font-medium text-slate-700">
-                Provider
-              </label>
+              <label className="text-sm font-medium text-slate-700">Provider</label>
               <DropdownMenuText
                 disabled={false}
                 testId="llm-provider-dropdown"
@@ -1330,67 +1261,87 @@ export const ProjectPage = () => {
               setModelFormValue={setModelFormValue}
             />
             {!isGithubScreening && (
-            <div className={classNames("flex flex-col gap-2 w-full", {"opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected})}>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-slate-700">Screening mode</span>
-                <Tooltip title="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest.">
-                  <Info size={14} className="text-slate-400 cursor-help" />
-                </Tooltip>
-              </div>
+              <div
+                className={classNames("flex flex-col gap-2 w-full", {
+                  "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected,
+                })}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-700">Screening mode</span>
+                  <Tooltip title="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest.">
+                    <Info size={14} className="text-slate-400 cursor-help" />
+                  </Tooltip>
+                </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  data-testid="screening-mode-abstract-button"
-                  onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
-                  className={classNames(
-                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
-                    {
-                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.TEXT,
-                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.TEXT,
-                    }
-                  )}
-                >
-                  <span>Abstract</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="screening-mode-pdf-button"
-                  disabled={promptingStrategy === "PC"}
-                  onClick={() => setScreeningMode(JobScreeningMode.PDF)}
-                  className={classNames(
-                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
-                    {
-                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.PDF,
-                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.PDF && promptingStrategy !== "PC",
-                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
-                    }
-                  )}
-                >
-                  <span>PDF</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="screening-mode-automatic-button"
-                  disabled={promptingStrategy === "PC"}
-                  onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
-                  className={classNames(
-                    "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
-                    {
-                      "bg-blue-600 border-blue-600 text-white": screeningMode === JobScreeningMode.AUTOMATIC,
-                      "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": screeningMode !== JobScreeningMode.AUTOMATIC && promptingStrategy !== "PC",
-                      "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed": promptingStrategy === "PC",
-                    }
-                  )}
-                >
-                  <span>Automatic</span>
-                </button>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    data-testid="screening-mode-abstract-button"
+                    onClick={() => setScreeningMode(JobScreeningMode.TEXT)}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white":
+                          screeningMode === JobScreeningMode.TEXT,
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50":
+                          screeningMode !== JobScreeningMode.TEXT,
+                      },
+                    )}
+                  >
+                    <span>Abstract</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="screening-mode-pdf-button"
+                    disabled={promptingStrategy === "PC"}
+                    onClick={() => setScreeningMode(JobScreeningMode.PDF)}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white":
+                          screeningMode === JobScreeningMode.PDF,
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50":
+                          screeningMode !== JobScreeningMode.PDF && promptingStrategy !== "PC",
+                        "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed":
+                          promptingStrategy === "PC",
+                      },
+                    )}
+                  >
+                    <span>PDF</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-testid="screening-mode-automatic-button"
+                    disabled={promptingStrategy === "PC"}
+                    onClick={() => setScreeningMode(JobScreeningMode.AUTOMATIC)}
+                    className={classNames(
+                      "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                      {
+                        "bg-blue-600 border-blue-600 text-white":
+                          screeningMode === JobScreeningMode.AUTOMATIC,
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50":
+                          screeningMode !== JobScreeningMode.AUTOMATIC &&
+                          promptingStrategy !== "PC",
+                        "border-slate-100 text-slate-400 bg-slate-50 opacity-40 cursor-not-allowed":
+                          promptingStrategy === "PC",
+                      },
+                    )}
+                  >
+                    <span>Automatic</span>
+                  </button>
+                </div>
+                {promptingStrategy === "PC" && (
+                  <p className="text-xs text-amber-600 -mt-1">
+                    PDF/Automatic screening modes aren't available with per-criterion evaluation yet
+                  </p>
+                )}
               </div>
-              {promptingStrategy === "PC" && (
-                <p className="text-xs text-amber-600 -mt-1">PDF/Automatic screening modes aren't available with per-criterion evaluation yet</p>)}
-            </div>
             )}
-            <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+            <div
+              className={classNames("flex flex-col gap-2 w-full", {
+                "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected,
+              })}
+            >
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-slate-700">Evaluation mode</span>
                 <Tooltip title="Choose how criteria are evaluated during screening.">
@@ -1400,20 +1351,29 @@ export const ProjectPage = () => {
               <button
                 type="button"
                 data-testid="evaluation-mode-all-criteria-button"
-                onClick={() => { if (promptingStrategy === "PC") setPromptingStrategy("ZS"); }}
+                onClick={() => {
+                  if (promptingStrategy === "PC") setPromptingStrategy("ZS");
+                }}
                 className={classNames(
                   "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
                   {
                     "border-blue-500 bg-blue-50/60": promptingStrategy !== "PC",
                     "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy === "PC",
-                  }
+                  },
                 )}
               >
-                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
-                  "border-blue-500": promptingStrategy !== "PC",
-                  "border-slate-300": promptingStrategy === "PC",
-                })}>
-                  {promptingStrategy !== "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                <div
+                  className={classNames(
+                    "w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                    {
+                      "border-blue-500": promptingStrategy !== "PC",
+                      "border-slate-300": promptingStrategy === "PC",
+                    },
+                  )}
+                >
+                  {promptingStrategy !== "PC" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  )}
                 </div>
                 <div className="flex-shrink-0 p-1.5 rounded-md bg-blue-100">
                   <Sparkles size={16} className="text-blue-600" />
@@ -1421,7 +1381,9 @@ export const ProjectPage = () => {
                 <div>
                   <div className="text-sm font-semibold text-slate-800">All criteria together</div>
                   <div className="text-xs text-slate-500">One LLM call evaluates all criteria.</div>
-                  <div className="text-xs text-slate-500">Supports zero-shot and few-shot prompting.</div>
+                  <div className="text-xs text-slate-500">
+                    Supports zero-shot and few-shot prompting.
+                  </div>
                 </div>
               </button>
               <button
@@ -1432,37 +1394,54 @@ export const ProjectPage = () => {
                   if (screeningMode !== JobScreeningMode.TEXT) {
                     setScreeningMode(JobScreeningMode.TEXT);
                   }
-                  }}
+                }}
                 className={classNames(
                   "flex items-center gap-3 p-3 rounded-lg border-2 text-left w-full transition-colors",
                   {
                     "border-blue-500 bg-blue-50/60": promptingStrategy === "PC",
                     "border-slate-200 bg-white hover:bg-slate-50": promptingStrategy !== "PC",
-                  }
+                  },
                 )}
               >
-                <div className={classNames("w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center", {
-                  "border-blue-500": promptingStrategy === "PC",
-                  "border-slate-300": promptingStrategy !== "PC",
-                })}>
-                  {promptingStrategy === "PC" && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                <div
+                  className={classNames(
+                    "w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center",
+                    {
+                      "border-blue-500": promptingStrategy === "PC",
+                      "border-slate-300": promptingStrategy !== "PC",
+                    },
+                  )}
+                >
+                  {promptingStrategy === "PC" && (
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  )}
                 </div>
                 <div className="flex-shrink-0 p-1.5 rounded-md bg-purple-100">
                   <ListChecks size={16} className="text-purple-600" />
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-slate-800">One call per criterion</div>
-                  <div className="text-xs text-slate-500">Runs one LLM call for each criterion.</div>
-                  <div className="text-xs text-slate-500">Prompting strategy is fixed for this mode.</div>
+                  <div className="text-xs text-slate-500">
+                    Runs one LLM call for each criterion.
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Prompting strategy is fixed for this mode.
+                  </div>
                 </div>
               </button>
             </div>
             {promptingStrategy !== "PC" && (
-              <div className={classNames("flex flex-col gap-2 w-full", { "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected })}>
+              <div
+                className={classNames("flex flex-col gap-2 w-full", {
+                  "opacity-30 pointer-events-none": !isLlmProviderSelected || !isLlmSelected,
+                })}
+              >
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-medium text-slate-700">Prompting strategy</span>
                 </div>
-                <p className="text-xs text-slate-500 -mt-1">Choose how examples are provided to the model.</p>
+                <p className="text-xs text-slate-500 -mt-1">
+                  Choose how examples are provided to the model.
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -1472,8 +1451,9 @@ export const ProjectPage = () => {
                       "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                       {
                         "bg-blue-600 border-blue-600 text-white": promptingStrategy === "ZS",
-                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "ZS",
-                      }
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50":
+                          promptingStrategy !== "ZS",
+                      },
                     )}
                   >
                     <User size={14} />
@@ -1487,8 +1467,9 @@ export const ProjectPage = () => {
                       "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                       {
                         "bg-blue-600 border-blue-600 text-white": promptingStrategy === "FS",
-                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50": promptingStrategy !== "FS",
-                      }
+                        "border-slate-200 text-slate-700 bg-white hover:bg-slate-50":
+                          promptingStrategy !== "FS",
+                      },
                     )}
                   >
                     <Users size={14} />
@@ -1502,11 +1483,15 @@ export const ProjectPage = () => {
                 <div className="text-xs font-semibold text-slate-600 mb-1">Per-criteria logic</div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Inclusion:</span>
-                  <span className="font-mono font-medium text-slate-700">{project.criteria.inclusion_expression ?? "default (AND)"}</span>
+                  <span className="font-mono font-medium text-slate-700">
+                    {project.criteria.inclusion_expression ?? "default (AND)"}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Exclusion:</span>
-                  <span className="font-mono font-medium text-slate-700">{project.criteria.exclusion_expression ?? "default (OR)"}</span>
+                  <span className="font-mono font-medium text-slate-700">
+                    {project.criteria.exclusion_expression ?? "default (OR)"}
+                  </span>
                 </div>
               </div>
             )}
@@ -1520,11 +1505,15 @@ export const ProjectPage = () => {
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Input tokens:</span>
-                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_input_tokens)}</span>
+                  <span className="font-mono font-medium text-slate-700">
+                    ~{fmt.format(tokenEstimation.estimated_input_tokens)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Output tokens:</span>
-                  <span className="font-mono font-medium text-slate-700">~{fmt.format(tokenEstimation.estimated_output_tokens)}</span>
+                  <span className="font-mono font-medium text-slate-700">
+                    ~{fmt.format(tokenEstimation.estimated_output_tokens)}
+                  </span>
                 </div>
               </div>
             )}
@@ -1540,11 +1529,7 @@ export const ProjectPage = () => {
                     navigate(`/project/${projectUuid}/few_shot`);
                   }
                 }}
-                disabled={
-                  fetchedFiles.length === 0 ||
-                  !isLlmProviderSelected ||
-                  !isLlmSelected
-                }
+                disabled={fetchedFiles.length === 0 || !isLlmProviderSelected || !isLlmSelected}
                 title="Create zero-shot task"
                 data-testid="create-task-button"
                 className="w-full rounded-lg font-bold text-sm items-center justify-center"

@@ -23,12 +23,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [consentRequired, setConsentRequired] = useState(false);
 
-  const fetchProjects = useTypedStoreActions(
-    (actions) => actions.fetchProjects
-  );
-  const fetchProviders = useTypedStoreActions(
-    (actions) => actions.fetchProviders
-  );
+  const fetchProjects = useTypedStoreActions((actions) => actions.fetchProjects);
+  const fetchProviders = useTypedStoreActions((actions) => actions.fetchProviders);
 
   // Checks session validity here
   useEffect(() => {
@@ -66,8 +62,7 @@ function App() {
       fetchProviders();
       fetchProjects();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchProjects, fetchProviders]);
 
   if (consentRequired) {
     return (
@@ -94,10 +89,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:projectUuid" component={ProjectPage} />
-        <Route
-          path="/project/:projectUuid/papers/page/:page"
-          component={PapersPage}
-        />
+        <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />

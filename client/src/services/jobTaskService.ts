@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { api } from "../services/api";
 import { JobTaskHumanResult, JobTask } from "../state/types";
 
@@ -6,8 +7,7 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
     const res = await api.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
+    const e = error as AxiosError;
     if (e.response?.status === 404) {
       return [];
     }
@@ -15,10 +15,7 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
   }
 };
 
-export const fetchJobTasksFromBackend = async (
-  jobUuid: string,
-  jobId?: number,
-) => {
+export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) => {
   try {
     const res = await api.get(`/api/v1/jobtask/${jobUuid}`);
     let id = jobId;
@@ -45,10 +42,7 @@ export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   }
 };
 
-export const addJobTaskResult = async (
-  jobTaskUuid: string,
-  result: JobTaskHumanResult,
-) => {
+export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {
     const res = await api.patch(`/api/v1/jobtask/${jobTaskUuid}`, {
       human_result: result,

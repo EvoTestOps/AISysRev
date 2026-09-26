@@ -11,6 +11,7 @@ COPY client/package-lock.json .
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY client/.oxlintrc.json .
+COPY client/.oxfmtrc.json .
 COPY client/index.html .
 COPY client/postcss.config.js .
 COPY client/tailwind.config.js .

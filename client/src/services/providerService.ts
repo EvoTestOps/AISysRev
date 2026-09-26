@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { ProviderResponse } from "../state/types";
 import { api } from "./api";
 
@@ -7,9 +8,7 @@ export const fetchProviders = async () => {
     const parsed = ProviderResponse.parse(res.data);
     return parsed;
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
-    // TODO: Do not return empty list for HTTP 404
+    const e = error as AxiosError;
     if (e.response?.status === 404) {
       return [];
     }

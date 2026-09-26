@@ -30,7 +30,6 @@ export function useConfig(name: string) {
       );
       setSetting(data ?? null);
       return data ?? null;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message || "Request failed");
       setSetting(null);
@@ -47,7 +46,6 @@ export function useConfig(name: string) {
       try {
         await axios.post("/api/v1/setting", { name, ...update });
         await refresh();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         setError(e?.message || "Update failed");
       } finally {
@@ -64,7 +62,6 @@ export function useConfig(name: string) {
       const params = new URLSearchParams({ name });
       await axios.delete(`/api/v1/setting?${params.toString()}`);
       setSetting(null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message || "Delete failed");
     } finally {

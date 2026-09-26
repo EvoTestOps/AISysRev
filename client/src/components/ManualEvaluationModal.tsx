@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Dialog,
   DialogPanel,
@@ -138,7 +137,6 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           screeningMode: entry.screening_mode,
         } satisfies ModelSuggestion;
       });
-    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, []);
 
   useEffect(() => {

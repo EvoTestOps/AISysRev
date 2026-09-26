@@ -52,10 +52,7 @@ const EventDataList: React.FC<{ logs: Array<EventData> }> = ({ logs }) => {
         </button>
       )}
       {open && (
-        <button
-          className="hover:cursor-pointer text-red-500"
-          onClick={() => setOpen(false)}
-        >
+        <button className="hover:cursor-pointer text-red-500" onClick={() => setOpen(false)}>
           Close
         </button>
       )}
@@ -82,37 +79,34 @@ export const EventStream = () => {
   const [connected, setConnected] = useState(false);
   const [logs, setLogs] = useState<Array<EventData>>([]);
 
-  // const setJobsForProject = useTypedStoreActions(
-  //   (actions) => actions.setJobsForProject
-  // );
-  const updateJobStats = useTypedStoreActions(
-    (actions) => actions.updateJobStats
-  );
+  const updateJobStats = useTypedStoreActions((actions) => actions.updateJobStats);
 
+  const _onMessage = useCallback(
+    (event: MessageEvent<unknown>) => {
+      const { data } = event;
+      if (typeof data === "string") {
+        const dataJson = JSON.parse(data);
+        const parsedData = EventData.safeParse(dataJson);
+        if (!parsedData.error) {
+          const eventData = parsedData.data;
+          setLogs((logs) => [...logs, eventData]);
 
-  const _onMessage = useCallback((event: MessageEvent<unknown>) => {
-    const { data } = event;
-    if (typeof data === "string") {
-      const dataJson = JSON.parse(data);
-      const parsedData = EventData.safeParse(dataJson);
-      if (!parsedData.error) {
-        const eventData = parsedData.data;
-        setLogs((logs) => [...logs, eventData]);
-
-        switch (eventData.event_name) {
-          case EventName.JOB_PROGRESS:
-            {
-              const jobId = eventData.value.job_id;
-              const stats: JobStats = eventData.value.stats;
-              updateJobStats({ jobId, stats });
-            }
-            break;
-          default:
-            break;
+          switch (eventData.event_name) {
+            case EventName.JOB_PROGRESS:
+              {
+                const jobId = eventData.value.job_id;
+                const stats: JobStats = eventData.value.stats;
+                updateJobStats({ jobId, stats });
+              }
+              break;
+            default:
+              break;
+          }
         }
       }
-    }
-  }, [updateJobStats]);
+    },
+    [updateJobStats],
+  );
 
   const startLogStream = useCallback(() => {
     const eventSource = new EventSource(event_url);
@@ -140,8 +134,7 @@ export const EventStream = () => {
     return () => {
       stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [startLogStream]);
 
   return !connected ? (
     <div className="fixed bottom-2 left-2 z-50 bg-slate-800 p-2 pl-3 pr-3 text-xs text-white rounded-lg flex flex-row items-center gap-2">

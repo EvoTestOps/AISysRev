@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import { api } from "../services/api";
 import { JobTaskHumanResult } from "../state/types";
 
@@ -6,8 +7,7 @@ export const fetchPapersForProject = async (projectUuid: string) => {
     const res = await api.get(`/api/v1/paper/${projectUuid}`);
     return res.data;
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
+    const e = error as AxiosError;
     // TODO: Do not return empty list for HTTP 404
     if (e.response?.status === 404) {
       return [];
@@ -16,17 +16,12 @@ export const fetchPapersForProject = async (projectUuid: string) => {
   }
 };
 
-export const fetchPapersWithModelEvalsForProject = async (
-  projectUuid: string,
-) => {
+export const fetchPapersWithModelEvalsForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(
-      `/api/v1/paper/${projectUuid}/with_model_evaluations`,
-    );
+    const res = await api.get(`/api/v1/paper/${projectUuid}/with_model_evaluations`);
     return res.data;
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
+    const e = error as AxiosError;
     // TODO: Do not return empty list for HTTP 404
     if (e.response?.status === 404) {
       return [];
@@ -35,10 +30,7 @@ export const fetchPapersWithModelEvalsForProject = async (
   }
 };
 
-export const addPaperHumanResult = async (
-  paperUuid: string,
-  result: JobTaskHumanResult,
-) => {
+export const addPaperHumanResult = async (paperUuid: string, result: JobTaskHumanResult) => {
   try {
     const res = await api.patch(`/api/v1/paper/${paperUuid}`, {
       human_result: result,
