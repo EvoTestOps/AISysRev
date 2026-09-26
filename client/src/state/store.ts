@@ -12,14 +12,9 @@ import * as projectsService from "../services/projectService";
 import * as paperService from "../services/paperService";
 import * as providerService from "../services/providerService";
 import * as jobService from "../services/jobService";
-import type {
-  JobTaskHumanResult,
-  PaperWithModelEval,
-  Provider,
-  JobWithStats,
-  JobStats,
-} from "./types";
+import type { JobTaskHumanResult, Provider, JobWithStats, JobStats } from "./types";
 import type { Project } from "./types/project";
+import { PaperReadWithAvgProbability } from "../services/api/client";
 
 const injections = {
   projectsService,
@@ -44,11 +39,7 @@ interface ProjectModel {
   setProjects: Action<StoreModel, Array<Project>>;
   setLoadingProjects: Action<StoreModel, boolean>;
   fetchProjects: Thunk<StoreModel, undefined, Injections>;
-  getProjectByUuid: Computed<
-    StoreModel,
-    (uuid: ProjectUUID) => Project | undefined,
-    StoreModel
-  >;
+  getProjectByUuid: Computed<StoreModel, (uuid: ProjectUUID) => Project | undefined, StoreModel>;
   refreshProjects: Thunk<StoreModel, undefined, Injections>;
 }
 
@@ -56,40 +47,26 @@ interface JobModel {
   jobsByProject: Record<string, JobWithStats[]>;
   jobsById: Record<string, JobWithStats>;
 
-  setJobsForProject: Action<
-    StoreModel,
-    { projectUuid: string; jobs: JobWithStats[] }
-  >;
+  setJobsForProject: Action<StoreModel, { projectUuid: string; jobs: JobWithStats[] }>;
   updateJobStats: Action<StoreModel, { jobId: string; stats: JobStats }>;
   fetchJobsForProject: Thunk<StoreModel, string, Injections>;
-  cancelJob: Thunk<
-    StoreModel,
-    { jobUuid: string; projectUuid: string },
-    Injections
-  >;
-  deleteJob: Thunk<
-    StoreModel,
-    { jobUuid: string; projectUuid: string },
-    Injections
-  >;
+  cancelJob: Thunk<StoreModel, { jobUuid: string; projectUuid: string }, Injections>;
+  deleteJob: Thunk<StoreModel, { jobUuid: string; projectUuid: string }, Injections>;
 }
 
 interface PaperModel {
   // Papers are study-specific
-  papers: Record<string, Array<PaperWithModelEval>>;
+  papers: Record<string, Array<PaperReadWithAvgProbability>>;
   papersPendingState: Record<string, boolean>;
   setPapers: Action<
     StoreModel,
-    { projectUuid: string; papers: Array<PaperWithModelEval> }
+    { projectUuid: string; papers: Array<PaperReadWithAvgProbability> }
   >;
   setPaperPdf: Action<
     StoreModel,
     { projectUuid: string; paperUuid: string; pdfFileUuid: string; pdfFilename: string }
   >;
-  setPaperPendingState: Action<
-    StoreModel,
-    { paperUuid: string; pending: boolean }
-  >;
+  setPaperPendingState: Action<StoreModel, { paperUuid: string; pending: boolean }>;
   fetchPapers: Thunk<StoreModel, ProjectUUID, Injections>;
   setPaperPending: Action<StoreModel, { projectUuid: string; state: boolean }>;
   // TODO: It might be wise to create a JobTaskModel for handling job task related stuff..
@@ -104,19 +81,15 @@ interface PaperModel {
   >;
   getPapersForProject: Computed<
     StoreModel,
-    (uuid: ProjectUUID) => PaperWithModelEval[],
+    (uuid: ProjectUUID) => PaperReadWithAvgProbability[],
     StoreModel
   >;
   getPaperByUuid: Computed<
     StoreModel,
-    (projectUuid: string, paperUuid: string) => PaperWithModelEval | undefined,
+    (projectUuid: string, paperUuid: string) => PaperReadWithAvgProbability | undefined,
     StoreModel
   >;
-  getPaperPendingState: Computed<
-    StoreModel,
-    (paperUuid: string) => boolean,
-    StoreModel
-  >;
+  getPaperPendingState: Computed<StoreModel, (paperUuid: string) => boolean, StoreModel>;
 }
 
 interface ProviderModel {
@@ -125,19 +98,11 @@ interface ProviderModel {
   setProviders: Action<StoreModel, Array<Provider>>;
   setLoadingProviders: Action<StoreModel, boolean>;
   fetchProviders: Thunk<StoreModel, undefined, Injections>;
-  getProviderByName: Computed<
-    StoreModel,
-    (name: string) => Provider | undefined,
-    StoreModel
-  >;
+  getProviderByName: Computed<StoreModel, (name: string) => Provider | undefined, StoreModel>;
   refreshProviders: Thunk<StoreModel, undefined, Injections>;
 }
 
-type StoreModel = {} & LoadingModel &
-  ProjectModel &
-  JobModel &
-  PaperModel &
-  ProviderModel;
+type StoreModel = {} & LoadingModel & ProjectModel & JobModel & PaperModel & ProviderModel;
 
 export type Injections = typeof injections;
 
@@ -205,10 +170,7 @@ export const model = {
       pending: true,
     });
     const { paperService } = injections;
-    await paperService.addPaperHumanResult(
-      params.paperUuid,
-      params.humanResult,
-    );
+    await paperService.addPaperHumanResult(params.paperUuid, params.humanResult);
     actions.setPaperHumanResult({
       projectUuid: params.projectUuid,
       paperUuid: params.paperUuid,
@@ -239,17 +201,14 @@ export const model = {
   papers: {},
   papersPendingState: {},
   getPapersForProject: computed((state) => {
-    return (uuid: string) =>
-      state.papers[uuid] === undefined ? [] : state.papers[uuid];
+    return (uuid: string) => (state.papers[uuid] === undefined ? [] : state.papers[uuid]);
   }),
   getPaperPendingState: computed((state) => {
     return (paperUuid: string) => state.papersPendingState[paperUuid] || false;
   }),
   getPaperByUuid: computed((state) => {
     return (projectUuid: string, paperUuid: string) =>
-      (state.papers[projectUuid] || []).find(
-        (paper) => paper.uuid === paperUuid,
-      );
+      (state.papers[projectUuid] || []).find((paper) => paper.uuid === paperUuid);
   }),
   providers: [],
   fetchProviders: thunk(async (actions, _, { injections }) => {
@@ -275,8 +234,7 @@ export const model = {
     state.loading.providers = payload;
   }),
   getProviderByName: computed((state) => {
-    return (name: string) =>
-      (state.providers || []).find((provider) => provider.name === name);
+    return (name: string) => (state.providers || []).find((provider) => provider.name === name);
   }),
 
   jobsByProject: {},
@@ -301,8 +259,8 @@ export const model = {
     state.jobsById[jobId] = updatedJob;
 
     for (const projectUuid in state.jobsByProject) {
-      state.jobsByProject[projectUuid] = state.jobsByProject[projectUuid].map(
-        (j) => (j.id === jobId ? updatedJob : j),
+      state.jobsByProject[projectUuid] = state.jobsByProject[projectUuid].map((j) =>
+        j.id === jobId ? updatedJob : j,
       );
     }
   }),
@@ -317,20 +275,16 @@ export const model = {
       jobs,
     });
   }),
-  cancelJob: thunk(
-    async (actions, { jobUuid, projectUuid }, { injections }) => {
-      const { jobService } = injections;
-      await jobService.cancelJob(jobUuid);
-      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
-    },
-  ),
-  deleteJob: thunk(
-    async (actions, { jobUuid, projectUuid }, { injections }) => {
-      const { jobService } = injections;
-      await jobService.deleteJob(jobUuid);
-      await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
-    },
-  ),
+  cancelJob: thunk(async (actions, { jobUuid, projectUuid }, { injections }) => {
+    const { jobService } = injections;
+    await jobService.cancelJob(jobUuid);
+    await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
+  }),
+  deleteJob: thunk(async (actions, { jobUuid, projectUuid }, { injections }) => {
+    const { jobService } = injections;
+    await jobService.deleteJob(jobUuid);
+    await actions.fetchJobsForProject(projectUuid); // TODO: Maybe no fetch here
+  }),
 } satisfies StoreModel;
 
 export const store = createStore<StoreModel>(model, {
