@@ -1,11 +1,16 @@
-from celery import Celery
+from celery import Celery, signals
 from src.core.config import settings
 
 broker_url = settings.CELERY_BROKER_URL
 
 celery_app = Celery("worker", broker=broker_url, backend=broker_url)
 
-print(f"Starting Celery worker, version {settings.APP_VERSION}")
+
+# Print only when a worker starts, not whenever the module is imported (e.g. by the API)
+@signals.worker_init.connect
+def announce_worker_start(**kwargs):
+    print(f"Starting Celery worker, version {settings.APP_VERSION}")
+
 
 celery_app.conf.update(
     task_serializer="json",
