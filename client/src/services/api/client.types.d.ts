@@ -32,6 +32,40 @@ export namespace Schemas {
     inclusion_expression?: string | null;
     exclusion_expression?: string | null;
   };
+  export type LikertDecision = "1" | "2" | "3" | "4" | "5" | "6" | "7";
+  export type Decision = {
+    /**
+     * Whether the criterion or relevance is clearly met (true) or not (false).
+     */
+    binary_decision: boolean;
+    /**
+     * The likelihood, that the criterion applies or the primary study is relevant. A value closer to `1.0` means that it is extremely likely (very strong match). A value closer to `0.0` means it is extremely unlikely (very weak or no match). You are encouraged to use intermediate values (e.g. `0.1`, `0.2`, `0.35`, `0.7`, etc..), not just `0.0` or `1.0`
+     */
+    probability_decision: number;
+    likert_decision: LikertDecision;
+    /**
+     * Reason for the decision.
+     */
+    reason: string;
+  };
+  export type Criterion = {
+    /**
+     * Criterion ID. E.g. IC1, IC2, IC3 etc.. for inclusion criteria or EC1, EC2, EC3 etc.. for exclusion criteria
+     */
+    name: string;
+    decision: Decision;
+  };
+  export type CriterionError = { error: string };
+  export type CriterionResponse = {
+    /**
+     * The likelihood, that the criterion applies or the primary study is relevant. A float between 0.000 and 1.000: closer to 1.000 means extremely likely (very strong match), closer to 0.000 means extremely unlikely (very weak or no match). Use intermediate values, not just 0.000 or 1.000.
+     */
+    probability_decision: number;
+    /**
+     * Reasoning for the probability estimate.
+     */
+    reason: string;
+  };
   export type FewShotPreferences = { inc_seed_papers: Array<string>; exc_seed_papers: Array<string> };
   export type FewShotPromptingConfig = {
     screening_type?: "FEW_SHOT";
@@ -101,6 +135,32 @@ export namespace Schemas {
   export type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
   export type JobTaskHumanResultUpdate = { human_result: JobTaskHumanResult };
   export type JobTaskStatus = "NOT_STARTED" | "PENDING" | "RUNNING" | "DONE" | "ERROR" | "CANCELLED";
+  export type StructuredResponse = {
+    overall_decision: Decision;
+    inclusion_criteria: Array<Criterion>;
+    exclusion_criteria: Array<Criterion>;
+  };
+  export type PerCriteriaResult = {
+    mode: "PER_CRITERIA";
+    criterion_results: Record<string, CriterionResponse | CriterionError>;
+    inclusion_probability: number | null;
+    exclusion_probability: number | null;
+    overall_probability: number | null;
+    binary_decision: boolean | null;
+  };
+  export type JobTaskRead = {
+    uuid: string;
+    job_id: number;
+    doi: string | null;
+    title: string;
+    abstract: string;
+    paper_uuid: string;
+    status: JobTaskStatus;
+    result: StructuredResponse | PerCriteriaResult | null;
+    human_result?: JobTaskHumanResult | null;
+    status_metadata?: Record<string, unknown> | null;
+    error?: string | null;
+  };
   export type JobTaskReadWithLLMConfig = {
     uuid: string;
     job_id: number;
@@ -109,13 +169,13 @@ export namespace Schemas {
     abstract: string;
     paper_uuid: string;
     status: JobTaskStatus;
-    result?: Record<string, unknown> | null;
+    result: StructuredResponse | PerCriteriaResult | null;
     human_result?: JobTaskHumanResult | null;
     status_metadata?: Record<string, unknown> | null;
     error?: string | null;
-    llm_config?: Record<string, unknown> | null;
-    prompting_config?: Record<string, unknown> | null;
-    screening_mode: string;
+    llm_config: LLMModelConfig;
+    prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
+    screening_mode: JobScreeningMode;
   };
   export type PaperHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
   export type PaperHumanResultUpdate = { human_result: PaperHumanResult };
@@ -357,7 +417,7 @@ export namespace Endpoints {
     parameters: {
       path: { uuid: string };
     };
-    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+    responses: { 200: Array<Schemas.JobTaskRead>; 422: Schemas.HTTPValidationError };
   };
   export type patch_Add_job_task_human_result_api_v1_jobtask__uuid__patch = {
     method: "PATCH";
@@ -560,8 +620,10 @@ export namespace Endpoints {
     path: "/api/v1/auth/dev-login";
     requestFormat: "json";
     responseFormat: "json";
-    parameters: never;
-    responses: { 200: unknown };
+    parameters: {
+      query?: Partial<{ worker: string | null }>;
+    };
+    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
   };
   export type get_Me_api_v1_auth_me_get = {
     method: "GET";

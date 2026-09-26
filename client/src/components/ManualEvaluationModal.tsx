@@ -17,43 +17,9 @@ import {
   PromptingConfig,
   ScreeningTarget,
 } from "../state/types";
-import axios from "axios";
+import { api } from "../services/api";
 import { AlertMessage } from "./AlertMessage";
 import { useTypedStoreActions } from "../state/store";
-
-type LLMResult = {
-  mode?: string;
-  overall_decision: {
-    reason: string;
-    binary_decision: boolean;
-    likert_decision: string;
-    probability_decision: number;
-  };
-};
-
-// TODO: Create Zod schema
-type JobTaskReadWithLLMConfig = {
-  uuid: string;
-  job_id: number;
-  doi: string | null;
-  title: string;
-  abstract: string;
-  paper_uuid: string;
-  status:
-  | "NOT_STARTED"
-  | "PENDING"
-  | "RUNNING"
-  | "DONE"
-  | "ERROR"
-  | "CANCELLED";
-  result: LLMResult | null;
-  human_result: JobTaskHumanResult | null;
-  status_metadata?: Record<string, any> | null;
-  error: string | null;
-  llm_config: Record<string, any> | null;
-  prompting_config: Record<string, any> | null;
-  screening_mode: JobScreeningMode | null;
-};
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
@@ -71,7 +37,7 @@ type ModelSuggestion = {
   binary: string | null;
   likertScale: string | null;
   probability: number | null;
-  screeningType: PromptingConfig["screening_type"];
+  screeningType: PromptingConfig["screening_type"] | null;
   screeningMode: JobScreeningMode | null;
 };
 
@@ -108,34 +74,26 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
   // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
-    const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
-    const data = response.data as JobTaskReadWithLLMConfig[];
+    const data = await api.get("/api/v1/jobtask", { query: { paper_uuid: paperUuid } });
 
-    // TODO: Refactor with types and proper handling
     return data
       .filter((entry) => entry.status !== JobTaskStatus.ERROR)
-      // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
-      // skip to avoid erroring.
-      .filter((entry) => !entry.result || entry.result.mode !== "PER_CRITERIA")
-      .map((entry) => {
-        return {
-          modelName: entry.llm_config ? entry.llm_config.model_name : "N/A",
-          binary: entry.result
-            ? entry.result.overall_decision.binary_decision
-              ? "Include"
-              : "Exclude"
-            : null,
-          likertScale: entry.result
-            ? entry.result.overall_decision.likert_decision
-            : null,
-          probability: entry.result
-            ? entry.result.overall_decision.probability_decision
-            : null,
-          screeningType: entry.prompting_config
-            ? entry.prompting_config.screening_type
-            : null,
-          screeningMode: entry.screening_mode,
-        } satisfies ModelSuggestion;
+      .flatMap((entry) => {
+        // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
+        // skip to avoid erroring.
+        if (entry.result && "mode" in entry.result) return [];
+        const decision = entry.result?.overall_decision ?? null;
+        return [
+          {
+            modelName: entry.llm_config.model_name,
+            binary: decision ? (decision.binary_decision ? "Include" : "Exclude") : null,
+            likertScale: decision ? decision.likert_decision : null,
+            probability: decision ? decision.probability_decision : null,
+            // The generated string literals match the values of the app's enums
+            screeningType: entry.prompting_config.screening_type as PromptingConfig["screening_type"],
+            screeningMode: entry.screening_mode as JobScreeningMode,
+          } satisfies ModelSuggestion,
+        ];
       });
   }, []);
 
@@ -191,7 +149,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </DialogTitle>
             <div
               className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {modelSuggestions.length === 0 && (
                 <AlertMessage message="No model suggestions." />
@@ -218,7 +176,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
             </div>
             <div
               className="flex-1 overflow-y-auto
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {currentPaper.doi && (
                 <div className="text-sm pt-2 pb-2">
@@ -288,7 +246,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
           <div
             className="flex flex-col overflow-y-auto
-          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
             <div className="bg-blue-50 rounded-xl p-3 mb-4">

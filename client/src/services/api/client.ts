@@ -60,6 +60,26 @@ export const Criteria = z.strictObject({
   exclusion_expression: z.string().nullable().optional(),
 });
 
+export type LikertDecision = __TypedOpenapi.Schemas.LikertDecision;
+export const LikertDecision = z.enum(["1", "2", "3", "4", "5", "6", "7"]);
+
+export type Decision = __TypedOpenapi.Schemas.Decision;
+export const Decision = z.strictObject({
+  binary_decision: z.boolean(),
+  probability_decision: z.number(),
+  likert_decision: LikertDecision,
+  reason: z.string(),
+});
+
+export type Criterion = __TypedOpenapi.Schemas.Criterion;
+export const Criterion = z.strictObject({ name: z.string(), decision: Decision });
+
+export type CriterionError = __TypedOpenapi.Schemas.CriterionError;
+export const CriterionError = z.strictObject({ error: z.string() });
+
+export type CriterionResponse = __TypedOpenapi.Schemas.CriterionResponse;
+export const CriterionResponse = z.strictObject({ probability_decision: z.number(), reason: z.string() });
+
 export type FewShotPreferences = __TypedOpenapi.Schemas.FewShotPreferences;
 export const FewShotPreferences = z.strictObject({
   inc_seed_papers: z.array(z.string()),
@@ -207,6 +227,38 @@ export const JobTaskHumanResultUpdate = z.strictObject({ human_result: JobTaskHu
 export type JobTaskStatus = __TypedOpenapi.Schemas.JobTaskStatus;
 export const JobTaskStatus = z.enum(["NOT_STARTED", "PENDING", "RUNNING", "DONE", "ERROR", "CANCELLED"]);
 
+export type StructuredResponse = __TypedOpenapi.Schemas.StructuredResponse;
+export const StructuredResponse = z.strictObject({
+  overall_decision: Decision,
+  inclusion_criteria: z.array(Criterion),
+  exclusion_criteria: z.array(Criterion),
+});
+
+export type PerCriteriaResult = __TypedOpenapi.Schemas.PerCriteriaResult;
+export const PerCriteriaResult = z.strictObject({
+  mode: z.literal("PER_CRITERIA"),
+  criterion_results: z.record(z.string(), z.union([CriterionResponse, CriterionError])),
+  inclusion_probability: z.number().nullable(),
+  exclusion_probability: z.number().nullable(),
+  overall_probability: z.number().nullable(),
+  binary_decision: z.boolean().nullable(),
+});
+
+export type JobTaskRead = __TypedOpenapi.Schemas.JobTaskRead;
+export const JobTaskRead = z.strictObject({
+  uuid: z.uuid(),
+  job_id: z.number().int(),
+  doi: z.string().nullable(),
+  title: z.string(),
+  abstract: z.string(),
+  paper_uuid: z.uuid(),
+  status: JobTaskStatus,
+  result: z.union([StructuredResponse, PerCriteriaResult, z.null()]),
+  human_result: JobTaskHumanResult.nullable().optional(),
+  status_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  error: z.string().nullable().optional(),
+});
+
 export type JobTaskReadWithLLMConfig = __TypedOpenapi.Schemas.JobTaskReadWithLLMConfig;
 export const JobTaskReadWithLLMConfig = z.strictObject({
   uuid: z.uuid(),
@@ -216,13 +268,17 @@ export const JobTaskReadWithLLMConfig = z.strictObject({
   abstract: z.string(),
   paper_uuid: z.uuid(),
   status: JobTaskStatus,
-  result: z.record(z.string(), z.unknown()).nullable().optional(),
+  result: z.union([StructuredResponse, PerCriteriaResult, z.null()]),
   human_result: JobTaskHumanResult.nullable().optional(),
   status_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   error: z.string().nullable().optional(),
-  llm_config: z.record(z.string(), z.unknown()).nullable().optional(),
-  prompting_config: z.record(z.string(), z.unknown()).nullable().optional(),
-  screening_mode: z.string(),
+  llm_config: LLMModelConfig,
+  prompting_config: z.discriminatedUnion("screening_type", [
+    FewShotPromptingConfig.extend({ screening_type: z.literal("FEW_SHOT") }),
+    PerCriteriaPromptingConfig.extend({ screening_type: z.literal("PER_CRITERIA") }),
+    ZeroShotPromptingConfig.extend({ screening_type: z.literal("ZERO_SHOT") }),
+  ]),
+  screening_mode: JobScreeningMode,
 });
 
 export type PaperHumanResult = __TypedOpenapi.Schemas.PaperHumanResult;
@@ -532,7 +588,7 @@ export const get_Get_job_tasks_api_v1_jobtask__uuid__get = {
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: { path: z.strictObject({ uuid: z.uuid() }) },
-  responses: { 200: z.unknown(), 422: HTTPValidationError },
+  responses: { 200: z.array(JobTaskRead), 422: HTTPValidationError },
 };
 
 export type patch_Add_job_task_human_result_api_v1_jobtask__uuid__patch =
@@ -755,8 +811,8 @@ export const get_Dev_login_api_v1_auth_dev_login_get = {
   path: z.literal("/api/v1/auth/dev-login"),
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
-  parameters: z.never(),
-  responses: { 200: z.unknown() },
+  parameters: { query: z.strictObject({ worker: z.string().nullable() }).partial().optional() },
+  responses: { 200: z.unknown(), 422: HTTPValidationError },
 };
 
 export type get_Me_api_v1_auth_me_get = __TypedOpenapi.Endpoints.get_Me_api_v1_auth_me_get;
@@ -981,6 +1037,7 @@ export const endpointParameterStyles = {
       query: { project_uuid: { style: "form", explode: true, allowReserved: false } },
     },
     "/api/v1/result/": { query: { project_uuid: { style: "form", explode: true, allowReserved: false } } },
+    "/api/v1/auth/dev-login": { query: { worker: { style: "form", explode: true, allowReserved: false } } },
   },
   delete: {
     "/api/v1/project/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
