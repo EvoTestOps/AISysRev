@@ -5,13 +5,22 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.schemas.jobtask import JobTaskHumanResultUpdate, JobTaskReadWithLLMConfig
+from src.schemas.jobtask import (
+    JobTaskHumanResultUpdate,
+    JobTaskRead,
+    JobTaskReadWithLLMConfig,
+)
 from src.services.jobtask_service import create_jobtask_service
 
 router = APIRouter()
 
 
-@router.get("/jobtask/{uuid}", status_code=status.HTTP_200_OK, tags=["Job task"])
+@router.get(
+    "/jobtask/{uuid}",
+    status_code=status.HTTP_200_OK,
+    response_model=list[JobTaskRead],
+    tags=["Job task"],
+)
 async def get_job_tasks(
     uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),

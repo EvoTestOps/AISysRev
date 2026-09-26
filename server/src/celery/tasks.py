@@ -20,7 +20,12 @@ from src.helpers.resolve_job_status import resolve_job_status
 from src.redis_client.client import get_redis_client
 from src.schemas.job import JobCreate, JobScreeningMode, PerCriteriaPromptingConfig
 from src.schemas.jobtask import JobTaskStatus
-from src.schemas.llm import ProviderRuntimeParameters
+from src.schemas.llm import (
+    CriterionError,
+    CriterionResponse,
+    PerCriteriaResult,
+    ProviderRuntimeParameters,
+)
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
 from src.services.pdf_screening_service import create_pdf_screening_service
@@ -243,7 +248,7 @@ async def _process_per_criteria_task(
                     criteria_tree.get("inclusion", {})
                 ) + extract_leaf_criteria(criteria_tree.get("exclusion", {}))
 
-                criterion_results: dict = {}
+                criterion_results: dict[str, CriterionResponse | CriterionError] = {}
                 criterion_probs: dict = {}
                 for leaf in leaf_nodes:
                     crit_id = leaf["id"]
@@ -256,7 +261,7 @@ async def _process_per_criteria_task(
                             leaf["description"],
                             client,
                         )
-                        criterion_results[crit_id] = response.model_dump()
+                        criterion_results[crit_id] = response
                         prob = response.probability_decision
                         criterion_probs[crit_id] = prob if 0.0 <= prob <= 1.0 else None
                     except Exception as e:
@@ -266,20 +271,20 @@ async def _process_per_criteria_task(
                             job_task_id,
                             e,
                         )
-                        criterion_results[crit_id] = {"error": str(e)}
+                        criterion_results[crit_id] = CriterionError(error=str(e))
                         criterion_probs[crit_id] = None
 
                 incl, excl, overall, binary = compute_overall(
                     criteria_tree, criterion_probs
                 )
-                result = {
-                    "mode": "PER_CRITERIA",
-                    "criterion_results": criterion_results,
-                    "inclusion_probability": incl,
-                    "exclusion_probability": excl,
-                    "overall_probability": overall,
-                    "binary_decision": binary,
-                }
+                result = PerCriteriaResult(
+                    mode="PER_CRITERIA",
+                    criterion_results=criterion_results,
+                    inclusion_probability=incl,
+                    exclusion_probability=excl,
+                    overall_probability=overall,
+                    binary_decision=binary,
+                )
 
                 await jobtask_crud.update_job_task_result(job_task.id, result)
                 await jobtask_crud.update_job_task_status(

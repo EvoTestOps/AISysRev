@@ -27,17 +27,19 @@ class JobTaskService:
         )
 
         return [
-            JobTaskRead(
-                uuid=task.uuid,
-                job_id=task.job_id,
-                doi=task.doi,
-                title=task.title,
-                abstract=task.abstract,
-                status=task.status,
-                paper_uuid=task.paper_uuid,
-                result=task.result,
-                human_result=task.human_result,
-                status_metadata=task.status_metadata,
+            JobTaskRead.model_validate(
+                {
+                    "uuid": task.uuid,
+                    "job_id": task.job_id,
+                    "doi": task.doi,
+                    "title": task.title,
+                    "abstract": task.abstract,
+                    "status": task.status,
+                    "paper_uuid": task.paper_uuid,
+                    "result": task.result,
+                    "human_result": task.human_result,
+                    "status_metadata": task.status_metadata,
+                }
             )
             for task in job_tasks
         ]

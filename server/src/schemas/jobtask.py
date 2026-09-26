@@ -5,6 +5,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from src.schemas.job import JobScreeningMode, LLMModelConfig, PromptingConfig
+from src.schemas.llm import PerCriteriaResult, StructuredResponse
+
 
 class JobTaskHumanResult(str, Enum):
     INCLUDE = "INCLUDE"
@@ -43,7 +46,7 @@ class JobTaskRead(BaseModel):
     abstract: str
     paper_uuid: UUID
     status: JobTaskStatus
-    result: Optional[Dict[str, Any]]
+    result: StructuredResponse | PerCriteriaResult | None
     human_result: JobTaskHumanResult | None = None
     status_metadata: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -58,27 +61,7 @@ class JobTaskRead(BaseModel):
         raise ValueError("JobTaskRead.result must be a dict or JSON string")
 
 
-class JobTaskReadWithLLMConfig(BaseModel):
-    uuid: UUID
-    job_id: int
-    doi: Optional[str]
-    title: str
-    abstract: str
-    paper_uuid: UUID
-    status: JobTaskStatus
-    result: Optional[Dict[str, Any]] = None
-    human_result: Optional[JobTaskHumanResult] = None
-    status_metadata: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    llm_config: Optional[Dict[str, Any]] = None
-    prompting_config: Optional[Dict[str, Any]] = None
-    screening_mode: str
-
-    @field_validator("result", mode="before")
-    @classmethod
-    def ensure_result_is_dict(cls, v: Any):
-        if v is None or isinstance(v, dict):
-            return v
-        if isinstance(v, str):
-            return json.loads(v)
-        raise ValueError("JobTaskRead.result must be a dict or JSON string")
+class JobTaskReadWithLLMConfig(JobTaskRead):
+    llm_config: LLMModelConfig
+    prompting_config: PromptingConfig
+    screening_mode: JobScreeningMode

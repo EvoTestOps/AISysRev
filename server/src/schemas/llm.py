@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -57,6 +57,19 @@ class CriterionResponse(BaseModel, extra="forbid"):
         "Use intermediate values, not just 0.000 or 1.000."
     )
     reason: str = Field(description="Reasoning for the probability estimate.")
+
+
+class CriterionError(BaseModel, extra="forbid"):
+    error: str
+
+
+class PerCriteriaResult(BaseModel, extra="forbid"):
+    mode: Literal["PER_CRITERIA"]
+    criterion_results: dict[str, CriterionResponse | CriterionError]
+    inclusion_probability: Optional[float]
+    exclusion_probability: Optional[float]
+    overall_probability: Optional[float]
+    binary_decision: Optional[bool]
 
 
 class ProviderRuntimeParameters(BaseModel):
