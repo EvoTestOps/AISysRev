@@ -9,6 +9,7 @@ from src.db.models.user import User
 from src.event_queue import EventName, QueueItem, publish_event
 from src.schemas.job import (
     FewShotPromptingConfig,
+    JobCancelResponse,
     JobCreate,
     JobCreateRequest,
     JobRead,
@@ -125,7 +126,12 @@ async def create_job(
         )
 
 
-@router.post("/job/{uuid}/cancel", status_code=status.HTTP_200_OK, tags=["Job"])
+@router.post(
+    "/job/{uuid}/cancel",
+    status_code=status.HTTP_200_OK,
+    response_model=JobCancelResponse,
+    tags=["Job"],
+)
 async def cancel_job(
     uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),

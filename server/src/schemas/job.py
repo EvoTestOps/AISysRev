@@ -111,3 +111,7 @@ class JobReadWithStats(BaseModel):
     stats: JobStats
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobCancelResponse(BaseModel):
+    detail: str
