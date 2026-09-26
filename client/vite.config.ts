@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import wasm from "vite-plugin-wasm";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
 const appEnv = process.env.VITE_APP_ENV;
@@ -8,7 +7,6 @@ const appEnv = process.env.VITE_APP_ENV;
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    wasm(),
     react(),
     ...(appEnv === "dev" ? [basicSsl()] : []),
   ],
