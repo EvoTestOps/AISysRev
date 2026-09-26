@@ -46,7 +46,7 @@ export const PaperCard: React.FC<
       setPaperPdf({
         projectUuid: paper.project_uuid,
         paperUuid: paper.uuid,
-        pdfFileUuid: updatedPaper.pdf_file_uuid,
+        pdfFileUuid: updatedPaper.pdf_file_uuid as string,
         pdfFilename: file.name,
       });
       toast.success("Full text uploaded");

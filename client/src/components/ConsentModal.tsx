@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { toast } from "react-toastify";
 import { Button } from "./Button";
-import { legacyApi } from "../services/api";
+import { api } from "../services/api";
 
 type ConsentModalProps = {
   open: boolean;
@@ -20,10 +20,12 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
   const handleAccept = async () => {
     setSubmitting(true);
     try {
-      await legacyApi.post("/api/v1/auth/consent", {
-        terms,
-        privacy_policy: privacyPolicy,
-        research,
+      await api.post("/api/v1/auth/consent", {
+        body: {
+          terms,
+          privacy_policy: privacyPolicy,
+          research,
+        },
       });
       onAccepted();
     } catch {

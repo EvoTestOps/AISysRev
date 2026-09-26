@@ -1,6 +1,5 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { ToastContainer } from "react-toastify";
 import { EventStream } from "./components/EventStream";
 import { NotFoundPage } from "./pages/NotFound";
@@ -14,7 +13,8 @@ import { ResultPage } from "./pages/ResultPage";
 import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
-import { legacyApi } from "./services/api";
+import { api } from "./services/api";
+import { TypedStatusError } from "./services/api/client";
 import { Layout } from "./components/Layout";
 import { ConsentModal } from "./components/ConsentModal";
 
@@ -31,12 +31,12 @@ function App() {
     const controller = new AbortController();
     const checkSession = async () => {
       try {
-        await legacyApi.get("/api/v1/auth/me", { signal: controller.signal });
+        await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
         setConsentRequired(false);
         setIsAuthenticated(true);
       } catch (error) {
         if (controller.signal.aborted) return;
-        if (axios.isAxiosError(error) && error.response?.status === 403) {
+        if (error instanceof TypedStatusError && error.status === 403) {
           setConsentRequired(true);
           setIsAuthenticated(false);
           return;

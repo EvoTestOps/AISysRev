@@ -7,7 +7,7 @@ import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
 import { TabButton } from "../components/TabButton";
-import { legacyApi } from "../services/api";
+import { api } from "../services/api";
 
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -19,8 +19,8 @@ export const AccountSettingsPage = () => {
     const controller = new AbortController();
     const fetchUser = async () => {
       try {
-        const res = await legacyApi.get("/api/v1/auth/me", { signal: controller.signal });
-        setResearchConsent(res.data.consent_anonymized_research_usage ?? false);
+        const user = await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
+        setResearchConsent(user.consent_anonymized_research_usage ?? false);
       } catch (e) {
         if (!controller.signal.aborted) throw e;
       }
@@ -33,7 +33,7 @@ export const AccountSettingsPage = () => {
     const newValue = !researchConsent;
     setSaving(true);
     try {
-      await legacyApi.patch("/api/v1/auth/me/research-consent", { research: newValue });
+      await api.patch("/api/v1/auth/me/research-consent", { body: { research: newValue } });
       setResearchConsent(newValue);
       toast.success("Research consent updated.");
     } catch {
@@ -44,7 +44,7 @@ export const AccountSettingsPage = () => {
   }, [researchConsent]);
 
   const handleDeleteAccount = async () => {
-    await legacyApi.delete("/api/v1/auth/me");
+    await api.delete("/api/v1/auth/me");
     navigate("/login");
   };
 

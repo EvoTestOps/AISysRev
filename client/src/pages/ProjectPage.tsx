@@ -29,7 +29,7 @@ import {
 } from "../state/types";
 import { fetchPerCriteriaStats } from "../services/resultService";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
-import axios from "axios";
+import { TypedStatusError } from "../services/api/client";
 import Tooltip from "@mui/material/Tooltip";
 import { twMerge } from "tailwind-merge";
 import {
@@ -739,8 +739,8 @@ export const ProjectPage = () => {
           console.error("File upload errors:", res.errors);
         }
       } catch (e) {
-        if (axios.isAxiosError(e)) {
-          toast.error("File upload failed: " + e.response?.data.detail);
+        if (e instanceof TypedStatusError) {
+          toast.error("File upload failed: " + (e.response.data as { detail?: unknown }).detail);
         } else {
           toast.error("File upload failed due to unknown error");
         }

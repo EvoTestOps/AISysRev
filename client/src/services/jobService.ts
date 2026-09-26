@@ -1,5 +1,5 @@
-import { legacyApi } from "../services/api";
-import { LlmConfig, PromptingConfig, JobScreeningMode } from "../state/types";
+import { api } from "../services/api";
+import { LlmConfig, PromptingConfig, JobScreeningMode, JobWithStats } from "../state/types";
 
 export const createJob = async (
   projectUuid: string,
@@ -8,14 +8,16 @@ export const createJob = async (
   screeningMode: JobScreeningMode,
 ) => {
   try {
-    const res = await legacyApi.post("/api/v1/job", {
-      project_uuid: projectUuid,
-      llm_config: llmConfig,
-      prompting_config: promptingConfig,
-      screening_mode: screeningMode,
+    const res = await api.post("/api/v1/job", {
+      body: {
+        project_uuid: projectUuid,
+        llm_config: llmConfig,
+        prompting_config: promptingConfig,
+        screening_mode: screeningMode,
+      },
     });
-    // console.log("Job created successfully:", res.data);
-    return res.data;
+    // console.log("Job created successfully:", res);
+    return res;
   } catch (error) {
     console.error("Error creating job:", error);
     throw error;
@@ -24,8 +26,8 @@ export const createJob = async (
 
 export const fetchJobsForProject = async (projectUuid: string) => {
   try {
-    const res = await legacyApi.get(`/api/v1/job?project=${projectUuid}`);
-    return res.data;
+    const res = await api.get("/api/v1/job", { query: { project: projectUuid } });
+    return res as unknown as JobWithStats[];
   } catch (error) {
     console.error("Error fetching jobs:", error);
     throw error;
@@ -34,8 +36,7 @@ export const fetchJobsForProject = async (projectUuid: string) => {
 
 export const cancelJob = async (jobUuid: string) => {
   try {
-    const res = await legacyApi.post(`/api/v1/job/${jobUuid}/cancel`);
-    return res.data;
+    return await api.post("/api/v1/job/{uuid}/cancel", { path: { uuid: jobUuid } });
   } catch (error) {
     console.error("Canceling task unsuccessful:", error);
     throw error;
@@ -44,8 +45,7 @@ export const cancelJob = async (jobUuid: string) => {
 
 export const deleteJob = async (jobUuid: string) => {
   try {
-    const res = await legacyApi.delete(`/api/v1/job/${jobUuid}`);
-    return res.data;
+    return await api.delete("/api/v1/job/{uuid}", { path: { uuid: jobUuid } });
   } catch (error) {
     console.error("Task deletion unsuccessful:", error);
     throw error;
