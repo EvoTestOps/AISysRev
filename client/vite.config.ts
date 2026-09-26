@@ -10,6 +10,9 @@ export default defineConfig({
     react(),
     ...(appEnv === "dev" ? [basicSsl()] : []),
   ],
+  build: {
+    chunkSizeWarningLimit: 1000,
+  },
   server: {
     open: false,
     port: 3000,
