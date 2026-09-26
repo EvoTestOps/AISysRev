@@ -37,7 +37,6 @@
     "react-paginate": "^8.3.0",
     "react-toastify": "^11.1.0",
     "tailwind-merge": "^2.6.0",
-    "tiktoken": "^1.0.18",
     "vite-plugin-wasm": "^3.6.0",
     "wouter": "^3.11.0",
     "zod": "^4.6.5"
