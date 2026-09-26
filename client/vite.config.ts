@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import wasm from "vite-plugin-wasm";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
@@ -12,12 +12,6 @@ export default defineConfig({
     react(),
     ...(appEnv === "dev" ? [basicSsl()] : []),
   ],
-  esbuild: {
-    
-    supported: {
-      'top-level-await': true
-    },
-  },
   server: {
     open: false,
     port: 3000,
