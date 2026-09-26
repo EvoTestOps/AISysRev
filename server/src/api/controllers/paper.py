@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -5,13 +6,22 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from src.core.auth import get_current_user
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
-from src.schemas.paper import PaperHumanResultUpdate
+from src.schemas.paper import (
+    PaperHumanResultUpdate,
+    PaperRead,
+    PaperReadWithAvgProbability,
+)
 from src.services.paper_service import create_paper_service
 
 router = APIRouter()
 
 
-@router.get("/paper/{project_uuid}", status_code=status.HTTP_200_OK, tags=["Paper"])
+@router.get(
+    "/paper/{project_uuid}",
+    status_code=status.HTTP_200_OK,
+    response_model=List[PaperRead],
+    tags=["Paper"],
+)
 async def get_papers(
     project_uuid: UUID,
     db_ctx: DBContext = Depends(get_db_ctx),
@@ -32,6 +42,7 @@ async def get_papers(
 @router.get(
     "/paper/{project_uuid}/with_model_evaluations",
     status_code=status.HTTP_200_OK,
+    response_model=List[PaperReadWithAvgProbability],
     tags=["Paper"],
 )
 async def get_project_papers_with_model_evals(

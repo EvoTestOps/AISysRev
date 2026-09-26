@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
+from openai.types.model import Model
 from pydantic import BaseModel
 
 from src.core.auth import get_current_user
@@ -60,7 +61,12 @@ async def get_provider_config_params(
     }
 
 
-@router.post("/llm/{provider}/models", status_code=status.HTTP_200_OK, tags=["LLM"])
+@router.post(
+    "/llm/{provider}/models",
+    status_code=status.HTTP_200_OK,
+    response_model=List[Model],
+    tags=["LLM"],
+)
 async def get_available_models(
     provider: str,
     provider_parameters: Optional[Dict[str, Any]] = Body(None),

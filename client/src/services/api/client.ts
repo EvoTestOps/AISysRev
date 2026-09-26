@@ -95,6 +95,9 @@ export const FewShotPromptingConfig = z.strictObject({
   remember_selection: z.boolean(),
 });
 
+export type FileError = __TypedOpenapi.Schemas.FileError;
+export const FileError = z.strictObject({ file: z.string(), row: z.string(), message: z.string() });
+
 export type FileReadWithPaperCount = __TypedOpenapi.Schemas.FileReadWithPaperCount;
 export const FileReadWithPaperCount = z.strictObject({
   uuid: z.uuid(),
@@ -125,6 +128,9 @@ export const ValidationError = z.strictObject({
 
 export type HTTPValidationError = __TypedOpenapi.Schemas.HTTPValidationError;
 export const HTTPValidationError = z.strictObject({ detail: z.array(ValidationError) }).partial();
+
+export type JobCancelResponse = __TypedOpenapi.Schemas.JobCancelResponse;
+export const JobCancelResponse = z.strictObject({ detail: z.string() });
 
 export type ZeroShotPromptingConfig = __TypedOpenapi.Schemas.ZeroShotPromptingConfig;
 export const ZeroShotPromptingConfig = z
@@ -281,6 +287,17 @@ export const JobTaskReadWithLLMConfig = z.strictObject({
   screening_mode: JobScreeningMode,
 });
 
+export type Model = __TypedOpenapi.Schemas.Model;
+export const Model = z
+  .object({
+    id: z.string(),
+    created: z.number().int(),
+    object: z.literal("model"),
+    owned_by: z.string(),
+    shutdown_date: z.string().nullable().optional(),
+  })
+  .catchall(z.unknown());
+
 export type PaperHumanResult = __TypedOpenapi.Schemas.PaperHumanResult;
 export const PaperHumanResult = z.enum(["INCLUDE", "EXCLUDE", "UNSURE"]);
 
@@ -316,6 +333,47 @@ export const PaperRead = z.strictObject({
     })
     .nullable()
     .optional(),
+});
+
+export type PaperReadWithAvgProbability = __TypedOpenapi.Schemas.PaperReadWithAvgProbability;
+export const PaperReadWithAvgProbability = z.strictObject({
+  uuid: z.uuid(),
+  paper_id: z.number().int(),
+  project_uuid: z.uuid(),
+  file_uuid: z.uuid().nullable().optional(),
+  pdf_file_uuid: z.uuid().nullable().optional(),
+  doi: z.string().nullable(),
+  title: z.string(),
+  abstract: z.string(),
+  human_result: PaperHumanResult.nullable().optional(),
+  created_at: z.iso
+    .datetime()
+    .transform((s) => {
+      const d = new Date(s);
+      if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+      return d;
+    })
+    .nullable()
+    .optional(),
+  updated_at: z.iso
+    .datetime()
+    .transform((s) => {
+      const d = new Date(s);
+      if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+      return d;
+    })
+    .nullable()
+    .optional(),
+  avg_probability_decision: z.number().nullable(),
+  error_messages: z.array(z.string()).nullable().optional(),
+  pdf_filename: z.string().nullable().optional(),
+});
+
+export type ProcessedFiles = __TypedOpenapi.Schemas.ProcessedFiles;
+export const ProcessedFiles = z.strictObject({
+  valid_filenames: z.array(z.string()),
+  errors: z.array(FileError),
+  empty_abstract_count: z.number().int().default(0),
 });
 
 export type ProjectCreateRequest = __TypedOpenapi.Schemas.ProjectCreateRequest;
@@ -477,7 +535,7 @@ export const post_Process_csv_api_v1_files_upload_post = {
   requestFormat: z.literal("form-data"),
   responseFormat: z.literal("json"),
   parameters: { body: Body_process_csv_api_v1_files_upload_post },
-  responses: { 200: z.record(z.string(), z.unknown()), 422: HTTPValidationError },
+  responses: { 200: ProcessedFiles, 422: HTTPValidationError },
 };
 
 export type post_Process_pdfs_api_v1_files_upload_pdfs_post =
@@ -577,7 +635,7 @@ export const post_Cancel_job_api_v1_job__uuid__cancel_post = {
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: { path: z.strictObject({ uuid: z.uuid() }) },
-  responses: { 200: z.unknown(), 422: HTTPValidationError },
+  responses: { 200: JobCancelResponse, 422: HTTPValidationError },
 };
 
 export type get_Get_job_tasks_api_v1_jobtask__uuid__get =
@@ -621,7 +679,7 @@ export const get_Get_papers_api_v1_paper__project_uuid__get = {
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: { path: z.strictObject({ project_uuid: z.uuid() }) },
-  responses: { 200: z.unknown(), 422: HTTPValidationError },
+  responses: { 200: z.array(PaperRead), 422: HTTPValidationError },
 };
 
 export type get_Get_project_papers_with_model_evals_api_v1_paper__project_uuid__with_model_evaluations_get =
@@ -632,7 +690,7 @@ export const get_Get_project_papers_with_model_evals_api_v1_paper__project_uuid_
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: { path: z.strictObject({ project_uuid: z.uuid() }) },
-  responses: { 200: z.unknown(), 422: HTTPValidationError },
+  responses: { 200: z.array(PaperReadWithAvgProbability), 422: HTTPValidationError },
 };
 
 export type get_Download_missing_fulltext_ris_api_v1_paper__project_uuid__missing_fulltext_ris_get =
@@ -718,7 +776,7 @@ export const post_Get_available_models_api_v1_llm__provider__models_post = {
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: { path: z.strictObject({ provider: z.string() }), body: z.record(z.string(), z.unknown()).nullable() },
-  responses: { 200: z.unknown(), 422: HTTPValidationError },
+  responses: { 200: z.array(Model), 422: HTTPValidationError },
 };
 
 export type get_Download_result_csv_api_v1_result_download_result_csv_get =

@@ -74,6 +74,7 @@ export namespace Schemas {
     seed_paper_exc: Array<string>;
     remember_selection: boolean;
   };
+  export type FileError = { file: string; row: string; message: string };
   export type FileReadWithPaperCount = {
     uuid: string;
     project_uuid: string;
@@ -92,6 +93,7 @@ export namespace Schemas {
     ctx?: Record<string, unknown>;
   };
   export type HTTPValidationError = Partial<{ detail: Array<ValidationError> }>;
+  export type JobCancelResponse = { detail: string };
   export type ZeroShotPromptingConfig = Partial<{ screening_type: "ZERO_SHOT"; screening_target: ScreeningTarget }>;
   export type PerCriteriaPromptingConfig = Partial<{
     screening_type: "PER_CRITERIA";
@@ -177,6 +179,16 @@ export namespace Schemas {
     prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
     screening_mode: JobScreeningMode;
   };
+  /**
+   * Describes an OpenAI model offering that can be used with the API.
+   */
+  export type Model = {
+    id: string;
+    created: number;
+    object: "model";
+    owned_by: string;
+    shutdown_date?: string | null;
+  } & Record<string, unknown>;
   export type PaperHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
   export type PaperHumanResultUpdate = { human_result: PaperHumanResult };
   export type PaperRead = {
@@ -191,6 +203,27 @@ export namespace Schemas {
     human_result?: PaperHumanResult | null;
     created_at?: Date | null;
     updated_at?: Date | null;
+  };
+  export type PaperReadWithAvgProbability = {
+    uuid: string;
+    paper_id: number;
+    project_uuid: string;
+    file_uuid?: string | null;
+    pdf_file_uuid?: string | null;
+    doi: string | null;
+    title: string;
+    abstract: string;
+    human_result?: PaperHumanResult | null;
+    created_at?: Date | null;
+    updated_at?: Date | null;
+    avg_probability_decision: number | null;
+    error_messages?: Array<string> | null;
+    pdf_filename?: string | null;
+  };
+  export type ProcessedFiles = {
+    valid_filenames: Array<string>;
+    errors: Array<FileError>;
+    empty_abstract_count?: number;
   };
   export type ProjectCreateRequest = { name: string; criteria: Criteria; screening_target?: ScreeningTarget };
   export type ProjectPreferences = { few_shot: FewShotPreferences | null };
@@ -315,7 +348,7 @@ export namespace Endpoints {
     parameters: {
       body: Schemas.Body_process_csv_api_v1_files_upload_post;
     };
-    responses: { 200: Record<string, unknown>; 422: Schemas.HTTPValidationError };
+    responses: { 200: Schemas.ProcessedFiles; 422: Schemas.HTTPValidationError };
   };
   export type post_Process_pdfs_api_v1_files_upload_pdfs_post = {
     method: "POST";
@@ -407,7 +440,7 @@ export namespace Endpoints {
     parameters: {
       path: { uuid: string };
     };
-    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+    responses: { 200: Schemas.JobCancelResponse; 422: Schemas.HTTPValidationError };
   };
   export type get_Get_job_tasks_api_v1_jobtask__uuid__get = {
     method: "GET";
@@ -449,7 +482,7 @@ export namespace Endpoints {
     parameters: {
       path: { project_uuid: string };
     };
-    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+    responses: { 200: Array<Schemas.PaperRead>; 422: Schemas.HTTPValidationError };
   };
   export type get_Get_project_papers_with_model_evals_api_v1_paper__project_uuid__with_model_evaluations_get = {
     method: "GET";
@@ -459,7 +492,7 @@ export namespace Endpoints {
     parameters: {
       path: { project_uuid: string };
     };
-    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+    responses: { 200: Array<Schemas.PaperReadWithAvgProbability>; 422: Schemas.HTTPValidationError };
   };
   export type get_Download_missing_fulltext_ris_api_v1_paper__project_uuid__missing_fulltext_ris_get = {
     method: "GET";
@@ -539,7 +572,7 @@ export namespace Endpoints {
 
       body: Record<string, unknown> | null;
     };
-    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+    responses: { 200: Array<Schemas.Model>; 422: Schemas.HTTPValidationError };
   };
   export type get_Download_result_csv_api_v1_result_download_result_csv_get = {
     method: "GET";
