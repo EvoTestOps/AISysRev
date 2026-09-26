@@ -10,7 +10,7 @@ COPY client/package.json .
 COPY client/package-lock.json .
 RUN --mount=type=cache,target=/root/.npm npm ci
 
-COPY client/eslint.config.js .
+COPY client/.oxlintrc.json .
 COPY client/index.html .
 COPY client/postcss.config.js .
 COPY client/tailwind.config.js .
@@ -24,7 +24,7 @@ COPY client/src ./src
 
 RUN npm run build
 
-FROM caddy:2.11.4-alpine@sha256:de23def33b17fb5d1290b0f6c2add1d70780e52341896c00a4c8a2a2fe9d355e AS client
+FROM caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b AS client
 RUN apk add --no-cache libcap && setcap -r /usr/bin/caddy && apk del libcap
 
 COPY Caddyfile /etc/caddy/Caddyfile
@@ -33,7 +33,7 @@ RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
 FROM ghcr.io/astral-sh/uv:0.12.17 AS uv
 
-FROM python:3.14.7-alpine@sha256:016508ba505da24f7139765bc4bb669df4e88eb2f12eeadd571bf2f88d7533df AS python-base
+FROM python:3.14.7-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS python-base
 
 FROM python-base AS server-builder
 ENV UV_LINK_MODE=copy

@@ -117,7 +117,6 @@ export const EventStream = () => {
   const startLogStream = useCallback(() => {
     const eventSource = new EventSource(event_url);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eventSource.onopen = (_ev) => {
       // console.log("SSE connected to " + event_url);
       setConnected(true);
