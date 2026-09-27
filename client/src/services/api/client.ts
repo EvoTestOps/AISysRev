@@ -430,6 +430,13 @@ export const ResearchConsentUpdate = z.strictObject({ research: z.boolean() });
 export type UpsertData = __TypedOpenapi.Schemas.UpsertData;
 export const UpsertData = z.strictObject({ name: z.string().max(1024), value: z.string().max(1024) });
 
+export type UserMe = __TypedOpenapi.Schemas.UserMe;
+export const UserMe = z.strictObject({
+  uuid: z.uuid(),
+  email: z.string().nullable().optional(),
+  consent_anonymized_research_usage: z.boolean().nullable().optional(),
+});
+
 export type UserRead = __TypedOpenapi.Schemas.UserRead;
 export const UserRead = z.strictObject({
   uuid: z.uuid(),
@@ -880,7 +887,7 @@ export const get_Me_api_v1_auth_me_get = {
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
   parameters: z.never(),
-  responses: { 200: UserRead },
+  responses: { 200: UserMe },
 };
 
 export type delete_Delete_account_api_v1_auth_me_delete =

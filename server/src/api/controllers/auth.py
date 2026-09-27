@@ -14,7 +14,7 @@ from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.redis_client.client import get_shared_redis_client
-from src.schemas.user import ConsentAccept, ResearchConsentUpdate, UserRead
+from src.schemas.user import ConsentAccept, ResearchConsentUpdate, UserMe, UserRead
 from src.services.user_service import create_user_service
 
 router = APIRouter(tags=["Auth"])
@@ -193,11 +193,10 @@ async def dev_login(
 @router.get(
     "/auth/me",
     status_code=status.HTTP_200_OK,
-    response_model=UserRead,
-    response_model_exclude={"sub"},
+    response_model=UserMe,
 )
 async def me(current_user: User = Depends(get_current_user)):
-    return UserRead.model_validate(current_user)
+    return UserMe.model_validate(current_user)
 
 
 @router.patch(

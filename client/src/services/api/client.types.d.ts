@@ -253,6 +253,10 @@ export namespace Schemas {
   };
   export type ResearchConsentUpdate = { research: boolean };
   export type UpsertData = { name: string; value: string };
+  /**
+   * Current user as returned by /auth/me; omits the identity provider subject.
+   */
+  export type UserMe = { uuid: string; email?: string | null; consent_anonymized_research_usage?: boolean | null };
   export type UserRead = {
     uuid: string;
     sub: string;
@@ -664,7 +668,7 @@ export namespace Endpoints {
     requestFormat: "json";
     responseFormat: "json";
     parameters: never;
-    responses: { 200: Schemas.UserRead };
+    responses: { 200: Schemas.UserMe };
   };
   export type delete_Delete_account_api_v1_auth_me_delete = {
     method: "DELETE";
