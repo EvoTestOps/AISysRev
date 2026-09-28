@@ -1,5 +1,5 @@
 import { useLocation, useParams } from "wouter";
-import ReactPaginate from "react-paginate";
+import ReactPaginateModule from "react-paginate";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
@@ -13,6 +13,11 @@ import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
 import { AlertMessage } from "../components/AlertMessage";
 import { ScreeningTarget } from "../state/types";
+
+// react-paginate is CJS-only with an __esModule default; Vite 8 interop returns module.exports for it
+const ReactPaginate =
+  (ReactPaginateModule as unknown as { default?: typeof ReactPaginateModule }).default ??
+  ReactPaginateModule;
 
 export const PapersPage = () => {
   const params = useParams<{ projectUuid: string; page?: string }>();
