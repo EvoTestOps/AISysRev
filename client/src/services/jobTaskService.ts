@@ -1,31 +1,26 @@
 import { api } from "../services/api";
-import { JobTaskHumanResult, JobTask } from "../state/types";
+import { TypedStatusError } from "../services/api/client";
+import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}`);
-    return res.data;
+    return await api.get("/api/v1/paper/{project_uuid}", { path: { project_uuid: projectUuid } });
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
-    if (e.response?.status === 404) {
+    if (error instanceof TypedStatusError && error.status === 404) {
       return [];
     }
     throw error;
   }
 };
 
-export const fetchJobTasksFromBackend = async (
-  jobUuid: string,
-  jobId?: number,
-) => {
+export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) => {
   try {
-    const res = await api.get(`/api/v1/jobtask/${jobUuid}`);
+    const res = await api.get("/api/v1/jobtask/{uuid}", { path: { uuid: jobUuid } });
     let id = jobId;
-    if (!id && res.data.length > 0) {
-      id = res.data[0].job_id;
+    if (!id && res.length > 0) {
+      id = res[0].job_id;
     }
-    return res.data.map((task: JobTask) => ({
+    return res.map((task) => ({
       ...task,
       job_uuid: jobUuid,
     }));
@@ -37,23 +32,19 @@ export const fetchJobTasksFromBackend = async (
 
 export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/jobtask/${jobTaskUuid}`);
-    return res.data;
+    return await api.get("/api/v1/jobtask/{uuid}", { path: { uuid: jobTaskUuid } });
   } catch (error) {
     console.error("Error fetching job task by UUID:", error);
     throw error;
   }
 };
 
-export const addJobTaskResult = async (
-  jobTaskUuid: string,
-  result: JobTaskHumanResult,
-) => {
+export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {
-    const res = await api.patch(`/api/v1/jobtask/${jobTaskUuid}`, {
-      human_result: result,
+    return await api.patch("/api/v1/jobtask/{uuid}", {
+      path: { uuid: jobTaskUuid },
+      body: { human_result: result },
     });
-    return res.data;
   } catch (error) {
     console.error("Error adding job task result:", error);
     throw error;

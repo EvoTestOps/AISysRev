@@ -16,7 +16,7 @@ import {ScreeningTarget} from "../state/types";
 export const fetch_projects = async (): Promise<Project[]> => {
   try {
     const res = await api.get("/api/v1/project");
-    return z.array(ProjectModel).parse(res.data);
+    return z.array(ProjectModel).parse(res);
   } catch (error) {
     console.error("Fetching projects unsuccessful", error);
     throw error;
@@ -25,8 +25,8 @@ export const fetch_projects = async (): Promise<Project[]> => {
 
 export const fetch_project_by_uuid = async (uuid: string): Promise<Project> => {
   try {
-    const res = await api.get(`/api/v1/project/${uuid}`);
-    return ProjectModel.parse(res.data);
+    const res = await api.get("/api/v1/project/{uuid}", { path: { uuid } });
+    return ProjectModel.parse(res);
   } catch (error) {
     console.error("Fetching project by UUID unsuccessful", error);
     throw error;
@@ -40,11 +40,13 @@ export const create_project = async (
 ): Promise<CreatedProject> => {
   try {
     const res = await api.post("/api/v1/project", {
-      name: title,
-      criteria: criteria,
-      screening_target: screeningTarget,
+      body: {
+        name: title,
+        criteria: criteria,
+        screening_target: screeningTarget,
+      },
     });
-    return CreatedProjectModel.parse(res.data);
+    return CreatedProjectModel.parse(res);
   } catch (error) {
     console.error("Creating project unsuccessful", error);
     throw error;
@@ -53,8 +55,8 @@ export const create_project = async (
 
 export const delete_project = async (uuid: string): Promise<DeletedProject> => {
   try {
-    const res = await api.delete(`/api/v1/project/${uuid}`);
-    return DeletedProjectModel.parse(res.data);
+    const res = await api.delete("/api/v1/project/{uuid}", { path: { uuid } });
+    return DeletedProjectModel.parse(res);
   } catch (error) {
     console.error("Deleting project unsuccessful", error);
     throw error;

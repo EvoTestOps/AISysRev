@@ -1,6 +1,5 @@
 import { Route, Switch, useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { ToastContainer } from "react-toastify";
 import { EventStream } from "./components/EventStream";
 import { NotFoundPage } from "./pages/NotFound";
@@ -15,6 +14,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
+import { TypedStatusError } from "./services/api/client";
 import { Layout } from "./components/Layout";
 import { ConsentModal } from "./components/ConsentModal";
 
@@ -23,24 +23,20 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [consentRequired, setConsentRequired] = useState(false);
 
-  const fetchProjects = useTypedStoreActions(
-    (actions) => actions.fetchProjects
-  );
-  const fetchProviders = useTypedStoreActions(
-    (actions) => actions.fetchProviders
-  );
+  const fetchProjects = useTypedStoreActions((actions) => actions.fetchProjects);
+  const fetchProviders = useTypedStoreActions((actions) => actions.fetchProviders);
 
   // Checks session validity here
   useEffect(() => {
     const controller = new AbortController();
     const checkSession = async () => {
       try {
-        await api.get("/api/v1/auth/me", { signal: controller.signal });
+        await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
         setConsentRequired(false);
         setIsAuthenticated(true);
       } catch (error) {
         if (controller.signal.aborted) return;
-        if (axios.isAxiosError(error) && error.response?.status === 403) {
+        if (error instanceof TypedStatusError && error.status === 403) {
           setConsentRequired(true);
           setIsAuthenticated(false);
           return;
@@ -66,8 +62,7 @@ function App() {
       fetchProviders();
       fetchProjects();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchProjects, fetchProviders]);
 
   if (consentRequired) {
     return (
@@ -94,10 +89,7 @@ function App() {
         <Route path="/projects" component={ProjectsPage} />
         <Route path="/create" component={NewProject} />
         <Route path="/project/:projectUuid" component={ProjectPage} />
-        <Route
-          path="/project/:projectUuid/papers/page/:page"
-          component={PapersPage}
-        />
+        <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/about" component={AboutPage} />

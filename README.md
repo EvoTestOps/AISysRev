@@ -260,6 +260,25 @@ API docs: [https://localhost:3001/docs](https://localhost:3001/docs)
 
 Adminer GUI: [http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=](http://localhost:8081/?pgsql=postgres&username=your_username&db=your_database_dev&ns=) password: **your_password**
 
+### Generating API types
+
+Generate TypeScript types and Zod schemas from the backend's OpenAPI spec by running, in the repository root:
+
+```sh
+make openapi
+```
+
+This doesn't need the server or containers running. It imports the FastAPI app locally (with `uv`), writes `app.openapi()` to `client/openapi.json`, and then runs `npm run generate:api` in [client/](./client/) to generate `client/src/services/api/` (client, types, fetcher) from that spec. The app's startup hooks aren't run, so nothing connects to the database or Redis; the connection URLs are set to placeholder values only because the settings require them. The spec is exported with `APP_ENV=dev`, so it matches the routes of the dev server.
+
+Alternatively, with `make start-dev` running, you can run the steps separately in [client/](./client/):
+
+- `npm run get:openapi-spec` — fetches the spec from `https://localhost:3001/openapi.json` into `client/openapi.json`.
+- `npm run generate:api` — generates `client/src/services/api/` from that spec.
+
+`client/src/services/api/` and the `openapi.json` are committed to git. Re-run `make openapi` whenever backend endpoints or schemas change.
+
+A smoke test is in place, which instructs you to update openapi.json then the spec changes.
+
 ## Other documentation
 
 - [docs/README.md](docs/README.md): index of all documentation

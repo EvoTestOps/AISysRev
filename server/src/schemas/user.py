@@ -33,3 +33,13 @@ class UserRead(BaseModel):
     consent_anonymized_research_usage: Optional[bool] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserMe(BaseModel):
+    """Current user as returned by /auth/me; omits the identity provider subject."""
+
+    uuid: UUID
+    email: Optional[str] = None
+    consent_anonymized_research_usage: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)

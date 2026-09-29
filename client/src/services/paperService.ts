@@ -1,49 +1,39 @@
 import { api } from "../services/api";
+import { TypedStatusError } from "../services/api/client";
 import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(`/api/v1/paper/${projectUuid}`);
-    return res.data;
+    return await api.get("/api/v1/paper/{project_uuid}", { path: { project_uuid: projectUuid } });
   } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
     // TODO: Do not return empty list for HTTP 404
-    if (e.response?.status === 404) {
+    if (error instanceof TypedStatusError && error.status === 404) {
       return [];
     }
     throw error;
   }
 };
 
-export const fetchPapersWithModelEvalsForProject = async (
-  projectUuid: string,
-) => {
+export const fetchPapersWithModelEvalsForProject = async (projectUuid: string) => {
   try {
-    const res = await api.get(
-      `/api/v1/paper/${projectUuid}/with_model_evaluations`,
-    );
-    return res.data;
-  } catch (error: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const e = error as any;
-    // TODO: Do not return empty list for HTTP 404
-    if (e.response?.status === 404) {
-      return [];
-    }
-    throw error;
-  }
-};
-
-export const addPaperHumanResult = async (
-  paperUuid: string,
-  result: JobTaskHumanResult,
-) => {
-  try {
-    const res = await api.patch(`/api/v1/paper/${paperUuid}`, {
-      human_result: result,
+    return await api.get("/api/v1/paper/{project_uuid}/with_model_evaluations", {
+      path: { project_uuid: projectUuid },
     });
-    return res.data;
+  } catch (error: unknown) {
+    // TODO: Do not return empty list for HTTP 404
+    if (error instanceof TypedStatusError && error.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+};
+
+export const addPaperHumanResult = async (paperUuid: string, result: JobTaskHumanResult) => {
+  try {
+    return await api.patch("/api/v1/paper/{uuid}", {
+      path: { uuid: paperUuid },
+      body: { human_result: result },
+    });
   } catch (error) {
     console.error("Error adding human result to paper:", error);
     throw error;

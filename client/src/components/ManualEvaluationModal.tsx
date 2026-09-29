@@ -1,10 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Description,
-} from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Description } from "@headlessui/react";
 import { useEffect, useCallback, useState } from "react";
 import { Check, CircleQuestionMark, CircleX, X } from "lucide-react";
 import { LlmModelCard } from "./LlmModelCard";
@@ -14,53 +8,19 @@ import {
   JobScreeningMode,
   JobTaskHumanResult,
   JobTaskStatus,
-  PaperWithModelEval,
   PromptingConfig,
   ScreeningTarget,
 } from "../state/types";
-import axios from "axios";
+import { api } from "../services/api";
 import { AlertMessage } from "./AlertMessage";
 import { useTypedStoreActions } from "../state/store";
-
-type LLMResult = {
-  mode?: string;
-  overall_decision: {
-    reason: string;
-    binary_decision: boolean;
-    likert_decision: string;
-    probability_decision: number;
-  };
-};
-
-// TODO: Create Zod schema
-type JobTaskReadWithLLMConfig = {
-  uuid: string;
-  job_id: number;
-  doi: string | null;
-  title: string;
-  abstract: string;
-  paper_uuid: string;
-  status:
-  | "NOT_STARTED"
-  | "PENDING"
-  | "RUNNING"
-  | "DONE"
-  | "ERROR"
-  | "CANCELLED";
-  result: LLMResult | null;
-  human_result: JobTaskHumanResult | null;
-  status_metadata?: Record<string, any> | null;
-  error: string | null;
-  llm_config: Record<string, any> | null;
-  prompting_config: Record<string, any> | null;
-  screening_mode: JobScreeningMode | null;
-};
+import { PaperReadWithAvgProbability } from "../services/api/client";
 
 type ManualEvaluationProps = {
   currentTaskUuid?: string;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
-  papers: PaperWithModelEval[];
+  papers: PaperReadWithAvgProbability[];
   paperUuid: string | null;
   screeningTarget: ScreeningTarget;
   onClose: () => void;
@@ -72,7 +32,7 @@ type ModelSuggestion = {
   binary: string | null;
   likertScale: string | null;
   probability: number | null;
-  screeningType: PromptingConfig["screening_type"];
+  screeningType: PromptingConfig["screening_type"] | null;
   screeningMode: JobScreeningMode | null;
 };
 
@@ -88,57 +48,50 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
   // TODO: Refactor this to use redux
-  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>(
-    [],
-  );
+  const [modelSuggestions, setModelSuggestions] = useState<ModelSuggestion[]>([]);
 
-  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult)
+  const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult);
 
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
 
-  const handleAddHumanResult = useCallback((humanResult: JobTaskHumanResult) => {
-    if (!paperUuid || !currentPaper) return;
+  const handleAddHumanResult = useCallback(
+    (humanResult: JobTaskHumanResult) => {
+      if (!paperUuid || !currentPaper) return;
 
-    try {
-      addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
-      onEvaluated();
-    } catch (error) {
-      console.error("Error adding human result:", error);
-    }
-  }, [paperUuid, currentPaper, onEvaluated, addHumanResult])
+      try {
+        addHumanResult({ projectUuid: currentPaper.project_uuid, paperUuid, humanResult });
+        onEvaluated();
+      } catch (error) {
+        console.error("Error adding human result:", error);
+      }
+    },
+    [paperUuid, currentPaper, onEvaluated, addHumanResult],
+  );
 
   // TODO: Refactor this to use Redux
   const getModelSuggestions = useCallback(async (paperUuid: string) => {
-    const response = await axios.get(`/api/v1/jobtask?paper_uuid=${paperUuid}`);
-    const data = response.data as JobTaskReadWithLLMConfig[];
+    const data = await api.get("/api/v1/jobtask", { query: { paper_uuid: paperUuid } });
 
-    // TODO: Refactor with types and proper handling
     return data
       .filter((entry) => entry.status !== JobTaskStatus.ERROR)
-      // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
-      // skip to avoid erroring.
-      .filter((entry) => !entry.result || entry.result.mode !== "PER_CRITERIA")
-      .map((entry) => {
-        return {
-          modelName: entry.llm_config ? entry.llm_config.model_name : "N/A",
-          binary: entry.result
-            ? entry.result.overall_decision.binary_decision
-              ? "Include"
-              : "Exclude"
-            : null,
-          likertScale: entry.result
-            ? entry.result.overall_decision.likert_decision
-            : null,
-          probability: entry.result
-            ? entry.result.overall_decision.probability_decision
-            : null,
-          screeningType: entry.prompting_config
-            ? entry.prompting_config.screening_type
-            : null,
-          screeningMode: entry.screening_mode,
-        } satisfies ModelSuggestion;
+      .flatMap((entry) => {
+        // Quick fix: PER_CRITERIA results don't have the same format as ZS or FS,
+        // skip to avoid erroring.
+        if (entry.result && "mode" in entry.result) return [];
+        const decision = entry.result?.overall_decision ?? null;
+        return [
+          {
+            modelName: entry.llm_config.model_name,
+            binary: decision ? (decision.binary_decision ? "Include" : "Exclude") : null,
+            likertScale: decision ? decision.likert_decision : null,
+            probability: decision ? decision.probability_decision : null,
+            // The generated string literals match the values of the app's enums
+            screeningType: entry.prompting_config
+              .screening_type as PromptingConfig["screening_type"],
+            screeningMode: entry.screening_mode as JobScreeningMode,
+          } satisfies ModelSuggestion,
+        ];
       });
-    /* eslint-enable @typescript-eslint/no-explicit-any */
   }, []);
 
   useEffect(() => {
@@ -156,12 +109,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         handleAddHumanResult(JobTaskHumanResult.INCLUDE);
       } else if (e.key === "u" || e.key === "U") {
         handleAddHumanResult(JobTaskHumanResult.UNSURE);
-      } else if (
-        e.key === "n" ||
-        e.key === "N" ||
-        e.key === "e" ||
-        e.key === "E"
-      ) {
+      } else if (e.key === "n" || e.key === "N" || e.key === "e" || e.key === "E") {
         handleAddHumanResult(JobTaskHumanResult.EXCLUDE);
       } else if (e.key === "Escape") {
         onClose();
@@ -188,16 +136,12 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         />
         <div className="grid h-full gap-6 p-8 grid-cols-[14rem_3fr_2fr]">
           <div className="flex flex-col min-h-0">
-            <DialogTitle className="text-base font-semibold mb-4">
-              Model suggestions
-            </DialogTitle>
+            <DialogTitle className="text-base font-semibold mb-4">Model suggestions</DialogTitle>
             <div
               className="flex flex-col gap-4 overflow-y-auto pr-4 max-w-60
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
-              {modelSuggestions.length === 0 && (
-                <AlertMessage message="No model suggestions." />
-              )}
+              {modelSuggestions.length === 0 && <AlertMessage message="No model suggestions." />}
               {modelSuggestions.map((suggestion, i) => (
                 <LlmModelCard
                   key={i}
@@ -215,18 +159,25 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
           <div className="flex flex-col min-h-0">
             <div className="pr-10">
               <DialogTitle className="text-lg font-bold mb-3">
-                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}: {currentPaper.title}
+                {isGithubScreening ? "Repository" : "Paper"} #{currentPaper.paper_id}:{" "}
+                {currentPaper.title}
               </DialogTitle>
             </div>
             <div
               className="flex-1 overflow-y-auto
-              [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             >
               {currentPaper.doi && (
                 <div className="text-sm pt-2 pb-2">
                   <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
                   <a
-                    href={isGithubScreening ? (/^https?:\/\//i.test(currentPaper.doi) ? currentPaper.doi : undefined) : encodeURI(`https://doi.org/${currentPaper.doi}`)}
+                    href={
+                      isGithubScreening
+                        ? /^https?:\/\//i.test(currentPaper.doi)
+                          ? currentPaper.doi
+                          : undefined
+                        : encodeURI(`https://doi.org/${currentPaper.doi}`)
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline text-blue-600 hover:text-blue-800"
@@ -290,7 +241,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
 
           <div
             className="flex flex-col overflow-y-auto
-          [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="font-bold text-sm mb-2">Inclusion criteria</p>
             <div className="bg-blue-50 rounded-xl p-3 mb-4">

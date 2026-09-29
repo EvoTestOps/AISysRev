@@ -6,7 +6,7 @@ type LlmModelCardProps = {
   binary: string | null;
   likertScale: string | null;
   probability: number | null;
-  screeningType: PromptingConfig["screening_type"];
+  screeningType: PromptingConfig["screening_type"] | null;
   screeningMode: JobScreeningMode | null;
 };
 

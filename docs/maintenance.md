@@ -68,7 +68,7 @@ npm audit                    # known vulnerabilities
 Notes:
 
 - `npm update` is the safe first step. Majors need `npm install <pkg>@latest` (or edit `package.json` and run `npm install`) and a look at the package's changelog.
-- Some packages are intentionally held back and need deliberate migration work: `react`/`react-dom` (18.x), `typescript` (`~5.7`, tilde range), `tailwind-merge` (2.x), `vite` (6.x). `typescript-eslint`, `@vitejs/plugin-react` and `vitest` tend to have peer-dependency requirements on `typescript`/`vite`, so upgrade them together.
+- Some packages are intentionally held back and need deliberate migration work: `react`/`react-dom` (18.x), `typescript` (`~5.7`, tilde range), `tailwind-merge` (2.x), `vite` (6.x). `@vitejs/plugin-react` and `vitest` tend to have peer-dependency requirements on `typescript`/`vite`, so upgrade them together.
 - `@playwright/test` and `@vitest/browser-playwright` both pull Playwright. After a Playwright upgrade, re-install browsers locally with `npx playwright install --with-deps`. CI does this on every run.
 - `@types/node` should track the Node major used in `.nvmrc` (currently 24), not fall behind it.
 - Don't hand-edit `package-lock.json`. If it gets into a bad state, delete `node_modules` and run `npm install` again (avoid deleting the lockfile, which re-resolves everything).

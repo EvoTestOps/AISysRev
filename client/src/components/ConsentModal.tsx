@@ -21,9 +21,11 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ open, onAccepted }) 
     setSubmitting(true);
     try {
       await api.post("/api/v1/auth/consent", {
-        terms,
-        privacy_policy: privacyPolicy,
-        research,
+        body: {
+          terms,
+          privacy_policy: privacyPolicy,
+          research,
+        },
       });
       onAccepted();
     } catch {

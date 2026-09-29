@@ -147,37 +147,6 @@ export type JobWithStats = {
   stats: JobStats;
 };
 
-export type Paper = {
-  uuid: string;
-  paper_id: number;
-  project_uuid: string;
-  file_uuid: string | null;
-  pdf_file_uuid: string | null;
-  doi: string | null;
-  title: string;
-  abstract: string;
-  human_result: JobTaskHumanResult | null;
-  created_at: Date | null;
-  updated_at: Date | null;
-};
-
-export type PaperWithModelEval = {
-  uuid: string;
-  paper_id: number;
-  project_uuid: string;
-  file_uuid: string | null;
-  pdf_file_uuid: string | null;
-  pdf_filename: string | null;
-  doi: string | null;
-  title: string;
-  abstract: string;
-  human_result: JobTaskHumanResult | null;
-  created_at: Date | null;
-  updated_at: Date | null;
-  avg_probability_decision: number | null;
-  error_messages: string[] | null;
-};
-
 // TODO: Remove result type
 export type Result = {
   title: string;
