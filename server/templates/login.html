@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AISysRev – Login</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --panel: #0f172a;
+      --panel-text: #e2e8f0;
+      --panel-muted: #94a3b8;
+      --accent: #38bdf8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #1e293b;
+      --primary-hover: #334155;
+      --secondary: #f1f5f9;
+      --secondary-hover: #e2e8f0;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #020617;
+        --card: #0f172a;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --border: #1e293b;
+        --primary: #f1f5f9;
+        --primary-hover: #cbd5e1;
+        --secondary: #1e293b;
+        --secondary-hover: #334155;
+      }
+      .btn-primary { color: #0f172a !important; }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Roboto, system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+    a { color: inherit; }
+
+    /* Info panel */
+    .info {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.18), transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(129, 140, 248, 0.16), transparent 45%),
+        var(--panel);
+      color: var(--panel-text);
+      padding: 3rem clamp(1.5rem, 5vw, 4.5rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 2.5rem;
+    }
+    .brand {
+      font-family: inherit;
+      font-weight: 800;
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .brand-name {
+      background: linear-gradient(90deg, #f8fafc 0%, #7dd3fc 45%, #a5b4fc 75%, #c084fc 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.35));
+    }
+    .hero h2 {
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      line-height: 1.15;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      max-width: 32rem;
+    }
+    .hero h2 span { color: var(--accent); }
+    .hero p { margin-top: 1rem; color: var(--panel-muted); max-width: 34rem; }
+    .features { list-style: none; margin-top: 2rem; display: grid; gap: 1rem; max-width: 34rem; }
+    .features li { display: flex; gap: 0.85rem; align-items: flex-start; }
+    .features svg { flex: none; width: 1.25rem; height: 1.25rem; margin-top: 0.15rem; color: var(--accent); }
+    .features strong { display: block; color: #f8fafc; font-weight: 600; }
+    .features small { color: var(--panel-muted); font-size: 0.9rem; }
+    .citation {
+      font-size: 0.85rem;
+      color: var(--panel-muted);
+      border-left: 2px solid rgba(148, 163, 184, 0.35);
+      padding-left: 0.85rem;
+      max-width: 34rem;
+    }
+    .strategies { margin-top: 2rem; max-width: 34rem; }
+    .strategies h3 {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--panel-muted); margin-bottom: 0.75rem;
+    }
+    .strategy-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+    .strategy {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 0.6rem;
+      padding: 0.75rem 0.85rem;
+    }
+    .strategy strong { display: block; color: #f8fafc; font-size: 0.9rem; font-weight: 600; }
+    .strategy small { display: block; margin-top: 0.25rem; color: var(--panel-muted); font-size: 0.8rem; line-height: 1.4; }
+    .version { margin-top: 0.5rem; font-size: 0.75rem; color: var(--panel-muted); opacity: 0.8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .citation a { color: var(--panel-text); text-underline-offset: 2px; }
+
+    /* Sign-in panel */
+    .auth { display: flex; align-items: center; justify-content: center; padding: 3rem 1.5rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 24rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .card h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; display: flex; align-items: center; gap: 0.6rem; }
+    .card h1 .icon-badge {
+      width: 2rem; height: 2rem; border-radius: 0.5rem;
+      background: var(--secondary); border: 1px solid var(--border);
+      display: grid; place-items: center; color: var(--text);
+    }
+    .card h1 svg { width: 1.1rem; height: 1.1rem; }
+    .card .lead { color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 0.6rem;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn svg { width: 1.1rem; height: 1.1rem; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--secondary); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--secondary-hover); }
+    .divider { display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.8rem; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .note { font-size: 0.85rem; color: var(--muted); }
+    .legal { font-size: 0.8rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 1.25rem; }
+    .legal a { text-underline-offset: 2px; }
+    .footer-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 0.75rem; font-size: 0.8rem; color: var(--muted); }
+    .footer-links a { text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; }
+    .footer-links svg { width: 0.95rem; height: 0.95rem; flex: none; }
+    .footer-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 860px) {
+      .strategy-grid { grid-template-columns: 1fr; }
+      body { grid-template-columns: 1fr; }
+      .info { padding: 2rem 1rem; gap: 1.75rem; }
+      .auth { padding: 2rem 1rem 3rem; order: -1; }
+      .info .brand { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <section class="info" aria-label="About AISysRev">
+    <div class="brand"><span class="brand-name">AISysRev</span></div>
+
+    <div class="hero">
+      <h2>LLM-assisted <span>systematic literature reviews.</span></h2>
+      <p>
+        AISysRev is a research-based tool for accelerating systematic literature reviews (SLRs). Import a list of papers,
+        define inclusion and exclusion criteria, and choose from various LLMs from multiple providers to evaluate papers
+        alongside your own manual screening.
+      </p>
+      <ul class="features">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <div><strong>Title-abstract screening</strong><small>Binary decisions, 1–7 ratings or inclusion probabilities per criterion.</small></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <div><strong>Full-text screening</strong><small>Upload PDFs or bulk import from Zotero; the most relevant passages are matched to each criterion.</small></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <div><strong>Multiple LLMs</strong><small>Compare models from OpenAI, Anthropic, Google, Mistral and more via OpenRouter.</small></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+          <div><strong>Import and export</strong><small>CSV import from Scopus or GitHub; export results for Excel, R or Python.</small></div>
+        </li>
+      </ul>
+
+      <div class="strategies">
+        <h3>Prompting strategies</h3>
+        <div class="strategy-grid">
+          <div class="strategy">
+            <strong>Zero-shot</strong>
+            <small>The LLM screens each paper using only your inclusion and exclusion criteria.</small>
+          </div>
+          <div class="strategy">
+            <strong>Few-shot</strong>
+            <small>Papers you have labelled as include or exclude are added to the prompt as examples.</small>
+          </div>
+          <div class="strategy">
+            <strong>Per-criteria</strong>
+            <small>Each criterion is evaluated in its own LLM call for a more focused decision.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <p class="citation">
+        Based on research presented at FSE 2026:
+        <a href="https://dl.acm.org/doi/10.1145/3803437.3806408" target="_blank" rel="noopener">AISysRev – LLM-based Tool for Title-abstract Screening</a>.
+        Developed by the EvoTestOps group at the University of Helsinki.
+      </p>
+      <p class="version" title="{{ app_version }}">Version {{ app_version_short }}</p>
+    </div>
+  </section>
+
+  <main class="auth">
+    <div class="card">
+      <div>
+        <h1>
+          <span class="icon-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          Sign in
+        </h1>
+        <p class="lead">Use your University of Helsinki account to continue.</p>
+      </div>
+
+      <a href="/api/v1/auth/login" id="login-btn" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+        Login with University of Helsinki
+      </a>
+
+      {% if show_dev_login %}
+      <div class="divider">Development</div>
+      <a href="/api/v1/auth/dev-login" id="dev-btn" class="btn btn-secondary">
+        Dev Login
+      </a>
+      {% endif %}
+
+      <p class="legal">
+        By signing in you agree to the
+        <a href="/terms-and-conditions" target="_blank" rel="noopener">Terms and Conditions</a>
+        and acknowledge the
+        <a href="/register-and-privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.
+      </p>
+
+      <nav class="footer-links" aria-label="Project links">
+        <a href="https://github.com/EvoTestOps/AISysRev" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.72.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+          GitHub
+        </a>
+        <a href="https://github.com/EvoTestOps/AISysRevCmdLine" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+          Command-line version
+        </a>
+        <a href="/docs" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          API docs
+        </a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

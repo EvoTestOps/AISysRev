@@ -27,6 +27,10 @@ localhost:9443 {
 		reverse_proxy backend_prod:8080
 	}
 
+	handle /terms-and-conditions {
+		reverse_proxy backend_prod:8080
+	}
+
 	handle /openapi.json {
 		reverse_proxy backend_prod:8080
 	}

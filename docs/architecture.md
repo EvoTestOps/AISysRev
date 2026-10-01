@@ -39,7 +39,7 @@ graph TD
 
 | Service | Role |
 | --- | --- |
-| Frontend | Caddy serves the built React app and reverse-proxies backend routes (`/api`, `/login`, `/logout`, `/register-and-privacy-policy`, `/openapi.json`, `/docs`). In development the Vite dev server does both jobs. |
+| Frontend | Caddy serves the built React app and reverse-proxies backend routes (`/api`, `/login`, `/logout`, `/register-and-privacy-policy`, `/terms-and-conditions`, `/openapi.json`, `/docs`). In development the Vite dev server does both jobs. |
 | Backend | FastAPI application. Runs database migrations on startup when `RUN_MIGRATIONS=true`. |
 | Celery | Runs the screening jobs in the background: LLM calls, and for PDF screening the text extraction and embeddings. |
 | PostgreSQL | Main database, see [database.md](database.md). It must be the `pgvector` image, because a migration enables the `vector` extension. Embeddings are currently stored as JSONB, though. |

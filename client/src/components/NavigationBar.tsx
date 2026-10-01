@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { H3 } from "./Typography";
+import AISysRevLogo from "../assets/images/aisysrev-logo-on-light.svg";
 
 type NavigationBarProps = {
   pageTitle: string;
@@ -17,7 +18,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
       <div className="flex flex-col sm:flex-row justify-between p-8 relative">
         <div>
           <Link to="/" className="m-0">
-            <span className="text-4xl font">AISysRev</span>
+            <img src={AISysRevLogo} alt="AISysRev" className="h-10 w-auto" />
           </Link>
           {appEnv === "dev" && (
             <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm absolute top-2 left-2 opacity-40 select-none">
