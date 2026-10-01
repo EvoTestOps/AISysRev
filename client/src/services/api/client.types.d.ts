@@ -252,7 +252,7 @@ export namespace Schemas {
     config_parameters: Array<ConfigParameter>;
   };
   export type ResearchConsentUpdate = { research: boolean };
-  export type UpsertData = { name: string; value: string };
+  export type UpsertData = { name: string; value: string; secret?: boolean };
   /**
    * Current user as returned by /auth/me; omits the identity provider subject.
    */
