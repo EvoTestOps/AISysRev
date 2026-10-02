@@ -62,6 +62,7 @@ import { FewShotModal } from "../components/FewShotModal";
 import classNames from "classnames";
 import { Badge } from "../components/Badge";
 import { useConfig } from "../config/config";
+import { GLOBAL_PROVIDER_OVERRIDES } from "../config/globalProviderOverrides";
 import { retrieve_models } from "../services/llmService";
 import { importFulltextFromEndnoteXml } from "../services/fileService";
 import { ScreeningTarget } from "../state/types";
@@ -194,7 +195,11 @@ type ProviderConfigurationProps = {
   modelSelected: boolean;
   providerParametersSchema?: Provider["provider_parameters_json_schema"];
   providerFormValues: Record<string, unknown>;
-  setProviderFormValue: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  setProviderFormValue: React.Dispatch<
+    React.SetStateAction<Record<string, unknown>>
+  >;
+  setModelsLoaded: React.Dispatch<React.SetStateAction<boolean>>;
+  forcedBooleanKeys?: Record<string, boolean>;
 };
 
 const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
@@ -202,6 +207,8 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
   providerParametersSchema,
   providerFormValues,
   setProviderFormValue,
+  setModelsLoaded,
+  forcedBooleanKeys = {},
 }) => {
   if (
     providerParametersSchema === null ||
@@ -242,14 +249,53 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                 <label className="text-sm font-medium text-slate-700">{property.title}</label>
                 <span className="text-sm font-medium text-slate-600">
                   {providerFormValues[key] !== undefined &&
-                  property.type !== "string" &&
-                  providerFormValues[key] !== "" ? (
+                    property.type !== "string" &&
+                    property.type !== "boolean" &&
+                    providerFormValues[key] !== "" ? (
                     <>{providerFormValues[key]}</>
                   ) : (
                     ""
                   )}
                 </span>
               </div>
+              {property.type === "boolean" && (() => {
+                const forced = Boolean(forcedBooleanKeys[key]);
+                const enabled = forced || Boolean(providerFormValues[key]);
+                const disabled = modelSelected || forced;
+                return (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    disabled={disabled}
+                    data-testid={`property_${key}_input`}
+                    onClick={() => {
+                      setProviderFormValue((vals) => ({
+                        ...vals,
+                        [key]: !enabled,
+                      }));
+                      setModelsLoaded(false);
+                    }}
+                    className={classNames(
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:cursor-not-allowed",
+                      {
+                        "bg-slate-800": enabled,
+                        "bg-slate-300": !enabled,
+                      },
+                    )}
+                  >
+                    <span
+                      className={classNames(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        {
+                          "translate-x-6": enabled,
+                          "translate-x-1": !enabled,
+                        },
+                      )}
+                    />
+                  </button>
+                );
+              })()}
               {property.type === "number" && (
                 <input
                   type="range"
@@ -266,6 +312,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // @ts-expect-error Ok
@@ -283,6 +330,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       ...vals,
                       [key]: e.target.value,
                     }));
+                    setModelsLoaded(false);
                   }}
                   // @ts-expect-error Ok
                   value={providerFormValues[key]}
@@ -301,6 +349,7 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                         ...vals,
                         [key]: val,
                       }));
+                      setModelsLoaded(false);
                     }
                   }}
                   // @ts-expect-error Ok
@@ -308,6 +357,11 @@ const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                 />
               )}
               <p className="text-xs text-gray-500">{property.description}</p>
+              {forcedBooleanKeys[key] && (
+                <p className="text-xs text-amber-600">
+                  Forced on by your global provider settings.
+                </p>
+              )}
             </div>
           );
         })}
@@ -573,6 +627,70 @@ export const ProjectPage = () => {
   useEffect(() => {
     setProviderFormValue(defaultProviderValues);
   }, [defaultProviderValues]);
+
+  // One useConfig call per entry in GLOBAL_PROVIDER_OVERRIDES.
+  const {
+    setting: openrouterForceZdrSetting,
+    loading: openrouterForceZdrLoading,
+  } = useConfig(GLOBAL_PROVIDER_OVERRIDES[0].settingKey);
+  const globalOverrideSettingValues = useMemo<Record<string, string | undefined>>(
+    () => ({
+      [GLOBAL_PROVIDER_OVERRIDES[0].settingKey]: openrouterForceZdrSetting?.value,
+    }),
+    [openrouterForceZdrSetting],
+  );
+  const globalOverridesLoading = openrouterForceZdrLoading;
+
+  const forcedBooleanKeys = useMemo(() => {
+    const keys: Record<string, boolean> = {};
+    // Don't apply defaults until the stored values are known, otherwise a
+    // default-on override would flash on (and stick in the form) for a user who
+    // has explicitly turned it off.
+    if (globalOverridesLoading) {
+      return keys;
+    }
+    for (const override of GLOBAL_PROVIDER_OVERRIDES) {
+      if (selectedLlmProvider?.value !== override.providerName) {
+        continue;
+      }
+      // Same fallback the backend uses: an unset setting takes the config
+      // parameter's default.
+      const defaultValue = configParameters?.find(
+        (param) => param.key === override.settingKey,
+      )?.defaultValue;
+      const value =
+        globalOverrideSettingValues[override.settingKey] ??
+        (defaultValue == null ? undefined : String(defaultValue));
+      if (value === "true") {
+        keys[override.providerParameterKey] = true;
+      }
+    }
+    return keys;
+  }, [
+    selectedLlmProvider,
+    globalOverrideSettingValues,
+    globalOverridesLoading,
+    configParameters,
+  ]);
+
+  useEffect(() => {
+    const forcedKeys = Object.keys(forcedBooleanKeys);
+    if (forcedKeys.length === 0) {
+      return;
+    }
+    setProviderFormValue((vals) => {
+      const alreadyForced = forcedKeys.every((key) => vals[key] === true);
+      if (alreadyForced) {
+        return vals;
+      }
+      const forcedVals = { ...vals };
+      for (const key of forcedKeys) {
+        forcedVals[key] = true;
+      }
+      return forcedVals;
+    });
+    setModelsLoaded(false);
+  }, [forcedBooleanKeys]);
 
   const pendingTasks = useMemo(
     () => papers.filter((paper) => paper.human_result == null),
@@ -1219,19 +1337,25 @@ export const ProjectPage = () => {
                   providerFormValues={providerFormValues}
                   setProviderFormValue={setProviderFormValue}
                   providerParametersSchema={providerParametersSchema}
+                  setModelsLoaded={setModelsLoaded}
+                  forcedBooleanKeys={forcedBooleanKeys}
                 />
               )}
             </div>
             {isLlmProviderSelected &&
               configParameters &&
-              configParameters.map((param, i) => (
-                <ConfigKeyCheck
-                  key={`${param.key}_${i}`}
-                  config_key={param.key}
-                  should_show
-                  title={param.title}
-                />
-              ))}
+              // Only secrets (API keys) are required to be set; non-secret
+              // parameters such as toggles fall back to their default.
+              configParameters
+                .filter((param) => param.secret)
+                .map((param, i) => (
+                  <ConfigKeyCheck
+                    key={`${param.key}_${i}`}
+                    config_key={param.key}
+                    should_show
+                    title={param.title}
+                  />
+                ))}
             <label className="text-sm font-medium text-slate-700">Model</label>
             {!modelsLoaded && (
               <div className="w-full p-1 bg-natural-100 border border-gray-300 h-10 rounded-lg shadow-sm bg-gray-100 focus:outline-none focus:ring-0 opacity-80 select-none text-sm" />

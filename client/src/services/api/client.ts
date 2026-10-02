@@ -428,7 +428,11 @@ export type ResearchConsentUpdate = __TypedOpenapi.Schemas.ResearchConsentUpdate
 export const ResearchConsentUpdate = z.strictObject({ research: z.boolean() });
 
 export type UpsertData = __TypedOpenapi.Schemas.UpsertData;
-export const UpsertData = z.strictObject({ name: z.string().max(1024), value: z.string().max(1024) });
+export const UpsertData = z.strictObject({
+  name: z.string().max(1024),
+  value: z.string().max(1024),
+  secret: z.boolean().default(true),
+});
 
 export type UserMe = __TypedOpenapi.Schemas.UserMe;
 export const UserMe = z.strictObject({

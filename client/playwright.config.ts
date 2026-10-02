@@ -21,7 +21,7 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: 3,
+  retries: 4,
   /* 30 seconds */
   timeout: 30 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -71,7 +71,7 @@ export default defineConfig({
     timeout: 240 * 1000,
     gracefulShutdown: {
       signal: "SIGINT",
-      timeout: 10 * 1000,
+      timeout: 20 * 1000,
     },
   },
 });

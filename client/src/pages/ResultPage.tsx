@@ -17,12 +17,12 @@ import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import {useTypedStoreState} from "../state/store";
+import { useTypedStoreState } from "../state/store";
 
 function Row({
   paper,
   modelColumns,
-  isGithubScreening
+  isGithubScreening,
 }: {
   paper: Result;
   modelColumns: string[];
@@ -41,7 +41,13 @@ function Row({
         <TableCell>
           {paper.doi && (
             <a
-              href={isGithubScreening ? (/^https?:\/\//i.test(paper.doi) ? paper.doi : undefined) : `https://doi.org/${paper.doi}`}
+              href={
+                isGithubScreening
+                  ? /^https?:\/\//i.test(paper.doi)
+                    ? paper.doi
+                    : undefined
+                  : `https://doi.org/${paper.doi}`
+              }
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#1976d2", textDecoration: "underline" }}
@@ -50,15 +56,13 @@ function Row({
             </a>
           )}
         </TableCell>
-        <TableCell sx={{ fontWeight: "bold" }}>
-          {paper.human_result ?? "—"}
-        </TableCell>
+        <TableCell sx={{ fontWeight: "bold" }}>{paper.human_result ?? "—"}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={4}>
           <Collapse in={isOpen} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
-              <Typography variant="body1" fontWeight="bold" gutterBottom>
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: "bold" }}>
                 Model Results
               </Typography>
               {modelColumns
@@ -68,12 +72,7 @@ function Row({
                     {model}: <b>{paper[model]}</b>
                   </Typography>
                 ))}
-              <Typography
-                variant="body1"
-                fontWeight="bold"
-                gutterBottom
-                sx={{ mt: 2 }}
-              >
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: "bold", mt: 2 }}>
                 {isGithubScreening ? "README" : "Abstract"}
               </Typography>
               <Typography variant="body2" gutterBottom>
@@ -106,9 +105,7 @@ export const ResultPage = () => {
 
   const fixedColumns = ["title", "abstract", "doi", "human_result"];
   const modelColumns =
-    result.length > 0
-      ? Object.keys(result[0]).filter((key) => !fixedColumns.includes(key))
-      : [];
+    result.length > 0 ? Object.keys(result[0]).filter((key) => !fixedColumns.includes(key)) : [];
 
   return (
     <Layout title="Results">
