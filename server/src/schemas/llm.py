@@ -49,6 +49,25 @@ class StructuredResponse(BaseModel, extra="forbid"):
     exclusion_criteria: list[Criterion]
 
 
+class JevDecision(BaseModel, extra="forbid"):
+    """Decision from TypeSafe Jev, which answers with a probability only (no Likert)."""
+
+    binary_decision: bool
+    probability_decision: float
+    reason: str
+
+
+class JevCriterion(BaseModel, extra="forbid"):
+    name: str
+    decision: JevDecision
+
+
+class JevStructuredResponse(BaseModel, extra="forbid"):
+    overall_decision: JevDecision
+    inclusion_criteria: list[JevCriterion]
+    exclusion_criteria: list[JevCriterion]
+
+
 class CriterionResponse(BaseModel, extra="forbid"):
     probability_decision: float = Field(
         description="The likelihood, that the criterion applies or the primary study is relevant. "

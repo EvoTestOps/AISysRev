@@ -129,6 +129,23 @@ export const ValidationError = z.strictObject({
 export type HTTPValidationError = __TypedOpenapi.Schemas.HTTPValidationError;
 export const HTTPValidationError = z.strictObject({ detail: z.array(ValidationError) }).partial();
 
+export type JevDecision = __TypedOpenapi.Schemas.JevDecision;
+export const JevDecision = z.strictObject({
+  binary_decision: z.boolean(),
+  probability_decision: z.number(),
+  reason: z.string(),
+});
+
+export type JevCriterion = __TypedOpenapi.Schemas.JevCriterion;
+export const JevCriterion = z.strictObject({ name: z.string(), decision: JevDecision });
+
+export type JevStructuredResponse = __TypedOpenapi.Schemas.JevStructuredResponse;
+export const JevStructuredResponse = z.strictObject({
+  overall_decision: JevDecision,
+  inclusion_criteria: z.array(JevCriterion),
+  exclusion_criteria: z.array(JevCriterion),
+});
+
 export type JobCancelResponse = __TypedOpenapi.Schemas.JobCancelResponse;
 export const JobCancelResponse = z.strictObject({ detail: z.string() });
 
@@ -259,7 +276,7 @@ export const JobTaskRead = z.strictObject({
   abstract: z.string(),
   paper_uuid: z.uuid(),
   status: JobTaskStatus,
-  result: z.union([StructuredResponse, PerCriteriaResult, z.null()]),
+  result: z.union([StructuredResponse, JevStructuredResponse, PerCriteriaResult, z.null()]),
   human_result: JobTaskHumanResult.nullable().optional(),
   status_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   error: z.string().nullable().optional(),
@@ -274,7 +291,7 @@ export const JobTaskReadWithLLMConfig = z.strictObject({
   abstract: z.string(),
   paper_uuid: z.uuid(),
   status: JobTaskStatus,
-  result: z.union([StructuredResponse, PerCriteriaResult, z.null()]),
+  result: z.union([StructuredResponse, JevStructuredResponse, PerCriteriaResult, z.null()]),
   human_result: JobTaskHumanResult.nullable().optional(),
   status_metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   error: z.string().nullable().optional(),
@@ -415,6 +432,8 @@ export const Provider = z.strictObject({
   provider_parameters_json_schema: z.record(z.string(), z.unknown()).nullable().optional(),
   model_parameters_json_schema: z.record(z.string(), z.unknown()),
   config_parameters: z.array(ConfigParameter),
+  api_key_config_parameter: ConfigParameter.nullable().optional(),
+  supports_per_criteria: z.boolean().default(true),
 });
 
 export type ProviderConfigParamsResponse = __TypedOpenapi.Schemas.ProviderConfigParamsResponse;

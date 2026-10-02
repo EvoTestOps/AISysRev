@@ -62,7 +62,7 @@ def process_job_task(self: Task, job_id: int, job_data: dict):
 
 def _create_retrying_client(max_attempts: int = 3, max_wait_seconds=60) -> AsyncClient:
     def should_retry_status(response):
-        if response.status_code in (429, 502, 503, 504):
+        if response.status_code in (429, 502, 503, 504, 529):
             response.raise_for_status()
 
     transport = AsyncHTTPX2TenacityTransport(

@@ -93,6 +93,16 @@ export namespace Schemas {
     ctx?: Record<string, unknown>;
   };
   export type HTTPValidationError = Partial<{ detail: Array<ValidationError> }>;
+  /**
+   * Decision from TypeSafe Jev, which answers with a probability only (no Likert).
+   */
+  export type JevDecision = { binary_decision: boolean; probability_decision: number; reason: string };
+  export type JevCriterion = { name: string; decision: JevDecision };
+  export type JevStructuredResponse = {
+    overall_decision: JevDecision;
+    inclusion_criteria: Array<JevCriterion>;
+    exclusion_criteria: Array<JevCriterion>;
+  };
   export type JobCancelResponse = { detail: string };
   export type ZeroShotPromptingConfig = Partial<{ screening_type: "ZERO_SHOT"; screening_target: ScreeningTarget }>;
   export type PerCriteriaPromptingConfig = Partial<{
@@ -158,7 +168,7 @@ export namespace Schemas {
     abstract: string;
     paper_uuid: string;
     status: JobTaskStatus;
-    result: StructuredResponse | PerCriteriaResult | null;
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | null;
     human_result?: JobTaskHumanResult | null;
     status_metadata?: Record<string, unknown> | null;
     error?: string | null;
@@ -171,7 +181,7 @@ export namespace Schemas {
     abstract: string;
     paper_uuid: string;
     status: JobTaskStatus;
-    result: StructuredResponse | PerCriteriaResult | null;
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | null;
     human_result?: JobTaskHumanResult | null;
     status_metadata?: Record<string, unknown> | null;
     error?: string | null;
@@ -245,6 +255,8 @@ export namespace Schemas {
     provider_parameters_json_schema?: Record<string, unknown> | null;
     model_parameters_json_schema: Record<string, unknown>;
     config_parameters: Array<ConfigParameter>;
+    api_key_config_parameter?: ConfigParameter | null;
+    supports_per_criteria?: boolean;
   };
   export type ProviderConfigParamsResponse = {
     title: string;

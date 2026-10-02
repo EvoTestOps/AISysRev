@@ -79,11 +79,13 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         // skip to avoid erroring.
         if (entry.result && "mode" in entry.result) return [];
         const decision = entry.result?.overall_decision ?? null;
+        // Jev results have no Likert scale.
+        const likert = decision && "likert_decision" in decision ? decision.likert_decision : null;
         return [
           {
             modelName: entry.llm_config.model_name,
             binary: decision ? (decision.binary_decision ? "Include" : "Exclude") : null,
-            likertScale: decision ? decision.likert_decision : null,
+            likertScale: typeof likert === "string" ? likert : null,
             probability: decision ? decision.probability_decision : null,
             // The generated string literals match the values of the app's enums
             screeningType: entry.prompting_config

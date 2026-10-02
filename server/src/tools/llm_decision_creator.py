@@ -19,6 +19,7 @@ from src.schemas.job import (
 )
 from src.schemas.llm import (
     CriterionResponse,
+    JevStructuredResponse,
     ProviderRuntimeParameters,
     StructuredResponse,
 )
@@ -61,7 +62,7 @@ async def get_structured_response(
     job_data: JobCreate,
     inc_exc_criteria: dict,
     client: AsyncClient,
-) -> StructuredResponse:
+) -> StructuredResponse | JevStructuredResponse:
     criteria = create_criteria(
         inc_exc_criteria["inclusion_criteria"],
         inc_exc_criteria["exclusion_criteria"],
@@ -145,7 +146,7 @@ async def get_structured_response(
                 model=job_data.llm_config.model_name,
                 api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
             ),
-            response_schema=StructuredResponse,
+            response_schema=llm.structured_response_schema,
             user_prompt=prompt_text,
             client=client,
         )
@@ -176,7 +177,7 @@ async def get_structured_response(
                 model=job_data.llm_config.model_name,
                 api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
             ),
-            response_schema=StructuredResponse,
+            response_schema=llm.structured_response_schema,
             user_prompt=prompt_text,
             client=client,
         )
