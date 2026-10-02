@@ -85,7 +85,9 @@ export const AboutPage = () => (
         <strong>
           that support structured JSON response, along with configuring
           temperature, seed and top_p parameters.
-        </strong>
+        </strong>{" "}
+        TypeSafe Jev is also supported through OpenRouter. It returns
+        probabilities only, without reasoning or a Likert scale.
       </p>
       <H3>License</H3>
       <p>MIT License</p>

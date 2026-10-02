@@ -24,6 +24,11 @@ from src.schemas.llm import (
     ProviderRuntimeParameters,
 )
 
+OPENROUTER_HEADERS = {
+    "X-Title": "AISysRev",
+    "HTTP-Referer": "https://github.com/EvoTestOps/AISysRev",
+}
+
 
 class OpenRouterProviderParams(BaseModel):
     zdr: bool = Field(
@@ -113,10 +118,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
 
         settings = OpenRouterModelSettings(
             openrouter_provider=self._build_openrouter_provider_settings(),
-            extra_headers={
-                "X-Title": "AISysRev",
-                "HTTP-Referer": "https://github.com/EvoTestOps/AISysRev",
-            },
+            extra_headers=OPENROUTER_HEADERS,
             temperature=model_cfg.temperature,
             top_p=model_cfg.top_p,
         )

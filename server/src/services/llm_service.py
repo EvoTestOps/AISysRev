@@ -50,9 +50,7 @@ class LLMService:
         user had saved it.
         """
         global_config: dict[str, str] = {}
-        for param in llm.config_parameters:
-            if param is llm.api_key_config_parameter or param.secret:
-                continue
+        for param in llm.global_config_parameters():
             if param.defaultValue is not None:
                 global_config[param.key] = _config_value_to_str(param.defaultValue)
             setting = await self.setting_service.get_setting(

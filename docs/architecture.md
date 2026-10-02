@@ -50,7 +50,7 @@ graph TD
 
 ## LLMs and OIDC provider
 
-- **LLMs:** the screening models are called through OpenRouter, OpenAI or a local OpenAI-compatible server, depending on what the user selects in the UI. See [local-models.md](local-models.md) for local models.
+- **LLMs:** the screening models are called through OpenRouter, OpenAI or a local OpenAI-compatible server, depending on what the user selects in the UI. TypeSafe Jev, a decision model that returns probabilities instead of text, is called through OpenRouter's System One API. See [local-models.md](local-models.md) for local models.
 - **OIDC provider:** users log in through OpenID Connect. The issuer is set with `OIDC_ISSUER_URL` and defaults to the University of Helsinki login.
 
 ## Port mapping

@@ -6,7 +6,11 @@ from uuid import UUID
 from pydantic import BaseModel, field_validator
 
 from src.schemas.job import JobScreeningMode, LLMModelConfig, PromptingConfig
-from src.schemas.llm import PerCriteriaResult, StructuredResponse
+from src.schemas.llm import (
+    JevStructuredResponse,
+    PerCriteriaResult,
+    StructuredResponse,
+)
 
 
 class JobTaskHumanResult(str, Enum):
@@ -46,7 +50,7 @@ class JobTaskRead(BaseModel):
     abstract: str
     paper_uuid: UUID
     status: JobTaskStatus
-    result: StructuredResponse | PerCriteriaResult | None
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | None
     human_result: JobTaskHumanResult | None = None
     status_metadata: Optional[Dict[str, Any]] = None
     error: Optional[str] = None

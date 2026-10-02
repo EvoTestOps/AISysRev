@@ -1,5 +1,6 @@
 from typing import List
 
+from src.core.llm.providers.jev import JevProvider
 from src.core.llm.providers.local_openai_sdk import LocalOpenAISDKProvider
 from src.core.llm.providers.mock import MockProvider
 from src.core.llm.providers.openai import OpenAIProvider
@@ -10,5 +11,6 @@ llm_providers: List[type[LLMProvider]] = [
     OpenRouterProvider,
     OpenAIProvider,
     LocalOpenAISDKProvider,
+    JevProvider,
     MockProvider,
 ]
