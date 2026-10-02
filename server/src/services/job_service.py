@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 
 from src.celery.tasks import cancel_task
+from src.core.llm.providers import llm_providers
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
@@ -128,6 +129,23 @@ class JobService:
             JobScreeningMode.AUTOMATIC,
         ) and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
             raise ValueError("PER_CRITERIA prompting with PDFs not possible yet")
+
+        provider = next(
+            (
+                p
+                for p in llm_providers
+                if p.provider_name == job_data.llm_config.provider_name
+            ),
+            None,
+        )
+        if (
+            provider is not None
+            and not provider.supports_per_criteria
+            and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig)
+        ):
+            raise ValueError(
+                f"PER_CRITERIA prompting is not supported by {provider.provider_title}"
+            )
 
         new_job = await self.job_crud.create_job(job_data)
         await self.jobtask_service.bulk_create(

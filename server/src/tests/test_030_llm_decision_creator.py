@@ -23,7 +23,11 @@ from src.schemas.job import (
     PerCriteriaPromptingConfig,
     ZeroShotPromptingConfig,
 )
-from src.schemas.llm import CriterionResponse, StructuredResponse
+from src.schemas.llm import (
+    CriterionResponse,
+    JevStructuredResponse,
+    StructuredResponse,
+)
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import ScreeningTarget
 from src.schemas.setting import SettingRead
@@ -81,7 +85,8 @@ def _llm_service(needs_api_key: bool = False, stored_key: str | None = None):
     provider = SimpleNamespace(
         api_key_config_parameter=(
             SimpleNamespace(key=API_KEY_NAME) if needs_api_key else None
-        )
+        ),
+        structured_response_schema=StructuredResponse,
     )
     service = MagicMock()
     service.get_llm.return_value = provider
@@ -195,6 +200,17 @@ async def test_zero_shot_sends_the_paper_prompt_to_the_llm():
     )
     for part in ("The title", "The abstract", "IC1: Is empirical", "EC1: Is a survey"):
         assert part in kwargs["user_prompt"]
+
+
+@pytest.mark.asyncio
+async def test_the_providers_structured_response_schema_is_requested():
+    service, provider = _llm_service()
+    provider.structured_response_schema = JevStructuredResponse
+
+    await _structured(service, _job_data())
+
+    _, kwargs = service.call_llm.await_args
+    assert kwargs["response_schema"] is JevStructuredResponse
 
 
 @pytest.mark.asyncio
