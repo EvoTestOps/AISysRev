@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { ExpandableToast } from "../../components/ExpandableToast";
-import { TypedStatusError } from "../../services/api/client";
-import { fileFetchFromBackend, fileUploadToBackend } from "../../services/fileService";
-import { useTypedStoreActions } from "../../state/store";
-import { FetchedFile, ScreeningTarget } from "../../state/types";
+import { ExpandableToast } from "../../../components/ExpandableToast";
+import { TypedStatusError } from "../../../services/api/client";
+import { fileFetchFromBackend, fileUploadToBackend } from "../../../services/fileService";
+import { useTypedStoreActions } from "../../../state/store";
+import { FetchedFile, ScreeningTarget } from "../../../state/types";
 
 /** The project's uploaded files, and uploading more of them. */
 export const useProjectFiles = (projectUuid: string, screeningTarget: ScreeningTarget) => {

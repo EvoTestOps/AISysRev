@@ -1,7 +1,7 @@
 import { User, Users } from "lucide-react";
 import { JobPromptingType } from "../../../../state/types";
 import { FieldGroup, FieldLabel, SegmentedButton } from "../controls";
-import { CreateTaskForm } from "../useCreateTaskForm";
+import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 
 type PromptingStrategySelectorProps = {
   form: CreateTaskForm;

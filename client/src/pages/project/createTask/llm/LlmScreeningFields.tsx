@@ -3,7 +3,7 @@ import { JobPromptingType } from "../../../../state/types";
 import type { Project } from "../../../../state/types/project";
 import { ModelPicker } from "../ModelPicker";
 import { ProviderSettings } from "../ProviderSettings";
-import { CreateTaskForm } from "../useCreateTaskForm";
+import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 import { EvaluationModeSelector } from "./EvaluationModeSelector";
 import { PerCriteriaLogic } from "./PerCriteriaLogic";
 import { PromptingStrategySelector } from "./PromptingStrategySelector";

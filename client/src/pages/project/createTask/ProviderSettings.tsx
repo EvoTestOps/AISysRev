@@ -1,7 +1,7 @@
 import { Provider } from "../../../state/types";
 import { ConfigKeyCheck } from "./ConfigKeyCheck";
 import { ProviderConfiguration } from "./ProviderConfiguration";
-import { CreateTaskForm } from "./useCreateTaskForm";
+import { CreateTaskForm } from "../hooks/useCreateTaskForm";
 
 type ProviderSettingsProps = {
   form: CreateTaskForm;

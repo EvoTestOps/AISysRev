@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "react-toastify";
 import { useLocation, useRoute, useSearch } from "wouter";
-import { PaperReadWithAvgProbability } from "../../services/api/client";
-import { JobWithStats } from "../../state/types";
+import { PaperReadWithAvgProbability } from "../../../services/api/client";
+import { JobWithStats } from "../../../state/types";
 
 /**
  * Stepping through papers in the manual evaluation modal, which is open on

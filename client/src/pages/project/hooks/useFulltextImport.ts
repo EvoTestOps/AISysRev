@@ -1,13 +1,21 @@
 import { useCallback, useRef, useState } from "react";
-import { toast } from "react-toastify";
-import { importFulltextFromEndnoteXml } from "../../services/fileService";
+import { importFulltextFromEndnoteXml } from "../../../services/fileService";
+import { Notifier } from "./notifier";
 
 /**
  * Importing full texts from a Zotero export folder (an EndNote XML file plus
  * PDFs). Render a hidden file input with `inputProps`, and call `trigger` to
  * open the folder picker.
  */
-export const useFulltextImport = (projectUuid: string, onImported: () => Promise<void>) => {
+export const useFulltextImport = ({
+  projectUuid,
+  onImported,
+  notify,
+}: {
+  projectUuid: string;
+  onImported: () => Promise<void>;
+  notify: Notifier;
+}) => {
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const [importing, setImporting] = useState(false);
 
@@ -29,7 +37,7 @@ export const useFulltextImport = (projectUuid: string, onImported: () => Promise
     const pdfRelativePaths = pdfFiles.map((f) => f.webkitRelativePath);
 
     if (!xmlFile) {
-      toast.error("No XML file found in the selected folder");
+      notify.error("No XML file found in the selected folder");
       e.target.value = "";
       return;
     }
@@ -42,7 +50,7 @@ export const useFulltextImport = (projectUuid: string, onImported: () => Promise
         pdfFiles,
         pdfRelativePaths,
       );
-      toast.success(
+      notify.success(
         `Matched ${result.matched_count} full text${result.matched_count === 1 ? "" : "s"}` +
           (result.unmatched.length > 0 ? `, ${result.unmatched.length} unmatched` : ""),
       );
@@ -52,7 +60,7 @@ export const useFulltextImport = (projectUuid: string, onImported: () => Promise
       await onImported();
     } catch (error) {
       console.error("Failed to import full text:", error);
-      toast.error("Failed to import full text");
+      notify.error("Failed to import full text");
     } finally {
       setImporting(false);
       e.target.value = "";

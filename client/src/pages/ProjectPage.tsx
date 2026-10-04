@@ -15,17 +15,17 @@ import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { JobPromptingType, PerCriteriaStatsResponse, ScreeningTarget } from "../state/types";
 import { NotFoundPage } from "./NotFound";
 import { CreateTaskCard } from "./project/createTask/CreateTaskCard";
-import { useCreateTaskForm } from "./project/createTask/useCreateTaskForm";
+import { useCreateTaskForm } from "./project/hooks/useCreateTaskForm";
 import { downloadMissingFulltextRis, downloadResultCsv } from "./project/downloads";
 import { JobActionModals } from "./project/JobActionModals";
 import { JobCard } from "./project/JobCard";
 import { ProjectActions } from "./project/ProjectActions";
 import { SectionHeader } from "./project/SectionHeader";
 import { UploadCard } from "./project/UploadCard";
-import { useFulltextImport } from "./project/useFulltextImport";
-import { useJobActions } from "./project/useJobActions";
-import { useManualEvaluation } from "./project/useManualEvaluation";
-import { useProjectFiles } from "./project/useProjectFiles";
+import { useFulltextImport } from "./project/hooks/useFulltextImport";
+import { useJobActions } from "./project/hooks/useJobActions";
+import { useManualEvaluation } from "./project/hooks/useManualEvaluation";
+import { useProjectFiles } from "./project/hooks/useProjectFiles";
 
 export const ProjectPage = () => {
   const { projectUuid } = useParams<{ projectUuid: string }>();
@@ -59,9 +59,13 @@ export const ProjectPage = () => {
 
   const taskForm = useCreateTaskForm(projectUuid, screeningTarget);
   const projectFiles = useProjectFiles(projectUuid, screeningTarget);
-  const fulltextImport = useFulltextImport(projectUuid, async () => {
-    await fetchPapers(projectUuid);
-    await projectFiles.fetchFiles();
+  const fulltextImport = useFulltextImport({
+    projectUuid,
+    onImported: async () => {
+      await fetchPapers(projectUuid);
+      await projectFiles.fetchFiles();
+    },
+    notify: toast,
   });
   const jobActions = useJobActions(projectUuid);
   const evaluation = useManualEvaluation({ projectUuid, papers, jobs, itemNamePlural });

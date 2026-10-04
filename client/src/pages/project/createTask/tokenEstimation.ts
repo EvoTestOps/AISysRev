@@ -1,5 +1,5 @@
 import { JobPromptingType, TokenEstimation } from "../../../state/types";
-import { PromptingStrategy, ScreeningMethod } from "./useCreateTaskForm";
+import { PromptingStrategy, ScreeningMethod } from "../hooks/useCreateTaskForm";
 
 const INPUT_TOKENS_PER_PAPER = 1880;
 const OUTPUT_TOKENS_PER_PAPER = 1300;

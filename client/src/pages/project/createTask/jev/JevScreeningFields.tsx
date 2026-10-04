@@ -1,6 +1,6 @@
 import { ModelPicker } from "../ModelPicker";
 import { ProviderSettings } from "../ProviderSettings";
-import { CreateTaskForm } from "../useCreateTaskForm";
+import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 
 type JevScreeningFieldsProps = {
   form: CreateTaskForm;

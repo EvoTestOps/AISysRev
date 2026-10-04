@@ -1,6 +1,6 @@
 import { DropdownMenuText } from "../../../components/DropDownMenus";
 import { ModelConfiguration } from "./ModelConfiguration";
-import { CreateTaskForm } from "./useCreateTaskForm";
+import { CreateTaskForm } from "../hooks/useCreateTaskForm";
 
 type ModelPickerProps = {
   form: CreateTaskForm;

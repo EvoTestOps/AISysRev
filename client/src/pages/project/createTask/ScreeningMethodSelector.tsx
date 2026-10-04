@@ -1,6 +1,6 @@
 import { Gauge, Sparkles } from "lucide-react";
 import { FieldGroup, FieldLabel, RadioCard } from "./controls";
-import { CreateTaskForm, ScreeningMethod } from "./useCreateTaskForm";
+import { CreateTaskForm, ScreeningMethod } from "../hooks/useCreateTaskForm";
 
 /** LLM screening or Jev screening. Hidden when the backend offers no Jev provider. */
 export const ScreeningMethodSelector: React.FC<{ form: CreateTaskForm }> = ({ form }) => {
