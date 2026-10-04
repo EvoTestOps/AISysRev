@@ -114,6 +114,8 @@ class JevProvider(LLMProvider[OpenRouterProviderParams, JevModelParams]):
     structured_response_schema = JevStructuredResponse
     # Jev answers all criteria in parallel in one request.
     supports_per_criteria = False
+    # Jev would judge a system prompt as part of the text.
+    uses_system_prompt = False
 
     # Shares OpenRouter's settings, which the Settings page shows under OpenRouter.
     api_key_config_parameter = OpenRouterProvider.api_key_config_parameter

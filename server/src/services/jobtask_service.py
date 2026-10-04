@@ -7,6 +7,7 @@ from src.db.db_context import DBContext
 from src.schemas.job import JobScreeningMode
 from src.schemas.jobtask import (
     JobTaskCreate,
+    JobTaskDetail,
     JobTaskHumanResult,
     JobTaskRead,
     JobTaskReadWithLLMConfig,
@@ -22,10 +23,10 @@ class JobTaskService:
         self.paper_service = paper_service
 
     async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
-        job_tasks = await self.jobtask_crud.fetch_job_tasks_by_job_uuid(
+        """A job's tasks in paper id order, without their prompts."""
+        rows = await self.jobtask_crud.fetch_job_tasks_with_paper_id(
             job_uuid, owner_uuid
         )
-
         return [
             JobTaskRead.model_validate(
                 {
@@ -36,13 +37,43 @@ class JobTaskService:
                     "abstract": task.abstract,
                     "status": task.status,
                     "paper_uuid": task.paper_uuid,
+                    "paper_id": paper_id,
                     "result": task.result,
                     "human_result": task.human_result,
                     "status_metadata": task.status_metadata,
+                    "error": task.error,
                 }
             )
-            for task in job_tasks
+            for task, paper_id in rows
         ]
+
+    async def fetch_job_task_detail(
+        self, job_uuid: UUID, job_task_uuid: UUID, owner_uuid: UUID
+    ) -> JobTaskDetail | None:
+        row = await self.jobtask_crud.fetch_job_task_detail(
+            job_uuid, job_task_uuid, owner_uuid
+        )
+        if row is None:
+            return None
+        task, job, paper_id = row
+        return JobTaskDetail(
+            uuid=task.uuid,
+            job_id=task.job_id,
+            doi=task.doi,
+            title=task.title,
+            abstract=task.abstract,
+            paper_uuid=task.paper_uuid,
+            paper_id=paper_id,
+            status=task.status,
+            result=task.result,
+            human_result=task.human_result,
+            status_metadata=task.status_metadata,
+            error=task.error,
+            llm_config=job.llm_config,
+            prompting_config=job.prompting_config,
+            screening_mode=job.screening_mode.value,
+            prompts=task.prompts,
+        )
 
     async def fetch_job_tasks_for_paper(self, paper_uuid: UUID, owner_uuid: UUID):
         job_tasks_with_jobs = await self.jobtask_crud.fetch_job_tasks_by_paper_uuid(
