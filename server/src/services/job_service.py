@@ -15,7 +15,6 @@ from src.schemas.job import (
     JobStatus,
     PerCriteriaPromptingConfig,
 )
-from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
 logger = logging.getLogger(__name__)
@@ -97,29 +96,6 @@ class JobService:
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
-
-    async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
-        job_tasks = await self.jobtask_service.jobtask_crud.fetch_job_tasks_by_job_uuid(
-            job_uuid, owner_uuid
-        )
-
-        return [
-            JobTaskRead.model_validate(
-                {
-                    "uuid": task.uuid,
-                    "job_id": task.id,
-                    "paper_uuid": task.paper_uuid,
-                    "doi": task.doi,
-                    "title": task.title,
-                    "abstract": task.abstract,
-                    "status": task.status,
-                    "result": task.result,
-                    "human_result": task.human_result,
-                    "status_metadata": task.status_metadata,
-                }
-            )
-            for task in job_tasks
-        ]
 
     async def create(self, job_data: JobCreate):
         logger.info("Creating new job", job_data)

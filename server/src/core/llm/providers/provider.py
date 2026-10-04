@@ -71,6 +71,8 @@ class LLMProvider(Generic[P, M], ABC):
     ] = StructuredResponse
     # Whether the PER_CRITERIA screening type (one call per criterion) can be used.
     supports_per_criteria: ClassVar[bool] = True
+    # Whether the runtime system prompt is sent to the model.
+    uses_system_prompt: ClassVar[bool] = True
 
     # Config-specific - e.g. what needs to be configured in the UI.
     config_parameters: ClassVar[list[ConfigParameter]]

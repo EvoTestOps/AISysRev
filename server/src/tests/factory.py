@@ -127,6 +127,7 @@ class Factory:
         status: str = "NOT_STARTED",
         result: dict | None = None,
         error: str | None = None,
+        prompts: list | None = None,
     ) -> JobTask:
         return await self._add(
             JobTask(
@@ -138,5 +139,6 @@ class Factory:
                 status=status,
                 result=result,
                 error=error,
+                prompts=prompts,
             )
         )

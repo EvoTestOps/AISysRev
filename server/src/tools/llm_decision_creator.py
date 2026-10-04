@@ -1,5 +1,8 @@
+from typing import Callable
+
 from httpx2 import AsyncClient
 
+from src.core.llm.providers.provider import LLMProvider
 from src.core.prompts import (
     additional_instructions,
     few_shot_task_prompt,
@@ -20,6 +23,7 @@ from src.schemas.job import (
 from src.schemas.llm import (
     CriterionResponse,
     JevStructuredResponse,
+    PromptRecord,
     ProviderRuntimeParameters,
     StructuredResponse,
 )
@@ -28,6 +32,30 @@ from src.schemas.setting import SettingRead
 from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
 from src.services.pdf_screening_service import PdfScreeningService
+
+PromptRecorder = Callable[[PromptRecord], None]
+
+
+def _record_prompt(
+    on_prompt: PromptRecorder | None,
+    llm: type[LLMProvider],
+    user_prompt: str,
+    criterion: str | None = None,
+) -> None:
+    """Reports the prompt about to be sent, so it is kept even if the call fails."""
+    if on_prompt is None:
+        return
+    on_prompt(
+        PromptRecord(
+            criterion=criterion,
+            system_prompt=(
+                ProviderRuntimeParameters().system_prompt
+                if llm.uses_system_prompt
+                else None
+            ),
+            user_prompt=user_prompt,
+        )
+    )
 
 
 def create_few_shot_examples(papers: list[PaperRead]):
@@ -62,6 +90,8 @@ async def get_structured_response(
     job_data: JobCreate,
     inc_exc_criteria: dict,
     client: AsyncClient,
+    *,
+    on_prompt: PromptRecorder | None = None,
 ) -> StructuredResponse | JevStructuredResponse:
     criteria = create_criteria(
         inc_exc_criteria["inclusion_criteria"],
@@ -138,6 +168,7 @@ async def get_structured_response(
             used_additional_instructions,
             content_label,
         )
+        _record_prompt(on_prompt, llm, prompt_text)
         result = await llm_service.call_llm(
             llm,
             provider_parameters=provider_parameters,
@@ -169,6 +200,7 @@ async def get_structured_response(
             seed_paper_txt,
             content_label,
         )
+        _record_prompt(on_prompt, llm, prompt_text)
         result = await llm_service.call_llm(
             llm,
             provider_parameters=provider_parameters,
@@ -193,6 +225,9 @@ async def get_single_criterion_response(
     abstract: str,
     criterion_description: str,
     client: AsyncClient,
+    *,
+    criterion_id: str | None = None,
+    on_prompt: PromptRecorder | None = None,
 ) -> CriterionResponse:
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
 
@@ -222,6 +257,7 @@ async def get_single_criterion_response(
         else per_criteria_task_prompt
     )
     prompt_text = prompt_template.format(title, abstract, criterion_description)
+    _record_prompt(on_prompt, llm, prompt_text, criterion=criterion_id)
     return await llm_service.call_llm(
         llm,
         provider_parameters=provider_parameters,

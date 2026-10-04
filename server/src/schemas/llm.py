@@ -96,3 +96,14 @@ class ProviderRuntimeParameters(BaseModel):
     api_key: Optional[str] = None
     # Defaults to "You are an expert research assistant."
     system_prompt: str = default_system_prompt
+
+
+class PromptRecord(BaseModel):
+    """A prompt sent to the model for a job task, stored for inspection."""
+
+    # None for the single prompt of a standard job; the criterion id (e.g. IC1)
+    # for each prompt of a per-criteria job.
+    criterion: Optional[str] = None
+    # None when the provider sends no system prompt (Jev).
+    system_prompt: Optional[str] = None
+    user_prompt: str
