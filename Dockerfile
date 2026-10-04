@@ -32,7 +32,7 @@ COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
 RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
-FROM ghcr.io/astral-sh/uv:0.12.17 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
 
 FROM python:3.14.7-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS python-base
 
