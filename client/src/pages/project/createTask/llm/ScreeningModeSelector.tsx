@@ -1,6 +1,6 @@
 import { JobPromptingType, JobScreeningMode } from "../../../../state/types";
 import { FieldGroup, FieldLabel, SegmentedButton } from "../controls";
-import { CreateTaskForm } from "../useCreateTaskForm";
+import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 
 type ScreeningModeSelectorProps = {
   form: CreateTaskForm;
