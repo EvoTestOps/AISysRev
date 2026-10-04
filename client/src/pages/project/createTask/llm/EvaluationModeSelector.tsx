@@ -1,7 +1,7 @@
 import { ListChecks, Sparkles } from "lucide-react";
 import { JobPromptingType, JobScreeningMode } from "../../../../state/types";
 import { FieldGroup, FieldLabel, RadioCard } from "../controls";
-import { CreateTaskForm } from "../useCreateTaskForm";
+import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 
 type EvaluationModeSelectorProps = {
   form: CreateTaskForm;

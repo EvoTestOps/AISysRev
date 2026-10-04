@@ -7,7 +7,7 @@ import { LlmScreeningFields } from "./llm/LlmScreeningFields";
 import { ScreeningMethodSelector } from "./ScreeningMethodSelector";
 import { TokenEstimate } from "./TokenEstimate";
 import { estimateTokens } from "./tokenEstimation";
-import { CreateTaskForm } from "./useCreateTaskForm";
+import { CreateTaskForm } from "../hooks/useCreateTaskForm";
 
 type CreateTaskCardProps = {
   form: CreateTaskForm;

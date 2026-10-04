@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import { useTypedStoreActions } from "../../state/store";
+import { useTypedStoreActions } from "../../../state/store";
 
 const errorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 

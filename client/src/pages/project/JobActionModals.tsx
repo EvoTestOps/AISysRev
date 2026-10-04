@@ -1,6 +1,6 @@
 import { CircleStop, Trash2 } from "lucide-react";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
-import { JobActions } from "./useJobActions";
+import { JobActions } from "./hooks/useJobActions";
 
 export const JobActionModals: React.FC<{ actions: JobActions }> = ({ actions }) => (
   <>
