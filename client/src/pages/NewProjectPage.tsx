@@ -1,75 +1,71 @@
-import { useState, useCallback, useMemo } from "react";
-import { useLocation } from "wouter";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import Accordion from "@mui/material/Accordion";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import { H6 } from "../components/Typography";
-import { Layout } from "../components/Layout";
-import { CriteriaInput } from "../components/CriteriaInput";
-import { CriteriaList } from "../components/CriteriaList";
+import { useLocation } from "wouter";
 import { ExpandableToast } from "../components/ExpandableToast";
-import { RotateCcw } from "lucide-react";
+import { Layout } from "../components/Layout";
 import { create_project } from "../services/projectService";
-import { Card } from "../components/Card";
 import { useTypedStoreActions } from "../state/store";
-import { Button } from "../components/Button";
-import type { Criteria } from "../state/types/project";
 import { ScreeningTarget } from "../state/types";
+import type { Criteria } from "../state/types/project";
+import { CriteriaEditor } from "./newProject/CriteriaEditor";
+import { LogicField } from "./newProject/LogicField";
+import { ProjectTypeSelector } from "./newProject/ProjectTypeSelector";
+
+type FormSectionProps = {
+  title: string;
+  description?: React.ReactNode;
+  children: React.ReactNode;
+};
+
+const FormSection: React.FC<FormSectionProps> = ({ title, description, children }) => (
+  <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+    <Stack spacing={2}>
+      <Box>
+        <Typography variant="h6" component="h2">
+          {title}
+        </Typography>
+        {description && (
+          <Typography variant="body2" color="text.secondary">
+            {description}
+          </Typography>
+        )}
+      </Box>
+      {children}
+    </Stack>
+  </Paper>
+);
 
 export const NewProject = () => {
   const [title, setTitle] = useState("");
-  const [inclusionCriteriaInput, setInclusionCriteriaInput] = useState("");
-  const [exclusionCriteriaInput, setExclusionCriteriaInput] = useState("");
+  const [titleError, setTitleError] = useState(false);
   const [inclusionCriteria, setInclusionCriteria] = useState<string[]>([]);
   const [exclusionCriteria, setExclusionCriteria] = useState<string[]>([]);
   const [inclusionExpression, setInclusionExpression] = useState("");
   const [exclusionExpression, setExclusionExpression] = useState("");
+  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(ScreeningTarget.PAPER);
+  // Remounts the criteria editors on reset, clearing their unsaved drafts.
+  const [resetKey, setResetKey] = useState(0);
 
   const [, navigate] = useLocation();
+  const refreshProjects = useTypedStoreActions((actions) => actions.refreshProjects);
 
-  const handleInclusionSetup = useCallback(() => {
-    if (inclusionCriteriaInput.trim() !== "") {
-      setInclusionCriteria((prev) => [...prev, inclusionCriteriaInput]);
-      setInclusionCriteriaInput("");
-    }
-  }, [inclusionCriteriaInput]);
-
-  const handleExclusionSetup = useCallback(() => {
-    if (exclusionCriteriaInput.trim() !== "") {
-      setExclusionCriteria((prev) => [...prev, exclusionCriteriaInput]);
-      setExclusionCriteriaInput("");
-    }
-  }, [exclusionCriteriaInput]);
-
-  const deleteInclusionCriteria = useCallback((index: number) => {
-    setInclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const deleteExclusionCriteria = useCallback((index: number) => {
-    setExclusionCriteria((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const refreshProjects = useTypedStoreActions(
-    (actions) => actions.refreshProjects,
-  );
-
-  const criteriaIdMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    inclusionCriteria.forEach((desc, i) => { map[`IC${i + 1}`] = desc; });
-    return map;
-  }, [inclusionCriteria]);
-
-  const exclusionCriteriaIdMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    exclusionCriteria.forEach((desc, i) => { map[`EC${i + 1}`] = desc; });
-    return map;
-  }, [exclusionCriteria]);
-
-  const [screeningTarget, setScreeningTarget] = useState<ScreeningTarget>(
-    ScreeningTarget.PAPER,
-  );
+  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const itemName = isGithubScreening ? "repository" : "study";
 
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {
-      toast.error("Title is required");
+      setTitleError(true);
     } else {
       handle().catch(console.error);
     }
@@ -78,12 +74,8 @@ export const NewProject = () => {
       const criteria: Criteria = {
         inclusion_criteria: inclusionCriteria,
         exclusion_criteria: exclusionCriteria,
-        ...(inclusionExpression.trim()
-          ? { inclusion_expression: inclusionExpression.trim() }
-          : {}),
-        ...(exclusionExpression.trim()
-          ? { exclusion_expression: exclusionExpression.trim() }
-          : {}),
+        ...(inclusionExpression.trim() ? { inclusion_expression: inclusionExpression.trim() } : {}),
+        ...(exclusionExpression.trim() ? { exclusion_expression: exclusionExpression.trim() } : {}),
       };
 
       try {
@@ -94,9 +86,7 @@ export const NewProject = () => {
           throw new Error(JSON.stringify(error.response.data.detail.errors));
         }
         if (Array.isArray(error.response?.data?.detail)) {
-          const msg = (error.response.data.detail as any[])
-            .map((e) => e.msg as string)
-            .join("\n");
+          const msg = (error.response.data.detail as any[]).map((e) => e.msg as string).join("\n");
           throw new Error(msg);
         }
         throw error;
@@ -127,188 +117,149 @@ export const NewProject = () => {
         }
       }
     }
-  }, [title, inclusionCriteria, exclusionCriteria, inclusionExpression, exclusionExpression, refreshProjects, navigate, screeningTarget]);
+  }, [
+    title,
+    inclusionCriteria,
+    exclusionCriteria,
+    inclusionExpression,
+    exclusionExpression,
+    refreshProjects,
+    navigate,
+    screeningTarget,
+  ]);
 
   const handleReset = useCallback(() => {
     setTitle("");
+    setTitleError(false);
     setInclusionCriteria([]);
     setExclusionCriteria([]);
-    setInclusionCriteriaInput("");
-    setExclusionCriteriaInput("");
     setInclusionExpression("");
     setExclusionExpression("");
     setScreeningTarget(ScreeningTarget.PAPER);
+    setResetKey((key) => key + 1);
   }, []);
 
   return (
-    <Layout title="New Project">
-      <div className="flex flex-col gap-2">
-        <Card>
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <H6>
-              Title<span className="text-red-500 font-semibold">*</span>
-            </H6>
-            <input
-              type="text"
-              data-testid="new-project-title-input"
-              className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none"
-              placeholder="Enter project title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-        </Card>
-        <Card>
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4 mb-8">
-            <div className="flex justify-start h-full">
-              <H6>
-                Inclusion criteria
-                <span className="text-red-500 font-semibold">*</span>
-              </H6>
-            </div>
-            <div className="flex flex-col gap-4">
-              <CriteriaList
+    <Layout title="New project">
+      <Stack
+        spacing={3}
+        sx={{ maxWidth: 840, mx: "auto" }}
+        component="form"
+        noValidate
+        onSubmit={(e) => e.preventDefault()}
+      >
+        <FormSection
+          title="Project type"
+          description="What the project screens. This can't be changed after the project is created."
+        >
+          <ProjectTypeSelector value={screeningTarget} onChange={setScreeningTarget} />
+        </FormSection>
+
+        <FormSection title="Details">
+          <TextField
+            label="Project title"
+            required
+            fullWidth
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (e.target.value.trim() !== "") setTitleError(false);
+            }}
+            error={titleError}
+            helperText={titleError ? "Give the project a title." : " "}
+            slotProps={{ htmlInput: { "data-testid": "new-project-title-input" } }}
+          />
+        </FormSection>
+
+        <FormSection
+          title="Screening criteria"
+          description={`Each criterion is evaluated for every ${itemName}. They are numbered in order (IC1, IC2… and EC1, EC2…).`}
+        >
+          <CriteriaEditor
+            key={`inclusion_${resetKey}`}
+            title="Inclusion criteria"
+            description={`A ${itemName} is included when it meets these.`}
+            idPrefix="IC"
+            inputLabel="Add inclusion criterion"
+            inputTestId="new-project-inclusion-criteria-input"
+            criteria={inclusionCriteria}
+            onAdd={(criterion) => setInclusionCriteria((prev) => [...prev, criterion])}
+            onDelete={(index) => setInclusionCriteria((prev) => prev.filter((_, i) => i !== index))}
+          />
+          <Divider />
+          <CriteriaEditor
+            key={`exclusion_${resetKey}`}
+            title="Exclusion criteria"
+            description={`A ${itemName} is excluded when it meets these.`}
+            idPrefix="EC"
+            inputLabel="Add exclusion criterion"
+            inputTestId="new-project-exclusion-criteria-input"
+            criteria={exclusionCriteria}
+            onAdd={(criterion) => setExclusionCriteria((prev) => [...prev, criterion])}
+            onDelete={(index) => setExclusionCriteria((prev) => prev.filter((_, i) => i !== index))}
+          />
+        </FormSection>
+
+        <Accordion
+          variant="outlined"
+          disableGutters
+          sx={{ borderRadius: 2, "&::before": { display: "none" } }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 3 }}>
+            <Box>
+              <Typography variant="h6" component="h2">
+                Per-criteria logic
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Optional. Only used by per-criterion screening tasks.
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails sx={{ px: 3, pb: 3 }}>
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                By default a {itemName} is included only if it meets <strong>all</strong> inclusion
+                criteria (AND) and <strong>none</strong> of the exclusion criteria (OR), the
+                standard approach for systematic reviews. To customise it, write an expression using
+                AND, OR, NOT and parentheses, e.g. <code>IC1 AND (IC2 OR NOT IC3)</code>. Click a
+                criterion to add it.
+              </Typography>
+              <LogicField
+                label="Inclusion logic"
+                idPrefix="IC"
                 criteria={inclusionCriteria}
-                onDelete={deleteInclusionCriteria}
+                value={inclusionExpression}
+                onChange={setInclusionExpression}
+                placeholder="e.g. IC1 AND IC2"
+                defaultHelp="Empty: all inclusion criteria must be met (AND)."
               />
-              <CriteriaInput
-                placeholder="Inclusion criterion + [Enter]"
-                value={inclusionCriteriaInput}
-                setCriteriaInput={setInclusionCriteriaInput}
-                handleSetup={handleInclusionSetup}
-                testId="new-project-inclusion-criteria-input"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-            <div className="flex justify-start h-full">
-              <H6>
-                Exclusion criteria
-                <span className="text-red-500 font-semibold">*</span>
-              </H6>
-            </div>
-            <div className="flex flex-col gap-4">
-              <CriteriaList
+              <LogicField
+                label="Exclusion logic"
+                idPrefix="EC"
                 criteria={exclusionCriteria}
-                onDelete={deleteExclusionCriteria}
+                value={exclusionExpression}
+                onChange={setExclusionExpression}
+                placeholder="e.g. EC1 OR EC2"
+                defaultHelp="Empty: meeting any exclusion criterion excludes (OR)."
               />
-              <CriteriaInput
-                placeholder="Exclusion criterion + [Enter]"
-                value={exclusionCriteriaInput}
-                setCriteriaInput={setExclusionCriteriaInput}
-                handleSetup={handleExclusionSetup}
-                testId="new-project-exclusion-criteria-input"
-              />
-            </div>
-          </div>
-        </Card>
-        <Card>
-          <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="h-5 w-5 accent-slate-800 cursor-pointer"
-                checked={screeningTarget === ScreeningTarget.GITHUB_REPOSITORY}
-                onChange={(event) =>
-                  setScreeningTarget(
-                    event.target.checked
-                      ? ScreeningTarget.GITHUB_REPOSITORY
-                      : ScreeningTarget.PAPER,
-                  )
-                }
-              />
-              <div className="flex flex-col">
-                <H6 className="select-none">GitHub repository screening</H6>
-                <span className="text-sm font-normal">
-                  To get a CSV file with correct field names, use this tool{" "}
-                  <a
-                    href="https://github.com/EvoTestOps/github-query-tool/tree/main"
-                    target="_blank"
-                    rel="noopener norefferer"
-                    className="underline"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    Github Query Tool
-                  </a>
-                </span>
-              </div>
-          </label>
-        </Card>
-        <Card>
-          <div className="flex flex-col gap-4">
-            <div>
-              <H6>Per-criteria logic <span className="font-normal text-gray-400">(optional)</span></H6>
-              <p className="text-sm text-gray-500 mt-1">
-                By default, a study is included only if it matches <span className="font-semibold text-gray-600">all</span> inclusion criteria (AND) and <span className="font-semibold text-gray-600">none</span> of the exclusion criteria (OR) — this is the standard approach for systematic reviews. Leave both fields blank to use this default.
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                To customize, define your own boolean logic below. Use AND, OR, and NOT — NOT flips a single criterion (e.g. <span className="font-mono">NOT IC1</span>). Use parentheses to group AND/OR sub-expressions.
-              </p>
-            </div>
-            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-              <H6 className="mt-2">Inclusion logic</H6>
-              <div className="flex flex-col gap-1">
-                {Object.keys(criteriaIdMap).length > 0 && (
-                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
-                    {Object.entries(criteriaIdMap).map(([id, desc]) => (
-                      <span key={id}>
-                        <span className="font-mono font-semibold text-gray-600">{id}</span>
-                        {" = "}
-                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <input
-                  type="text"
-                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
-                  placeholder="e.g. IC1 AND IC2"
-                  value={inclusionExpression}
-                  onChange={(e) => setInclusionExpression(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-[200px_1fr] items-start gap-4">
-              <H6 className="mt-2">Exclusion logic</H6>
-              <div className="flex flex-col gap-1">
-                {Object.keys(exclusionCriteriaIdMap).length > 0 && (
-                  <div className="text-xs text-gray-400 flex flex-wrap gap-x-4 gap-y-1 mb-1">
-                    {Object.entries(exclusionCriteriaIdMap).map(([id, desc]) => (
-                      <span key={id}>
-                        <span className="font-mono font-semibold text-gray-600">{id}</span>
-                        {" = "}
-                        <span className="italic">{desc.length > 50 ? desc.slice(0, 50) + "…" : desc}</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <input
-                  type="text"
-                  className="border border-gray-300 pr-4 pl-4 h-10 rounded-lg shadow-md w-full focus:outline-none font-mono"
-                  placeholder="e.g. EC1 OR EC2"
-                  value={exclusionExpression}
-                  onChange={(e) => setExclusionExpression(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-        </Card>
-        <Card>
-          <div className="flex justify-between items-end gap-4">
-            <Button
-              variant="red"
-              onClick={handleReset}
-              data-testid="new-project-reset-button"
-            >
-              <RotateCcw size={16} />
-              <span>Reset</span>
-            </Button>
-            <Button onClick={handleCreate} data-testid="new-project-create-button">
-              <span>Create</span>
-            </Button>
-          </div>
-        </Card>
-      </div>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button onClick={handleReset} data-testid="new-project-reset-button">
+            Reset
+          </Button>
+          <Button
+            variant="contained"
+            type="submit"
+            onClick={handleCreate}
+            data-testid="new-project-create-button"
+          >
+            Create project
+          </Button>
+        </Box>
+      </Stack>
     </Layout>
   );
 };

@@ -9,7 +9,7 @@ import { FewShotModal } from "../components/FewShotModal";
 import { Layout } from "../components/Layout";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
-import { TabButton } from "../components/TabButton";
+import { ProjectTabs } from "../components/ProjectTabs";
 import { fetchPerCriteriaStats } from "../services/resultService";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { JobPromptingType, PerCriteriaStatsResponse, ScreeningTarget } from "../state/types";
@@ -102,7 +102,7 @@ export const ProjectPage = () => {
   return (
     <Layout
       title={project.name}
-      navbarActionComponent={() => (
+      headerActions={
         <ProjectActions
           hasPapers={hasPapers}
           downloadCsv={() => downloadResultCsv(projectUuid, screeningTarget)}
@@ -114,16 +114,9 @@ export const ProjectPage = () => {
           hasMultiplePcJobs={hasMultiplePcJobs}
           screeningTarget={screeningTarget}
         />
-      )}
+      }
     >
-      <div className="flex flex-row mb-4">
-        <TabButton href={`/project/${projectUuid}`} active>
-          Screening tasks
-        </TabButton>
-        <TabButton href={`/project/${projectUuid}/papers/page/1`}>
-          List of {itemNamePlural}
-        </TabButton>
-      </div>
+      <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
           {jobs.length === 0 && <AlertMessage message="No screening tasks." />}
