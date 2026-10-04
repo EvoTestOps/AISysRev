@@ -1,6 +1,18 @@
-import { BarChart2, Download, FileText } from "lucide-react";
-import { twMerge } from "tailwind-merge";
-import { Button } from "../../components/Button";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import DriveFolderUploadOutlinedIcon from "@mui/icons-material/DriveFolderUploadOutlined";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import { useState } from "react";
 import { ScreeningTarget } from "../../state/types";
 
 type ProjectActionsProps = {
@@ -15,6 +27,19 @@ type ProjectActionsProps = {
   screeningTarget: ScreeningTarget;
 };
 
+const useMenu = () => {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  return {
+    anchor,
+    open: (e: React.MouseEvent<HTMLElement>) => setAnchor(e.currentTarget),
+    close: () => setAnchor(null),
+  };
+};
+
+/**
+ * The project's page actions: exports in one menu, everything else in an
+ * overflow menu, so new actions don't widen the header.
+ */
 export const ProjectActions: React.FC<ProjectActionsProps> = ({
   hasPapers,
   projectUuid,
@@ -27,64 +52,105 @@ export const ProjectActions: React.FC<ProjectActionsProps> = ({
   screeningTarget,
 }) => {
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const exportMenu = useMenu();
+  const moreMenu = useMenu();
+  const run = (close: () => void, action: () => unknown) => () => {
+    close();
+    action();
+  };
+  const htmlReportHref = `/api/v1/result/html?${new URLSearchParams({
+    project_uuid: projectUuid,
+    screening_target: screeningTarget,
+  }).toString()}`;
+
   return (
-    <div className="flex flex-row gap-2">
-      {hasMultiplePcJobs && (
-        <Button
-          variant="slate"
-          onClick={onPerCriteriaStats}
-          title="Per-criteria agreement statistics"
-        >
-          <BarChart2 />
-          <span>PC Agreement Stats</span>
-        </Button>
-      )}
-      {!isGithubScreening && (
-        <Button
-          variant="slate"
-          onClick={downloadMissingFulltextRis}
-          title="Download papers missing full text"
-          disabled={!hasPapers}
-        >
-          <Download />
-          <span>Download papers missing full text</span>
-        </Button>
-      )}
-      {!isGithubScreening && (
-        <Button
-          variant="slate"
-          onClick={onImportFulltext}
-          title="Import full text (Zotero Export Folder)"
-          data-testid="import-fulltext-button"
-          disabled={!hasPapers || importingFulltext}
-        >
-          <Download />
-          <span>
-            {importingFulltext ? "Importing..." : "Import full text (Zotero Export Folder)"}
-          </span>
-        </Button>
-      )}
-      <Button variant="slate" onClick={downloadCsv} title="Download CSV" disabled={!hasPapers}>
-        <Download />
-        <span>Download CSV</span>
+    <>
+      <Button
+        variant="outlined"
+        startIcon={<DownloadOutlinedIcon />}
+        endIcon={<ArrowDropDownIcon />}
+        disabled={!hasPapers}
+        onClick={exportMenu.open}
+        data-testid="project-export-button"
+      >
+        Export
       </Button>
-      {hasPapers && (
-        <a
-          className={twMerge(
-            "px-4 py-2 text-white flex flex-row gap-2 items-center content-center text-sm font-semibold rounded-lg shadow-md transition duration-200 ease-in-out cursor-pointer bg-slate-800 hover:bg-slate-700",
-          )}
-          href={`/api/v1/result/html?${new URLSearchParams({
-            project_uuid: projectUuid,
-            screening_target: screeningTarget,
-          }).toString()}`}
-          target="__blank"
+      <Menu
+        anchorEl={exportMenu.anchor}
+        open={exportMenu.anchor !== null}
+        onClose={exportMenu.close}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem onClick={run(exportMenu.close, downloadCsv)}>
+          <ListItemIcon>
+            <DescriptionOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Download results (CSV)</ListItemText>
+        </MenuItem>
+        <MenuItem
+          component="a"
+          href={htmlReportHref}
+          target="_blank"
           rel="noopener noreferrer"
-          title="Show HTML"
+          onClick={exportMenu.close}
         >
-          <FileText />
-          <span>Show HTML</span>
-        </a>
-      )}
-    </div>
+          <ListItemIcon>
+            <OpenInNewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Open HTML report</ListItemText>
+        </MenuItem>
+        {!isGithubScreening && (
+          <MenuItem onClick={run(exportMenu.close, downloadMissingFulltextRis)}>
+            <ListItemIcon>
+              <DownloadOutlinedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Papers missing full text (RIS)</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
+
+      <Tooltip title="More actions">
+        <IconButton
+          aria-label="More actions"
+          onClick={moreMenu.open}
+          data-testid="project-more-actions-button"
+        >
+          <MoreVertIcon />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={moreMenu.anchor}
+        open={moreMenu.anchor !== null}
+        onClose={moreMenu.close}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        {!isGithubScreening && (
+          <MenuItem
+            disabled={!hasPapers || importingFulltext}
+            onClick={run(moreMenu.close, onImportFulltext)}
+            data-testid="import-fulltext-button"
+          >
+            <ListItemIcon>
+              <DriveFolderUploadOutlinedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary={importingFulltext ? "Importing full text…" : "Import full text"}
+              secondary="From a Zotero export folder"
+            />
+          </MenuItem>
+        )}
+        <MenuItem disabled={!hasMultiplePcJobs} onClick={run(moreMenu.close, onPerCriteriaStats)}>
+          <ListItemIcon>
+            <BarChartOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Per-criteria agreement"
+            secondary={hasMultiplePcJobs ? undefined : "Needs two per-criteria tasks"}
+          />
+        </MenuItem>
+      </Menu>
+    </>
   );
 };

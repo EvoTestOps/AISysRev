@@ -7,7 +7,7 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
-import { TabButton } from "../components/TabButton";
+import { NavTabs } from "../components/NavTabs";
 import { api } from "../services/api";
 
 export const AccountSettingsPage = () => {
@@ -53,12 +53,14 @@ export const AccountSettingsPage = () => {
 
   return (
     <Layout title="Settings">
-      <div className="flex flex-row mb-4">
-        <TabButton href="/settings">LLM Settings</TabButton>
-        <TabButton href="/settings/account" active>
-          Account
-        </TabButton>
-      </div>
+      <NavTabs
+        aria-label="Settings sections"
+        active="/settings/account"
+        tabs={[
+          { label: "LLM Settings", href: "/settings" },
+          { label: "Account", href: "/settings/account" },
+        ]}
+      />
       <Card>
         <div className="border-b border-slate-200 bg-white px-6 py-5">
           <h1 className="text-xl font-semibold text-slate-900">Account</h1>

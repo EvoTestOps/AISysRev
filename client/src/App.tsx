@@ -7,6 +7,8 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
+import { JobPage } from "./pages/job/JobPage";
+import { JobTaskPage } from "./pages/job/JobTaskPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
@@ -92,6 +94,8 @@ function App() {
         <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
+        <Route path="/project/:projectUuid/job/:jobUuid" component={JobPage} />
+        <Route path="/project/:projectUuid/job/:jobUuid/task/:taskUuid" component={JobTaskPage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />
