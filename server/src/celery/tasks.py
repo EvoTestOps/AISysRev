@@ -24,6 +24,7 @@ from src.schemas.llm import (
     CriterionError,
     CriterionResponse,
     PerCriteriaResult,
+    PromptRecord,
     ProviderRuntimeParameters,
 )
 from src.services.llm_service import create_llm_service
@@ -139,6 +140,7 @@ async def _process_standard_task(
     client: AsyncClient,
     update_interval: int = 5,
 ):
+    prompts: list[PromptRecord] = []
     async with semaphore:
         try:
             async with DBContext() as task_db_ctx:
@@ -162,9 +164,11 @@ async def _process_standard_task(
                     job_data,
                     project_criteria,
                     client,
+                    on_prompt=prompts.append,
                 )
 
                 await jobtask_crud.update_job_task_result(job_task.id, llm_result)
+                await jobtask_crud.update_job_task_prompts(job_task.id, prompts)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
@@ -181,6 +185,7 @@ async def _process_standard_task(
                         job_task_id, JobTaskStatus.ERROR
                     )
                     await err_jobtask_crud.update_job_task_error(job_task_id, str(e))
+                    await err_jobtask_crud.update_job_task_prompts(job_task_id, prompts)
                     await task_err_db_ctx.commit()
 
                     async with counter_lock:
@@ -232,6 +237,7 @@ async def _process_per_criteria_task(
     client: AsyncClient,
     update_interval: int = 5,
 ):
+    prompts: list[PromptRecord] = []
     async with semaphore:
         try:
             async with DBContext() as db_ctx:
@@ -260,6 +266,8 @@ async def _process_per_criteria_task(
                             job_task.abstract,
                             leaf["description"],
                             client,
+                            criterion_id=crit_id,
+                            on_prompt=prompts.append,
                         )
                         criterion_results[crit_id] = response
                         prob = response.probability_decision
@@ -287,6 +295,7 @@ async def _process_per_criteria_task(
                 )
 
                 await jobtask_crud.update_job_task_result(job_task.id, result)
+                await jobtask_crud.update_job_task_prompts(job_task.id, prompts)
                 await jobtask_crud.update_job_task_status(
                     job_task.id, JobTaskStatus.DONE
                 )
@@ -303,6 +312,7 @@ async def _process_per_criteria_task(
                         job_task_id, JobTaskStatus.ERROR
                     )
                     await err_crud.update_job_task_error(job_task_id, str(e))
+                    await err_crud.update_job_task_prompts(job_task_id, prompts)
                     await err_db_ctx.commit()
                     async with counter_lock:
                         counter["failed"] += 1
