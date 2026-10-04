@@ -1,23 +1,19 @@
 import { useLocation, useParams } from "wouter";
-import ReactPaginateModule from "react-paginate";
 import { useEffect, useId, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
-import { TabButton } from "../components/TabButton";
+import { ProjectTabs } from "../components/ProjectTabs";
 import { NotFoundPage } from "./NotFound";
 import { Card } from "../components/Card";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { CriteriaList } from "../components/CriteriaList";
 import { H6 } from "../components/Typography";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
+import { PaperListHeader } from "../components/paperList/PaperListHeader";
+import { PaginationBar } from "../components/paperList/PaginationBar";
+import { paginate } from "../components/paperList/pagination";
 import { AlertMessage } from "../components/AlertMessage";
 import { ScreeningTarget } from "../state/types";
-
-// react-paginate is CJS-only with an __esModule default; Vite 8 interop returns module.exports for it
-const ReactPaginate =
-  (ReactPaginateModule as unknown as { default?: typeof ReactPaginateModule }).default ??
-  ReactPaginateModule;
 
 export const PapersPage = () => {
   const params = useParams<{ projectUuid: string; page?: string }>();
@@ -28,8 +24,6 @@ export const PapersPage = () => {
   const id = useId();
 
   const [, setLocation] = useLocation();
-
-  const papersPerPage = 25;
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
 
@@ -60,13 +54,11 @@ export const PapersPage = () => {
     useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("ID_ASC");
 
-  const itemOffset = ((currentPage - 1) * papersPerPage) % papers.length;
-
-  const endOffset = itemOffset + papersPerPage;
-  const pageCount = Math.ceil(papers.length / papersPerPage);
-
   const sortedPapers = useMemo(
-    () => [...papers].sort(getPaperSortFunction(sortOption)),
+    () =>
+      [...papers].sort(
+        getPaperSortFunction(sortOption, (paper) => paper.avg_probability_decision)
+      ),
     [papers, sortOption]
   );
   const alreadyEvaluatedPapers = useMemo(
@@ -85,7 +77,10 @@ export const PapersPage = () => {
   );
 
   // TODO: Memoize & Redux
-  const currentPapers = sortedAndFilteredPapers.slice(itemOffset, endOffset);
+  const { pageItems: currentPapers, pageCount } = paginate(
+    sortedAndFilteredPapers,
+    currentPage
+  );
 
   useEffect(() => {
     if (project !== undefined) {
@@ -103,14 +98,11 @@ export const PapersPage = () => {
   return (
     <Layout title={project.name}>
       <div>
-        <div className="flex flex-row mb-4">
-          <TabButton href={`/project/${projectUuid}`}>
-            Screening tasks
-          </TabButton>
-          <TabButton href={`/project/${projectUuid}/papers/page/1`} active>
-            List of {itemNamePlural}
-          </TabButton>
-        </div>
+        <ProjectTabs
+          projectUuid={projectUuid}
+          active="papers"
+          itemNamePlural={itemNamePlural}
+        />
         <div className="p-4 flex flex-row gap-2">
           <input
             type="checkbox"
@@ -131,58 +123,10 @@ export const PapersPage = () => {
         </div>
         <div className="grid grid-cols-[1fr_350px] gap-2">
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-[60px_1fr_240px_30px] p-4 h-16 rounded-lg bg-slate-800 text-white sticky top-2">
-              <button
-                className="flex flex-row gap-1 items-center content-center justify-start hover:cursor-pointer"
-                data-testid="sort-by-id"
-                onClick={() => {
-                  if (sortOption === "ID_ASC") {
-                    setSortOption("ID_DESC");
-                  } else {
-                    setSortOption("ID_ASC");
-                  }
-                }}
-              >
-                <span className="font-bold select-none">ID</span>
-                {sortOption === "ID_ASC" && <ChevronDown />}
-                {sortOption === "ID_DESC" && <ChevronUp />}
-              </button>
-              <button
-                className="flex flex-row gap-1 items-center content-center hover:cursor-pointer"
-                data-testid="sort-by-name"
-                onClick={() => {
-                  if (sortOption === "NAME_ASC") {
-                    setSortOption("NAME_DESC");
-                  } else {
-                    setSortOption("NAME_ASC");
-                  }
-                }}
-              >
-                <span className="font-bold select-none">Name</span>
-                {sortOption === "NAME_ASC" && <ChevronDown />}
-                {sortOption === "NAME_DESC" && <ChevronUp />}
-              </button>
-              <button
-                className="flex flex-row gap-1 items-center content-center justify-center hover:cursor-pointer"
-                data-testid="sort-by-inclusion-probability"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  if (sortOption === "INCLUDE_ASC") {
-                    setSortOption("INCLUDE_DESC");
-                  } else {
-                    setSortOption("INCLUDE_ASC");
-                  }
-                }}
-              >
-                <span className="font-bold select-none">
-                  Probability of inclusion
-                </span>
-                {sortOption === "INCLUDE_ASC" && <ChevronDown />}
-                {sortOption === "INCLUDE_DESC" && <ChevronUp />}
-              </button>
-              <div></div>
-            </div>
+            <PaperListHeader
+              sortOption={sortOption}
+              onSortChange={setSortOption}
+            />
             <div className="flex flex-col gap-1">
               {!loadingPapers &&
                 currentPapers.map((paper) => (
@@ -203,42 +147,15 @@ export const PapersPage = () => {
                   message={`No ${itemNamePlural}.`}
                 />
               )}
-            {!loadingPapers &&
-              sortedAndFilteredPapers &&
-              sortedAndFilteredPapers.length > papersPerPage && (
-                <Card
-                  className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6"
-                  data-testid="pagination-card"
-                >
-                  <ReactPaginate
-                    data-testid="pagination-card-child-react-paginate"
-                    onPageChange={(item) =>
-                      setLocation(
-                        `/project/${projectUuid}/papers/page/${
-                          item.selected + 1
-                        }`
-                      )
-                    }
-                    breakLabel="..."
-                    nextLabel=">"
-                    previousLabel="<"
-                    pageRangeDisplayed={5}
-                    pageCount={pageCount}
-                    renderOnZeroPageCount={null}
-                    containerClassName="flex items-center gap-2 items-center content-center justify-center select-none"
-                    pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
-                    pageLinkClassName="flex items-center justify-center w-full h-full"
-                    activeClassName="bg-slate-600 hover:cursor-normal"
-                    previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-                    previousLinkClassName="flex items-center justify-center w-full h-full"
-                    nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-                    nextLinkClassName="flex items-center justify-center w-full h-full"
-                    breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
-                    breakLinkClassName="flex items-center justify-center w-full h-full"
-                    forcePage={currentPage - 1}
-                  />
-                </Card>
-              )}
+            {!loadingPapers && (
+              <PaginationBar
+                currentPage={currentPage}
+                pageCount={pageCount}
+                onPageChange={(page) =>
+                  setLocation(`/project/${projectUuid}/papers/page/${page}`)
+                }
+              />
+            )}
           </div>
           <div className="flex flex-col gap-2">
             <div className="sticky top-2 h-16 flex items-center content-center p-4 bg-slate-800 text-white rounded-lg">

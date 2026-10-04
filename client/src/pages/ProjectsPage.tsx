@@ -1,20 +1,12 @@
+import AddIcon from "@mui/icons-material/Add";
+import Button from "@mui/material/Button";
+import { Link } from "wouter";
 import { useCallback } from "react";
 import { toast } from "react-toastify";
 import { Layout } from "../components/Layout";
 import { delete_project } from "../services/projectService";
-import { Plus } from "lucide-react";
 import { ProjectsList } from "../components/ProjectsList";
-import { LinkButton } from "../components/LinkButton";
 import { useTypedStoreActions } from "../state/store";
-
-const ProjectsPageActions = () => {
-  return (
-    <LinkButton variant="green" href="/create">
-      <Plus />
-      <span>New</span>
-    </LinkButton>
-  );
-};
 
 export const ProjectsPage = () => {
   const fetchProjects = useTypedStoreActions(
@@ -34,7 +26,20 @@ export const ProjectsPage = () => {
   );
 
   return (
-    <Layout title="Projects" navbarActionComponent={ProjectsPageActions}>
+    <Layout
+      title="Projects"
+      headerActions={
+        <Button
+          variant="contained"
+          component={Link}
+          href="/create"
+          startIcon={<AddIcon />}
+          data-testid="new-project-button"
+        >
+          New project
+        </Button>
+      }
+    >
       <ProjectsList handleProjectDelete={handleProjectDelete} />
     </Layout>
   );
