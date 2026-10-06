@@ -1,14 +1,31 @@
 from io import BytesIO
+from typing import BinaryIO
 
 import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
 
-def extract_pdf_text(pdf_bytes: bytes) -> str:
-    reader = PdfReader(BytesIO(pdf_bytes))
+def to_valid_unicode(text: str) -> str:
+    """Make extracted text safe to encode as UTF-8 (JSON requests, Postgres).
+
+    pypdf can return UTF-16 surrogates: a pair (e.g. a math-italic letter)
+    is joined back into its real character, and a lone surrogate becomes
+    U+FFFD. Unhandled, either makes the embedding request fail with
+    "surrogates not allowed".
+    """
+    return text.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
+
+
+def extract_pdf_text(pdf: bytes | BinaryIO) -> str:
+    """Extract the text of a PDF given as bytes or as a seekable binary stream.
+
+    Prefer a stream (see pdf_storage.open_pdf_stream): pypdf then reads only the
+    objects it needs, so embedded images are never loaded into memory.
+    """
+    reader = PdfReader(BytesIO(pdf) if isinstance(pdf, bytes) else pdf)
     text = "\n".join(page.extract_text() for page in reader.pages)
-    return text.replace("\x00", "")
+    return to_valid_unicode(text.replace("\x00", ""))
 
 
 def chunk_text(text: str, chunk_size: int = 500, chunk_overlap: int = 100) -> list[str]:

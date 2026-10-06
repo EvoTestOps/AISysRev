@@ -1,5 +1,8 @@
 import hashlib
+import tempfile
+from contextlib import contextmanager
 from pathlib import Path
+from typing import BinaryIO, Iterator
 from uuid import UUID
 
 import boto3
@@ -69,6 +72,32 @@ def read_pdf_bytes(storage_path: str) -> bytes:
         return response["Body"].read()
 
     return Path(storage_path).read_bytes()
+
+
+@contextmanager
+def open_pdf_stream(storage_path: str) -> Iterator[BinaryIO]:
+    """Yield the PDF as a seekable binary stream instead of one bytes object.
+
+    pypdf reads a PDF's structure lazily and only decodes the objects a caller
+    touches, so text extraction from a stream never loads embedded images. S3
+    bodies can't seek, so they are spooled: in memory up to 8 MB, on disk beyond.
+    """
+    if settings.STORAGE_BACKEND == "s3":
+        try:
+            response = _client().get_object(Bucket=settings.S3_BUCKET, Key=storage_path)
+        except ClientError as e:
+            if e.response["Error"]["Code"] in ("NoSuchKey", "404"):
+                raise FileNotFoundError(storage_path) from e
+            raise
+        with tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024) as tmp:
+            for chunk in response["Body"].iter_chunks(chunk_size=1024 * 1024):
+                tmp.write(chunk)
+            tmp.seek(0)
+            yield tmp
+        return
+
+    with open(storage_path, "rb") as f:
+        yield f
 
 
 def delete_pdf_bytes(storage_path: str) -> None:

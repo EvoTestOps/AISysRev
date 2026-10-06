@@ -12,6 +12,7 @@ from src.tools.pdf_storage import (
     build_storage_path,
     delete_pdf_bytes,
     delete_project_pdf_directory,
+    open_pdf_stream,
     read_pdf_bytes,
     write_pdf_bytes,
 )
@@ -110,6 +111,20 @@ def test_local_read_of_a_missing_file_raises(local_storage: Path):
         read_pdf_bytes(str(local_storage / "missing.pdf"))
 
 
+def test_local_stream_yields_the_file_content(local_storage: Path):
+    path = build_storage_path(uuid4(), PDF)
+    write_pdf_bytes(path, PDF)
+
+    with open_pdf_stream(path) as stream:
+        assert stream.read() == PDF
+
+
+def test_local_stream_of_a_missing_file_raises(local_storage: Path):
+    with pytest.raises(FileNotFoundError):
+        with open_pdf_stream(str(local_storage / "missing.pdf")):
+            pass
+
+
 def test_local_delete_removes_the_file(local_storage: Path):
     path = str(local_storage / "file.pdf")
     write_pdf_bytes(path, PDF)
@@ -204,6 +219,40 @@ def test_s3_read_does_not_hide_other_errors(s3_client: MagicMock):
 
     with pytest.raises(ClientError):
         read_pdf_bytes("owner/hash.pdf")
+
+
+def test_s3_stream_yields_the_object_body_as_a_seekable_stream(s3_client: MagicMock):
+    body = MagicMock()
+    body.iter_chunks.return_value = [PDF[:5], PDF[5:]]
+    s3_client.get_object.return_value = {"Body": body}
+
+    with open_pdf_stream("owner/hash.pdf") as stream:
+        assert stream.read() == PDF
+        stream.seek(0)  # pypdf needs random access
+        assert stream.read(4) == PDF[:4]
+
+    s3_client.get_object.assert_called_once_with(
+        Bucket="test-bucket", Key="owner/hash.pdf"
+    )
+
+
+@pytest.mark.parametrize("code", ["NoSuchKey", "404"])
+def test_s3_stream_of_a_missing_object_raises_file_not_found(
+    s3_client: MagicMock, code: str
+):
+    s3_client.get_object.side_effect = _client_error(code)
+
+    with pytest.raises(FileNotFoundError, match="owner/hash.pdf"):
+        with open_pdf_stream("owner/hash.pdf"):
+            pass
+
+
+def test_s3_stream_does_not_hide_other_errors(s3_client: MagicMock):
+    s3_client.get_object.side_effect = _client_error("AccessDenied")
+
+    with pytest.raises(ClientError):
+        with open_pdf_stream("owner/hash.pdf"):
+            pass
 
 
 def test_s3_delete_removes_the_object(s3_client: MagicMock):

@@ -10,6 +10,7 @@ from src.tools.pdf_chunk_extraction import (
     chunk_text,
     extract_pdf_text,
     merge_and_dedupe_chunks,
+    to_valid_unicode,
     top_k_chunks_by_similarity,
 )
 from src.tools.pdf_file_validation import validate_pdf
@@ -55,6 +56,32 @@ def test_pages_are_joined_with_newlines():
 def test_bytes_that_are_not_a_pdf_raise_a_pdf_error():
     with pytest.raises(PdfReadError):
         extract_pdf_text(b"this is definitely not a pdf")
+
+
+def test_a_stream_gives_the_same_text_as_bytes():
+    with FIXTURE_PDF.open("rb") as stream:
+        from_stream = extract_pdf_text(stream)
+
+    assert from_stream == extract_pdf_text(FIXTURE_PDF.read_bytes())
+
+
+def test_extracted_text_has_no_utf16_surrogates():
+    # U+1D44E (math italic a) split into a surrogate pair, then a lone surrogate.
+    page = MagicMock()
+    page.extract_text.return_value = "x = 𝑎 + \ud835 end"
+
+    with patch("src.tools.pdf_chunk_extraction.PdfReader") as reader:
+        reader.return_value.pages = [page]
+        text = extract_pdf_text(b"ignored")
+
+    assert text == "x = \U0001d44e + � end"
+    text.encode("utf-8")  # raised "surrogates not allowed" before
+
+
+def test_text_without_surrogates_is_unchanged():
+    text = "Résumé – naïve 日本語 ✓"
+
+    assert to_valid_unicode(text) == text
 
 
 # --- chunk_text -------------------------------------------------------------
