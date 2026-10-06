@@ -2,7 +2,7 @@ import hashlib
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import BinaryIO, Iterator
+from typing import IO, Iterator
 from uuid import UUID
 
 import boto3
@@ -75,7 +75,7 @@ def read_pdf_bytes(storage_path: str) -> bytes:
 
 
 @contextmanager
-def open_pdf_stream(storage_path: str) -> Iterator[BinaryIO]:
+def open_pdf_stream(storage_path: str) -> Iterator[IO[bytes]]:
     """Yield the PDF as a seekable binary stream instead of one bytes object.
 
     pypdf reads a PDF's structure lazily and only decodes the objects a caller

@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import BinaryIO
+from typing import IO
 
 import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -17,7 +17,7 @@ def to_valid_unicode(text: str) -> str:
     return text.encode("utf-16", "surrogatepass").decode("utf-16", "replace")
 
 
-def extract_pdf_text(pdf: bytes | BinaryIO) -> str:
+def extract_pdf_text(pdf: bytes | IO[bytes]) -> str:
     """Extract the text of a PDF given as bytes or as a seekable binary stream.
 
     Prefer a stream (see pdf_storage.open_pdf_stream): pypdf then reads only the
