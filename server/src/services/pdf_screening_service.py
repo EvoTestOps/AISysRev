@@ -17,7 +17,12 @@ from src.tools.pdf_chunk_extraction import (
     merge_and_dedupe_chunks,
     top_k_chunks_by_similarity,
 )
-from src.tools.pdf_storage import read_pdf_bytes
+from src.tools.pdf_storage import open_pdf_stream
+
+
+def _read_and_extract_pdf_text(storage_path: str) -> str:
+    with open_pdf_stream(storage_path) as pdf_stream:
+        return extract_pdf_text(pdf_stream)
 
 
 class PdfScreeningService:
@@ -143,8 +148,9 @@ class PdfScreeningService:
         if file_record is None or file_record.storage_path is None:
             raise ValueError("PDF file not found")
 
-        pdf_bytes = await asyncio.to_thread(read_pdf_bytes, file_record.storage_path)
-        pdf_text = await asyncio.to_thread(extract_pdf_text, pdf_bytes)
+        pdf_text = await asyncio.to_thread(
+            _read_and_extract_pdf_text, file_record.storage_path
+        )
         chunks = await asyncio.to_thread(chunk_text, pdf_text)
         if not chunks:
             raise ValueError("PDF has no extractable text")
