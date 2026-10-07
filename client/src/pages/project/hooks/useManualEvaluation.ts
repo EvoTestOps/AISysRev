@@ -33,7 +33,7 @@ export const useManualEvaluation = ({
     [papers],
   );
 
-  const evaluationFinished = jobs.length === 0 && pendingTasks.length === 0;
+  const evaluationFinished = papers.length > 0 && jobs.length === 0 && pendingTasks.length === 0;
 
   const paperToTaskMap = useMemo(() => {
     if (papers.length === 0 || jobs.length === 0 || pendingTasks.length === 0) {
