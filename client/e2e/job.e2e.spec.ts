@@ -26,7 +26,7 @@ test.describe("Job UI (mock LLM)", () => {
     await page.getByTestId("llm-model-dropdown").click();
     await page.getByTestId("llm-model-dropdown-option-mock-small").click();
 
-    await page.getByTestId("prompting-strategy-zero-shot-button").click();
+    // Zero-shot is the default; its button is folded away under "Customize".
 
     const createButton = page.getByTestId("create-task-button");
     await expect(createButton).toBeEnabled();
