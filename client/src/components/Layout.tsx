@@ -54,7 +54,7 @@ export const Layout = ({
             gap: { xs: 1, sm: 3 },
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="textSecondary">
             © AISysRev
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 3 }}>
@@ -65,7 +65,7 @@ export const Layout = ({
                 target="_blank"
                 rel="noreferrer"
                 variant="body2"
-                color="text.secondary"
+                color="textSecondary"
                 underline="hover"
               >
                 {label}
