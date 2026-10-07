@@ -5,11 +5,13 @@ import { PropsWithChildren } from "react";
 import { Helmet } from "react-helmet-async";
 import { twMerge } from "tailwind-merge";
 import { NavigationBar } from "./NavigationBar";
-import { PageHeader } from "./PageHeader";
+import { PageHeader, PageParent } from "./PageHeader";
 
 type LayoutProps = {
   title: string;
   className?: string;
+  /** The page one level up, shown before the title. */
+  parent?: PageParent;
   /** Page-level actions, shown next to the title. */
   headerActions?: React.ReactNode;
   hideNavbar?: boolean;
@@ -27,6 +29,7 @@ export const Layout = ({
   title,
   children,
   className,
+  parent,
   headerActions,
   hideNavbar,
 }: PropsWithChildren<LayoutProps>) => {
@@ -39,7 +42,7 @@ export const Layout = ({
       {!hideNavbar && <NavigationBar />}
 
       <div className={twMerge(CONTENT_WIDTH, "mt-8 mb-12", className)}>
-        {!hideNavbar && <PageHeader title={title} actions={headerActions} />}
+        {!hideNavbar && <PageHeader title={title} parent={parent} actions={headerActions} />}
         {children}
       </div>
       <Box component="footer" sx={{ mt: "auto", borderTop: 1, borderColor: "divider" }}>
@@ -65,7 +68,7 @@ export const Layout = ({
                 target="_blank"
                 rel="noreferrer"
                 variant="body2"
-                color="textSecondary"
+                color="text.secondary"
                 underline="hover"
               >
                 {label}

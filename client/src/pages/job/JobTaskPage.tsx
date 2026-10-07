@@ -5,6 +5,7 @@ import { Link, useParams } from "wouter";
 import { AlertMessage } from "../../components/AlertMessage";
 import { Card } from "../../components/Card";
 import { Layout } from "../../components/Layout";
+import { PROJECTS_PARENT } from "../../components/PageHeader";
 import { PaperDetails } from "../../components/paperList/PaperDetails";
 import { H6 } from "../../components/Typography";
 import { ScreeningTarget } from "../../state/types";
@@ -73,7 +74,7 @@ export const JobTaskPage = () => {
   };
 
   return (
-    <Layout title={project.name}>
+    <Layout title={project.name} parent={PROJECTS_PARENT}>
       <div className="flex flex-col gap-4" data-testid="job-task-page">
         <div className="flex items-center justify-between gap-4">
           <JobBreadcrumbs
