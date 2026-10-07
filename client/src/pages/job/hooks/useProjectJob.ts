@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { jobRunNumbers } from "../../project/jobLabels";
 import { useTypedStoreActions, useTypedStoreState } from "../../../state/store";
 
 /** The project and one of its jobs (with stats), loading the jobs if needed. */
@@ -14,9 +15,16 @@ export const useProjectJob = (projectUuid: string, jobUuid: string) => {
     }
   }, [projectUuid, fetchJobsForProject]);
 
+  const runNumber = useMemo(
+    () => (jobs ? jobRunNumbers(jobs)[jobUuid] : undefined),
+    [jobs, jobUuid],
+  );
+
   return {
     loading: loadingProjects || jobs === undefined,
     project,
     job: jobs?.find((job) => job.uuid === jobUuid),
+    /** Which run of its model in the project, e.g. 2 for Run #2. */
+    runNumber,
   };
 };
