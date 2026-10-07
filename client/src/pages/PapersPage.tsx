@@ -3,6 +3,7 @@ import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
+import { PROJECTS_PARENT } from "../components/PageHeader";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { ProjectTabs } from "../components/ProjectTabs";
 import { NotFoundPage } from "./NotFound";
@@ -96,7 +97,7 @@ export const PapersPage = () => {
   }
 
   return (
-    <Layout title={project.name}>
+    <Layout title={project.name} parent={PROJECTS_PARENT}>
       <div>
         <ProjectTabs
           projectUuid={projectUuid}
