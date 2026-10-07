@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import { ToggleSwitch } from "../../../components/ToggleSwitch";
 import { Provider } from "../../../state/types";
 
 type ProviderConfigurationProps = {
@@ -72,37 +73,19 @@ export const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                   const enabled = forced || Boolean(providerFormValues[key]);
                   const disabled = modelSelected || forced;
                   return (
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={enabled}
+                    <ToggleSwitch
+                      checked={enabled}
                       disabled={disabled}
-                      data-testid={`property_${key}_input`}
-                      onClick={() => {
+                      inputLabel={property.title ?? key}
+                      testId={`property_${key}_input`}
+                      onChange={(checked) => {
                         setProviderFormValue((vals) => ({
                           ...vals,
-                          [key]: !enabled,
+                          [key]: checked,
                         }));
                         setModelsLoaded(false);
                       }}
-                      className={classNames(
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:cursor-not-allowed",
-                        {
-                          "bg-slate-800": enabled,
-                          "bg-slate-300": !enabled,
-                        },
-                      )}
-                    >
-                      <span
-                        className={classNames(
-                          "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
-                          {
-                            "translate-x-6": enabled,
-                            "translate-x-1": !enabled,
-                          },
-                        )}
-                      />
-                    </button>
+                    />
                   );
                 })()}
               {property.type === "number" && (
