@@ -1,10 +1,5 @@
-import ReactPaginateModule from "react-paginate";
-import { Card } from "../Card";
-
-// react-paginate is CJS-only with an __esModule default; Vite 8 interop returns module.exports for it
-const ReactPaginate =
-  (ReactPaginateModule as unknown as { default?: typeof ReactPaginateModule }).default ??
-  ReactPaginateModule;
+import Pagination from "@mui/material/Pagination";
+import Paper from "@mui/material/Paper";
 
 type PaginationBarProps = {
   /** 1-based. */
@@ -23,31 +18,27 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
     return null;
   }
   return (
-    <Card
-      className="flex shadow-lg bg-slate-800 justify-center mt-12 sticky bottom-6"
+    <Paper
+      elevation={3}
       data-testid="pagination-card"
+      sx={{
+        position: "sticky",
+        bottom: 24,
+        mt: 4,
+        py: 1.5,
+        display: "flex",
+        justifyContent: "center",
+        borderRadius: 2,
+      }}
     >
-      <ReactPaginate
-        data-testid="pagination-card-child-react-paginate"
-        onPageChange={(item) => onPageChange(item.selected + 1)}
-        breakLabel="..."
-        nextLabel=">"
-        previousLabel="<"
-        pageRangeDisplayed={5}
-        pageCount={pageCount}
-        renderOnZeroPageCount={null}
-        containerClassName="flex items-center gap-2 items-center content-center justify-center select-none"
-        pageClassName="text-white flex items-center justify-center rounded-full w-10 h-10 border border-white hover:bg-slate-600 hover:cursor-pointer"
-        pageLinkClassName="flex items-center justify-center w-full h-full"
-        activeClassName="bg-slate-600 hover:cursor-normal"
-        previousClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-        previousLinkClassName="flex items-center justify-center w-full h-full"
-        nextClassName="flex items-center justify-center rounded-full w-10 h-10 border border-white text-white hover:bg-slate-600 hover:cursor-pointer"
-        nextLinkClassName="flex items-center justify-center w-full h-full"
-        breakClassName="flex items-center justify-center w-10 h-10 text-white hover:cursor-pointer"
-        breakLinkClassName="flex items-center justify-center w-full h-full"
-        forcePage={currentPage - 1}
+      <Pagination
+        count={pageCount}
+        page={currentPage}
+        onChange={(_, page) => onPageChange(page)}
+        color="primary"
+        shape="rounded"
+        siblingCount={2}
       />
-    </Card>
+    </Paper>
   );
 };
