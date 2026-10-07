@@ -83,7 +83,7 @@ function App() {
   if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
 
   return (
-    <div className="flex flex-col bg-gray-200 font-roboto pb-32">
+    <div className="flex flex-col bg-gray-200 font-roboto">
       <ToastContainer autoClose={4000} />
       <EventStream />
       <Switch>

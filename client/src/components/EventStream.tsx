@@ -1,7 +1,7 @@
+import Alert from "@mui/material/Alert";
+import Snackbar from "@mui/material/Snackbar";
 import { useCallback, useEffect, useState } from "react";
-import { CircleAlert } from "lucide-react";
 import * as z from "zod";
-import classNames from "classnames";
 import { useTypedStoreActions } from "../state/store";
 import type { JobStats } from "../state/types";
 
@@ -26,6 +26,10 @@ const EventName = {
   SERVER_ERROR: 99999,
 } as const;
 
+/** The readable name of an event code, e.g. 3003 → "JOB_PROGRESS". */
+export const eventNameLabel = (code: number) =>
+  Object.entries(EventName).find(([, value]) => value === code)?.[0] ?? String(code);
+
 const EventNameEnum = z.enum(EventName);
 const EventData = z.object({
   timestamp: z.string(),
@@ -33,52 +37,14 @@ const EventData = z.object({
   value: z.record(z.string(), z.any()),
 });
 
-type EventData = z.infer<typeof EventData>;
-
-const EventDataList: React.FC<{ logs: Array<EventData> }> = ({ logs }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div
-      className={classNames(
-        "fixed bottom-0 left-0 z-50 bg-slate-800/90 m-2 p-3 text-xs text-white rounded-lg flex flex-col items-start gap-2 overflow-y-scroll max-h-[50vh]",
-        {
-          "w-[70vw]": open,
-        },
-      )}
-    >
-      {!open && (
-        <button className="hover:cursor-pointer" onClick={() => setOpen(true)}>
-          View logs ({logs.length})
-        </button>
-      )}
-      {open && (
-        <button className="hover:cursor-pointer text-red-500" onClick={() => setOpen(false)}>
-          Close
-        </button>
-      )}
-      {open &&
-        logs.map((log, i) => (
-          <div key={i} className="flex flex-row gap-2">
-            <span>
-              <strong>[{log.timestamp}]</strong>
-            </span>
-            <span>
-              <strong>Event:</strong> {log.event_name}
-            </span>
-            <span>
-              <strong>Data:</strong> {JSON.stringify(log.value)}
-            </span>
-          </div>
-        ))}
-    </div>
-  );
-};
+// The event log is a debugging aid, so only collect it in dev.
+const collectEventLog = import.meta.env.VITE_APP_ENV === "dev";
 
 export const EventStream = () => {
   const event_url = "/api/v1/event-queue";
-  const [connected, setConnected] = useState(false);
-  const [logs, setLogs] = useState<Array<EventData>>([]);
+  const [disconnected, setDisconnected] = useState(false);
 
+  const addEventLog = useTypedStoreActions((actions) => actions.addEventLog);
   const updateJobStats = useTypedStoreActions((actions) => actions.updateJobStats);
 
   const _onMessage = useCallback(
@@ -89,7 +55,7 @@ export const EventStream = () => {
         const parsedData = EventData.safeParse(dataJson);
         if (!parsedData.error) {
           const eventData = parsedData.data;
-          setLogs((logs) => [...logs, eventData]);
+          if (collectEventLog) addEventLog(eventData);
 
           switch (eventData.event_name) {
             case EventName.JOB_PROGRESS:
@@ -105,29 +71,23 @@ export const EventStream = () => {
         }
       }
     },
-    [updateJobStats],
+    [addEventLog, updateJobStats],
   );
 
   const startLogStream = useCallback(() => {
     const eventSource = new EventSource(event_url);
 
-    eventSource.onopen = (_ev) => {
-      // console.log("SSE connected to " + event_url);
-      setConnected(true);
-    };
+    eventSource.onopen = () => setDisconnected(false);
 
     eventSource.onmessage = (event) => _onMessage(event);
 
     eventSource.onerror = (error) => {
       console.error("SSE error:", error);
       eventSource.close();
-      setConnected(false);
+      setDisconnected(true);
     };
 
-    return () => {
-      eventSource.close();
-      setConnected(false);
-    };
+    return () => eventSource.close();
   }, [_onMessage]);
   useEffect(() => {
     const stop = startLogStream();
@@ -136,12 +96,11 @@ export const EventStream = () => {
     };
   }, [startLogStream]);
 
-  return !connected ? (
-    <div className="fixed bottom-2 left-2 z-50 bg-slate-800 p-2 pl-3 pr-3 text-xs text-white rounded-lg flex flex-row items-center gap-2">
-      <CircleAlert size={20} />
-      <span className="text-red-400">Event stream disconnected</span>
-    </div>
-  ) : (
-    <EventDataList logs={logs} />
+  return (
+    <Snackbar open={disconnected} anchorOrigin={{ vertical: "bottom", horizontal: "left" }}>
+      <Alert severity="warning" variant="filled" sx={{ width: "100%" }}>
+        Live updates disconnected. Refresh the page to reconnect.
+      </Alert>
+    </Snackbar>
   );
 };
