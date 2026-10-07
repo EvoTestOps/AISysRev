@@ -75,7 +75,7 @@ export const ProjectTypeSelector: React.FC<ProjectTypeSelectorProps> = ({ value,
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   {option.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="textSecondary">
                   {option.description}
                 </Typography>
               </Box>
@@ -92,7 +92,7 @@ export const ProjectTypeSelector: React.FC<ProjectTypeSelectorProps> = ({ value,
       })}
     </Box>
     {value === ScreeningTarget.GITHUB_REPOSITORY && (
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="textSecondary">
         Upload a CSV of repositories with the expected columns, e.g. one made with the{" "}
         <Link
           href="https://github.com/EvoTestOps/github-query-tool/tree/main"

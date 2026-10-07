@@ -36,7 +36,7 @@ const FormSection: React.FC<FormSectionProps> = ({ title, description, children 
           {title}
         </Typography>
         {description && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="textSecondary">
             {description}
           </Typography>
         )}
@@ -210,14 +210,14 @@ export const NewProject = () => {
               <Typography variant="h6" component="h2">
                 Per-criteria logic
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="textSecondary">
                 Optional. Only used by per-criterion screening tasks.
               </Typography>
             </Box>
           </AccordionSummary>
           <AccordionDetails sx={{ px: 3, pb: 3 }}>
             <Stack spacing={2}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="textSecondary">
                 By default a {itemName} is included only if it meets <strong>all</strong> inclusion
                 criteria (AND) and <strong>none</strong> of the exclusion criteria (OR), the
                 standard approach for systematic reviews. To customise it, write an expression using

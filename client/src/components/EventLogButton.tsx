@@ -38,7 +38,7 @@ export const EventLogButton: React.FC = () => {
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             Event log
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="textSecondary">
             {logs.length} {logs.length === 1 ? "event" : "events"}
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
@@ -49,7 +49,7 @@ export const EventLogButton: React.FC = () => {
         <Divider />
         <Box sx={{ overflowY: "auto", px: 2, py: 1, fontFamily: "monospace", fontSize: 12 }}>
           {logs.length === 0 ? (
-            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+            <Typography variant="body2" color="textSecondary" sx={{ py: 2 }}>
               No events yet.
             </Typography>
           ) : (

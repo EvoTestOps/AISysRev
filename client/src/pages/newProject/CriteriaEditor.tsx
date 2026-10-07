@@ -49,7 +49,7 @@ export const CriteriaEditor: React.FC<CriteriaEditorProps> = ({
       <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="textSecondary">
         {description}
       </Typography>
       {criteria.length > 0 && (
