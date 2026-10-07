@@ -13,6 +13,7 @@ import { useJobTaskDetail } from "./hooks/useJobTaskDetail";
 import { useJobTasks } from "./hooks/useJobTasks";
 import { useProjectJob } from "./hooks/useProjectJob";
 import { JobBreadcrumbs } from "./JobBreadcrumbs";
+import { jobDisplayName } from "../project/jobLabels";
 import { JobSummaryCard } from "./JobSummaryCard";
 import { PromptList } from "./PromptList";
 import { TaskResultView } from "./result/TaskResultView";
@@ -49,7 +50,7 @@ export const JobTaskPage = () => {
     jobUuid: string;
     taskUuid: string;
   }>();
-  const { loading, project, job } = useProjectJob(projectUuid, jobUuid);
+  const { loading, project, job, runNumber } = useProjectJob(projectUuid, jobUuid);
   const { task, loading: loadingTask, notFound, error } = useJobTaskDetail(jobUuid, taskUuid);
   // Same order as the job page, for previous / next.
   const { tasks } = useJobTasks(jobUuid);
@@ -80,7 +81,7 @@ export const JobTaskPage = () => {
             backLabel={`Back to all ${itemNamePlural} in this task`}
             crumbs={[
               { label: "Screening tasks", href: `/project/${projectUuid}` },
-              { label: job.llm_config.model_name, href: jobPath, testId: "task-back" },
+              { label: jobDisplayName(job, runNumber), href: jobPath, testId: "task-back" },
               {
                 label: task
                   ? `${task.paper_id != null ? `#${task.paper_id} ` : ""}${task.title}`
@@ -98,7 +99,7 @@ export const JobTaskPage = () => {
             <StepButton href={neighbour(1)} testId="task-next" direction="next" />
           </div>
         </div>
-        <JobSummaryCard job={job} itemName={itemName} />
+        <JobSummaryCard job={job} runNumber={runNumber} itemName={itemName} />
         {error && <AlertMessage className="p-4" message={error} />}
         {!loadingTask && task && (
           <>

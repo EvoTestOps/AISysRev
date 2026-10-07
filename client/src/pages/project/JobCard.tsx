@@ -5,37 +5,39 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import CardActionArea from "@mui/material/CardActionArea";
 import CardActions from "@mui/material/CardActions";
-import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useState } from "react";
 import { Link } from "wouter";
 import { JobStatus, JobWithStats } from "../../state/types";
-import {
-  jobProgress,
-  SCREENING_TYPE_BADGES,
-  screeningModeLabel,
-  truncatedModelName,
-} from "./jobLabels";
+import { JobFields } from "./JobFields";
+import { jobDisplayName, jobProgress, jobStartedAt } from "./jobLabels";
 import { JobStatusIndicator } from "./JobStatusIndicator";
 
 type JobCardProps = {
   job: JobWithStats;
+  /** Which run of this model in the project, e.g. 2 for Run #2. */
+  runNumber?: number;
   itemName: string;
   onCancel: (jobUuid: string) => void;
   onDelete: (jobUuid: string) => void;
 };
 
-export const JobCard: React.FC<JobCardProps> = ({ job, itemName, onCancel, onDelete }) => {
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  runNumber,
+  itemName,
+  onCancel,
+  onDelete,
+}) => {
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const { status } = job.stats;
   const progress = jobProgress(job);
-  const badge = SCREENING_TYPE_BADGES[job.prompting_config.screening_type];
+  const startedAt = jobStartedAt(job);
   const taskHref = `/project/${job.project_uuid}/job/${job.uuid}`;
   const closeMenu = () => setMenuAnchor(null);
   // Only running or queued tasks can be cancelled.
@@ -51,23 +53,27 @@ export const JobCard: React.FC<JobCardProps> = ({ job, itemName, onCancel, onDel
         component={Link}
         href={taskHref}
         data-testid={`job-card-link-${job.uuid}`}
-        aria-label={`View the ${job.llm_config.model_name} screening task`}
+        aria-label={`View ${jobDisplayName(job, runNumber)}`}
         sx={{ display: "flex", justifyContent: "flex-start", gap: 2, px: 2, py: 1.5 }}
       >
-        {badge && (
-          <Chip label={badge} color="secondary" sx={{ fontWeight: 700, borderRadius: 1 }} />
-        )}
-        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, minWidth: 0 }}>
-          <Tooltip title={job.llm_config.model_name} enterDelay={50}>
-            <Typography variant="subtitle2" noWrap>
-              {truncatedModelName(job.llm_config.model_name)}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 600 }}
+              data-testid={`job-card-run-${job.uuid}`}
+            >
+              {runNumber !== undefined ? `Run #${runNumber}` : "Screening task"}
             </Typography>
-          </Tooltip>
-          <Typography variant="caption" color="text.secondary">
-            {screeningModeLabel(job)}
-          </Typography>
+            {startedAt && (
+              <Typography variant="caption" color="text.secondary">
+                Started {startedAt}
+              </Typography>
+            )}
+          </Box>
+          <JobFields job={job} />
         </Box>
-        <Box className="relative w-56 h-8" sx={{ ml: "auto", flexShrink: 0 }}>
+        <Box className="relative w-56 h-8" sx={{ flexShrink: 0 }}>
           <JobStatusIndicator job={job} itemName={itemName} progress={progress} />
         </Box>
       </CardActionArea>

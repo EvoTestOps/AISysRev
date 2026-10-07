@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import { useLocation, useParams, useRoute } from "wouter";
@@ -19,6 +19,7 @@ import { useCreateTaskForm } from "./project/hooks/useCreateTaskForm";
 import { downloadMissingFulltextRis, downloadResultCsv } from "./project/downloads";
 import { JobActionModals } from "./project/JobActionModals";
 import { JobCard } from "./project/JobCard";
+import { jobRunNumbers, newestFirst } from "./project/jobLabels";
 import { ProjectActions } from "./project/ProjectActions";
 import { SectionHeader } from "./project/SectionHeader";
 import { UploadCard } from "./project/UploadCard";
@@ -38,6 +39,7 @@ export const ProjectPage = () => {
   const papers = useTypedStoreState((state) => state.getPapersForProject)(projectUuid);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
   const jobs = useTypedStoreState((state) => state.jobsByProject[projectUuid] || []);
+  const runNumbers = useMemo(() => jobRunNumbers(jobs), [jobs]);
   const fetchJobsForProject = useTypedStoreActions((actions) => actions.fetchJobsForProject);
 
   const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
@@ -120,8 +122,9 @@ export const ProjectPage = () => {
       <div className="flex space-x-8 lg:flex-row flex-col items-start">
         <div className="flex flex-col space-y-4 w-7xl">
           {jobs.length === 0 && <AlertMessage message="No screening tasks." />}
-          {jobs.map((job) => (
+          {newestFirst(jobs).map((job) => (
             <JobCard
+              runNumber={runNumbers[job.uuid]}
               key={job.uuid}
               job={job}
               itemName={itemName}

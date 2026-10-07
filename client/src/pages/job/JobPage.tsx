@@ -17,6 +17,7 @@ import { SegmentedButton } from "../project/createTask/controls";
 import { useJobTasks } from "./hooks/useJobTasks";
 import { useProjectJob } from "./hooks/useProjectJob";
 import { JobBreadcrumbs } from "./JobBreadcrumbs";
+import { jobDisplayName } from "../project/jobLabels";
 import { JobSummaryCard } from "./JobSummaryCard";
 import { JobTaskRow } from "./JobTaskRow";
 import { isErroredTask, overallDecision } from "./taskResult";
@@ -49,7 +50,7 @@ const sortableTask = (task: JobTaskRead) => ({ ...task, paper_id: task.paper_id 
 /** The papers a screening task (job) screened, with the task's result for each. */
 export const JobPage = () => {
   const { projectUuid, jobUuid } = useParams<{ projectUuid: string; jobUuid: string }>();
-  const { loading, project, job } = useProjectJob(projectUuid, jobUuid);
+  const { loading, project, job, runNumber } = useProjectJob(projectUuid, jobUuid);
   const { tasks, loading: loadingTasks, error } = useJobTasks(jobUuid);
 
   const [filter, setFilter] = useState<TaskFilter>("ALL");
@@ -89,10 +90,10 @@ export const JobPage = () => {
           backLabel="Back to screening tasks"
           crumbs={[
             { label: "Screening tasks", href: `/project/${projectUuid}` },
-            { label: job.llm_config.model_name },
+            { label: jobDisplayName(job, runNumber) },
           ]}
         />
-        <JobSummaryCard job={job} itemName={itemName} />
+        <JobSummaryCard job={job} runNumber={runNumber} itemName={itemName} />
         <div className="grid grid-cols-4 gap-2 max-w-xl">
           {FILTERS.map(({ value, label }) => (
             <SegmentedButton
