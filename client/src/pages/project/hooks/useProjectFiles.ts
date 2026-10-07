@@ -10,6 +10,7 @@ import { FetchedFile, ScreeningTarget } from "../../../state/types";
 export const useProjectFiles = (projectUuid: string, screeningTarget: ScreeningTarget) => {
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
   const [files, setFiles] = useState<FetchedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const fetchFiles = useCallback(async () => {
     try {
@@ -59,16 +60,19 @@ export const useProjectFiles = (projectUuid: string, screeningTarget: ScreeningT
 
   const handleFilesSelected = useCallback(
     async (selected: File[]) => {
+      setUploading(true);
       try {
         await uploadFiles(selected);
         await fetchFiles();
         await fetchPapers(projectUuid);
       } catch (error) {
         console.error("Problem uploading the files", error);
+      } finally {
+        setUploading(false);
       }
     },
     [uploadFiles, fetchFiles, projectUuid, fetchPapers],
   );
 
-  return { files, fetchFiles, handleFilesSelected };
+  return { files, uploading, fetchFiles, handleFilesSelected };
 };
