@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useLocation } from "wouter";
-import { DropdownOption } from "../../../components/DropDownMenus";
 import { useConfig } from "../../../config/config";
 import { GLOBAL_PROVIDER_OVERRIDES } from "../../../config/globalProviderOverrides";
 import { createJob } from "../../../services/jobService";
@@ -16,6 +15,9 @@ import {
   Provider,
   ScreeningTarget,
 } from "../../../state/types";
+
+/** A provider or model choice: its display name and its identifier. */
+export type DropdownOption = { name: string; value: string };
 
 // Jev answers typed questions with probabilities instead of generating text,
 // so it gets its own screening method rather than sitting among the LLMs.
@@ -46,8 +48,30 @@ const schemaDefaults = (
   );
 };
 
+// The last provider and model a task was created with, preselected next time.
+const LAST_SETUP_KEY = "aisysrev.lastTaskSetup";
+
+type LastTaskSetup = { screeningMethod: ScreeningMethod; provider: string; model: string };
+
+const readLastSetup = (): LastTaskSetup | null => {
+  try {
+    const raw = window.localStorage.getItem(LAST_SETUP_KEY);
+    return raw ? (JSON.parse(raw) as LastTaskSetup) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveLastSetup = (setup: LastTaskSetup) => {
+  try {
+    window.localStorage.setItem(LAST_SETUP_KEY, JSON.stringify(setup));
+  } catch {
+    // Remembering is a convenience; without storage the form starts empty.
+  }
+};
+
 /**
- * State and actions of the "Create task" card. Lives in ProjectPage because the
+ * State and actions of the task form. Lives in ProjectPage because the
  * few-shot modal, opened from the card, needs the same selections.
  */
 export const useCreateTaskForm = (projectUuid: string, screeningTarget: ScreeningTarget) => {
@@ -55,6 +79,7 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
   const providers = useTypedStoreState((state) => state.providers);
   const fetchJobsForProject = useTypedStoreActions((actions) => actions.fetchJobsForProject);
 
+  const [lastSetup] = useState(readLastSetup);
   const [screeningMethod, setScreeningMethod] = useState<ScreeningMethod>(ScreeningMethod.LLM);
   const [promptingStrategy, setPromptingStrategy] = useState<PromptingStrategy>(
     JobPromptingType.ZERO_SHOT,
@@ -199,6 +224,40 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
       });
   }, [isProviderSelected, modelsLoaded, selectedProvider, providerFormValues]);
 
+  // Preselect the last provider, then (once its models are loaded) the last
+  // model. Each happens once, so clearing a selection sticks.
+  const restoredProvider = useRef(false);
+  useEffect(() => {
+    if (restoredProvider.current || !lastSetup || providers.length === 0) {
+      return;
+    }
+    restoredProvider.current = true;
+    const saved = providers.find((p) => p.name === lastSetup.provider);
+    if (!saved) {
+      return;
+    }
+    if (lastSetup.screeningMethod === ScreeningMethod.JEV && saved.name === JEV_PROVIDER_NAME) {
+      setScreeningMethod(ScreeningMethod.JEV);
+    }
+    setSelectedProvider({ name: saved.title, value: saved.name });
+    setIsProviderSelected(true);
+  }, [lastSetup, providers]);
+
+  const restoredModel = useRef(false);
+  useEffect(() => {
+    if (restoredModel.current || !lastSetup || !modelsLoaded) {
+      return;
+    }
+    restoredModel.current = true;
+    if (
+      selectedProvider?.value === lastSetup.provider &&
+      availableModels.some((m) => m.id === lastSetup.model)
+    ) {
+      setSelectedModel({ name: lastSetup.model, value: lastSetup.model });
+      setIsModelSelected(true);
+    }
+  }, [lastSetup, modelsLoaded, selectedProvider, availableModels]);
+
   const llmConfig = useMemo<LlmConfig | null>(
     () =>
       selectedModel && selectedProvider
@@ -212,19 +271,26 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     [selectedModel, selectedProvider, modelFormValues, providerFormValues],
   );
 
-  const createTask = useCallback(async () => {
-    if (promptingStrategy === JobPromptingType.FEW_SHOT) {
-      // The few-shot modal collects the seed papers and creates the job.
-      navigate(`/project/${projectUuid}/few_shot`);
-      return;
-    }
+  /** Creates the task (or opens the few-shot modal). Resolves to whether it did. */
+  const createTask = useCallback(async (): Promise<boolean> => {
     if (!selectedModel) {
       toast.error("Please select a model before creating a task.");
-      return;
+      return false;
     }
     if (!llmConfig) {
       toast.error("Please select a provider before creating a task.");
-      return;
+      return false;
+    }
+    const setup = {
+      screeningMethod,
+      provider: llmConfig.provider_name,
+      model: llmConfig.model_name,
+    };
+    if (promptingStrategy === JobPromptingType.FEW_SHOT) {
+      // The few-shot modal collects the seed papers and creates the job.
+      saveLastSetup(setup);
+      navigate(`/project/${projectUuid}/few_shot`);
+      return true;
     }
     const promptingConfig =
       promptingStrategy === JobPromptingType.PER_CRITERIA
@@ -232,12 +298,16 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
         : createZeroShotPromptingConfig(screeningTarget);
     try {
       await createJob(projectUuid, llmConfig, promptingConfig, screeningMode);
+      saveLastSetup(setup);
       fetchJobsForProject(projectUuid);
+      return true;
     } catch (e) {
       console.error("Error creating job:", e);
       toast.error("Error creating job");
+      return false;
     }
   }, [
+    screeningMethod,
     promptingStrategy,
     navigate,
     projectUuid,

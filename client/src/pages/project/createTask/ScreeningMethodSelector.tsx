@@ -1,5 +1,5 @@
 import { Gauge, Sparkles } from "lucide-react";
-import { FieldGroup, FieldLabel, RadioCard } from "./controls";
+import { RadioCard } from "./controls";
 import { CreateTaskForm, ScreeningMethod } from "../hooks/useCreateTaskForm";
 
 /** LLM screening or Jev screening. Hidden when the backend offers no Jev provider. */
@@ -8,11 +8,7 @@ export const ScreeningMethodSelector: React.FC<{ form: CreateTaskForm }> = ({ fo
     return null;
   }
   return (
-    <FieldGroup>
-      <FieldLabel
-        label="Screening method"
-        tooltip="LLM screening asks a language model to judge each criterion and explain why. Jev screening asks TypeSafe's Jev decision model for a calibrated probability per criterion."
-      />
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
       <RadioCard
         testId="screening-method-llm-button"
         selected={!form.isJevScreening}
@@ -31,6 +27,6 @@ export const ScreeningMethodSelector: React.FC<{ form: CreateTaskForm }> = ({ fo
         title="Jev screening"
         description="TypeSafe Jev returns a probability per criterion, all in one request."
       />
-    </FieldGroup>
+    </div>
   );
 };

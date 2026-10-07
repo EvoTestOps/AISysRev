@@ -16,20 +16,22 @@ export type JobField = {
   tooltip: string;
 };
 
+type FieldValue = Pick<JobField, "value" | "tooltip">;
+
 const isGithubJob = (job: JobWithStats) =>
   job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY;
 
-// Values use the same words as the "Create task" form.
-const evaluationMode = (job: JobWithStats): Pick<JobField, "value" | "tooltip"> =>
-  job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA
+// The task form and the job cards describe a task's options in the same words.
+export const evaluationModeLabel = (screeningType: JobPromptingType): FieldValue =>
+  screeningType === JobPromptingType.PER_CRITERIA
     ? {
         value: "One call per criterion",
         tooltip: "Each criterion is evaluated in its own model call.",
       }
     : { value: "All criteria together", tooltip: "One model call evaluates all criteria." };
 
-const promptingStrategy = (job: JobWithStats): Pick<JobField, "value" | "tooltip"> => {
-  switch (job.prompting_config.screening_type) {
+export const promptingStrategyLabel = (screeningType: JobPromptingType): FieldValue => {
+  switch (screeningType) {
     case JobPromptingType.PER_CRITERIA:
       return {
         value: "Zero-shot (fixed)",
@@ -48,8 +50,8 @@ const promptingStrategy = (job: JobWithStats): Pick<JobField, "value" | "tooltip
   }
 };
 
-const screeningMode = (job: JobWithStats): Pick<JobField, "value" | "tooltip"> => {
-  switch (job.screening_mode) {
+export const screeningModeLabel = (mode: JobScreeningMode, isGithub: boolean): FieldValue => {
+  switch (mode) {
     case JobScreeningMode.PDF:
       return {
         value: "Full text (PDF)",
@@ -61,7 +63,7 @@ const screeningMode = (job: JobWithStats): Pick<JobField, "value" | "tooltip"> =
         tooltip: "Papers with a PDF are screened on their full text, the rest on the abstract.",
       };
     default:
-      return isGithubJob(job)
+      return isGithub
         ? {
             value: "Name, description & README",
             tooltip: "The model reads each repository's name, description and README.",
@@ -82,9 +84,21 @@ export const jobFields = (job: JobWithStats, providerTitle?: string): JobField[]
     detail: providerTitle ?? job.llm_config.provider_name,
     tooltip: "The model, and the provider it was called through.",
   },
-  { key: "evaluation", label: "Evaluation mode", ...evaluationMode(job) },
-  { key: "prompting", label: "Prompting strategy", ...promptingStrategy(job) },
-  { key: "screening", label: "Screening mode", ...screeningMode(job) },
+  {
+    key: "evaluation",
+    label: "Evaluation mode",
+    ...evaluationModeLabel(job.prompting_config.screening_type),
+  },
+  {
+    key: "prompting",
+    label: "Prompting strategy",
+    ...promptingStrategyLabel(job.prompting_config.screening_type),
+  },
+  {
+    key: "screening",
+    label: "Screening mode",
+    ...screeningModeLabel(job.screening_mode, isGithubJob(job)),
+  },
 ];
 
 const createdTime = (job: JobWithStats) =>
