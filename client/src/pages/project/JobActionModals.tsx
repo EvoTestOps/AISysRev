@@ -1,4 +1,5 @@
-import { CircleStop, Trash2 } from "lucide-react";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { JobActions } from "./hooks/useJobActions";
 
@@ -12,8 +13,8 @@ export const JobActionModals: React.FC<{ actions: JobActions }> = ({ actions }) 
         title="Cancel screening task?"
         description="This will cancel running and scheduled screening jobs."
         confirmButtonLabel="Cancel task"
-        confirmButtonVariant="yellow"
-        confirmButtonIcon={<CircleStop size={16} />}
+        confirmColor="warning"
+        confirmButtonIcon={<StopCircleOutlinedIcon />}
       />
     )}
     {actions.jobToDelete && (
@@ -24,8 +25,8 @@ export const JobActionModals: React.FC<{ actions: JobActions }> = ({ actions }) 
         title="Delete screening task?"
         description="This action cannot be undone. All data related to this task will be permanently deleted."
         confirmButtonLabel="Delete"
-        confirmButtonVariant="red"
-        confirmButtonIcon={<Trash2 size={16} />}
+        confirmColor="error"
+        confirmButtonIcon={<DeleteOutlinedIcon />}
       />
     )}
   </>
