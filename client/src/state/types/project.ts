@@ -29,6 +29,8 @@ export const ProjectModel = z.object({
   criteria: CriteriaModel,
   preferences: ProjectPreferences.nullable(),
   screening_target: z.nativeEnum(ScreeningTarget),
+  created_at: z.coerce.date().optional(),
+  updated_at: z.coerce.date().optional(),
 });
 
 export const CreatedProjectModel = z.object({
