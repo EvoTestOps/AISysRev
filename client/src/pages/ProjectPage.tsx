@@ -1,3 +1,4 @@
+import Fade from "@mui/material/Fade";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
@@ -7,6 +8,7 @@ import { AlertMessage } from "../components/AlertMessage";
 import { Button } from "../components/Button";
 import { FewShotModal } from "../components/FewShotModal";
 import { Layout } from "../components/Layout";
+import { PROJECTS_PARENT } from "../components/PageHeader";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import { ProjectTabs } from "../components/ProjectTabs";
@@ -21,6 +23,7 @@ import { JobActionModals } from "./project/JobActionModals";
 import { JobCard } from "./project/JobCard";
 import { jobRunNumbers, newestFirst } from "./project/jobLabels";
 import { ProjectActions } from "./project/ProjectActions";
+import { ProjectWelcome } from "./project/ProjectWelcome";
 import { SectionHeader } from "./project/SectionHeader";
 import { UploadCard } from "./project/UploadCard";
 import { useFulltextImport } from "./project/hooks/useFulltextImport";
@@ -38,6 +41,12 @@ export const ProjectPage = () => {
   const project = useTypedStoreState((state) => state.getProjectByUuid)(projectUuid);
   const papers = useTypedStoreState((state) => state.getPapersForProject)(projectUuid);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
+  // Whether the papers have been fetched at least once (or failed to be), so an
+  // empty list means the project really has none.
+  const papersKnown = useTypedStoreState(
+    (state) =>
+      state.papers[projectUuid] !== undefined || state.loading.papers[projectUuid] === false,
+  );
   const jobs = useTypedStoreState((state) => state.jobsByProject[projectUuid] || []);
   const runNumbers = useMemo(() => jobRunNumbers(jobs), [jobs]);
   const fetchJobsForProject = useTypedStoreActions((actions) => actions.fetchJobsForProject);
@@ -96,6 +105,26 @@ export const ProjectPage = () => {
   }
 
   const hasPapers = papers.length > 0;
+
+  // Hold back the page until the papers are known, so it doesn't flash the
+  // full layout and then swap to the welcome screen (or the other way round).
+  if (!papersKnown) {
+    return <Layout title={project.name} parent={PROJECTS_PARENT} />;
+  }
+
+  if (!hasPapers) {
+    return (
+      <Layout title={project.name} parent={PROJECTS_PARENT}>
+        <ProjectWelcome
+          project={project}
+          itemNamePlural={itemNamePlural}
+          uploading={projectFiles.uploading}
+          onFilesSelected={projectFiles.handleFilesSelected}
+        />
+      </Layout>
+    );
+  }
+
   const hasFiles = projectFiles.files.length > 0;
   const hasMultiplePcJobs =
     jobs.filter((job) => job.prompting_config.screening_type === JobPromptingType.PER_CRITERIA)
@@ -104,6 +133,7 @@ export const ProjectPage = () => {
   return (
     <Layout
       title={project.name}
+      parent={PROJECTS_PARENT}
       headerActions={
         <ProjectActions
           hasPapers={hasPapers}
@@ -118,41 +148,45 @@ export const ProjectPage = () => {
         />
       }
     >
-      <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
-      <div className="flex space-x-8 lg:flex-row flex-col items-start">
-        <div className="flex flex-col space-y-4 w-7xl">
-          {jobs.length === 0 && <AlertMessage message="No screening tasks." />}
-          {newestFirst(jobs).map((job) => (
-            <JobCard
-              runNumber={runNumbers[job.uuid]}
-              key={job.uuid}
-              job={job}
-              itemName={itemName}
-              onCancel={jobActions.requestCancel}
-              onDelete={jobActions.requestDelete}
-            />
-          ))}
+      <Fade in appear timeout={400}>
+        <div>
+          <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
+          <div className="flex space-x-8 lg:flex-row flex-col items-start">
+            <div className="flex flex-col space-y-4 w-7xl">
+              {jobs.length === 0 && <AlertMessage message="No screening tasks." />}
+              {newestFirst(jobs).map((job) => (
+                <JobCard
+                  runNumber={runNumbers[job.uuid]}
+                  key={job.uuid}
+                  job={job}
+                  itemName={itemName}
+                  onCancel={jobActions.requestCancel}
+                  onDelete={jobActions.requestDelete}
+                />
+              ))}
+            </div>
+            <div className="flex flex-col gap-2">
+              <SectionHeader title={`Step 1. Upload ${itemNamePlural}`} selected={hasFiles} />
+              <UploadCard
+                files={projectFiles.files}
+                loading={loadingProjects}
+                itemNamePlural={itemNamePlural}
+                onFilesSelected={projectFiles.handleFilesSelected}
+              />
+              <SectionHeader title="Step 2. Create task" />
+              <CreateTaskCard
+                form={taskForm}
+                project={project}
+                paperCount={papers.length}
+                hasFiles={hasFiles}
+                itemName={itemName}
+                itemNamePlural={itemNamePlural}
+                isGithubScreening={isGithubScreening}
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <SectionHeader title={`Step 1. Upload ${itemNamePlural}`} selected={hasFiles} />
-          <UploadCard
-            files={projectFiles.files}
-            loading={loadingProjects}
-            itemNamePlural={itemNamePlural}
-            onFilesSelected={projectFiles.handleFilesSelected}
-          />
-          <SectionHeader title="Step 2. Create task" />
-          <CreateTaskCard
-            form={taskForm}
-            project={project}
-            paperCount={papers.length}
-            hasFiles={hasFiles}
-            itemName={itemName}
-            itemNamePlural={itemNamePlural}
-            isGithubScreening={isGithubScreening}
-          />
-        </div>
-      </div>
+      </Fade>
 
       <div className="fixed z-40 bottom-0 left-1/2 transform -translate-x-1/2 m-4">
         {evaluation.evaluationFinished ? (
