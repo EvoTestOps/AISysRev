@@ -26,7 +26,7 @@ export const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, runNumber, 
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
             {runNumber !== undefined ? `Run #${runNumber}` : "Screening task"}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="textSecondary">
             {startedAt && `Started ${startedAt} · `}
             {success} done, {failed} failed of {total}
           </Typography>

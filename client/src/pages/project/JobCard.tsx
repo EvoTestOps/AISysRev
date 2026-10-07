@@ -66,7 +66,7 @@ export const JobCard: React.FC<JobCardProps> = ({
               {runNumber !== undefined ? `Run #${runNumber}` : "Screening task"}
             </Typography>
             {startedAt && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="textSecondary">
                 Started {startedAt}
               </Typography>
             )}

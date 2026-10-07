@@ -57,7 +57,7 @@ const SettingRow: React.FC<SettingRowProps> = ({
         <Typography variant="subtitle2">{loading ? <Skeleton width={160} /> : title}</Typography>
         {!loading && status}
       </Stack>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="textSecondary">
         {loading ? <Skeleton width={260} /> : (description ?? "")}
       </Typography>
     </Box>
@@ -159,7 +159,7 @@ const SettingEntry: React.FC<SettingEntryProps> = ({ title, config_key, descript
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <Typography
           variant="body2"
-          color="text.secondary"
+          color="textSecondary"
           sx={{ fontFamily: "monospace", letterSpacing: 2 }}
           aria-label="Saved key (hidden)"
         >
@@ -301,7 +301,7 @@ export const SettingsPage = () => {
     <Layout title="Settings">
       <NavTabs aria-label="Settings sections" active="/settings" tabs={SETTINGS_TABS} />
       <Stack spacing={3} sx={{ maxWidth: 960 }}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="textSecondary">
           API keys and options for the LLM providers. Keys are stored for your account only.
         </Typography>
         {providerKeys.map((key) => {
@@ -312,7 +312,7 @@ export const SettingsPage = () => {
                 <Typography variant="h6" component="h2">
                   {entry.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="textSecondary">
                   {entry.description}
                 </Typography>
               </Box>

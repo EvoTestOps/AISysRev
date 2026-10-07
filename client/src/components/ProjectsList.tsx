@@ -172,7 +172,7 @@ const EmptyState = () => (
   >
     <FolderOutlinedIcon sx={{ fontSize: 56, color: "text.disabled" }} />
     <Typography variant="h6">No projects yet</Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, mb: 2 }}>
+    <Typography variant="body2" color="textSecondary" sx={{ maxWidth: 420, mb: 2 }}>
       A project holds your inclusion and exclusion criteria and the papers you want to screen.
     </Typography>
     <Button variant="contained" component={Link} href="/create" startIcon={<AddIcon />}>
@@ -235,7 +235,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ handleProjectDelete 
         {loadingProjects ? (
           <LoadingRows />
         ) : visibleProjects.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 4, textAlign: "center" }}>
+          <Typography variant="body2" color="textSecondary" sx={{ px: 2, py: 4, textAlign: "center" }}>
             {FILTERS.find((f) => f.value === filter)?.emptyText}
           </Typography>
         ) : (

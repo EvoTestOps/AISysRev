@@ -23,14 +23,14 @@ export const JobFields: React.FC<{ job: JobWithStats }> = ({ job }) => {
     >
       {jobFields(job, providerTitle).map((field) => (
         <Box key={field.key} sx={{ minWidth: 0 }} data-testid={`job-field-${field.key}`}>
-          <Typography component="dt" variant="caption" color="text.secondary">
+          <Typography component="dt" variant="caption" color="textSecondary">
             {field.label}
           </Typography>
           <Tooltip title={field.tooltip} describeChild placement="bottom-start">
             <Typography component="dd" variant="body2" noWrap sx={{ m: 0, fontWeight: 500 }}>
               {field.value}
               {field.detail && (
-                <Typography component="span" variant="caption" color="text.secondary">
+                <Typography component="span" variant="caption" color="textSecondary">
                   {" "}
                   · {field.detail}
                 </Typography>

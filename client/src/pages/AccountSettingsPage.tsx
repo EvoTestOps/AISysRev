@@ -41,7 +41,7 @@ const Section: React.FC<SectionProps> = ({ title, description, danger = false, a
       <Typography variant="h6" component="h2" color={danger ? "error" : undefined}>
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="textSecondary">
         {description}
       </Typography>
     </Box>

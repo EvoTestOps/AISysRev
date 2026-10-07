@@ -46,7 +46,7 @@ export const JobBreadcrumbs: React.FC<JobBreadcrumbsProps> = ({ crumbs, backHref
         ) : (
           <Typography
             key={i}
-            color="text.primary"
+            color="textPrimary"
             noWrap
             sx={{ maxWidth: 480 }}
             data-testid={crumb.testId}
