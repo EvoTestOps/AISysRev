@@ -107,8 +107,8 @@ export const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       setModelsLoaded(false);
                     }
                   }}
-                  // @ts-expect-error Ok
-                  value={providerFormValues[key]}
+                  // Empty until the schema defaults are filled in, so the input stays controlled.
+                  value={(providerFormValues[key] as string | number | undefined) ?? ""}
                 />
               )}
               {property.type === "string" && (
@@ -124,8 +124,8 @@ export const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                     }));
                     setModelsLoaded(false);
                   }}
-                  // @ts-expect-error Ok
-                  value={providerFormValues[key]}
+                  // Empty until the schema defaults are filled in, so the input stays controlled.
+                  value={(providerFormValues[key] as string | number | undefined) ?? ""}
                 />
               )}
               {property.type === "integer" && (
@@ -144,8 +144,8 @@ export const ProviderConfiguration: React.FC<ProviderConfigurationProps> = ({
                       setModelsLoaded(false);
                     }
                   }}
-                  // @ts-expect-error Ok
-                  value={providerFormValues[key]}
+                  // Empty until the schema defaults are filled in, so the input stays controlled.
+                  value={(providerFormValues[key] as string | number | undefined) ?? ""}
                 />
               )}
               <p className="text-xs text-gray-500">{property.description}</p>
