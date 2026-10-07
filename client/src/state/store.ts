@@ -102,11 +102,31 @@ interface ProviderModel {
   refreshProviders: Thunk<StoreModel, undefined, Injections>;
 }
 
-type StoreModel = {} & LoadingModel & ProjectModel & JobModel & PaperModel & ProviderModel;
+/** One server-sent event, kept for the dev-only event log. */
+export type EventLogEntry = {
+  timestamp: string;
+  event_name: number;
+  value: Record<string, unknown>;
+};
+
+const MAX_EVENT_LOGS = 500;
+
+interface EventLogModel {
+  eventLogs: Array<EventLogEntry>;
+  addEventLog: Action<StoreModel, EventLogEntry>;
+}
+
+type StoreModel = {} & LoadingModel & EventLogModel & ProjectModel & JobModel & PaperModel & ProviderModel;
 
 export type Injections = typeof injections;
 
 export const model = {
+  // Event log
+  eventLogs: [],
+  addEventLog: action((state, payload) => {
+    state.eventLogs.push(payload);
+    if (state.eventLogs.length > MAX_EVENT_LOGS) state.eventLogs.shift();
+  }),
   // Projects
   projects: [],
   setProjects: action((state, payload) => {
