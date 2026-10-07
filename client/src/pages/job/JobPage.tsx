@@ -4,6 +4,7 @@ import { AlertMessage } from "../../components/AlertMessage";
 import { Card } from "../../components/Card";
 import { CriteriaList } from "../../components/CriteriaList";
 import { Layout } from "../../components/Layout";
+import { PROJECTS_PARENT } from "../../components/PageHeader";
 import { PaginationBar } from "../../components/paperList/PaginationBar";
 import { paginate } from "../../components/paperList/pagination";
 import { PaperListHeader } from "../../components/paperList/PaperListHeader";
@@ -82,7 +83,7 @@ export const JobPage = () => {
   const jobPath = `/project/${projectUuid}/job/${jobUuid}`;
 
   return (
-    <Layout title={project.name}>
+    <Layout title={project.name} parent={PROJECTS_PARENT}>
       <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
       <div className="flex flex-col gap-4" data-testid="job-page">
         <JobBreadcrumbs

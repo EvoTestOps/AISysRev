@@ -1,14 +1,25 @@
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Box from "@mui/material/Box";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
+import MuiLink from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
+import { Link } from "wouter";
+
+export type PageParent = { label: string; href: string };
+
+/** The parent of every page inside a project. */
+export const PROJECTS_PARENT: PageParent = { label: "Projects", href: "/" };
 
 type PageHeaderProps = {
   title: string;
+  /** The page one level up, shown before the title, e.g. "Projects › My project". */
+  parent?: PageParent;
   /** Page-level actions, aligned to the right of the title. */
   actions?: React.ReactNode;
 };
 
 /** The page title and its actions, above the page content. */
-export const PageHeader: React.FC<PageHeaderProps> = ({ title, actions }) => (
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, parent, actions }) => (
   <Box
     sx={{
       display: "flex",
@@ -19,9 +30,38 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, actions }) => (
       mb: 3,
     }}
   >
-    <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
-      {title}
-    </Typography>
+    {parent ? (
+      <Breadcrumbs
+        component="h1"
+        aria-label="breadcrumb"
+        separator={<NavigateNextIcon />}
+        sx={{ m: 0, minWidth: 0, typography: "h5", "& .MuiBreadcrumbs-ol": { flexWrap: "nowrap" } }}
+      >
+        <MuiLink
+          component={Link}
+          href={parent.href}
+          underline="hover"
+          color="text.secondary"
+          variant="h5"
+          sx={{ whiteSpace: "nowrap" }}
+        >
+          {parent.label}
+        </MuiLink>
+        <Typography
+          variant="h5"
+          component="span"
+          noWrap
+          sx={{ fontWeight: 600, color: "text.primary" }}
+          aria-current="page"
+        >
+          {title}
+        </Typography>
+      </Breadcrumbs>
+    ) : (
+      <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
+        {title}
+      </Typography>
+    )}
     {actions && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>{actions}</Box>}
   </Box>
 );

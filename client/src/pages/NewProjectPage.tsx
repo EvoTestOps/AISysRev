@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { useLocation } from "wouter";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { Layout } from "../components/Layout";
+import { PROJECTS_PARENT } from "../components/PageHeader";
 import { create_project } from "../services/projectService";
 import { useTypedStoreActions } from "../state/store";
 import { ScreeningTarget } from "../state/types";
@@ -140,7 +141,7 @@ export const NewProject = () => {
   }, []);
 
   return (
-    <Layout title="New project">
+    <Layout title="New project" parent={PROJECTS_PARENT}>
       <Stack
         spacing={3}
         sx={{ maxWidth: 840, mx: "auto" }}
