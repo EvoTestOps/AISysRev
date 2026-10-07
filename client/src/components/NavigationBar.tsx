@@ -17,6 +17,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import AISysRevLogo from "../assets/images/aisysrev-logo-on-light.svg";
+import { EventLogButton } from "./EventLogButton";
 
 // Top-level destinations; everything about the user lives in the account menu.
 const DESTINATIONS = [
@@ -113,6 +114,7 @@ export const NavigationBar: React.FC = () => {
             );
           })}
         </Box>
+        {appEnv === "dev" && <EventLogButton />}
         <AccountMenu />
       </Toolbar>
     </AppBar>
