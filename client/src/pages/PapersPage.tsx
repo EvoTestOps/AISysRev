@@ -1,5 +1,7 @@
 import { useLocation, useParams } from "wouter";
-import { useEffect, useId, useMemo, useState } from "react";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { ProjectTabs } from "../components/ProjectTabs";
@@ -20,8 +22,6 @@ export const PapersPage = () => {
   const { projectUuid } = params;
 
   const currentPage = Number(params.page ?? 1);
-
-  const id = useId();
 
   const [, setLocation] = useLocation();
 
@@ -103,26 +103,24 @@ export const PapersPage = () => {
           active="papers"
           itemNamePlural={itemNamePlural}
         />
-        <div className="p-4 flex flex-row gap-2">
-          <input
-            type="checkbox"
-            id={`${id}-filter_out_evaluated`}
-            data-testid="input-filter_out_evaluated"
-            checked={hideAlreadyEvaluatedPapers}
-            onChange={() => {
-              sethideAlreadyEvaluatedPapers(!hideAlreadyEvaluatedPapers);
-            }}
-          />
-          <label
-            htmlFor={`${id}-filter_out_evaluated`}
-            data-testid="label-filter_out_evaluated"
-            className="font-semibold select-none"
-          >
-            Hide already evaluated {itemNamePlural} ({alreadyEvaluatedPapers})
-          </label>
-        </div>
-        <div className="grid grid-cols-[1fr_350px] gap-2">
-          <div className="flex flex-col gap-2">
+        <FormControlLabel
+          sx={{ mb: 1 }}
+          data-testid="label-filter_out_evaluated"
+          control={
+            <Checkbox
+              checked={hideAlreadyEvaluatedPapers}
+              onChange={(e) => sethideAlreadyEvaluatedPapers(e.target.checked)}
+              slotProps={{
+                input: {
+                  "data-testid": "input-filter_out_evaluated",
+                } as React.InputHTMLAttributes<HTMLInputElement>,
+              }}
+            />
+          }
+          label={`Hide already evaluated ${itemNamePlural} (${alreadyEvaluatedPapers})`}
+        />
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+          <div className="flex flex-col gap-2 min-w-0">
             <PaperListHeader
               sortOption={sortOption}
               onSortChange={setSortOption}

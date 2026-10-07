@@ -1,6 +1,12 @@
-import classNames from "classnames";
-import { ChevronDown, ChevronUp, FileText } from "lucide-react";
-import { Card, CardProps } from "../Card";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import TextSnippetOutlinedIcon from "@mui/icons-material/TextSnippetOutlined";
+import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
+import Card from "@mui/material/Card";
+import Collapse from "@mui/material/Collapse";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { PAPER_LIST_COLUMNS } from "./columns";
 
 type PaperRowProps = {
   paperId: number | null | undefined;
@@ -14,10 +20,11 @@ type PaperRowProps = {
   onToggle: () => void;
   /** Shown below the row while it is open. */
   children?: React.ReactNode;
+  "data-testid"?: string;
 };
 
 /** One row of a list of papers, expandable to show more about the paper. */
-export const PaperRow: React.FC<React.PropsWithChildren<CardProps> & PaperRowProps> = ({
+export const PaperRow: React.FC<PaperRowProps> = ({
   paperId,
   title,
   hasFullText,
@@ -26,34 +33,57 @@ export const PaperRow: React.FC<React.PropsWithChildren<CardProps> & PaperRowPro
   open,
   onToggle,
   children,
-  ...rest
+  "data-testid": testId,
 }) => (
-  <Card {...rest} padding="p-0">
-    <button
-      className="rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50"
+  <Card data-testid={testId} sx={{ borderRadius: 2 }}>
+    <ButtonBase
       onClick={onToggle}
+      aria-expanded={open}
+      sx={{
+        width: "100%",
+        display: "grid",
+        gridTemplateColumns: PAPER_LIST_COLUMNS,
+        alignItems: "center",
+        textAlign: "left",
+        px: 2,
+        py: 1.75,
+        "&:hover": { bgcolor: "action.hover" },
+      }}
     >
-      <div className="text-sm font-semibold select-none text-left">{paperId}</div>
-      <div
-        className="text-sm font-semibold select-none text-left flex items-center gap-1.5"
-        title={title}
-      >
+      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+        {paperId}
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
         {hasFullText && (
-          <FileText size={14} className="text-teal-600 shrink-0" aria-label="Full text attached" />
+          <Tooltip title="Full text attached">
+            <TextSnippetOutlinedIcon
+              aria-label="Full text attached"
+              sx={{ fontSize: 16, color: "success.main", flexShrink: 0 }}
+            />
+          </Tooltip>
         )}
-        <span className="truncate">
-          {title.length > 80 ? title.substring(0, 77) + "..." : title}
-        </span>
-      </div>
-      <div
-        className={classNames("text-center text-sm select-none", {
-          "text-gray-400": valueMuted,
-        })}
+        <Typography variant="body2" noWrap title={title} sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      <Typography
+        variant="body2"
+        component="div"
+        sx={{ textAlign: "center", color: valueMuted ? "text.disabled" : undefined }}
       >
         {value}
-      </div>
-      <div className="hover:cursor-pointer">{open ? <ChevronUp /> : <ChevronDown />}</div>
-    </button>
-    {open && <div className="pl-4 pr-4 pb-4">{children}</div>}
+      </Typography>
+      <ExpandMoreIcon
+        sx={{
+          justifySelf: "end",
+          color: "text.secondary",
+          transition: "transform 150ms",
+          transform: open ? "rotate(180deg)" : "none",
+        }}
+      />
+    </ButtonBase>
+    <Collapse in={open} unmountOnExit>
+      <Box sx={{ px: 2, pb: 2 }}>{children}</Box>
+    </Collapse>
   </Card>
 );

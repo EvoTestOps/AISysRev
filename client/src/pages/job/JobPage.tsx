@@ -109,8 +109,8 @@ export const JobPage = () => {
             </SegmentedButton>
           ))}
         </div>
-        <div className="grid grid-cols-[1fr_350px] gap-2">
-          <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+          <div className="flex flex-col gap-2 min-w-0">
             <PaperListHeader
               sortOption={sortOption}
               onSortChange={setSortOption}
