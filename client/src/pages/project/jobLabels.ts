@@ -18,9 +18,6 @@ export type JobField = {
 
 type FieldValue = Pick<JobField, "value" | "tooltip">;
 
-const isGithubJob = (job: JobWithStats) =>
-  job.prompting_config.screening_target === ScreeningTarget.GITHUB_REPOSITORY;
-
 // The task form and the job cards describe a task's options in the same words.
 export const evaluationModeLabel = (screeningType: JobPromptingType): FieldValue =>
   screeningType === JobPromptingType.PER_CRITERIA
@@ -50,7 +47,22 @@ export const promptingStrategyLabel = (screeningType: JobPromptingType): FieldVa
   }
 };
 
-export const screeningModeLabel = (mode: JobScreeningMode, isGithub: boolean): FieldValue => {
+// What a text-mode task reads, which depends on what the project screens.
+const TEXT_MODE_LABEL: Record<ScreeningTarget, FieldValue> = {
+  [ScreeningTarget.PAPER]: {
+    value: "Title+Abstract",
+    tooltip: "The model reads each paper's title and abstract.",
+  },
+  [ScreeningTarget.GITHUB_REPOSITORY]: {
+    value: "Name, description & README",
+    tooltip: "The model reads each repository's name, description and README.",
+  },
+};
+
+export const screeningModeLabel = (
+  mode: JobScreeningMode,
+  screeningTarget: ScreeningTarget,
+): FieldValue => {
   switch (mode) {
     case JobScreeningMode.PDF:
       return {
@@ -63,15 +75,7 @@ export const screeningModeLabel = (mode: JobScreeningMode, isGithub: boolean): F
         tooltip: "Papers with a PDF are screened on their full text, the rest on the abstract.",
       };
     default:
-      return isGithub
-        ? {
-            value: "Name, description & README",
-            tooltip: "The model reads each repository's name, description and README.",
-          }
-        : {
-            value: "Title+Abstract",
-            tooltip: "The model reads each paper's title and abstract.",
-          };
+      return TEXT_MODE_LABEL[screeningTarget];
   }
 };
 
@@ -97,7 +101,7 @@ export const jobFields = (job: JobWithStats, providerTitle?: string): JobField[]
   {
     key: "screening",
     label: "Screening mode",
-    ...screeningModeLabel(job.screening_mode, isGithubJob(job)),
+    ...screeningModeLabel(job.screening_mode, job.prompting_config.screening_target),
   },
 ];
 

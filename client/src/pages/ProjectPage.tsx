@@ -23,6 +23,7 @@ import {
   PerCriteriaStatsResponse,
   ScreeningTarget,
 } from "../state/types";
+import { ITEM_NAMES } from "../helpers/screeningTarget";
 import { NotFoundPage } from "./NotFound";
 import { useCreateTaskForm } from "./project/hooks/useCreateTaskForm";
 import { downloadMissingFulltextRis, downloadResultCsv } from "./project/downloads";
@@ -91,9 +92,7 @@ export const ProjectPage = () => {
   const fetchJobsForProject = useTypedStoreActions((actions) => actions.fetchJobsForProject);
 
   const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemName = isGithubScreening ? "repository" : "paper";
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+  const { singular: itemName, plural: itemNamePlural } = ITEM_NAMES[screeningTarget];
 
   useEffect(() => {
     if (project !== undefined) {
@@ -185,7 +184,6 @@ export const ProjectPage = () => {
     paperCount: papers.length,
     itemName,
     itemNamePlural,
-    isGithubScreening,
   };
   const hasTasks = jobs.length > 0;
 

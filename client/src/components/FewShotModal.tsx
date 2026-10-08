@@ -29,6 +29,7 @@ import { useTheme } from "@mui/material/styles";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useParams } from "wouter";
+import { ITEM_NAMES } from "../helpers/screeningTarget";
 import { screeningModeLabel } from "../pages/project/jobLabels";
 import { PaperReadWithAvgProbability } from "../services/api/client";
 import { createJob } from "../services/jobService";
@@ -218,8 +219,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   const project = useTypedStoreState((state) => state.getProjectByUuid)(projectUuid);
   const papers = useTypedStoreState((state) => state.getPapersForProject)(projectUuid);
 
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+  const itemNamePlural = ITEM_NAMES[screeningTarget].plural;
 
   const included = useMemo(
     () => papers.filter((p) => p.human_result === JobTaskHumanResult.INCLUDE).sort(byProbability),
@@ -402,7 +402,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
               </dd>
               <dt>Screening mode</dt>
               <dd data-testid="few-shot-screening-mode">
-                {screeningModeLabel(screeningMode, isGithubScreening).value}
+                {screeningModeLabel(screeningMode, screeningTarget).value}
               </dd>
             </Box>
             {!llmConfig && !llmConfigLoading && (

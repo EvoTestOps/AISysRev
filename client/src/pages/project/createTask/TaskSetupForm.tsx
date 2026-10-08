@@ -12,7 +12,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { useState } from "react";
-import { JobPromptingType, JobScreeningMode } from "../../../state/types";
+import { JobPromptingType, JobScreeningMode, ScreeningTarget } from "../../../state/types";
 import type { Project } from "../../../state/types/project";
 import { CreateTaskForm } from "../hooks/useCreateTaskForm";
 import { evaluationModeLabel, promptingStrategyLabel, screeningModeLabel } from "../jobLabels";
@@ -59,8 +59,10 @@ const Section: React.FC<
 );
 
 /** What the model reads, as the summary sentence puts it. */
-const readsWhat = (mode: JobScreeningMode, isGithub: boolean) => {
-  if (isGithub) return "the names, descriptions and READMEs of";
+const readsWhat = (mode: JobScreeningMode, screeningTarget: ScreeningTarget) => {
+  if (screeningTarget === ScreeningTarget.GITHUB_REPOSITORY) {
+    return "the names, descriptions and READMEs of";
+  }
   switch (mode) {
     case JobScreeningMode.PDF:
       return "the full text (PDF) of";
@@ -77,7 +79,6 @@ type TaskSetupFormProps = {
   paperCount: number;
   itemName: string;
   itemNamePlural: string;
-  isGithubScreening: boolean;
   /** Called once a task was created (or the few-shot modal opened). */
   onCreated?: () => void;
 };
@@ -92,9 +93,9 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
   paperCount,
   itemName,
   itemNamePlural,
-  isGithubScreening,
   onCreated,
 }) => {
+  const screeningTarget = project.screening_target;
   const [customizing, setCustomizing] = useState(false);
   const [creating, setCreating] = useState(false);
   const { inclusion_criteria, exclusion_criteria } = project.criteria;
@@ -116,7 +117,10 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
   const optionChips = form.isJevScreening
     ? ["Title+Abstract", "All criteria at once", "Zero-shot"]
     : [
-        ...(isGithubScreening ? [] : [screeningModeLabel(form.screeningMode, false).value]),
+        // Repositories have one screening mode, so it isn't worth a chip.
+        ...(screeningTarget === ScreeningTarget.PAPER
+          ? [screeningModeLabel(form.screeningMode, screeningTarget).value]
+          : []),
         evaluationModeLabel(form.promptingStrategy).value,
         promptingStrategyLabel(form.promptingStrategy).value,
       ];
@@ -163,11 +167,7 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
 
         <Section step={step(2)} title="Model">
           {form.isJevScreening ? (
-            <JevScreeningFields
-              form={form}
-              itemName={itemName}
-              isGithubScreening={isGithubScreening}
-            />
+            <JevScreeningFields form={form} itemName={itemName} screeningTarget={screeningTarget} />
           ) : (
             <>
               <TextField
@@ -221,7 +221,9 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
           {!form.isJevScreening && (
             <Collapse in={customizing} unmountOnExit>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-                {!isGithubScreening && <ScreeningModeSelector form={form} disabled={false} />}
+                {screeningTarget === ScreeningTarget.PAPER && (
+                  <ScreeningModeSelector form={form} disabled={false} />
+                )}
                 <EvaluationModeSelector form={form} disabled={false} />
                 {isPerCriterion ? (
                   <PerCriteriaLogic
@@ -269,7 +271,7 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
         </Typography>
         <Typography variant="body2" sx={{ "& strong": { fontWeight: 600 } }}>
           <strong>{modelName ?? (form.isJevScreening ? "Jev" : "The model")}</strong> will read{" "}
-          {readsWhat(form.screeningMode, isGithubScreening)}{" "}
+          {readsWhat(form.screeningMode, screeningTarget)}{" "}
           <strong>
             {paperCount} {paperCount === 1 ? itemName : itemNamePlural}
           </strong>{" "}

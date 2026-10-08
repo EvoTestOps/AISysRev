@@ -1,23 +1,22 @@
 import Box from "@mui/material/Box";
 import Link from "@mui/material/Link";
 import Typography from "@mui/material/Typography";
+import { itemHref } from "../../helpers/screeningTarget";
+import { ScreeningTarget } from "../../state/types";
 
 type PaperDetailsProps = {
   doi: string | null | undefined;
   abstract: string;
   pdfFileUuid?: string | null;
   pdfFilename?: string | null;
-  isGithubScreening: boolean;
+  screeningTarget: ScreeningTarget;
   /** Shown next to the links, e.g. an upload button. */
   actions?: React.ReactNode;
 };
 
-const doiHref = (doi: string, isGithubScreening: boolean) => {
-  if (!isGithubScreening) {
-    return `https://doi.org/${doi}`;
-  }
-  // A repository's "DOI" is its URL; only link real URLs.
-  return /^https?:\/\//i.test(doi) ? doi : undefined;
+const LABELS: Record<ScreeningTarget, { identifier: string; abstract: string }> = {
+  [ScreeningTarget.PAPER]: { identifier: "DOI", abstract: "Abstract" },
+  [ScreeningTarget.GITHUB_REPOSITORY]: { identifier: "Repository", abstract: "Description" },
 };
 
 /** A paper's DOI (or repository URL), full-text link and abstract. */
@@ -26,7 +25,7 @@ export const PaperDetails: React.FC<PaperDetailsProps> = ({
   abstract,
   pdfFileUuid,
   pdfFilename,
-  isGithubScreening,
+  screeningTarget,
   actions,
 }) => {
   const hasFullText = Boolean(pdfFileUuid && pdfFilename);
@@ -58,10 +57,10 @@ export const PaperDetails: React.FC<PaperDetailsProps> = ({
           >
             {doi && (
               <>
-                <dt>{isGithubScreening ? "Repository" : "DOI"}</dt>
+                <dt>{LABELS[screeningTarget].identifier}</dt>
                 <dd>
                   <Link
-                    href={doiHref(doi, isGithubScreening)}
+                    href={itemHref(doi, screeningTarget)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -94,7 +93,7 @@ export const PaperDetails: React.FC<PaperDetailsProps> = ({
           component="h4"
           sx={{ display: "block", color: "text.secondary", lineHeight: 2 }}
         >
-          {isGithubScreening ? "Description" : "Abstract"}
+          {LABELS[screeningTarget].abstract}
         </Typography>
         <Typography
           variant="body2"

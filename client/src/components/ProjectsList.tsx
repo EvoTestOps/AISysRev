@@ -42,8 +42,10 @@ const updatedFormat = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
 });
 
-const isGithubProject = (project: Project) =>
-  project.screening_target === ScreeningTarget.GITHUB_REPOSITORY;
+const PROJECT_TYPE_ICON: Record<ScreeningTarget, React.ReactNode> = {
+  [ScreeningTarget.PAPER]: <ArticleOutlinedIcon />,
+  [ScreeningTarget.GITHUB_REPOSITORY]: <GitHubIcon />,
+};
 
 // Same names as the project type picker on the "New project" page.
 const PROJECT_TYPE_LABEL: Record<ScreeningTarget, string> = {
@@ -128,7 +130,7 @@ const ProjectRow: React.FC<{ project: Project; onDelete: (project: Project) => v
           <Avatar
             sx={{ bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1), color: "primary.main" }}
           >
-            {isGithubProject(project) ? <GitHubIcon /> : <ArticleOutlinedIcon />}
+            {PROJECT_TYPE_ICON[project.screening_target]}
           </Avatar>
         </ListItemAvatar>
         <ListItemText

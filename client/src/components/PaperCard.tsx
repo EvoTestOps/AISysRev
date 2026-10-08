@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { useRef, useState } from "react";
-import { JobTaskHumanResult } from "../state/types";
+import { JobTaskHumanResult, ScreeningTarget } from "../state/types";
 import { PaperDetails } from "./paperList/PaperDetails";
 import { PaperRow } from "./paperList/PaperRow";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
@@ -47,14 +47,14 @@ const DECIDED_LABELS: Record<JobTaskHumanResult, string> = {
 
 type PaperCardProps = {
   paper: PaperReadWithAvgProbability;
-  isGithubScreening: boolean;
+  screeningTarget: ScreeningTarget;
   "data-testid"?: string;
 };
 
 /** A paper in the project's list, expandable to its details and the user's decision. */
 export const PaperCard: React.FC<PaperCardProps> = ({
   paper,
-  isGithubScreening,
+  screeningTarget,
   "data-testid": testId,
 }) => {
   const [open, setOpen] = useState(false);
@@ -121,10 +121,11 @@ export const PaperCard: React.FC<PaperCardProps> = ({
         abstract={paper.abstract}
         pdfFileUuid={paper.pdf_file_uuid}
         pdfFilename={paper.pdf_filename}
-        isGithubScreening={isGithubScreening}
+        screeningTarget={screeningTarget}
         actions={
           <>
-            {!isGithubScreening && (
+            {/* Only papers have full texts. */}
+            {screeningTarget === ScreeningTarget.PAPER && (
               <Button
                 variant="outlined"
                 size="small"
