@@ -2,6 +2,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Box from "@mui/material/Box";
 import Breadcrumbs from "@mui/material/Breadcrumbs";
 import MuiLink from "@mui/material/Link";
+import Skeleton from "@mui/material/Skeleton";
 import Typography from "@mui/material/Typography";
 import { Link } from "wouter";
 
@@ -16,10 +17,14 @@ type PageHeaderProps = {
   parent?: PageParent;
   /** Page-level actions, aligned to the right of the title. */
   actions?: React.ReactNode;
+  /** Shows a placeholder for the title while it is loading, e.g. a project's name. */
+  loading?: boolean;
 };
 
+const TitleSkeleton = () => <Skeleton width={240} sx={{ maxWidth: "50vw" }} />;
+
 /** The page title and its actions, above the page content. */
-export const PageHeader: React.FC<PageHeaderProps> = ({ title, parent, actions }) => (
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, parent, actions, loading }) => (
   <Box
     sx={{
       display: "flex",
@@ -54,12 +59,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ title, parent, actions }
           sx={{ fontWeight: 600, color: "text.primary" }}
           aria-current="page"
         >
-          {title}
+          {loading ? <TitleSkeleton /> : title}
         </Typography>
       </Breadcrumbs>
     ) : (
       <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
-        {title}
+        {loading ? <TitleSkeleton /> : title}
       </Typography>
     )}
     {actions && <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>{actions}</Box>}
