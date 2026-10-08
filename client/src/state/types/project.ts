@@ -31,6 +31,8 @@ export const ProjectModel = z.object({
   screening_target: z.nativeEnum(ScreeningTarget),
   created_at: z.coerce.date().optional(),
   updated_at: z.coerce.date().optional(),
+  /** How many screening tasks the project has, e.g. to size the task list's placeholder. */
+  job_count: z.number().int().nonnegative().optional(),
 });
 
 export const CreatedProjectModel = z.object({

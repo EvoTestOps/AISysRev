@@ -453,6 +453,7 @@ export const ProjectRead = z.strictObject({
     return d;
   }),
   screening_target: ScreeningTarget.optional(),
+  job_count: z.number().int().default(0),
   inclusion_criteria_embedding: z.array(z.array(z.number())).nullable().optional(),
   exclusion_criteria_embedding: z.array(z.array(z.number())).nullable().optional(),
 });

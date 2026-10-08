@@ -1,10 +1,11 @@
 from typing import Optional, Sequence, Tuple, cast
 from uuid import UUID
 
-from sqlalchemy import RowMapping, insert, select, update
+from sqlalchemy import RowMapping, func, insert, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.models.job import Job
 from src.db.models.project import Project
 from src.schemas.project import ProjectCreate, ProjectPreferences
 
@@ -22,9 +23,25 @@ class ProjectCrud:
             Project.created_at,
             Project.updated_at,
             Project.screening_target,
+            self._job_count().label("job_count"),
         ).where(Project.owner_uuid == owner_uuid)
         result = await self.db.execute(stmt)
         return result.mappings().all()
+
+    @staticmethod
+    def _job_count():
+        """How many screening tasks (jobs) the project has, as a correlated subquery."""
+        return (
+            select(func.count(Job.id))
+            .where(Job.project_id == Project.id)
+            .correlate(Project)
+            .scalar_subquery()
+        )
+
+    async def count_jobs(self, project_id: int) -> int:
+        stmt = select(func.count(Job.id)).where(Job.project_id == project_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one()
 
     async def get_project_preferences(
         self, uuid: UUID, owner_uuid: UUID

@@ -269,6 +269,7 @@ export namespace Schemas {
     created_at: Date;
     updated_at: Date;
     screening_target?: ScreeningTarget;
+    job_count?: number;
     inclusion_criteria_embedding?: Array<Array<number>> | null;
     exclusion_criteria_embedding?: Array<Array<number>> | null;
   };
