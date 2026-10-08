@@ -38,17 +38,26 @@ import { useJobActions } from "./project/hooks/useJobActions";
 import { useManualEvaluation } from "./project/hooks/useManualEvaluation";
 import { useProjectFiles } from "./project/hooks/useProjectFiles";
 
-/** Stands in for the tabs and task cards while the project's papers and tasks load. */
-const ProjectBodySkeleton = () => (
+// Cards past these are below the fold anyway.
+const MAX_TASK_SKELETONS = 10;
+
+/**
+ * Stands in for the tabs and task cards while the project's papers and tasks
+ * load: one card per task, so the page keeps its height when the tasks arrive.
+ */
+const ProjectBodySkeleton: React.FC<{ taskCount: number }> = ({ taskCount }) => (
   <SkeletonGroup>
     <TabsSkeleton />
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {[0, 1, 2].map((i) => (
+      {Array.from({ length: Math.min(taskCount, MAX_TASK_SKELETONS) }, (_, i) => (
         <JobCardSkeleton key={i} />
       ))}
     </Box>
   </SkeletonGroup>
 );
+
+// Before the projects load, the number of tasks isn't known yet.
+const DEFAULT_TASK_SKELETONS = 3;
 
 /** The screening mode the task form passed to the few-shot modal in its URL. */
 const fewShotScreeningMode = (search: string): JobScreeningMode | undefined => {
@@ -129,7 +138,7 @@ export const ProjectPage = () => {
   if (loadingProjects && !project) {
     return (
       <Layout title="" parent={PROJECTS_PARENT} loading>
-        <ProjectBodySkeleton />
+        <ProjectBodySkeleton taskCount={DEFAULT_TASK_SKELETONS} />
       </Layout>
     );
   }
@@ -145,7 +154,10 @@ export const ProjectPage = () => {
   if (!papersKnown || !(jobsLoaded || jobsFailed)) {
     return (
       <Layout title={project.name} parent={PROJECTS_PARENT}>
-        <ProjectBodySkeleton />
+        <ProjectBodySkeleton
+          // The tasks themselves when they're loaded, else the count the project list gave.
+          taskCount={jobsLoaded ? jobs.length : (project.job_count ?? DEFAULT_TASK_SKELETONS)}
+        />
       </Layout>
     );
   }
