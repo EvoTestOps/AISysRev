@@ -2,6 +2,7 @@ import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Chip from "@mui/material/Chip";
 import LinearProgress from "@mui/material/LinearProgress";
+import Skeleton from "@mui/material/Skeleton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { promptingStrategyLabel, screeningModeLabel } from "../pages/project/jobLabels";
@@ -159,3 +160,26 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
     </Card>
   );
 };
+
+/** Stands in for an LlmModelCard while the model results load. */
+export const LlmModelCardSkeleton = () => (
+  <Card component="li" variant="outlined" aria-hidden sx={{ p: 1.5, flexShrink: 0 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Skeleton width="60%" />
+      </Typography>
+      <Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: 4 }} />
+    </Box>
+    <Typography variant="caption" component="p">
+      <Skeleton width="80%" />
+    </Typography>
+    {[0, 1].map((i) => (
+      <Box key={i} sx={{ mt: i === 0 ? 1.5 : 1.25 }}>
+        <Typography variant="caption" component="p">
+          <Skeleton width="45%" />
+        </Typography>
+        <Skeleton variant="rounded" height={6} sx={{ mt: 0.5, borderRadius: 3 }} />
+      </Box>
+    ))}
+  </Card>
+);
