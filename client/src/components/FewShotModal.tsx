@@ -19,6 +19,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import ListSubheader from "@mui/material/ListSubheader";
 import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import Step from "@mui/material/Step";
 import StepButton from "@mui/material/StepButton";
 import Stepper from "@mui/material/Stepper";
@@ -388,12 +389,11 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
                 {llmConfig ? (
                   `${llmConfig.model_name} (${llmConfig.provider_name})`
                 ) : llmConfigLoading ? (
-                  <Box
-                    component="span"
-                    sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}
-                  >
-                    <CircularProgress size={14} /> Loading your model selection…
-                  </Box>
+                  <Skeleton
+                    width={220}
+                    aria-label="Loading your model selection"
+                    sx={{ display: "inline-block", maxWidth: "100%" }}
+                  />
                 ) : (
                   <Box component="span" sx={{ color: "error.main" }}>
                     Not selected
