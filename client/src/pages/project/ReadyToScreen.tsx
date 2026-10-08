@@ -9,7 +9,7 @@ import { FetchedFile } from "../../state/types";
 import type { Project } from "../../state/types/project";
 import { TaskSetupForm } from "./createTask/TaskSetupForm";
 import { CreateTaskForm } from "./hooks/useCreateTaskForm";
-import { riseIn } from "./motion";
+import { riseIn } from "../../components/motion";
 import { ProjectProgress } from "./ProjectProgress";
 
 type ReadyToScreenProps = {
