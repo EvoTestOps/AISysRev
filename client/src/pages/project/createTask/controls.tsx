@@ -85,6 +85,7 @@ export const SegmentedButton: React.FC<SegmentedButtonProps> = ({
   <button
     type="button"
     data-testid={testId}
+    aria-pressed={selected}
     disabled={disabled}
     onClick={onSelect}
     className={classNames(

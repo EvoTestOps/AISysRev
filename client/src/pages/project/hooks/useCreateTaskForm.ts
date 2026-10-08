@@ -289,7 +289,8 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     if (promptingStrategy === JobPromptingType.FEW_SHOT) {
       // The few-shot modal collects the seed papers and creates the job.
       saveLastSetup(setup);
-      navigate(`/project/${projectUuid}/few_shot`);
+      // The screening mode rides along in the URL, so a refresh of the modal keeps it.
+      navigate(`/project/${projectUuid}/few_shot?mode=${screeningMode}`);
       return true;
     }
     const promptingConfig =
@@ -326,6 +327,8 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     llmProviders,
 
     provider,
+    /** The selected provider and model with their parameters, or null until both are chosen. */
+    llmConfig,
     selectedProvider,
     selectProvider,
     isProviderSelected,

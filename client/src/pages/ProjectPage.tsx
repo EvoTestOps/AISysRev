@@ -7,7 +7,7 @@ import Fade from "@mui/material/Fade";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
-import { useLocation, useParams, useRoute } from "wouter";
+import { useLocation, useParams, useRoute, useSearch } from "wouter";
 import { FewShotModal } from "../components/FewShotModal";
 import { Layout } from "../components/Layout";
 import { PROJECTS_PARENT } from "../components/PageHeader";
@@ -16,7 +16,12 @@ import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import { ProjectTabs } from "../components/ProjectTabs";
 import { fetchPerCriteriaStats } from "../services/resultService";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
-import { JobPromptingType, PerCriteriaStatsResponse, ScreeningTarget } from "../state/types";
+import {
+  JobPromptingType,
+  JobScreeningMode,
+  PerCriteriaStatsResponse,
+  ScreeningTarget,
+} from "../state/types";
 import { NotFoundPage } from "./NotFound";
 import { useCreateTaskForm } from "./project/hooks/useCreateTaskForm";
 import { downloadMissingFulltextRis, downloadResultCsv } from "./project/downloads";
@@ -32,10 +37,17 @@ import { useJobActions } from "./project/hooks/useJobActions";
 import { useManualEvaluation } from "./project/hooks/useManualEvaluation";
 import { useProjectFiles } from "./project/hooks/useProjectFiles";
 
+/** The screening mode the task form passed to the few-shot modal in its URL. */
+const fewShotScreeningMode = (search: string): JobScreeningMode | undefined => {
+  const mode = new URLSearchParams(search).get("mode");
+  return Object.values(JobScreeningMode).find((value) => value === mode);
+};
+
 export const ProjectPage = () => {
   const { projectUuid } = useParams<{ projectUuid: string }>();
   const [, navigate] = useLocation();
   const [fewShotViewMatch] = useRoute("/project/:projectUuid/few_shot");
+  const search = useSearch();
 
   const loadingProjects = useTypedStoreState((state) => state.loading.projects);
   const loadProjects = useTypedStoreActions((actions) => actions.fetchProjects);
@@ -251,13 +263,15 @@ export const ProjectPage = () => {
       />
       {fewShotViewMatch && (
         <FewShotModal
-          llmConfig={{
-            provider_name: taskForm.selectedProvider!.value,
-            model_name: taskForm.selectedModel!.value,
-            model_parameters: taskForm.modelFormValues,
-            provider_parameters: {},
-          }}
-          screeningMode={taskForm.screeningMode}
+          llmConfig={taskForm.llmConfig}
+          // After a refresh the form restores the last provider and model; until
+          // then there is no model to start with.
+          llmConfigLoading={
+            !taskForm.llmConfig &&
+            (taskForm.llmProviders.length === 0 ||
+              (taskForm.isProviderSelected && !taskForm.modelsLoaded))
+          }
+          screeningMode={fewShotScreeningMode(search) ?? taskForm.screeningMode}
           screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();
