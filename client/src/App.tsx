@@ -43,6 +43,13 @@ function App() {
           setIsAuthenticated(false);
           return;
         }
+        // Only the server saying so logs the user out. A request that failed on
+        // the way, e.g. one the browser cancelled for a page refresh, says
+        // nothing about the session, and redirecting would interrupt the refresh.
+        if (!(error instanceof TypedStatusError && error.status === 401)) {
+          console.warn("Could not check the session:", error);
+          return;
+        }
         setConsentRequired(false);
         setIsAuthenticated(false);
       }
