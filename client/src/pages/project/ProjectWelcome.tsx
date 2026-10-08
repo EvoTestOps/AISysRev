@@ -10,7 +10,7 @@ import { alpha, keyframes, useTheme } from "@mui/material/styles";
 import { DragEvent, useRef, useState } from "react";
 import type { Project } from "../../state/types/project";
 import { downloadCsvTemplate, REQUIRED_CSV_COLUMNS } from "./downloads";
-import { riseIn } from "./motion";
+import { riseIn } from "../../components/motion";
 import { pickSingleCsvFile } from "./pickSingleCsvFile";
 import { ProjectProgress } from "./ProjectProgress";
 
