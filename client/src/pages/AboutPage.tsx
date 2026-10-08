@@ -41,6 +41,14 @@ type Publication = {
 
 const PUBLICATIONS: Publication[] = [
   {
+    authors: "Huotala, A., Kuutila, M., Turtio, O.-P., Sipilä, S., & Mäntylä, M.",
+    year: 2026,
+    title: "AISysRev – LLM-based Tool for Title-abstract Screening",
+    venue:
+      "FSE '26: Companion Proceedings of the 34th ACM Symposium on the Foundations of Software Engineering",
+    doi: "10.1145/3803437.3806408",
+  },
+  {
     authors: "Huotala, A., Kuutila, M., & Mäntylä, M.",
     year: 2025,
     title:
