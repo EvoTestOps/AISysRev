@@ -1,3 +1,7 @@
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Button from "@mui/material/Button";
 import { Link } from "wouter";
 import { useConfig } from "../../../config/config";
 
@@ -7,6 +11,7 @@ type ConfigKeyCheckProps = {
   should_show: boolean;
 };
 
+/** A warning that a setting the provider needs, such as its API key, is missing. */
 export const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({
   config_key,
   should_show,
@@ -14,19 +19,25 @@ export const ConfigKeyCheck: React.FC<ConfigKeyCheckProps> = ({
 }) => {
   const { loading, setting } = useConfig(config_key);
   return !loading && setting == null && should_show ? (
-    <div>
-      <div
-        className="inline-flex bg-red-300 rounded-md p-4 items-center w-full"
-        data-testid={`error-missing-${config_key}`}
-      >
-        <span className="font-bold text-sm text-red-900 select-none">
-          {title} is not set.
-          <br />
-          <Link className="text-blue-800" to="/settings">
-            Go to settings
-          </Link>
-        </span>
-      </div>
-    </div>
+    <Alert
+      severity="error"
+      data-testid={`error-missing-${config_key}`}
+      sx={{ borderRadius: 2, alignItems: "center" }}
+      action={
+        <Button
+          component={Link}
+          href="/settings"
+          color="inherit"
+          size="small"
+          startIcon={<SettingsOutlinedIcon />}
+          sx={{ whiteSpace: "nowrap" }}
+        >
+          Go to settings
+        </Button>
+      }
+    >
+      <AlertTitle sx={{ mb: 0.25 }}>{title} is not set</AlertTitle>
+      Tasks with this provider can't run until it is added in settings.
+    </Alert>
   ) : null;
 };
