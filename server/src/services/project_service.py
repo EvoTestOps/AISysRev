@@ -24,6 +24,7 @@ class ProjectService:
                 created_at=row.created_at,
                 updated_at=row.updated_at,
                 screening_target=row.screening_target,
+                job_count=row.job_count,
             )
             for row in rows
         ]
@@ -48,7 +49,11 @@ class ProjectService:
 
     async def fetch_by_uuid(self, uuid: UUID, owner_uuid: UUID) -> ProjectRead | None:
         row = await self.project_crud.fetch_project_by_uuid(uuid, owner_uuid)
-        return None if row is None else ProjectRead.model_validate(row)
+        if row is None:
+            return None
+        project = ProjectRead.model_validate(row)
+        project.job_count = await self.project_crud.count_jobs(row.id)
+        return project
 
     async def create(self, data: ProjectCreate):
         return await self.project_crud.create_project(data)
