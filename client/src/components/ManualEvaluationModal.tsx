@@ -14,7 +14,8 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useEffect, useCallback, useState } from "react";
-import { LlmModelCard } from "./LlmModelCard";
+import { LlmModelCard, LlmModelCardSkeleton } from "./LlmModelCard";
+import { FadeIn } from "./FadeIn";
 import {
   JobScreeningMode,
   JobTaskHumanResult,
@@ -245,6 +246,15 @@ const CriteriaSection: React.FC<{
   </Box>
 );
 
+const SUGGESTION_LIST = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 1.5,
+  m: 0,
+  p: 0,
+  listStyle: "none",
+} as const;
+
 /** The model suggestions, paper and criteria for one paper. Remounted for each paper. */
 const EvaluationContent: React.FC<{
   paper: PaperReadWithAvgProbability;
@@ -333,21 +343,23 @@ const EvaluationContent: React.FC<{
         }
       >
         {modelSuggestions?.length === 0 && <AlertMessage message="No model suggestions." />}
-        <Box
-          component="ul"
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1.5,
-            m: 0,
-            p: 0,
-            listStyle: "none",
-          }}
-        >
-          {modelSuggestions?.map((suggestion, i) => (
-            <LlmModelCard key={i} {...suggestion} isGithubScreening={isGithubScreening} />
-          ))}
-        </Box>
+        {modelSuggestions === undefined ? (
+          <Box
+            component="ul"
+            aria-busy="true"
+            aria-label="Loading model suggestions"
+            sx={SUGGESTION_LIST}
+          >
+            <LlmModelCardSkeleton />
+            <LlmModelCardSkeleton />
+          </Box>
+        ) : (
+          <FadeIn component="ul" sx={SUGGESTION_LIST}>
+            {modelSuggestions.map((suggestion, i) => (
+              <LlmModelCard key={i} {...suggestion} isGithubScreening={isGithubScreening} />
+            ))}
+          </FadeIn>
+        )}
       </Pane>
 
       <Pane
