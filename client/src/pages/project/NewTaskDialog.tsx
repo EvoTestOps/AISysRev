@@ -17,7 +17,6 @@ type NewTaskDialogProps = {
   paperCount: number;
   itemName: string;
   itemNamePlural: string;
-  isGithubScreening: boolean;
 };
 
 /** The task form in a dialog, for projects that already have tasks. Full screen on phones. */

@@ -18,6 +18,7 @@ import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
 import { PaperList, PaperListSkeleton } from "../components/paperList/PaperList";
 import { paginate } from "../components/paperList/pagination";
+import { ITEM_NAMES } from "../helpers/screeningTarget";
 import { ScreeningTarget } from "../state/types";
 
 const LIST_AND_CRITERIA = {
@@ -46,8 +47,7 @@ export const PapersPage = () => {
   const project = getProjectByUuid(projectUuid);
 
   const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+  const itemNamePlural = ITEM_NAMES[screeningTarget].plural;
 
   const getPapersForProject = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapersForProject(projectUuid);
@@ -170,7 +170,7 @@ export const PapersPage = () => {
             <PaperCard
               key={paper.uuid}
               paper={paper}
-              isGithubScreening={isGithubScreening}
+              screeningTarget={screeningTarget}
               data-testid={`paper-${paper.paper_id}`}
             />
           ))}

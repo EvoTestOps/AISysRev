@@ -24,6 +24,12 @@ import { CriteriaEditor } from "./newProject/CriteriaEditor";
 import { LogicField } from "./newProject/LogicField";
 import { ProjectTypeSelector } from "./newProject/ProjectTypeSelector";
 
+// What each criterion is evaluated for, as the criteria help text puts it.
+const CRITERIA_ITEM_NAME: Record<ScreeningTarget, string> = {
+  [ScreeningTarget.PAPER]: "study",
+  [ScreeningTarget.GITHUB_REPOSITORY]: "repository",
+};
+
 type FormSectionProps = {
   title: string;
   description?: React.ReactNode;
@@ -64,8 +70,7 @@ export const NewProject = () => {
   const [, navigate] = useLocation();
   const refreshProjects = useTypedStoreActions((actions) => actions.refreshProjects);
 
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemName = isGithubScreening ? "repository" : "study";
+  const itemName = CRITERIA_ITEM_NAME[screeningTarget];
 
   const handleCreate = useCallback(async () => {
     if (title.trim() === "") {

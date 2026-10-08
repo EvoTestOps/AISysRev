@@ -8,13 +8,15 @@ import { Link } from "wouter";
 import { PaperDetails } from "../../components/paperList/PaperDetails";
 import { PaperRow, PaperRowStatus } from "../../components/paperList/PaperRow";
 import { JobTaskRead } from "../../services/api/client";
+import type { ScreeningTarget } from "../../state/types";
 import { DecisionPill } from "./result/DecisionPill";
 import { isErroredTask, overallDecision, taskStatusLabel } from "./taskResult";
 
 type JobTaskRowProps = {
   task: JobTaskRead;
   taskHref: string;
-  isGithubScreening: boolean;
+  /** What the job screened: papers or GitHub repositories. */
+  screeningTarget: ScreeningTarget;
 };
 
 /** The probability column's text when the task has no probability. */
@@ -26,7 +28,7 @@ const rowStatus = (task: JobTaskRead): PaperRowStatus => {
 };
 
 /** A paper in a job's list: its result for this job, expandable to a summary. */
-export const JobTaskRow: React.FC<JobTaskRowProps> = ({ task, taskHref, isGithubScreening }) => {
+export const JobTaskRow: React.FC<JobTaskRowProps> = ({ task, taskHref, screeningTarget }) => {
   const [open, setOpen] = useState(false);
   const overall = overallDecision(task.result);
 
@@ -80,11 +82,7 @@ export const JobTaskRow: React.FC<JobTaskRowProps> = ({ task, taskHref, isGithub
             </Typography>
           </Box>
         )}
-        <PaperDetails
-          doi={task.doi}
-          abstract={task.abstract}
-          isGithubScreening={isGithubScreening}
-        />
+        <PaperDetails doi={task.doi} abstract={task.abstract} screeningTarget={screeningTarget} />
       </Box>
     </PaperRow>
   );

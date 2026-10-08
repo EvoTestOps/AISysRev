@@ -18,7 +18,7 @@ import {
 import { PROJECTS_PARENT } from "../../components/PageHeader";
 import { PaperDetails } from "../../components/paperList/PaperDetails";
 import { H6 } from "../../components/Typography";
-import { ScreeningTarget } from "../../state/types";
+import { ITEM_NAMES } from "../../helpers/screeningTarget";
 import { NotFoundPage } from "../NotFound";
 import { useJobTaskDetail } from "./hooks/useJobTaskDetail";
 import { useJobTasks } from "./hooks/useJobTasks";
@@ -90,9 +90,7 @@ export const JobTaskPage = () => {
     return <NotFoundPage />;
   }
 
-  const isGithubScreening = project.screening_target === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemName = isGithubScreening ? "repository" : "paper";
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+  const { singular: itemName, plural: itemNamePlural } = ITEM_NAMES[project.screening_target];
   const jobPath = `/project/${projectUuid}/job/${jobUuid}`;
   const index = tasks.findIndex((t) => t.uuid === taskUuid);
   const neighbour = (offset: number) => {
@@ -147,7 +145,7 @@ export const JobTaskPage = () => {
                 <PaperDetails
                   doi={task.doi}
                   abstract={task.abstract}
-                  isGithubScreening={isGithubScreening}
+                  screeningTarget={project.screening_target}
                 />
               </Card>
             </Box>
