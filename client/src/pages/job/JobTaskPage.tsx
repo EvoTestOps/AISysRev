@@ -1,10 +1,20 @@
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Skeleton from "@mui/material/Skeleton";
 import { Link, useParams } from "wouter";
 import { AlertMessage } from "../../components/AlertMessage";
 import { Card } from "../../components/Card";
 import { Layout } from "../../components/Layout";
+import { FadeIn } from "../../components/FadeIn";
+import { riseIn } from "../../components/motion";
+import {
+  BreadcrumbsSkeleton,
+  JobCardSkeleton,
+  SkeletonGroup,
+  TextCardSkeleton,
+} from "../../components/skeletons";
 import { PROJECTS_PARENT } from "../../components/PageHeader";
 import { PaperDetails } from "../../components/paperList/PaperDetails";
 import { H6 } from "../../components/Typography";
@@ -44,6 +54,15 @@ const StepButton: React.FC<StepButtonProps> = ({ href, testId, direction }) => {
   );
 };
 
+/** Stands in for the paper, result and prompt cards while the result loads. */
+const ResultCardsSkeleton = () => (
+  <SkeletonGroup sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <TextCardSkeleton lines={4} />
+    <TextCardSkeleton lines={3} />
+    <TextCardSkeleton lines={2} />
+  </SkeletonGroup>
+);
+
 /** One paper's result in a screening task: decision, criteria, error and prompts. */
 export const JobTaskPage = () => {
   const { projectUuid, jobUuid, taskUuid } = useParams<{
@@ -57,7 +76,15 @@ export const JobTaskPage = () => {
   const { tasks } = useJobTasks(jobUuid);
 
   if (loading) {
-    return null;
+    return (
+      <Layout title={project?.name ?? ""} parent={PROJECTS_PARENT} loading={!project}>
+        <SkeletonGroup sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <BreadcrumbsSkeleton />
+          <JobCardSkeleton />
+          <ResultCardsSkeleton />
+        </SkeletonGroup>
+      </Layout>
+    );
   }
   if (!project || !job || notFound) {
     return <NotFoundPage />;
@@ -75,7 +102,7 @@ export const JobTaskPage = () => {
 
   return (
     <Layout title={project.name} parent={PROJECTS_PARENT}>
-      <div className="flex flex-col gap-4" data-testid="job-task-page">
+      <FadeIn className="flex flex-col gap-4" data-testid="job-task-page">
         <div className="flex items-center justify-between gap-4">
           <JobBreadcrumbs
             backHref={jobPath}
@@ -84,9 +111,12 @@ export const JobTaskPage = () => {
               { label: "Screening tasks", href: `/project/${projectUuid}` },
               { label: jobDisplayName(job, runNumber), href: jobPath, testId: "task-back" },
               {
-                label: task
-                  ? `${task.paper_id != null ? `#${task.paper_id} ` : ""}${task.title}`
-                  : "…",
+                label:
+                  task && !loadingTask ? (
+                    `${task.paper_id != null ? `#${task.paper_id} ` : ""}${task.title}`
+                  ) : (
+                    <Skeleton width={200} sx={{ display: "inline-block" }} />
+                  ),
               },
             ]}
           />
@@ -102,49 +132,57 @@ export const JobTaskPage = () => {
         </div>
         <JobSummaryCard job={job} runNumber={runNumber} itemName={itemName} />
         {error && <AlertMessage className="p-4" message={error} />}
+        {loadingTask && <ResultCardsSkeleton />}
         {!loadingTask && task && (
-          <>
-            <Card>
-              <H6>
-                {task.paper_id != null && (
-                  <span className="text-slate-500 mr-2">#{task.paper_id}</span>
-                )}
-                <span data-testid="task-title">{task.title}</span>
-              </H6>
-              <PaperDetails
-                doi={task.doi}
-                abstract={task.abstract}
-                isGithubScreening={isGithubScreening}
-              />
-            </Card>
-            <Card>
-              <div className="flex items-center justify-between mb-2">
-                <H6>Result</H6>
-                <span className="text-xs text-slate-500" data-testid="task-status">
-                  Status: {taskStatusLabel(task.status)}
-                </span>
-              </div>
-              {isErroredTask(task) && task.error && (
-                <div
-                  className="text-sm text-red-700 bg-red-50 rounded-md p-2 mb-4 whitespace-pre-wrap"
-                  data-testid="task-error"
-                >
-                  {task.error}
+          // Keyed by the task, so stepping to the next paper animates it in too.
+          <FadeIn key={task.uuid} className="flex flex-col gap-4">
+            <Box sx={riseIn(0)}>
+              <Card>
+                <H6>
+                  {task.paper_id != null && (
+                    <span className="text-slate-500 mr-2">#{task.paper_id}</span>
+                  )}
+                  <span data-testid="task-title">{task.title}</span>
+                </H6>
+                <PaperDetails
+                  doi={task.doi}
+                  abstract={task.abstract}
+                  isGithubScreening={isGithubScreening}
+                />
+              </Card>
+            </Box>
+            <Box sx={riseIn(1)}>
+              <Card>
+                <div className="flex items-center justify-between mb-2">
+                  <H6>Result</H6>
+                  <span className="text-xs text-slate-500" data-testid="task-status">
+                    Status: {taskStatusLabel(task.status)}
+                  </span>
                 </div>
-              )}
-              {task.result ? (
-                <TaskResultView result={task.result} projectCriteria={project.criteria} />
-              ) : (
-                !isErroredTask(task) && <p className="text-sm text-slate-500">No result yet.</p>
-              )}
-            </Card>
-            <Card>
-              <H6>Prompt sent to the model</H6>
-              <PromptList prompts={task.prompts} />
-            </Card>
-          </>
+                {isErroredTask(task) && task.error && (
+                  <div
+                    className="text-sm text-red-700 bg-red-50 rounded-md p-2 mb-4 whitespace-pre-wrap"
+                    data-testid="task-error"
+                  >
+                    {task.error}
+                  </div>
+                )}
+                {task.result ? (
+                  <TaskResultView result={task.result} projectCriteria={project.criteria} />
+                ) : (
+                  !isErroredTask(task) && <p className="text-sm text-slate-500">No result yet.</p>
+                )}
+              </Card>
+            </Box>
+            <Box sx={riseIn(2)}>
+              <Card>
+                <H6>Prompt sent to the model</H6>
+                <PromptList prompts={task.prompts} />
+              </Card>
+            </Box>
+          </FadeIn>
         )}
-      </div>
+      </FadeIn>
     </Layout>
   );
 };
