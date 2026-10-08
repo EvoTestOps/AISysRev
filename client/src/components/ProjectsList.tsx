@@ -28,6 +28,9 @@ import { useTypedStoreState } from "../state/store";
 import { ScreeningTarget } from "../state/types";
 import type { Project } from "../state/types/project";
 import { ConfirmationModal } from "./ConfirmationModal";
+import { FadeIn } from "./FadeIn";
+import { riseIn } from "./motion";
+import { SkeletonGroup } from "./skeletons";
 
 type ProjectsListProps = {
   handleProjectDelete: (uuid: string) => void;
@@ -138,8 +141,17 @@ const ProjectRow: React.FC<{ project: Project; onDelete: (project: Project) => v
   );
 };
 
+/** Stands in for the filter chips, sized like "All", "Literature reviews" and "GitHub repositories". */
+const LoadingFilters = () => (
+  <Box aria-hidden sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+    {[64, 160, 170].map((width) => (
+      <Skeleton key={width} variant="rounded" width={width} height={32} sx={{ borderRadius: 4 }} />
+    ))}
+  </Box>
+);
+
 const LoadingRows = () => (
-  <List disablePadding>
+  <List disablePadding aria-hidden>
     {[1, 2, 3].map((i) => (
       <Fragment key={i}>
         {i > 1 && <Divider component="li" />}
@@ -160,6 +172,7 @@ const LoadingRows = () => (
 const EmptyState = () => (
   <Card
     sx={{
+      ...riseIn(0),
       borderRadius: 2,
       py: 8,
       px: 3,
@@ -203,50 +216,63 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ handleProjectDelete 
   const countFor = (value: ProjectFilter) =>
     value === "ALL" ? projects.length : projects.filter((p) => p.screening_target === value).length;
 
+  // Only the first load shows placeholders: a reload, e.g. after a delete, keeps the list.
+  const firstLoad = loadingProjects && projects.length === 0;
+
   if (!loadingProjects && projects.length === 0) return <EmptyState />;
 
-  return (
-    <>
-      {!loadingProjects && (
-        <Box
-          role="group"
-          aria-label="Filter by project type"
-          sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}
-        >
-          {FILTERS.map(({ value, label }) => {
-            const selected = filter === value;
-            return (
-              <Chip
-                key={value}
-                label={`${label} (${countFor(value)})`}
-                clickable
-                color={selected ? "primary" : "default"}
-                variant={selected ? "filled" : "outlined"}
-                onClick={() => setFilter(value)}
-                aria-pressed={selected}
-                data-testid={`project-filter-${value}`}
-                sx={selected ? undefined : { bgcolor: "background.paper" }}
-              />
-            );
-          })}
-        </Box>
-      )}
-      <Card sx={{ borderRadius: 2 }}>
-        {loadingProjects ? (
+  if (firstLoad) {
+    return (
+      <SkeletonGroup>
+        <LoadingFilters />
+        <Card sx={{ borderRadius: 2 }}>
           <LoadingRows />
-        ) : visibleProjects.length === 0 ? (
+        </Card>
+      </SkeletonGroup>
+    );
+  }
+
+  return (
+    <FadeIn>
+      <Box
+        role="group"
+        aria-label="Filter by project type"
+        sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2, ...riseIn(0) }}
+      >
+        {FILTERS.map(({ value, label }) => {
+          const selected = filter === value;
+          return (
+            <Chip
+              key={value}
+              label={`${label} (${countFor(value)})`}
+              clickable
+              color={selected ? "primary" : "default"}
+              variant={selected ? "filled" : "outlined"}
+              onClick={() => setFilter(value)}
+              aria-pressed={selected}
+              data-testid={`project-filter-${value}`}
+              sx={selected ? undefined : { bgcolor: "background.paper" }}
+            />
+          );
+        })}
+      </Box>
+      <Card sx={{ borderRadius: 2, ...riseIn(1) }}>
+        {visibleProjects.length === 0 ? (
           <Typography variant="body2" color="textSecondary" sx={{ px: 2, py: 4, textAlign: "center" }}>
             {FILTERS.find((f) => f.value === filter)?.emptyText}
           </Typography>
         ) : (
-          <List disablePadding>
-            {visibleProjects.map((project, i) => (
-              <Fragment key={project.uuid}>
-                {i > 0 && <Divider component="li" />}
-                <ProjectRow project={project} onDelete={setPendingDelete} />
-              </Fragment>
-            ))}
-          </List>
+          // Keyed by the filter, so switching filters fades the new list in.
+          <FadeIn key={filter}>
+            <List disablePadding>
+              {visibleProjects.map((project, i) => (
+                <Fragment key={project.uuid}>
+                  {i > 0 && <Divider component="li" />}
+                  <ProjectRow project={project} onDelete={setPendingDelete} />
+                </Fragment>
+              ))}
+            </List>
+          </FadeIn>
         )}
       </Card>
       <ConfirmationModal
@@ -263,6 +289,6 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({ handleProjectDelete 
         confirmButtonIcon={<DeleteOutlinedIcon />}
         confirmButtonTestId="confirm-delete-project-button"
       />
-    </>
+    </FadeIn>
   );
 };
