@@ -5,6 +5,8 @@ import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import Box from "@mui/material/Box";
 import { alpha } from "@mui/material/styles";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { useRef, useState } from "react";
@@ -36,6 +38,12 @@ const DECISIONS = [
     icon: <CheckIcon fontSize="small" />,
   },
 ] as const;
+
+const DECIDED_LABELS: Record<JobTaskHumanResult, string> = {
+  [JobTaskHumanResult.INCLUDE]: "Included",
+  [JobTaskHumanResult.EXCLUDE]: "Excluded",
+  [JobTaskHumanResult.UNSURE]: "Unsure",
+};
 
 type PaperCardProps = {
   paper: PaperReadWithAvgProbability;
@@ -79,7 +87,8 @@ export const PaperCard: React.FC<PaperCardProps> = ({
       e.target.value = "";
     }
   };
-  const hasErrors = (paper.error_messages?.length ?? 0) > 0;
+  const errorMessages = paper.error_messages ?? [];
+  const decision = DECISIONS.find((d) => d.value === paper.human_result);
 
   return (
     <PaperRow
@@ -87,14 +96,23 @@ export const PaperCard: React.FC<PaperCardProps> = ({
       paperId={paper.paper_id}
       title={paper.title}
       hasFullText={Boolean(paper.pdf_file_uuid)}
-      value={
-        paper.avg_probability_decision != null
-          ? paper.avg_probability_decision.toFixed(3)
-          : hasErrors
-            ? "ERROR"
-            : "Pending"
+      probability={paper.avg_probability_decision}
+      status={
+        errorMessages.length > 0
+          ? { label: "Error", tone: "error", tooltip: errorMessages.join("; ") }
+          : { label: "Not screened", shortLabel: "—" }
       }
-      valueMuted={paper.avg_probability_decision == null}
+      badge={
+        decision && (
+          <Chip
+            size="small"
+            variant="outlined"
+            color={decision.color}
+            label={DECIDED_LABELS[decision.value]}
+            sx={{ height: 22 }}
+          />
+        )
+      }
       open={open}
       onToggle={() => setOpen(!open)}
     >
@@ -107,21 +125,19 @@ export const PaperCard: React.FC<PaperCardProps> = ({
         actions={
           <>
             {!isGithubScreening && (
-              <Box sx={{ pb: 1 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<UploadFileOutlinedIcon />}
-                  disabled={uploadingPdf}
-                  onClick={() => pdfInputRef.current?.click()}
-                >
-                  {uploadingPdf
-                    ? "Uploading…"
-                    : paper.pdf_file_uuid
-                      ? "Replace full text"
-                      : "Upload full text"}
-                </Button>
-              </Box>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<UploadFileOutlinedIcon />}
+                disabled={uploadingPdf}
+                onClick={() => pdfInputRef.current?.click()}
+              >
+                {uploadingPdf
+                  ? "Uploading…"
+                  : paper.pdf_file_uuid
+                    ? "Replace full text"
+                    : "Upload full text"}
+              </Button>
             )}
             <input
               type="file"
@@ -133,11 +149,14 @@ export const PaperCard: React.FC<PaperCardProps> = ({
           </>
         }
       />
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mt: 2.5 }}>
+        <Typography variant="subtitle2" component="span" id={`decision-${paper.uuid}`}>
+          Your decision
+        </Typography>
         <ToggleButtonGroup
           exclusive
           size="small"
-          aria-label="Your decision"
+          aria-labelledby={`decision-${paper.uuid}`}
           disabled={isPending}
           value={paper.human_result ?? null}
           onChange={(_, humanResult: JobTaskHumanResult | null) => {

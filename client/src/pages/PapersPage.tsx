@@ -1,21 +1,19 @@
-import { useLocation, useParams } from "wouter";
-import Checkbox from "@mui/material/Checkbox";
+import Box from "@mui/material/Box";
 import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import Typography from "@mui/material/Typography";
+import { useLocation, useParams } from "wouter";
 import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { PROJECTS_PARENT } from "../components/PageHeader";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { ProjectTabs } from "../components/ProjectTabs";
 import { NotFoundPage } from "./NotFound";
-import { Card } from "../components/Card";
-import { CriteriaList } from "../components/CriteriaList";
-import { H6 } from "../components/Typography";
+import { CriteriaPanel } from "../components/CriteriaPanel";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
-import { PaperListHeader } from "../components/paperList/PaperListHeader";
-import { PaginationBar } from "../components/paperList/PaginationBar";
+import { PaperList } from "../components/paperList/PaperList";
 import { paginate } from "../components/paperList/pagination";
-import { AlertMessage } from "../components/AlertMessage";
 import { ScreeningTarget } from "../state/types";
 
 export const PapersPage = () => {
@@ -30,41 +28,32 @@ export const PapersPage = () => {
 
   // TODO: Use computed value
   const loadingPapers = useTypedStoreState((state) =>
-    state.loading.papers[projectUuid] === undefined
-      ? true
-      : state.loading.papers[projectUuid]
+    state.loading.papers[projectUuid] === undefined ? true : state.loading.papers[projectUuid],
   );
 
-  const getProjectByUuid = useTypedStoreState(
-    (state) => state.getProjectByUuid
-  );
+  const getProjectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
   const project = getProjectByUuid(projectUuid);
 
   const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   const itemNamePlural = isGithubScreening ? "repositories" : "papers";
 
-  const getPapersForProject = useTypedStoreState(
-    (state) => state.getPapersForProject
-  );
+  const getPapersForProject = useTypedStoreState((state) => state.getPapersForProject);
   const papers = getPapersForProject(projectUuid);
 
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
 
-  const [hideAlreadyEvaluatedPapers, sethideAlreadyEvaluatedPapers] =
-    useState(true);
+  const [hideAlreadyEvaluatedPapers, sethideAlreadyEvaluatedPapers] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("ID_ASC");
 
   const sortedPapers = useMemo(
     () =>
-      [...papers].sort(
-        getPaperSortFunction(sortOption, (paper) => paper.avg_probability_decision)
-      ),
-    [papers, sortOption]
+      [...papers].sort(getPaperSortFunction(sortOption, (paper) => paper.avg_probability_decision)),
+    [papers, sortOption],
   );
   const alreadyEvaluatedPapers = useMemo(
     () => [...papers].filter((p) => p.human_result !== null).length,
-    [papers]
+    [papers],
   );
   const sortedAndFilteredPapers = useMemo(
     () =>
@@ -74,14 +63,15 @@ export const PapersPage = () => {
         }
         return paper.human_result === null;
       }),
-    [hideAlreadyEvaluatedPapers, sortedPapers]
+    [hideAlreadyEvaluatedPapers, sortedPapers],
   );
 
   // TODO: Memoize & Redux
-  const { pageItems: currentPapers, pageCount } = paginate(
-    sortedAndFilteredPapers,
-    currentPage
-  );
+  const {
+    pageItems: currentPapers,
+    pageCount,
+    page,
+  } = paginate(sortedAndFilteredPapers, currentPage);
 
   useEffect(() => {
     if (project !== undefined) {
@@ -96,85 +86,82 @@ export const PapersPage = () => {
     return <NotFoundPage />;
   }
 
+  const shown = sortedAndFilteredPapers.length;
+
   return (
     <Layout title={project.name} parent={PROJECTS_PARENT}>
-      <div>
-        <ProjectTabs
-          projectUuid={projectUuid}
-          active="papers"
-          itemNamePlural={itemNamePlural}
-        />
-        <FormControlLabel
-          sx={{ mb: 1 }}
-          data-testid="label-filter_out_evaluated"
-          control={
-            <Checkbox
-              checked={hideAlreadyEvaluatedPapers}
-              onChange={(e) => sethideAlreadyEvaluatedPapers(e.target.checked)}
-              slotProps={{
-                input: {
-                  "data-testid": "input-filter_out_evaluated",
-                } as React.InputHTMLAttributes<HTMLInputElement>,
-              }}
-            />
+      <ProjectTabs projectUuid={projectUuid} active="papers" itemNamePlural={itemNamePlural} />
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 320px" },
+          alignItems: "start",
+          gap: 3,
+        }}
+      >
+        <PaperList
+          sortOption={sortOption}
+          onSortChange={setSortOption}
+          loading={loadingPapers}
+          emptyMessage={
+            hideAlreadyEvaluatedPapers && papers.length > 0
+              ? `All ${itemNamePlural} are evaluated. Turn off “Hide evaluated ${itemNamePlural}” to see them.`
+              : `No ${itemNamePlural}.`
           }
-          label={`Hide already evaluated ${itemNamePlural} (${alreadyEvaluatedPapers})`}
-        />
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
-          <div className="flex flex-col gap-2 min-w-0">
-            <PaperListHeader
-              sortOption={sortOption}
-              onSortChange={setSortOption}
-            />
-            <div className="flex flex-col gap-1">
-              {!loadingPapers &&
-                currentPapers.map((paper) => (
-                  <PaperCard
-                    key={paper.uuid}
-                    paper={paper}
-                    isGithubScreening={isGithubScreening}
-                    data-testid={`paper-${paper.paper_id}`}
+          emptyTestId="no-papers-text"
+          pagination={{
+            page,
+            pageCount,
+            itemCount: shown,
+            onPageChange: (page) => setLocation(`/project/${projectUuid}/papers/page/${page}`),
+          }}
+          toolbar={
+            <>
+              <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }}>
+                {shown === papers.length
+                  ? `${papers.length} ${itemNamePlural}`
+                  : `${shown} of ${papers.length} ${itemNamePlural}`}
+              </Typography>
+              <FormControlLabel
+                data-testid="label-filter_out_evaluated"
+                labelPlacement="start"
+                sx={{ ml: 0, gap: 0.5 }}
+                control={
+                  <Switch
+                    checked={hideAlreadyEvaluatedPapers}
+                    onChange={(e) => sethideAlreadyEvaluatedPapers(e.target.checked)}
+                    slotProps={{
+                      input: {
+                        "data-testid": "input-filter_out_evaluated",
+                      } as React.InputHTMLAttributes<HTMLInputElement>,
+                    }}
                   />
-                ))}
-            </div>
-            {!loadingPapers &&
-              sortedAndFilteredPapers &&
-              sortedAndFilteredPapers.length === 0 && (
-                <AlertMessage
-                  className="p-4"
-                  data-testid="no-papers-text"
-                  message={`No ${itemNamePlural}.`}
-                />
-              )}
-            {!loadingPapers && (
-              <PaginationBar
-                currentPage={currentPage}
-                pageCount={pageCount}
-                onPageChange={(page) =>
-                  setLocation(`/project/${projectUuid}/papers/page/${page}`)
+                }
+                label={
+                  <Typography variant="body2">
+                    Hide evaluated {itemNamePlural} ({alreadyEvaluatedPapers})
+                  </Typography>
                 }
               />
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="sticky top-2 h-16 flex items-center content-center p-4 bg-slate-800 text-white rounded-lg">
-              <H6>Inclusion and exclusion criteria</H6>
-            </div>
-            <Card className="sticky top-20">
-              <H6>Inclusion criteria</H6>
-              <CriteriaList
-                data-testid="inclusion-criteria"
-                criteria={project.criteria.inclusion_criteria || []}
-              />
-              <H6>Exclusion criteria</H6>
-              <CriteriaList
-                data-testid="exclusion-criteria"
-                criteria={project.criteria.exclusion_criteria || []}
-              />
-            </Card>
-          </div>
-        </div>
-      </div>
+            </>
+          }
+        >
+          {currentPapers.map((paper) => (
+            <PaperCard
+              key={paper.uuid}
+              paper={paper}
+              isGithubScreening={isGithubScreening}
+              data-testid={`paper-${paper.paper_id}`}
+            />
+          ))}
+        </PaperList>
+        <CriteriaPanel
+          inclusionCriteria={project.criteria.inclusion_criteria || []}
+          exclusionCriteria={project.criteria.exclusion_criteria || []}
+          inclusionTestId="inclusion-criteria"
+          exclusionTestId="exclusion-criteria"
+        />
+      </Box>
     </Layout>
   );
 };
