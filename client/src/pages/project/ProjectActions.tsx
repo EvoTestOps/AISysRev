@@ -51,7 +51,8 @@ export const ProjectActions: React.FC<ProjectActionsProps> = ({
   hasMultiplePcJobs,
   screeningTarget,
 }) => {
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  // Only papers have full texts to export or import.
+  const hasFullTexts = screeningTarget === ScreeningTarget.PAPER;
   const exportMenu = useMenu();
   const moreMenu = useMenu();
   const run = (close: () => void, action: () => unknown) => () => {
@@ -100,7 +101,7 @@ export const ProjectActions: React.FC<ProjectActionsProps> = ({
           </ListItemIcon>
           <ListItemText>Open HTML report</ListItemText>
         </MenuItem>
-        {!isGithubScreening && (
+        {hasFullTexts && (
           <MenuItem onClick={run(exportMenu.close, downloadMissingFulltextRis)}>
             <ListItemIcon>
               <DownloadOutlinedIcon fontSize="small" />
@@ -126,7 +127,7 @@ export const ProjectActions: React.FC<ProjectActionsProps> = ({
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        {!isGithubScreening && (
+        {hasFullTexts && (
           <MenuItem
             disabled={!hasPapers || importingFulltext}
             onClick={run(moreMenu.close, onImportFulltext)}

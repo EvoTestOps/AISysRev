@@ -16,6 +16,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import { useEffect, useCallback, useState } from "react";
 import { LlmModelCard, LlmModelCardSkeleton } from "./LlmModelCard";
 import { FadeIn } from "./FadeIn";
+import { itemHref } from "../helpers/screeningTarget";
 import {
   JobScreeningMode,
   JobTaskHumanResult,
@@ -247,6 +248,11 @@ const CriteriaSection: React.FC<{
   </Box>
 );
 
+const ITEM_LABELS: Record<ScreeningTarget, { item: string; identifier: string }> = {
+  [ScreeningTarget.PAPER]: { item: "Paper", identifier: "DOI" },
+  [ScreeningTarget.GITHUB_REPOSITORY]: { item: "Repository", identifier: "Repository URL" },
+};
+
 const SUGGESTION_LIST = {
   display: "flex",
   flexDirection: "column",
@@ -261,8 +267,8 @@ const EvaluationContent: React.FC<{
   paper: PaperReadWithAvgProbability;
   inclusionCriteria: string[];
   exclusionCriteria: string[];
-  isGithubScreening: boolean;
-}> = ({ paper, inclusionCriteria, exclusionCriteria, isGithubScreening }) => {
+  screeningTarget: ScreeningTarget;
+}> = ({ paper, inclusionCriteria, exclusionCriteria, screeningTarget }) => {
   // TODO: Refactor this to use redux
   const [modelResults, setModelResults] = useState<ModelResults | null>(null);
   const [modelResultsError, setModelResultsError] = useState<string | null>(null);
@@ -368,7 +374,7 @@ const EvaluationContent: React.FC<{
         ) : (
           <FadeIn component="ul" sx={SUGGESTION_LIST}>
             {modelSuggestions.map((suggestion, i) => (
-              <LlmModelCard key={i} {...suggestion} isGithubScreening={isGithubScreening} />
+              <LlmModelCard key={i} {...suggestion} screeningTarget={screeningTarget} />
             ))}
           </FadeIn>
         )}
@@ -379,7 +385,7 @@ const EvaluationContent: React.FC<{
         heading={
           <>
             <PaneTitle component="p">
-              {isGithubScreening ? "Repository" : "Paper"} #{paper.paper_id}
+              {ITEM_LABELS[screeningTarget].item} #{paper.paper_id}
             </PaneTitle>
             <Typography
               id="manual-evaluation-title"
@@ -414,16 +420,10 @@ const EvaluationContent: React.FC<{
           >
             {paper.doi && (
               <>
-                <dt>{isGithubScreening ? "Repository URL" : "DOI"}</dt>
+                <dt>{ITEM_LABELS[screeningTarget].identifier}</dt>
                 <dd>
                   <Link
-                    href={
-                      isGithubScreening
-                        ? /^https?:\/\//i.test(paper.doi)
-                          ? paper.doi
-                          : undefined
-                        : encodeURI(`https://doi.org/${paper.doi}`)
-                    }
+                    href={itemHref(paper.doi, screeningTarget)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -509,8 +509,6 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
   const currentPaper = papers.find((p) => p.uuid === paperUuid);
 
   const addHumanResult = useTypedStoreActions((actions) => actions.addHumanResult);
-
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
 
   const handleAddHumanResult = useCallback(
     (humanResult: JobTaskHumanResult) => {
@@ -607,7 +605,7 @@ export const ManualEvaluationModal: React.FC<ManualEvaluationProps> = ({
         paper={currentPaper}
         inclusionCriteria={inclusionCriteria}
         exclusionCriteria={exclusionCriteria}
-        isGithubScreening={isGithubScreening}
+        screeningTarget={screeningTarget}
       />
       <DialogActions
         sx={{

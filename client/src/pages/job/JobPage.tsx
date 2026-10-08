@@ -22,6 +22,7 @@ import { PaperList, PaperListSkeleton } from "../../components/paperList/PaperLi
 import { ProjectTabs } from "../../components/ProjectTabs";
 import { getPaperSortFunction, SortOption } from "../../helpers/sort";
 import { JobTaskRead } from "../../services/api/client";
+import { ITEM_NAMES } from "../../helpers/screeningTarget";
 import { ScreeningTarget } from "../../state/types";
 import { NotFoundPage } from "../NotFound";
 import { useJobTasks } from "./hooks/useJobTasks";
@@ -86,9 +87,9 @@ export const JobPage = () => {
   );
   const { pageItems, pageCount, page: currentPage } = paginate(visibleTasks, page);
 
-  const isGithubScreening = project?.screening_target === ScreeningTarget.GITHUB_REPOSITORY;
-  const itemName = isGithubScreening ? "repository" : "paper";
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
+  // The project, and so what it screens, is unknown while the page loads.
+  const { singular: itemName, plural: itemNamePlural } =
+    ITEM_NAMES[project?.screening_target ?? ScreeningTarget.PAPER];
 
   if (loading) {
     return (
@@ -192,7 +193,7 @@ export const JobPage = () => {
                 key={task.uuid}
                 task={task}
                 taskHref={`${jobPath}/task/${task.uuid}`}
-                isGithubScreening={isGithubScreening}
+                screeningTarget={project.screening_target}
               />
             ))}
           </PaperList>

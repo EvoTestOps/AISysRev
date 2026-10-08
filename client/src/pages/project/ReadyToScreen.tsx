@@ -19,7 +19,6 @@ type ReadyToScreenProps = {
   files: FetchedFile[];
   itemName: string;
   itemNamePlural: string;
-  isGithubScreening: boolean;
   /** Every paper already has a manual decision. */
   evaluationFinished: boolean;
   onStartManualEvaluation: () => void;
@@ -37,7 +36,6 @@ export const ReadyToScreen: React.FC<ReadyToScreenProps> = ({
   files,
   itemName,
   itemNamePlural,
-  isGithubScreening,
   evaluationFinished,
   onStartManualEvaluation,
   onShowResults,
@@ -105,7 +103,6 @@ export const ReadyToScreen: React.FC<ReadyToScreenProps> = ({
               paperCount={paperCount}
               itemName={itemName}
               itemNamePlural={itemNamePlural}
-              isGithubScreening={isGithubScreening}
             />
           </Box>
         </Box>

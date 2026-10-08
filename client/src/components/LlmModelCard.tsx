@@ -6,7 +6,7 @@ import Skeleton from "@mui/material/Skeleton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { promptingStrategyLabel, screeningModeLabel } from "../pages/project/jobLabels";
-import { JobScreeningMode, PromptingConfig } from "../state/types";
+import { JobScreeningMode, PromptingConfig, ScreeningTarget } from "../state/types";
 
 type LlmModelCardProps = {
   modelName: string;
@@ -15,7 +15,7 @@ type LlmModelCardProps = {
   probability: number | null;
   screeningType: PromptingConfig["screening_type"] | null;
   screeningMode: JobScreeningMode | null;
-  isGithubScreening: boolean;
+  screeningTarget: ScreeningTarget;
 };
 
 const likertMap: Record<string, string> = {
@@ -36,7 +36,7 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
   probability,
   screeningType,
   screeningMode,
-  isGithubScreening,
+  screeningTarget,
 }) => {
   // "openai/gpt-5.1-mini": the model on the first line, its provider with the setup below.
   const slash = modelName.lastIndexOf("/");
@@ -45,7 +45,7 @@ export const LlmModelCard: React.FC<LlmModelCardProps> = ({
   const setup = [
     provider,
     screeningType && promptingStrategyLabel(screeningType).value,
-    screeningMode && screeningModeLabel(screeningMode, isGithubScreening).value,
+    screeningMode && screeningModeLabel(screeningMode, screeningTarget).value,
   ]
     .filter(Boolean)
     .join(" · ");
