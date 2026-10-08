@@ -15,7 +15,7 @@ export const ScreeningModeSelector: React.FC<ScreeningModeSelectorProps> = ({ fo
     <FieldGroup disabled={disabled}>
       <FieldLabel
         label="Screening mode"
-        tooltip="Choose what content is used for screening papers. Automatic uses PDF mode for papers with a PDF attached and Abstract for the rest."
+        tooltip="Choose what content is used for screening papers. Automatic uses Full-text (PDF) for papers with a PDF attached and Title+Abstract for the rest."
       />
       <div className="grid grid-cols-3 gap-2">
         <SegmentedButton
@@ -23,7 +23,7 @@ export const ScreeningModeSelector: React.FC<ScreeningModeSelectorProps> = ({ fo
           selected={screeningMode === JobScreeningMode.TEXT}
           onSelect={() => setScreeningMode(JobScreeningMode.TEXT)}
         >
-          <span>Abstract</span>
+          <span className="text-center">Title+Abstract</span>
         </SegmentedButton>
         <SegmentedButton
           testId="screening-mode-pdf-button"
@@ -31,7 +31,7 @@ export const ScreeningModeSelector: React.FC<ScreeningModeSelectorProps> = ({ fo
           disabled={isPerCriterion}
           onSelect={() => setScreeningMode(JobScreeningMode.PDF)}
         >
-          <span>PDF</span>
+          <span className="text-center">Full-text (PDF)</span>
         </SegmentedButton>
         <SegmentedButton
           testId="screening-mode-automatic-button"
@@ -44,7 +44,8 @@ export const ScreeningModeSelector: React.FC<ScreeningModeSelectorProps> = ({ fo
       </div>
       {isPerCriterion && (
         <p className="text-xs text-amber-600 -mt-1">
-          PDF/Automatic screening modes aren't available with per-criterion evaluation yet
+          Full-text (PDF) and Automatic screening modes aren't available with per-criterion
+          evaluation yet
         </p>
       )}
     </FieldGroup>

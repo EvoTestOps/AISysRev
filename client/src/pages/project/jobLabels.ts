@@ -54,7 +54,7 @@ export const screeningModeLabel = (mode: JobScreeningMode, isGithub: boolean): F
   switch (mode) {
     case JobScreeningMode.PDF:
       return {
-        value: "Full text (PDF)",
+        value: "Full-text (PDF)",
         tooltip: "The model reads excerpts of each paper's PDF.",
       };
     case JobScreeningMode.AUTOMATIC:
@@ -69,7 +69,7 @@ export const screeningModeLabel = (mode: JobScreeningMode, isGithub: boolean): F
             tooltip: "The model reads each repository's name, description and README.",
           }
         : {
-            value: "Title & abstract",
+            value: "Title+Abstract",
             tooltip: "The model reads each paper's title and abstract.",
           };
   }
