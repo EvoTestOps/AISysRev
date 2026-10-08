@@ -15,6 +15,8 @@ type LayoutProps = {
   /** Page-level actions, shown next to the title. */
   headerActions?: React.ReactNode;
   hideNavbar?: boolean;
+  /** The page is loading: the header shows a placeholder for the title. */
+  loading?: boolean;
 };
 
 // Content and footer share the same column.
@@ -32,17 +34,20 @@ export const Layout = ({
   parent,
   headerActions,
   hideNavbar,
+  loading,
 }: PropsWithChildren<LayoutProps>) => {
   return (
     <div className="flex flex-col min-h-screen">
       <Helmet>
-        <title>{title}</title>
+        <title>{loading ? "Loading…" : title}</title>
       </Helmet>
 
       {!hideNavbar && <NavigationBar />}
 
       <div className={twMerge(CONTENT_WIDTH, "mt-8 mb-12", className)}>
-        {!hideNavbar && <PageHeader title={title} parent={parent} actions={headerActions} />}
+        {!hideNavbar && (
+          <PageHeader title={title} parent={parent} actions={headerActions} loading={loading} />
+        )}
         {children}
       </div>
       <Box component="footer" sx={{ mt: "auto", borderTop: 1, borderColor: "divider" }}>

@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { alpha } from "@mui/material/styles";
+import { SxProps, Theme, alpha } from "@mui/material/styles";
 
 const CriteriaGroup: React.FC<{
   title: string;
@@ -68,6 +68,7 @@ type CriteriaPanelProps = {
   exclusionCriteria: string[];
   inclusionTestId?: string;
   exclusionTestId?: string;
+  sx?: SxProps<Theme>;
 };
 
 /** The project's inclusion and exclusion criteria, beside a list of papers. */
@@ -76,20 +77,24 @@ export const CriteriaPanel: React.FC<CriteriaPanelProps> = ({
   exclusionCriteria,
   inclusionTestId,
   exclusionTestId,
+  sx,
 }) => (
   <Paper
     variant="outlined"
     component="aside"
     aria-labelledby="criteria-panel-title"
-    sx={{
-      borderRadius: 2,
-      p: { xs: 2, md: 2.5 },
-      display: "flex",
-      flexDirection: "column",
-      gap: 2.5,
-      position: { lg: "sticky" },
-      top: 16,
-    }}
+    sx={[
+      {
+        borderRadius: 2,
+        p: { xs: 2, md: 2.5 },
+        display: "flex",
+        flexDirection: "column",
+        gap: 2.5,
+        position: { lg: "sticky" },
+        top: 16,
+      },
+      ...(Array.isArray(sx) ? sx : [sx]),
+    ]}
   >
     <Typography
       id="criteria-panel-title"

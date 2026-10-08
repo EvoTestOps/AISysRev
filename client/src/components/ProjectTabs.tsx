@@ -15,6 +15,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
   itemNamePlural,
 }) => {
   const paperCount = useTypedStoreState((state) => state.getPapersForProject(projectUuid).length);
+  // Known once fetched; a reload keeps showing the last count.
+  const papersKnown = useTypedStoreState((state) => state.papers[projectUuid] !== undefined);
   // undefined: never requested; true: loading; false: loaded.
   const papersLoading = useTypedStoreState((state) => state.loading.papers[projectUuid]);
   const fetchPapers = useTypedStoreActions((actions) => actions.fetchPapers);
@@ -37,7 +39,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({
         {
           label: `List of ${itemNamePlural}`,
           href: papersHref,
-          count: papersLoading === false ? paperCount : undefined,
+          count: papersKnown ? paperCount : undefined,
+          countLoading: !papersKnown && papersLoading !== false,
         },
       ]}
     />
