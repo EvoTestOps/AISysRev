@@ -10,29 +10,30 @@ export const useJobTaskDetail = (jobUuid: string, taskUuid: string) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setNotFound(false);
-    setError(null);
-    fetchJobTaskDetail(jobUuid, taskUuid)
-      .then((fetched) => {
-        if (!cancelled) setTask(fetched);
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return;
+    // Cancels the request when stepping to another task or leaving the page.
+    const controller = new AbortController();
+    const { signal } = controller;
+    const load = async () => {
+      setLoading(true);
+      setNotFound(false);
+      setError(null);
+      try {
+        const fetched = await fetchJobTaskDetail(jobUuid, taskUuid, signal);
+        if (!signal.aborted) setTask(fetched);
+      } catch (e: unknown) {
+        if (signal.aborted) return;
         if (e instanceof TypedStatusError && e.status === 404) {
           setNotFound(true);
         } else {
           console.error("Failed to fetch job task:", e);
           setError("Failed to load the result.");
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
     };
+    load();
+    return () => controller.abort();
   }, [jobUuid, taskUuid]);
 
   return { task, loading, notFound, error };

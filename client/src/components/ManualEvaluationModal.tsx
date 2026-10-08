@@ -59,9 +59,10 @@ type ModelResults = {
 };
 
 // TODO: Refactor this to use Redux
-const getModelResults = async (paperUuid: string): Promise<ModelResults> => {
+const getModelResults = async (paperUuid: string, signal: AbortSignal): Promise<ModelResults> => {
   const data = await api.get("/api/v1/jobtask", {
     query: { paper_uuid: paperUuid },
+    overrides: { signal },
   });
   const done = data.filter((entry) => entry.status !== JobTaskStatus.ERROR);
 
@@ -264,6 +265,7 @@ const EvaluationContent: React.FC<{
 }> = ({ paper, inclusionCriteria, exclusionCriteria, isGithubScreening }) => {
   // TODO: Refactor this to use redux
   const [modelResults, setModelResults] = useState<ModelResults | null>(null);
+  const [modelResultsError, setModelResultsError] = useState<string | null>(null);
   const modelSuggestions = modelResults?.suggestions;
   const criteriaRuns = Math.max(
     0,
@@ -271,13 +273,21 @@ const EvaluationContent: React.FC<{
   );
 
   useEffect(() => {
-    let cancelled = false;
-    getModelResults(paper.uuid).then((results) => {
-      if (!cancelled) setModelResults(results);
-    });
-    return () => {
-      cancelled = true;
+    // Cancels the request if the dialog closes before it answers.
+    const controller = new AbortController();
+    const { signal } = controller;
+    const load = async () => {
+      try {
+        const results = await getModelResults(paper.uuid, signal);
+        if (!signal.aborted) setModelResults(results);
+      } catch (e: unknown) {
+        if (signal.aborted) return;
+        console.error("Failed to fetch model results:", e);
+        setModelResultsError("Failed to load the model suggestions.");
+      }
     };
+    load();
+    return () => controller.abort();
   }, [paper.uuid]);
 
   const includeCount = modelSuggestions?.filter((s) => s.binary === "Include").length ?? 0;
@@ -343,7 +353,9 @@ const EvaluationContent: React.FC<{
         }
       >
         {modelSuggestions?.length === 0 && <AlertMessage message="No model suggestions." />}
-        {modelSuggestions === undefined ? (
+        {modelResultsError ? (
+          <AlertMessage message={modelResultsError} />
+        ) : modelSuggestions === undefined ? (
           <Box
             component="ul"
             aria-busy="true"
