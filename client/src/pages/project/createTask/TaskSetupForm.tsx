@@ -114,7 +114,7 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
   });
 
   const optionChips = form.isJevScreening
-    ? ["Title & abstract", "All criteria at once", "Zero-shot"]
+    ? ["Title+Abstract", "All criteria at once", "Zero-shot"]
     : [
         ...(isGithubScreening ? [] : [screeningModeLabel(form.screeningMode, false).value]),
         evaluationModeLabel(form.promptingStrategy).value,
