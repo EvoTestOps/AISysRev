@@ -268,7 +268,6 @@ export const ProjectPage = () => {
       )}
       {evaluation.isOpen && evaluation.paperUuid && (
         <ManualEvaluationModal
-          key={evaluation.paperUuid}
           currentTaskUuid={evaluation.currentTaskUuid}
           inclusionCriteria={project.criteria.inclusion_criteria}
           exclusionCriteria={project.criteria.exclusion_criteria}
