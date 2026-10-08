@@ -1,4 +1,5 @@
 import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 import { Link } from "wouter";
@@ -8,6 +9,8 @@ export type NavTab = {
   href: string;
   /** Shown after the label, e.g. how many papers the tab lists. */
   count?: number;
+  /** The count is still loading: a placeholder stands in for it. */
+  countLoading?: boolean;
 };
 
 type NavTabsProps = {
@@ -25,12 +28,16 @@ export const NavTabs: React.FC<NavTabsProps> = ({ tabs, active, ...rest }) => (
         key={tab.href}
         value={tab.href}
         label={
-          tab.count === undefined ? (
+          tab.count === undefined && !tab.countLoading ? (
             tab.label
           ) : (
             <span className="flex items-center gap-2">
               {tab.label}
-              <Chip label={tab.count} size="small" data-testid="nav-tab-count" />
+              {tab.count === undefined ? (
+                <Skeleton variant="rounded" width={32} height={24} sx={{ borderRadius: 4 }} />
+              ) : (
+                <Chip label={tab.count} size="small" data-testid="nav-tab-count" />
+              )}
             </span>
           )
         }
