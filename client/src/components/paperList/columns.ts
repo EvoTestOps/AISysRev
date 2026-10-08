@@ -4,6 +4,9 @@
  * instead of widening the page.
  */
 export const PAPER_LIST_COLUMNS = {
-  xs: "44px minmax(0, 1fr) 96px 40px",
-  md: "60px minmax(0, 1fr) 200px 40px",
+  xs: "44px minmax(0, 1fr) 56px 24px",
+  md: "64px minmax(0, 1fr) 176px 40px",
 };
+
+/** Horizontal padding of the list's header, rows and footer. */
+export const PAPER_LIST_GUTTER = { xs: 2, md: 3 };

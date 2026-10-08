@@ -1,20 +1,19 @@
 import { useMemo, useState } from "react";
 import { useParams } from "wouter";
-import { AlertMessage } from "../../components/AlertMessage";
-import { Card } from "../../components/Card";
-import { CriteriaList } from "../../components/CriteriaList";
+import Box from "@mui/material/Box";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
+import { CriteriaPanel } from "../../components/CriteriaPanel";
 import { Layout } from "../../components/Layout";
 import { PROJECTS_PARENT } from "../../components/PageHeader";
-import { PaginationBar } from "../../components/paperList/PaginationBar";
 import { paginate } from "../../components/paperList/pagination";
-import { PaperListHeader } from "../../components/paperList/PaperListHeader";
+import { PaperList } from "../../components/paperList/PaperList";
 import { ProjectTabs } from "../../components/ProjectTabs";
-import { H6 } from "../../components/Typography";
 import { getPaperSortFunction, SortOption } from "../../helpers/sort";
 import { JobTaskRead } from "../../services/api/client";
 import { ScreeningTarget } from "../../state/types";
 import { NotFoundPage } from "../NotFound";
-import { SegmentedButton } from "../project/createTask/controls";
 import { useJobTasks } from "./hooks/useJobTasks";
 import { useProjectJob } from "./hooks/useProjectJob";
 import { JobBreadcrumbs } from "./JobBreadcrumbs";
@@ -95,67 +94,77 @@ export const JobPage = () => {
           ]}
         />
         <JobSummaryCard job={job} runNumber={runNumber} itemName={itemName} />
-        <div className="grid grid-cols-4 gap-2 max-w-xl">
-          {FILTERS.map(({ value, label }) => (
-            <SegmentedButton
-              key={value}
-              testId={`job-task-filter-${value.toLowerCase()}`}
-              selected={filter === value}
-              onSelect={() => {
-                setFilter(value);
-                setPage(1);
-              }}
-            >
-              {label}
-            </SegmentedButton>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
-          <div className="flex flex-col gap-2 min-w-0">
-            <PaperListHeader
-              sortOption={sortOption}
-              onSortChange={setSortOption}
-              probabilityLabel="Probability of inclusion (this task)"
-            />
-            {error && <AlertMessage className="p-4" message={error} />}
-            <div className="flex flex-col gap-1">
-              {!loadingTasks &&
-                pageItems.map((task) => (
-                  <JobTaskRow
-                    key={task.uuid}
-                    task={task}
-                    taskHref={`${jobPath}/task/${task.uuid}`}
-                    isGithubScreening={isGithubScreening}
-                  />
-                ))}
-            </div>
-            {!loadingTasks && !error && visibleTasks.length === 0 && (
-              <AlertMessage
-                className="p-4"
-                data-testid="no-job-tasks-text"
-                message={`No ${itemNamePlural}.`}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 320px" },
+            alignItems: "start",
+            gap: 3,
+          }}
+        >
+          <PaperList
+            sortOption={sortOption}
+            onSortChange={setSortOption}
+            probabilityLabel="Probability of inclusion (this task)"
+            loading={loadingTasks}
+            error={error}
+            emptyMessage={`No ${itemNamePlural}.`}
+            emptyTestId="no-job-tasks-text"
+            pagination={{
+              page: currentPage,
+              pageCount,
+              itemCount: visibleTasks.length,
+              onPageChange: setPage,
+            }}
+            toolbar={
+              <>
+                <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }}>
+                  {visibleTasks.length === tasks.length
+                    ? `${tasks.length} ${itemNamePlural}`
+                    : `${visibleTasks.length} of ${tasks.length} ${itemNamePlural}`}
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  color="primary"
+                  aria-label={`Show ${itemNamePlural}`}
+                  value={filter}
+                  onChange={(_, value: TaskFilter | null) => {
+                    // Clicking the current filter again keeps it.
+                    if (value !== null) {
+                      setFilter(value);
+                      setPage(1);
+                    }
+                  }}
+                >
+                  {FILTERS.map(({ value, label }) => (
+                    <ToggleButton
+                      key={value}
+                      value={value}
+                      data-testid={`job-task-filter-${value.toLowerCase()}`}
+                      sx={{ px: 1.5, textTransform: "none" }}
+                    >
+                      {label}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </>
+            }
+          >
+            {pageItems.map((task) => (
+              <JobTaskRow
+                key={task.uuid}
+                task={task}
+                taskHref={`${jobPath}/task/${task.uuid}`}
+                isGithubScreening={isGithubScreening}
               />
-            )}
-            {!loadingTasks && (
-              <PaginationBar
-                currentPage={currentPage}
-                pageCount={pageCount}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="sticky top-2 h-16 flex items-center content-center p-4 bg-slate-800 text-white rounded-lg">
-              <H6>Inclusion and exclusion criteria</H6>
-            </div>
-            <Card className="sticky top-20">
-              <H6>Inclusion criteria</H6>
-              <CriteriaList criteria={project.criteria.inclusion_criteria || []} />
-              <H6>Exclusion criteria</H6>
-              <CriteriaList criteria={project.criteria.exclusion_criteria || []} />
-            </Card>
-          </div>
-        </div>
+            ))}
+          </PaperList>
+          <CriteriaPanel
+            inclusionCriteria={project.criteria.inclusion_criteria || []}
+            exclusionCriteria={project.criteria.exclusion_criteria || []}
+          />
+        </Box>
       </div>
     </Layout>
   );

@@ -1,14 +1,14 @@
 import Box from "@mui/material/Box";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import { SortOption } from "../../helpers/sort";
-import { PAPER_LIST_COLUMNS } from "./columns";
+import { PAPER_LIST_COLUMNS, PAPER_LIST_GUTTER } from "./columns";
 
 type SortColumn = {
-  label: string;
+  label: React.ReactNode;
   testId: string;
   ascending: SortOption;
   descending: SortOption;
-  align: "left" | "center";
+  align: "left" | "right";
 };
 
 type PaperListHeaderProps = {
@@ -39,11 +39,20 @@ export const PaperListHeader: React.FC<PaperListHeaderProps> = ({
       align: "left",
     },
     {
-      label: probabilityLabel,
+      label: (
+        <>
+          <Box component="span" sx={{ display: { xs: "none", md: "inline" } }}>
+            {probabilityLabel}
+          </Box>
+          <Box component="span" sx={{ display: { md: "none" } }} title={probabilityLabel}>
+            Incl.
+          </Box>
+        </>
+      ),
       testId: "sort-by-inclusion-probability",
       ascending: "INCLUDE_ASC",
       descending: "INCLUDE_DESC",
-      align: "center",
+      align: "right",
     },
   ];
   return (
@@ -51,21 +60,30 @@ export const PaperListHeader: React.FC<PaperListHeaderProps> = ({
       sx={{
         display: "grid",
         gridTemplateColumns: PAPER_LIST_COLUMNS,
+        columnGap: { xs: 1, md: 2 },
         alignItems: "center",
-        px: 2,
-        minHeight: 56,
-        borderRadius: 2,
-        bgcolor: "#1e293b",
-        color: "common.white",
+        px: PAPER_LIST_GUTTER,
+        minHeight: 48,
         position: "sticky",
-        top: 8,
+        top: 0,
         zIndex: 2,
+        bgcolor: "background.paper",
+        borderTop: 1,
+        borderBottom: 1,
+        borderColor: "divider",
       }}
     >
       {columns.map((column) => {
         const active = sortOption === column.ascending || sortOption === column.descending;
         return (
-          <Box key={column.testId} sx={{ minWidth: 0, textAlign: column.align }}>
+          <Box
+            key={column.testId}
+            sx={{
+              minWidth: 0,
+              display: "flex",
+              justifyContent: column.align === "right" ? "flex-end" : "flex-start",
+            }}
+          >
             <TableSortLabel
               active={active}
               direction={sortOption === column.descending ? "desc" : "asc"}
@@ -74,17 +92,16 @@ export const PaperListHeader: React.FC<PaperListHeaderProps> = ({
               }
               data-testid={column.testId}
               sx={{
-                fontWeight: 700,
-                color: "inherit",
+                typography: "subtitle2",
+                color: "text.secondary",
                 maxWidth: "100%",
-                "&:hover, &:focus, &.Mui-active": { color: "inherit" },
-                "& .MuiTableSortLabel-icon": { color: "inherit !important" },
+                // Numeric columns keep the arrow before the label, so the label lines up with the values.
+                flexDirection: column.align === "right" ? "row-reverse" : undefined,
+                "&.Mui-active": { color: "text.primary" },
               }}
             >
-              <Box
-                component="span"
-                sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-              >
+              {/* Long labels, such as the job page's, wrap rather than truncate. */}
+              <Box component="span" sx={{ lineHeight: 1.3, textAlign: column.align, py: 0.5 }}>
                 {column.label}
               </Box>
             </TableSortLabel>

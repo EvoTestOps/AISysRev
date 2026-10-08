@@ -1,10 +1,14 @@
+import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
+import Typography from "@mui/material/Typography";
+
 type PaperDetailsProps = {
   doi: string | null | undefined;
   abstract: string;
   pdfFileUuid?: string | null;
   pdfFilename?: string | null;
   isGithubScreening: boolean;
-  /** Shown between the links and the abstract, e.g. an upload button. */
+  /** Shown next to the links, e.g. an upload button. */
   actions?: React.ReactNode;
 };
 
@@ -24,37 +28,86 @@ export const PaperDetails: React.FC<PaperDetailsProps> = ({
   pdfFilename,
   isGithubScreening,
   actions,
-}) => (
-  <>
-    <div className="text-sm pt-2 pb-2">
-      {doi && (
-        <>
-          <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
-          <a
-            href={doiHref(doi, isGithubScreening)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline text-blue-600 hover:text-blue-800"
-          >
-            {doi}
-          </a>
-        </>
-      )}
-    </div>
-    {pdfFileUuid && pdfFilename && (
-      <div className="text-sm pt-2 pb-2">
-        <strong>Full text:</strong>{" "}
-        <a
-          href={`/api/v1/files/${pdfFileUuid}/download`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline text-blue-600 hover:text-blue-800"
+}) => {
+  const hasFullText = Boolean(pdfFileUuid && pdfFilename);
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {(doi || hasFullText || actions) && (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1.5,
+          }}
         >
-          {pdfFilename}
-        </a>
-      </div>
-    )}
-    {actions}
-    <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">{abstract}</div>
-  </>
-);
+          <Box
+            component="dl"
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "auto minmax(0, 1fr)",
+              columnGap: 1.5,
+              rowGap: 0.5,
+              m: 0,
+              minWidth: 0,
+              typography: "body2",
+              "& dt": { color: "text.secondary" },
+              "& dd": { m: 0, overflowWrap: "anywhere" },
+            }}
+          >
+            {doi && (
+              <>
+                <dt>{isGithubScreening ? "Repository" : "DOI"}</dt>
+                <dd>
+                  <Link
+                    href={doiHref(doi, isGithubScreening)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {doi}
+                  </Link>
+                </dd>
+              </>
+            )}
+            {hasFullText && (
+              <>
+                <dt>Full text</dt>
+                <dd>
+                  <Link
+                    href={`/api/v1/files/${pdfFileUuid}/download`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {pdfFilename}
+                  </Link>
+                </dd>
+              </>
+            )}
+          </Box>
+          {actions}
+        </Box>
+      )}
+      <Box component="section">
+        <Typography
+          variant="overline"
+          component="h4"
+          sx={{ display: "block", color: "text.secondary", lineHeight: 2 }}
+        >
+          {isGithubScreening ? "Description" : "Abstract"}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            lineHeight: 1.7,
+            whiteSpace: "pre-line",
+            maxWidth: "80ch",
+            color: abstract ? "text.primary" : "text.disabled",
+          }}
+        >
+          {abstract || "No abstract."}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
