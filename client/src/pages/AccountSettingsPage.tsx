@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import { useLocation } from "wouter";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
+import { riseIn } from "../components/motion";
 import { NavTabs } from "../components/NavTabs";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { api } from "../services/api";
@@ -21,9 +22,11 @@ type SectionProps = {
   /** Marks a section whose action can't be undone. */
   danger?: boolean;
   action: React.ReactNode;
+  /** Its place in the page's stagger of blocks rising in. */
+  index: number;
 };
 
-const Section: React.FC<SectionProps> = ({ title, description, danger = false, action }) => (
+const Section: React.FC<SectionProps> = ({ title, description, danger = false, action, index }) => (
   <Paper
     variant="outlined"
     component="section"
@@ -35,6 +38,7 @@ const Section: React.FC<SectionProps> = ({ title, description, danger = false, a
       alignItems: { xs: "stretch", sm: "center" },
       gap: 2,
       ...(danger && { borderColor: "error.light" }),
+      ...riseIn(index),
     }}
   >
     <Box sx={{ flex: 1 }}>
@@ -95,6 +99,7 @@ export const AccountSettingsPage = () => {
       <NavTabs aria-label="Settings sections" active="/settings/account" tabs={SETTINGS_TABS} />
       <Stack spacing={3} sx={{ maxWidth: 960 }}>
         <Section
+          index={0}
           title="Research data consent"
           description="I consent to my anonymized usage data being used for academic research about this tool. This is optional and will not affect your use of the application. You can change your consent at any time."
           action={
@@ -112,6 +117,7 @@ export const AccountSettingsPage = () => {
           }
         />
         <Section
+          index={1}
           danger
           title="Delete account"
           description="Permanently deletes your account and all your projects, papers and jobs. This cannot be undone."

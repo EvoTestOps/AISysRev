@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import { useLocation } from "wouter";
 import { ExpandableToast } from "../components/ExpandableToast";
 import { Layout } from "../components/Layout";
+import { riseIn } from "../components/motion";
 import { PROJECTS_PARENT } from "../components/PageHeader";
 import { create_project } from "../services/projectService";
 import { useTypedStoreActions } from "../state/store";
@@ -27,10 +28,12 @@ type FormSectionProps = {
   title: string;
   description?: React.ReactNode;
   children: React.ReactNode;
+  /** Its place in the form's stagger of blocks rising in. */
+  index: number;
 };
 
-const FormSection: React.FC<FormSectionProps> = ({ title, description, children }) => (
-  <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+const FormSection: React.FC<FormSectionProps> = ({ title, description, children, index }) => (
+  <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, ...riseIn(index) }}>
     <Stack spacing={2}>
       <Box>
         <Typography variant="h6" component="h2">
@@ -150,13 +153,14 @@ export const NewProject = () => {
         onSubmit={(e) => e.preventDefault()}
       >
         <FormSection
+          index={0}
           title="Project type"
           description="What the project screens. This can't be changed after the project is created."
         >
           <ProjectTypeSelector value={screeningTarget} onChange={setScreeningTarget} />
         </FormSection>
 
-        <FormSection title="Details">
+        <FormSection index={1} title="Details">
           <TextField
             label="Project title"
             required
@@ -173,6 +177,7 @@ export const NewProject = () => {
         </FormSection>
 
         <FormSection
+          index={2}
           title="Screening criteria"
           description={`Each criterion is evaluated for every ${itemName}. They are numbered in order (IC1, IC2… and EC1, EC2…).`}
         >
@@ -204,7 +209,7 @@ export const NewProject = () => {
         <Accordion
           variant="outlined"
           disableGutters
-          sx={{ borderRadius: 2, "&::before": { display: "none" } }}
+          sx={{ borderRadius: 2, "&::before": { display: "none" }, ...riseIn(3) }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 3 }}>
             <Box>
@@ -247,7 +252,7 @@ export const NewProject = () => {
           </AccordionDetails>
         </Accordion>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, ...riseIn(4) }}>
           <Button onClick={handleReset} data-testid="new-project-reset-button">
             Reset
           </Button>

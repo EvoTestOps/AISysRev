@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "wouter";
 import { Layout } from "../components/Layout";
+import { fadeIn, riseIn } from "../components/motion";
 import { fetchResultFromBackend } from "../services/resultService";
 import { Result, ScreeningTarget } from "../state/types";
 import * as React from "react";
@@ -15,6 +16,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useTypedStoreState } from "../state/store";
@@ -86,6 +88,30 @@ function Row({
   );
 }
 
+const SKELETON_TITLE_WIDTHS = ["78%", "62%", "86%", "70%", "55%", "74%"];
+
+/** Stands in for the result rows while they load. */
+const SkeletonRows = () => (
+  <>
+    {SKELETON_TITLE_WIDTHS.map((width, i) => (
+      <TableRow key={i} aria-hidden>
+        <TableCell>
+          <Skeleton variant="circular" width={28} height={28} />
+        </TableCell>
+        <TableCell>
+          <Skeleton width={width} />
+        </TableCell>
+        <TableCell>
+          <Skeleton width={120} />
+        </TableCell>
+        <TableCell>
+          <Skeleton width={64} />
+        </TableCell>
+      </TableRow>
+    ))}
+  </>
+);
+
 export const ResultPage = () => {
   const params = useParams<{ uuid: string }>();
   const { uuid } = params;
@@ -94,11 +120,17 @@ export const ResultPage = () => {
   const screeningTarget = project?.screening_target ?? ScreeningTarget.PAPER;
   const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
   const [result, setResult] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const res: Result[] = await fetchResultFromBackend(uuid);
-      setResult(res);
+      setLoading(true);
+      try {
+        const res: Result[] = await fetchResultFromBackend(uuid);
+        setResult(res);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [uuid]);
@@ -109,8 +141,8 @@ export const ResultPage = () => {
 
   return (
     <Layout title="Results">
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} sx={riseIn(0)}>
+        <Table aria-busy={loading}>
           <TableHead>
             <TableRow>
               <TableCell />
@@ -119,15 +151,20 @@ export const ResultPage = () => {
               <TableCell>Human Result</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {result.map((paper, i) => (
-              <Row
-                key={`${paper.title}_${i}`}
-                paper={paper}
-                modelColumns={modelColumns}
-                isGithubScreening={isGithubScreening}
-              />
-            ))}
+          {/* Remounts when the rows arrive, so they fade in. */}
+          <TableBody key={loading ? "loading" : "rows"} sx={loading ? undefined : fadeIn}>
+            {loading ? (
+              <SkeletonRows />
+            ) : (
+              result.map((paper, i) => (
+                <Row
+                  key={`${paper.title}_${i}`}
+                  paper={paper}
+                  modelColumns={modelColumns}
+                  isGithubScreening={isGithubScreening}
+                />
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>

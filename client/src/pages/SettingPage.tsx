@@ -17,6 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import * as z from "zod";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
+import { riseIn } from "../components/motion";
+import { SectionSkeleton, SkeletonGroup } from "../components/skeletons";
 import { NavTabs } from "../components/NavTabs";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { useConfig } from "../config/config";
@@ -282,6 +284,7 @@ type ProviderConfigParamsMap = z.infer<typeof ProviderConfigParamsMapSchema>;
 
 export const SettingsPage = () => {
   const [entries, setEntries] = useState<ProviderConfigParamsMap>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/v1/llm/provider_config_params")
@@ -289,7 +292,8 @@ export const SettingsPage = () => {
       .then((jsonData) => {
         setEntries(ProviderConfigParamsMapSchema.parse(jsonData));
       })
-      .catch();
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const providerKeys = useMemo(
@@ -304,10 +308,23 @@ export const SettingsPage = () => {
         <Typography variant="body2" color="textSecondary">
           API keys and options for the LLM providers. Keys are stored for your account only.
         </Typography>
-        {providerKeys.map((key) => {
+        {loading && (
+          <SkeletonGroup>
+            <Stack spacing={3}>
+              <SectionSkeleton rows={1} />
+              <SectionSkeleton rows={2} />
+            </Stack>
+          </SkeletonGroup>
+        )}
+        {providerKeys.map((key, i) => {
           const entry = entries[key];
           return (
-            <Paper key={key} variant="outlined" sx={{ borderRadius: 2 }} component="section">
+            <Paper
+              key={key}
+              variant="outlined"
+              sx={{ borderRadius: 2, ...riseIn(i) }}
+              component="section"
+            >
               <Box sx={{ px: 3, pt: 2.5, pb: 1 }}>
                 <Typography variant="h6" component="h2">
                   {entry.title}
