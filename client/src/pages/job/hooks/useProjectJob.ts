@@ -21,7 +21,8 @@ export const useProjectJob = (projectUuid: string, jobUuid: string) => {
   );
 
   return {
-    loading: loadingProjects || jobs === undefined,
+    // Only the first load: a reload of the projects keeps what is shown.
+    loading: (loadingProjects && !project) || jobs === undefined,
     project,
     job: jobs?.find((job) => job.uuid === jobUuid),
     /** Which run of its model in the project, e.g. 2 for Run #2. */

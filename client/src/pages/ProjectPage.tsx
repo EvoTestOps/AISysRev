@@ -3,13 +3,14 @@ import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Fade from "@mui/material/Fade";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import Skeleton from "react-loading-skeleton";
 import { useLocation, useParams, useRoute, useSearch } from "wouter";
 import { FewShotModal } from "../components/FewShotModal";
 import { Layout } from "../components/Layout";
+import { FadeIn } from "../components/FadeIn";
+import { riseIn } from "../components/motion";
+import { JobCardSkeleton, SkeletonGroup, TabsSkeleton } from "../components/skeletons";
 import { PROJECTS_PARENT } from "../components/PageHeader";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
@@ -36,6 +37,18 @@ import { useFulltextImport } from "./project/hooks/useFulltextImport";
 import { useJobActions } from "./project/hooks/useJobActions";
 import { useManualEvaluation } from "./project/hooks/useManualEvaluation";
 import { useProjectFiles } from "./project/hooks/useProjectFiles";
+
+/** Stands in for the tabs and task cards while the project's papers and tasks load. */
+const ProjectBodySkeleton = () => (
+  <SkeletonGroup>
+    <TabsSkeleton />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {[0, 1, 2].map((i) => (
+        <JobCardSkeleton key={i} />
+      ))}
+    </Box>
+  </SkeletonGroup>
+);
 
 /** The screening mode the task form passed to the few-shot modal in its URL. */
 const fewShotScreeningMode = (search: string): JobScreeningMode | undefined => {
@@ -112,10 +125,11 @@ export const ProjectPage = () => {
     }
   }, [projectUuid]);
 
-  if (loadingProjects) {
+  // Only the first load: a reload of the projects keeps the page as it is.
+  if (loadingProjects && !project) {
     return (
-      <Layout title="">
-        <Skeleton />
+      <Layout title="" parent={PROJECTS_PARENT} loading>
+        <ProjectBodySkeleton />
       </Layout>
     );
   }
@@ -126,10 +140,14 @@ export const ProjectPage = () => {
 
   const hasPapers = papers.length > 0;
 
-  // Hold back the page until the papers and tasks are known, so it doesn't
+  // Hold back the content until the papers and tasks are known, so it doesn't
   // flash one layout and then swap to another.
   if (!papersKnown || !(jobsLoaded || jobsFailed)) {
-    return <Layout title={project.name} parent={PROJECTS_PARENT} />;
+    return (
+      <Layout title={project.name} parent={PROJECTS_PARENT}>
+        <ProjectBodySkeleton />
+      </Layout>
+    );
   }
 
   if (!hasPapers) {
@@ -189,20 +207,23 @@ export const ProjectPage = () => {
         </>
       }
     >
-      <Fade in appear timeout={400}>
+      {/* The tabs stay put; the content below them fades in. */}
+      <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
+      <FadeIn>
         <div>
-          <ProjectTabs projectUuid={projectUuid} active="tasks" itemNamePlural={itemNamePlural} />
           {hasTasks ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {newestFirst(jobs).map((job) => (
-                <JobCard
-                  runNumber={runNumbers[job.uuid]}
-                  key={job.uuid}
-                  job={job}
-                  itemName={itemName}
-                  onCancel={jobActions.requestCancel}
-                  onDelete={jobActions.requestDelete}
-                />
+              {newestFirst(jobs).map((job, i) => (
+                // Cards further down the page join the last ones' stagger.
+                <Box key={job.uuid} sx={riseIn(Math.min(i, 6))}>
+                  <JobCard
+                    runNumber={runNumbers[job.uuid]}
+                    job={job}
+                    itemName={itemName}
+                    onCancel={jobActions.requestCancel}
+                    onDelete={jobActions.requestDelete}
+                  />
+                </Box>
               ))}
             </Box>
           ) : (
@@ -215,7 +236,7 @@ export const ProjectPage = () => {
             />
           )}
         </div>
-      </Fade>
+      </FadeIn>
 
       {hasTasks && (
         <Box

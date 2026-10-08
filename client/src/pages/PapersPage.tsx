@@ -1,10 +1,14 @@
 import Box from "@mui/material/Box";
+import Skeleton from "@mui/material/Skeleton";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import Typography from "@mui/material/Typography";
 import { useLocation, useParams } from "wouter";
 import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
+import { FadeIn } from "../components/FadeIn";
+import { riseIn } from "../components/motion";
+import { CriteriaPanelSkeleton, SkeletonGroup, TabsSkeleton } from "../components/skeletons";
 import { PROJECTS_PARENT } from "../components/PageHeader";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { ProjectTabs } from "../components/ProjectTabs";
@@ -12,9 +16,16 @@ import { NotFoundPage } from "./NotFound";
 import { CriteriaPanel } from "../components/CriteriaPanel";
 import { PaperCard } from "../components/PaperCard";
 import { getPaperSortFunction, SortOption } from "../helpers/sort";
-import { PaperList } from "../components/paperList/PaperList";
+import { PaperList, PaperListSkeleton } from "../components/paperList/PaperList";
 import { paginate } from "../components/paperList/pagination";
 import { ScreeningTarget } from "../state/types";
+
+const LIST_AND_CRITERIA = {
+  display: "grid",
+  gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 320px" },
+  alignItems: "start",
+  gap: 3,
+};
 
 export const PapersPage = () => {
   const params = useParams<{ projectUuid: string; page?: string }>();
@@ -79,8 +90,19 @@ export const PapersPage = () => {
     }
   }, [fetchPapers, project, projectUuid]);
 
-  if (loadingProjects) {
-    return null;
+  // Only the first load: a reload of the projects keeps the page as it is.
+  if (loadingProjects && !project) {
+    return (
+      <Layout title="" parent={PROJECTS_PARENT} loading>
+        <SkeletonGroup>
+          <TabsSkeleton />
+          <Box sx={LIST_AND_CRITERIA}>
+            <PaperListSkeleton />
+            <CriteriaPanelSkeleton />
+          </Box>
+        </SkeletonGroup>
+      </Layout>
+    );
   }
   if (project === undefined) {
     return <NotFoundPage />;
@@ -91,15 +113,9 @@ export const PapersPage = () => {
   return (
     <Layout title={project.name} parent={PROJECTS_PARENT}>
       <ProjectTabs projectUuid={projectUuid} active="papers" itemNamePlural={itemNamePlural} />
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "minmax(0, 1fr)", lg: "minmax(0, 1fr) 320px" },
-          alignItems: "start",
-          gap: 3,
-        }}
-      >
+      <FadeIn sx={LIST_AND_CRITERIA}>
         <PaperList
+          sx={riseIn(0)}
           sortOption={sortOption}
           onSortChange={setSortOption}
           loading={loadingPapers}
@@ -118,9 +134,13 @@ export const PapersPage = () => {
           toolbar={
             <>
               <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600 }}>
-                {shown === papers.length
-                  ? `${papers.length} ${itemNamePlural}`
-                  : `${shown} of ${papers.length} ${itemNamePlural}`}
+                {loadingPapers && papers.length === 0 ? (
+                  <Skeleton width={110} />
+                ) : shown === papers.length ? (
+                  `${papers.length} ${itemNamePlural}`
+                ) : (
+                  `${shown} of ${papers.length} ${itemNamePlural}`
+                )}
               </Typography>
               <FormControlLabel
                 data-testid="label-filter_out_evaluated"
@@ -160,8 +180,9 @@ export const PapersPage = () => {
           exclusionCriteria={project.criteria.exclusion_criteria || []}
           inclusionTestId="inclusion-criteria"
           exclusionTestId="exclusion-criteria"
+          sx={riseIn(1)}
         />
-      </Box>
+      </FadeIn>
     </Layout>
   );
 };
