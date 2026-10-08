@@ -12,7 +12,6 @@ import { JobTaskPage } from "./pages/job/JobTaskPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
-import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
