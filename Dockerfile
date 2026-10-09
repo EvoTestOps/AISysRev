@@ -25,16 +25,16 @@ COPY client/src ./src
 
 RUN npm run build
 
-FROM caddy:2.11.4-alpine@sha256:6aeddd44c3078b0f9a35206472a11420648a79c184603ef95957d0a20044cb2b AS client
+FROM caddy:2.11.6-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9 AS client
 RUN apk add --no-cache libcap && setcap -r /usr/bin/caddy && apk del libcap
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
 RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
-FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.24 AS uv
 
-FROM python:3.14.7-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS python-base
+FROM python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72 AS python-base
 
 FROM python-base AS server-builder
 ENV UV_LINK_MODE=copy
