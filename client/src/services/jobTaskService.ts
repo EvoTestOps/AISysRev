@@ -1,5 +1,5 @@
 import { api } from "../services/api";
-import { TypedStatusError } from "../services/api/client";
+import { JobTaskDetail, JobTaskRead, TypedStatusError } from "../services/api/client";
 import { JobTaskHumanResult } from "../state/types";
 
 export const fetchPapersFromBackend = async (projectUuid: string) => {
@@ -13,31 +13,35 @@ export const fetchPapersFromBackend = async (projectUuid: string) => {
   }
 };
 
-export const fetchJobTasksFromBackend = async (jobUuid: string, jobId?: number) => {
+/** A job's tasks (one per paper), ordered by paper id. Empty when it has none. */
+export const fetchJobTasks = async (
+  jobUuid: string,
+  signal?: AbortSignal,
+): Promise<JobTaskRead[]> => {
   try {
-    const res = await api.get("/api/v1/jobtask/{uuid}", { path: { uuid: jobUuid } });
-    let id = jobId;
-    if (!id && res.length > 0) {
-      id = res[0].job_id;
+    return await api.get("/api/v1/jobtask/{uuid}", {
+      path: { uuid: jobUuid },
+      overrides: { signal },
+    });
+  } catch (error: unknown) {
+    // The endpoint answers 404 for a job without tasks.
+    if (error instanceof TypedStatusError && error.status === 404) {
+      return [];
     }
-    return res.map((task) => ({
-      ...task,
-      job_uuid: jobUuid,
-    }));
-  } catch (error) {
-    console.error("Error fetching job tasks:", error);
     throw error;
   }
 };
 
-export const fetchJobTaskByUuid = async (jobTaskUuid: string) => {
-  try {
-    return await api.get("/api/v1/jobtask/{uuid}", { path: { uuid: jobTaskUuid } });
-  } catch (error) {
-    console.error("Error fetching job task by UUID:", error);
-    throw error;
-  }
-};
+/** One task of a job, with its result, error and the prompts sent. */
+export const fetchJobTaskDetail = (
+  jobUuid: string,
+  taskUuid: string,
+  signal?: AbortSignal,
+): Promise<JobTaskDetail> =>
+  api.get("/api/v1/job/{job_uuid}/task/{task_uuid}", {
+    path: { job_uuid: jobUuid, task_uuid: taskUuid },
+    overrides: { signal },
+  });
 
 export const addJobTaskResult = async (jobTaskUuid: string, result: JobTaskHumanResult) => {
   try {

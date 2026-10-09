@@ -4,7 +4,11 @@ from typing import Any, ClassVar, Generic, List, Literal, Optional, Type, TypeVa
 from httpx2 import AsyncClient
 from pydantic import BaseModel, Field
 
-from src.schemas.llm import ProviderRuntimeParameters
+from src.schemas.llm import (
+    JevStructuredResponse,
+    ProviderRuntimeParameters,
+    StructuredResponse,
+)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -61,6 +65,15 @@ class LLMProvider(Generic[P, M], ABC):
     # Model-specific
     model_parameters_schema: ClassVar[type[M]]  # type: ignore
 
+    # Response schema requested for zero-shot / few-shot screening.
+    structured_response_schema: ClassVar[
+        type[StructuredResponse | JevStructuredResponse]
+    ] = StructuredResponse
+    # Whether the PER_CRITERIA screening type (one call per criterion) can be used.
+    supports_per_criteria: ClassVar[bool] = True
+    # Whether the runtime system prompt is sent to the model.
+    uses_system_prompt: ClassVar[bool] = True
+
     # Config-specific - e.g. what needs to be configured in the UI.
     config_parameters: ClassVar[list[ConfigParameter]]
     api_key_config_parameter: ClassVar[ConfigParameter | None] = None
@@ -111,6 +124,19 @@ class LLMProvider(Generic[P, M], ABC):
         raise RuntimeError(f"{self.provider_name} does not support embeddings")
 
     @classmethod
+    def global_config_parameters(cls) -> list[ConfigParameter]:
+        """
+        The user's global (non-secret) config_parameters passed to
+        apply_global_config_overrides. Defaults to this provider's own;
+        a provider sharing another provider's settings can return those.
+        """
+        return [
+            param
+            for param in cls.config_parameters
+            if param is not cls.api_key_config_parameter and not param.secret
+        ]
+
+    @classmethod
     def apply_global_config_overrides(
         cls, provider_parameters: dict[str, Any], global_config: dict[str, str]
     ) -> dict[str, Any]:
@@ -129,3 +155,7 @@ class Provider(BaseModel):
     provider_parameters_json_schema: Optional[dict] = None
     model_parameters_json_schema: dict
     config_parameters: list[ConfigParameter]
+    # The setting holding the provider's API key; may belong to another
+    # provider (Jev uses OpenRouter's key).
+    api_key_config_parameter: Optional[ConfigParameter] = None
+    supports_per_criteria: bool = True

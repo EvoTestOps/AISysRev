@@ -158,7 +158,8 @@ export type Result = {
 
 export type TokenEstimation = {
   estimated_input_tokens: number;
-  estimated_output_tokens: number;
+  // null when output tokens are free (Jev).
+  estimated_output_tokens: number | null;
 };
 
 export type CriterionAgreementStats = {
@@ -195,6 +196,7 @@ export const ProviderSchema = z.object({
   model_parameters_json_schema: z.object({}).catchall(z.any()),
   provider_parameters_json_schema: z.object({}).catchall(z.any()).nullable(),
   config_parameters: z.array(ConfigParameterSchema),
+  api_key_config_parameter: ConfigParameterSchema.nullable().optional(),
 });
 
 export const ProviderResponse = z.array(ProviderSchema);

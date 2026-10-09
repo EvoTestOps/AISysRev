@@ -2,6 +2,7 @@ import logging
 from uuid import UUID
 
 from src.celery.tasks import cancel_task
+from src.core.llm.providers import llm_providers
 from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
@@ -14,7 +15,6 @@ from src.schemas.job import (
     JobStatus,
     PerCriteriaPromptingConfig,
 )
-from src.schemas.jobtask import JobTaskRead
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
 
 logger = logging.getLogger(__name__)
@@ -97,29 +97,6 @@ class JobService:
             updated_at=job.updated_at,
         )
 
-    async def fetch_job_tasks(self, job_uuid: UUID, owner_uuid: UUID):
-        job_tasks = await self.jobtask_service.jobtask_crud.fetch_job_tasks_by_job_uuid(
-            job_uuid, owner_uuid
-        )
-
-        return [
-            JobTaskRead.model_validate(
-                {
-                    "uuid": task.uuid,
-                    "job_id": task.id,
-                    "paper_uuid": task.paper_uuid,
-                    "doi": task.doi,
-                    "title": task.title,
-                    "abstract": task.abstract,
-                    "status": task.status,
-                    "result": task.result,
-                    "human_result": task.human_result,
-                    "status_metadata": task.status_metadata,
-                }
-            )
-            for task in job_tasks
-        ]
-
     async def create(self, job_data: JobCreate):
         logger.info("Creating new job", job_data)
 
@@ -128,6 +105,23 @@ class JobService:
             JobScreeningMode.AUTOMATIC,
         ) and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
             raise ValueError("PER_CRITERIA prompting with PDFs not possible yet")
+
+        provider = next(
+            (
+                p
+                for p in llm_providers
+                if p.provider_name == job_data.llm_config.provider_name
+            ),
+            None,
+        )
+        if (
+            provider is not None
+            and not provider.supports_per_criteria
+            and isinstance(job_data.prompting_config, PerCriteriaPromptingConfig)
+        ):
+            raise ValueError(
+                f"PER_CRITERIA prompting is not supported by {provider.provider_title}"
+            )
 
         new_job = await self.job_crud.create_job(job_data)
         await self.jobtask_service.bulk_create(

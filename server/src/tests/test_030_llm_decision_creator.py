@@ -6,6 +6,7 @@ import pytest
 
 from src.core.prompts import (
     additional_instructions,
+    default_system_prompt,
     few_shot_task_prompt,
     github_additional_instructions,
     github_few_shot_task_prompt,
@@ -23,7 +24,12 @@ from src.schemas.job import (
     PerCriteriaPromptingConfig,
     ZeroShotPromptingConfig,
 )
-from src.schemas.llm import CriterionResponse, StructuredResponse
+from src.schemas.llm import (
+    CriterionResponse,
+    JevStructuredResponse,
+    PromptRecord,
+    StructuredResponse,
+)
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import ScreeningTarget
 from src.schemas.setting import SettingRead
@@ -81,7 +87,9 @@ def _llm_service(needs_api_key: bool = False, stored_key: str | None = None):
     provider = SimpleNamespace(
         api_key_config_parameter=(
             SimpleNamespace(key=API_KEY_NAME) if needs_api_key else None
-        )
+        ),
+        structured_response_schema=StructuredResponse,
+        uses_system_prompt=True,
     )
     service = MagicMock()
     service.get_llm.return_value = provider
@@ -195,6 +203,17 @@ async def test_zero_shot_sends_the_paper_prompt_to_the_llm():
     )
     for part in ("The title", "The abstract", "IC1: Is empirical", "EC1: Is a survey"):
         assert part in kwargs["user_prompt"]
+
+
+@pytest.mark.asyncio
+async def test_the_providers_structured_response_schema_is_requested():
+    service, provider = _llm_service()
+    provider.structured_response_schema = JevStructuredResponse
+
+    await _structured(service, _job_data())
+
+    _, kwargs = service.call_llm.await_args
+    assert kwargs["response_schema"] is JevStructuredResponse
 
 
 @pytest.mark.asyncio
@@ -504,3 +523,96 @@ async def test_single_criterion_with_a_missing_api_key_fails_before_the_llm_call
         await _single(service, _job_data(PerCriteriaPromptingConfig()))
 
     service.call_llm.assert_not_awaited()
+
+
+# --- prompt recording -------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_the_prompt_sent_is_recorded_with_the_system_prompt():
+    service, _ = _llm_service()
+    recorded: list[PromptRecord] = []
+
+    await get_structured_response(
+        service,
+        MagicMock(),
+        MagicMock(),
+        _job_task(),
+        _job_data(),
+        CRITERIA_DICT,
+        MagicMock(),
+        on_prompt=recorded.append,
+    )
+
+    _, kwargs = service.call_llm.await_args
+    assert recorded == [
+        PromptRecord(
+            criterion=None,
+            system_prompt=default_system_prompt,
+            user_prompt=kwargs["user_prompt"],
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_the_prompt_is_recorded_even_when_the_llm_call_fails():
+    service, _ = _llm_service()
+    service.call_llm = AsyncMock(side_effect=RuntimeError("provider down"))
+    recorded: list[PromptRecord] = []
+
+    with pytest.raises(RuntimeError):
+        await get_structured_response(
+            service,
+            MagicMock(),
+            MagicMock(),
+            _job_task(),
+            _job_data(),
+            CRITERIA_DICT,
+            MagicMock(),
+            on_prompt=recorded.append,
+        )
+
+    assert len(recorded) == 1
+    assert "The title" in recorded[0].user_prompt
+
+
+@pytest.mark.asyncio
+async def test_no_system_prompt_is_recorded_for_a_provider_that_sends_none():
+    service, provider = _llm_service()
+    provider.uses_system_prompt = False
+    recorded: list[PromptRecord] = []
+
+    await get_structured_response(
+        service,
+        MagicMock(),
+        MagicMock(),
+        _job_task(),
+        _job_data(),
+        CRITERIA_DICT,
+        MagicMock(),
+        on_prompt=recorded.append,
+    )
+
+    assert recorded[0].system_prompt is None
+
+
+@pytest.mark.asyncio
+async def test_a_single_criterion_prompt_is_recorded_with_its_criterion_id():
+    service, _ = _llm_service()
+    recorded: list[PromptRecord] = []
+
+    await get_single_criterion_response(
+        service,
+        _job_data(PerCriteriaPromptingConfig()),
+        "The title",
+        "The abstract",
+        "Is empirical",
+        MagicMock(),
+        criterion_id="IC1",
+        on_prompt=recorded.append,
+    )
+
+    assert [r.criterion for r in recorded] == ["IC1"]
+    assert recorded[0].user_prompt == per_criteria_task_prompt.format(
+        "The title", "The abstract", "Is empirical"
+    )

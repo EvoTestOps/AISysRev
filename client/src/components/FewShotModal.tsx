@@ -1,167 +1,281 @@
-import { Dialog, DialogPanel, Description } from "@headlessui/react";
-import { ArrowLeft, ArrowRight, CircleX, Sparkles, Square, SquareCheckBig } from "lucide-react";
-import { H3, H4, H6 } from "./Typography";
-import { Button } from "./Button";
-import { useTypedStoreState } from "../state/store";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CloseIcon from "@mui/icons-material/Close";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import ListSubheader from "@mui/material/ListSubheader";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+import Step from "@mui/material/Step";
+import StepButton from "@mui/material/StepButton";
+import Stepper from "@mui/material/Stepper";
+import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import { useParams } from "wouter";
+import { ITEM_NAMES } from "../helpers/screeningTarget";
+import { screeningModeLabel } from "../pages/project/jobLabels";
+import { PaperReadWithAvgProbability } from "../services/api/client";
+import { createJob } from "../services/jobService";
+import { useTypedStoreState } from "../state/store";
 import {
   createFewShotPromptingConfig,
-  JobTaskHumanResult,
   JobScreeningMode,
+  JobTaskHumanResult,
   LlmConfig,
+  ScreeningTarget,
 } from "../state/types";
-import { twMerge } from "tailwind-merge";
-import classNames from "classnames";
-import { useCallback, useState } from "react";
-import { AlertMessage } from "./AlertMessage";
-import { createJob } from "../services/jobService";
-import { Hr } from "./Hr";
-import { ScreeningTarget } from "../state/types";
-import { PaperReadWithAvgProbability } from "../services/api/client";
 
 type FewShotModalProps = {
   onClose: () => void;
   screeningTarget: ScreeningTarget;
-  llmConfig: LlmConfig;
+  /** The task form's provider and model, or null while none is chosen. */
+  llmConfig: LlmConfig | null;
+  /** The form is still restoring its provider and model, e.g. after a refresh. */
+  llmConfigLoading: boolean;
   screeningMode: JobScreeningMode;
 };
 
-type SeedPaperProps = {
-  paper: PaperReadWithAvgProbability;
-  selected: boolean;
-  disabled?: boolean;
-  onTitleClick?: (paperUuid: string) => void;
-} & React.HTMLAttributes<HTMLDivElement>;
+const STEPS = ["Inclusion examples", "Exclusion examples", "Review"] as const;
 
-const SeedPaper: React.FC<SeedPaperProps> = ({
-  paper,
-  selected,
-  disabled = false,
-  onTitleClick,
-  ...rest
-}) => (
-  <div className="grid grid-cols-[1fr_80px] gap-2" {...rest}>
-    <div
-      className={twMerge(
-        classNames(
-          "p-2 gap-2 rounded-md hover:cursor-pointer grid grid-cols-[20px_1fr] items-center",
-          {
-            "bg-blue-700 hover:bg-blue-600 text-white": selected,
-            "hover:bg-gray-200 odd:bg-gray-100": !selected,
-            "opacity-20 hover:cursor-not-allowed": disabled,
-          },
-        ),
-      )}
-      onClick={() => {
-        if (onTitleClick && !disabled) {
-          onTitleClick(paper.uuid);
+/** Lowest probability first; papers no model has scored yet go to the top. */
+const byProbability = (a: PaperReadWithAvgProbability, b: PaperReadWithAvgProbability) =>
+  (a.avg_probability_decision ?? -1) - (b.avg_probability_decision ?? -1);
+
+const formatScore = (probability: number | null | undefined) =>
+  probability != null ? `${Math.round(probability * 100)} %` : "Not screened";
+
+const toggle = (list: string[], uuid: string) =>
+  list.includes(uuid) ? list.filter((u) => u !== uuid) : [...list, uuid];
+
+/** Papers the user labelled one way, as a checklist to pick seed examples from. */
+const SeedList: React.FC<{
+  papers: PaperReadWithAvgProbability[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  label: string;
+  emptyMessage: string;
+  testId: string;
+}> = ({ papers, selected, onChange, label, emptyMessage, testId }) => {
+  if (papers.length === 0) {
+    return (
+      <Alert
+        severity="info"
+        variant="outlined"
+        sx={{ borderRadius: 2 }}
+        data-testid={`${testId}-empty`}
+      >
+        {emptyMessage}
+      </Alert>
+    );
+  }
+  const allSelected = selected.length === papers.length;
+  return (
+    <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }} data-testid={testId}>
+      <List
+        dense
+        disablePadding
+        sx={{ maxHeight: { xs: "none", sm: "50vh" }, overflowY: "auto" }}
+        subheader={
+          <ListSubheader
+            disableGutters
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              pr: 2,
+              borderBottom: 1,
+              borderColor: "divider",
+              lineHeight: "40px",
+            }}
+          >
+            <Checkbox
+              edge="start"
+              size="small"
+              checked={allSelected}
+              indeterminate={selected.length > 0 && !allSelected}
+              onChange={() => onChange(allSelected ? [] : papers.map((p) => p.uuid))}
+              data-testid={`${testId}-select-all`}
+              slotProps={{ input: { "aria-label": `Select all ${label}` } }}
+              sx={{ ml: 1.5, mr: 1 }}
+            />
+            <Box component="span" sx={{ flex: 1 }}>
+              {selected.length} of {papers.length} selected
+            </Box>
+            <span>Probability (include)</span>
+          </ListSubheader>
         }
-      }}
-    >
-      <span>
-        {!selected && <Square size={18} />}
-        {selected && <SquareCheckBig size={18} />}
-      </span>
-      <span className="select-none font-bold">{paper.title}</span>
-    </div>
-    <div
-      className={classNames(
-        "rounded-md bg-gray-100 text-xs px-2 py-1 flex items-center content-center justify-center p-2 select-none",
-        {
-          "text-gray-600": paper.avg_probability_decision === null,
-        },
-      )}
-      key={`${paper.uuid}_score`}
-    >
-      {paper.avg_probability_decision?.toFixed(3) || "Pending"}
-    </div>
-  </div>
+      >
+        {papers.map((paper) => {
+          const checked = selected.includes(paper.uuid);
+          return (
+            <ListItem key={paper.uuid} disablePadding divider>
+              <ListItemButton
+                onClick={() => onChange(toggle(selected, paper.uuid))}
+                data-testid={`few-shot-seed-${paper.uuid}`}
+                selected={checked}
+                sx={{ gap: 2 }}
+              >
+                <ListItemIcon sx={{ minWidth: 0 }}>
+                  <Checkbox
+                    edge="start"
+                    size="small"
+                    checked={checked}
+                    tabIndex={-1}
+                    disableRipple
+                    slotProps={{ input: { "aria-labelledby": `seed-${paper.uuid}` } }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  id={`seed-${paper.uuid}`}
+                  primary={paper.title}
+                  slotProps={{ primary: { variant: "body2" } }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    flexShrink: 0,
+                    textAlign: "right",
+                    color:
+                      paper.avg_probability_decision != null ? "text.primary" : "text.disabled",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {formatScore(paper.avg_probability_decision)}
+                </Typography>
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+    </Paper>
+  );
+};
+
+/** The chosen seed papers of one kind, for the review step. */
+const SeedSummary: React.FC<{
+  title: string;
+  papers: PaperReadWithAvgProbability[];
+  emptyMessage: string;
+}> = ({ title, papers, emptyMessage }) => (
+  <Box>
+    <Typography variant="subtitle2" component="h3" sx={{ mb: 1 }}>
+      {title} ({papers.length})
+    </Typography>
+    {papers.length === 0 ? (
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
+        {emptyMessage}
+      </Typography>
+    ) : (
+      <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+        <List dense disablePadding>
+          {papers.map((paper, i) => (
+            <ListItem key={paper.uuid} divider={i < papers.length - 1}>
+              <ListItemText
+                primary={paper.title}
+                slotProps={{ primary: { variant: "body2" } }}
+                sx={{ pr: 2 }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}
+              >
+                {formatScore(paper.avg_probability_decision)}
+              </Typography>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    )}
+  </Box>
 );
 
+/** Picks the labelled papers a few-shot task shows the model as examples, then starts it. */
 export const FewShotModal: React.FC<FewShotModalProps> = ({
   onClose,
   screeningTarget,
   llmConfig,
+  llmConfigLoading,
   screeningMode,
 }) => {
-  const [currentStep, setCurrentStep] = useState<"INCLUSION_SEED" | "EXCLUSION_SEED" | "OVERVIEW">(
-    "INCLUSION_SEED",
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const { projectUuid } = useParams<{ projectUuid: string }>();
+  const project = useTypedStoreState((state) => state.getProjectByUuid)(projectUuid);
+  const papers = useTypedStoreState((state) => state.getPapersForProject)(projectUuid);
+
+  const itemNamePlural = ITEM_NAMES[screeningTarget].plural;
+
+  const included = useMemo(
+    () => papers.filter((p) => p.human_result === JobTaskHumanResult.INCLUDE).sort(byProbability),
+    [papers],
   );
-  const params = useParams<{ projectUuid: string }>();
-  const { projectUuid } = params;
-  const getPapersForProject = useTypedStoreState((state) => state.getPapersForProject);
-  const projectByUuid = useTypedStoreState((state) => state.getProjectByUuid);
-  const project = projectByUuid(projectUuid);
+  const excluded = useMemo(
+    () => papers.filter((p) => p.human_result === JobTaskHumanResult.EXCLUDE).sort(byProbability),
+    [papers],
+  );
 
-  const incSeedPapers = project?.preferences?.few_shot?.inc_seed_papers || [];
-  const excSeedPapers = project?.preferences?.few_shot?.exc_seed_papers || [];
-
-  const papers = getPapersForProject(projectUuid);
-  // Default to true
+  // Start from the remembered selection, minus papers whose label has since changed.
+  const [selectedInclusionSeeds, setSelectedInclusionSeeds] = useState<string[]>(() =>
+    (project?.preferences?.few_shot?.inc_seed_papers ?? []).filter((uuid) =>
+      included.some((p) => p.uuid === uuid),
+    ),
+  );
+  const [selectedExclusionSeeds, setSelectedExclusionSeeds] = useState<string[]>(() =>
+    (project?.preferences?.few_shot?.exc_seed_papers ?? []).filter((uuid) =>
+      excluded.some((p) => p.uuid === uuid),
+    ),
+  );
   const [rememberSelection, setRememberSelection] = useState(true);
+  const [activeStep, setActiveStep] = useState(0);
+  const [starting, setStarting] = useState(false);
 
-  const isGithubScreening = screeningTarget === ScreeningTarget.GITHUB_REPOSITORY;
+  const hasSeeds = selectedInclusionSeeds.length + selectedExclusionSeeds.length > 0;
+  const isLastStep = activeStep === STEPS.length - 1;
 
-  const itemName = isGithubScreening ? "Repository" : "Title";
-
-  const itemNamePlural = isGithubScreening ? "repositories" : "papers";
-
-  const inclusionSeeds = [...papers].filter(
-    (paper) => paper.human_result === JobTaskHumanResult.INCLUDE,
-  );
-  const sortedInclusionSeeds = [...inclusionSeeds].sort((a, b) => {
-    // Hack
-    const aVal = a.avg_probability_decision ?? -100_000;
-    const bVal = b.avg_probability_decision ?? -100_000;
-    return aVal - bVal;
-  });
-
-  const [selectedInclusionSeeds, setSelectedInclusionSeeds] =
-    useState<Array<string>>(incSeedPapers);
-  const [selectedExclusionSeeds, setSelectedExclusionSeeds] =
-    useState<Array<string>>(excSeedPapers);
-  const exclusionSeeds = [...papers].filter(
-    (paper) => paper.human_result === JobTaskHumanResult.EXCLUDE,
-  );
-  const sortedExclusionSeeds = [...exclusionSeeds].sort((a, b) => {
-    // Hack
-    const aVal = a.avg_probability_decision ?? -100_000;
-    const bVal = b.avg_probability_decision ?? -100_000;
-    return aVal - bVal;
-  });
-
-  const getPaperByUuid = useTypedStoreState((state) => state.getPaperByUuid);
-
-  const createFewShotJob = useCallback(async () => {
-    const promptingConfig = createFewShotPromptingConfig(
-      selectedInclusionSeeds,
-      selectedExclusionSeeds,
-      rememberSelection,
-      screeningTarget,
-    );
-
+  const startFewShotJob = useCallback(async () => {
+    if (!llmConfig) return;
+    setStarting(true);
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig, screeningMode);
-      // const createdJob: CreatedJob = {
-      //   uuid: res.uuid,
-      //   project_uuid: res.project_uuid,
-      //   llm_config: res.llm_config,
-      //   prompting_config: res.prompting_config,
-      //   created_at: res.created_at,
-      //   updated_at: res.updated_at,
-      // };
+      await createJob(
+        projectUuid,
+        llmConfig,
+        createFewShotPromptingConfig(
+          selectedInclusionSeeds,
+          selectedExclusionSeeds,
+          rememberSelection,
+          screeningTarget,
+        ),
+        screeningMode,
+      );
       onClose();
-      // console.log(createdJob);
     } catch (e) {
       console.error("Error creating job:", e);
+      toast.error("Error creating the few-shot task.");
+      setStarting(false);
     }
   }, [
+    llmConfig,
+    projectUuid,
     selectedInclusionSeeds,
     selectedExclusionSeeds,
     rememberSelection,
-    projectUuid,
     screeningTarget,
-    llmConfig,
     screeningMode,
     onClose,
   ]);
@@ -170,282 +284,195 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     return null;
   }
 
+  const pick = (uuids: string[], from: PaperReadWithAvgProbability[]) =>
+    from.filter((p) => uuids.includes(p.uuid));
+
   return (
     <Dialog
-      open={true}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      open
       onClose={onClose}
+      fullScreen={fullScreen}
+      fullWidth
+      maxWidth="md"
+      aria-labelledby="few-shot-dialog-title"
+      aria-describedby="few-shot-dialog-description"
+      data-testid="few-shot-dialog"
+      slotProps={{ paper: { sx: { borderRadius: fullScreen ? 0 : 3 } } }}
     >
-      <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
-      <DialogPanel className="relative bg-white p-4 shadow-2xl rounded-xl w-full md:w-5/6">
-        <CircleX
-          onClick={onClose}
-          className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
-        />
-        <div className="grid grid-rows-[auto_auto_auto_1fr_auto_auto] gap-2 h-full">
-          <H3>Few-shot screening</H3>
-          <Description className="px-4 py-2 border-l-4 bg-blue-50 border-blue-400 text-blue-700 text-sm ">
-            <strong>Few-shot screening</strong> requires seed {itemNamePlural}, which can aid in LLM
-            decision making. Below, you can select {itemNamePlural} per category (include /
-            exclude), based on your manual evaluation results. The {itemNamePlural} are ordered by
-            the probability of inclusion.
-          </Description>
-          <H4>
-            {currentStep === "INCLUSION_SEED" &&
-              "Inclusion seed " + itemNamePlural + " (" + inclusionSeeds.length + ")"}
-            {currentStep === "EXCLUSION_SEED" &&
-              "Exclusion seed " + itemNamePlural + " (" + exclusionSeeds.length + ")"}
-            {currentStep === "OVERVIEW" && "Overview"}
-          </H4>
-          <div
-            className={classNames("flex flex-col gap-2", {
-              "h-96 overflow-y-scroll": currentStep !== "OVERVIEW",
-            })}
-          >
-            {(currentStep === "INCLUSION_SEED" || currentStep === "EXCLUSION_SEED") && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 sticky top-0 z-50 text-md">
-                <div className="font-bold flex items-center content-center p-2 pl-3 bg-slate-800 text-white rounded-md">
-                  {itemName}
-                </div>
-                <div className="font-bold flex items-center content-center justify-center p-2 bg-slate-800 text-white rounded-md">
-                  Score
-                </div>
-              </div>
-            )}
-            {currentStep === "OVERVIEW" && (
-              <div className="flex flex-col gap-2">
-                <H6>Inclusion seeds</H6>
-                <div className="flex flex-col gap-2">
-                  {selectedInclusionSeeds.map((s) => {
-                    const paper = getPaperByUuid(projectUuid, s);
-                    if (!paper) {
-                      return null;
-                    }
-                    return (
-                      <div key={s} className="flex flex-row gap-2 justify-between">
-                        <div>
-                          <strong>{itemName}:</strong> {paper.title}
-                        </div>
-                        <div>
-                          <strong>Score: </strong>
-                          {paper.avg_probability_decision
-                            ? paper.avg_probability_decision.toFixed(3)
-                            : "Pending"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {selectedInclusionSeeds.length === 0 && (
-                    <AlertMessage message="No inclusion seeds selected." />
-                  )}
-                </div>
-                <Hr />
+      <DialogTitle id="few-shot-dialog-title" sx={{ fontWeight: 600, pr: 7 }}>
+        Few-shot screening
+      </DialogTitle>
+      <IconButton
+        aria-label="Close"
+        onClick={onClose}
+        sx={{ position: "absolute", right: 12, top: 12 }}
+      >
+        <CloseIcon />
+      </IconButton>
+      <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3, py: 3 }}>
+        <Typography
+          id="few-shot-dialog-description"
+          variant="body2"
+          sx={{ color: "text.secondary" }}
+        >
+          The model sees the {itemNamePlural} you pick here as examples of what to include and
+          exclude. Choose from {itemNamePlural} you have evaluated manually; the ones the models
+          found least likely to include are listed first.
+        </Typography>
 
-                <H6>Exclusion seeds</H6>
-                <div className="flex flex-col gap-2">
-                  {selectedExclusionSeeds.map((s) => {
-                    const paper = getPaperByUuid(projectUuid, s);
-                    if (!paper) {
-                      return null;
-                    }
-                    return (
-                      <div key={s} className="flex flex-row gap-2 justify-between">
-                        <div>
-                          <strong>{itemName}:</strong> {paper.title}
-                        </div>
-                        <div>
-                          <strong>Score: </strong>
-                          {paper.avg_probability_decision
-                            ? paper.avg_probability_decision.toFixed(3)
-                            : "Pending"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {selectedExclusionSeeds.length === 0 && (
-                    <AlertMessage message="No exclusion seeds selected." />
-                  )}
-                </div>
-              </div>
-            )}
-            {currentStep === "INCLUSION_SEED" && sortedInclusionSeeds.length === 0 && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 p-2">
-                <AlertMessage
-                  message={`No manually evaluated ${itemNamePlural} that are labelled as included. Please first manually evaluate the ${itemNamePlural}.`}
-                />
-                <div />
-              </div>
-            )}
-            {currentStep === "INCLUSION_SEED" &&
-              sortedInclusionSeeds.length > 0 &&
-              sortedInclusionSeeds.map((s) => (
-                <SeedPaper
-                  paper={s}
-                  key={s.uuid}
-                  selected={selectedInclusionSeeds.includes(s.uuid)}
-                  onTitleClick={() => {
-                    if (selectedInclusionSeeds.includes(s.uuid)) {
-                      setSelectedInclusionSeeds((prev) => [...prev].filter((p) => p !== s.uuid));
-                    } else {
-                      setSelectedInclusionSeeds((prev) => [...prev, s.uuid]);
-                    }
-                  }}
-                />
-              ))}
-            {currentStep === "EXCLUSION_SEED" && sortedExclusionSeeds.length === 0 && (
-              <div className="grid grid-cols-[1fr_80px] gap-2 p-2">
-                <AlertMessage
-                  message={`No manually evaluated ${itemNamePlural} that are labelled as excluded. Please first manually evaluate the ${itemNamePlural}.`}
-                />
-                <div />
-              </div>
-            )}
-            {currentStep === "EXCLUSION_SEED" &&
-              sortedExclusionSeeds.length > 0 &&
-              sortedExclusionSeeds.map((s) => (
-                <SeedPaper
-                  paper={s}
-                  key={s.uuid}
-                  selected={selectedExclusionSeeds.includes(s.uuid)}
-                  onTitleClick={() => {
-                    if (selectedExclusionSeeds.includes(s.uuid)) {
-                      setSelectedExclusionSeeds((prev) => [...prev].filter((p) => p !== s.uuid));
-                    } else {
-                      setSelectedExclusionSeeds((prev) => [...prev, s.uuid]);
-                    }
-                  }}
-                />
-              ))}
-          </div>
-          <div className="flex flex-row gap-2 items-center content-center justify-center h-12">
-            {currentStep === "INCLUSION_SEED" ? (
-              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
-                Step 1: Inclusion
-              </div>
-            ) : (
-              <div
-                className="p-2 hover:cursor-pointer hover:underline text-sm select-none"
-                onClick={() => setCurrentStep("INCLUSION_SEED")}
-              >
-                Step 1: Inclusion
-              </div>
-            )}
-            <ArrowRight />
-            {currentStep === "EXCLUSION_SEED" ? (
-              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
-                Step 2: Exclusion
-              </div>
-            ) : (
-              <div
-                className={classNames(
-                  "p-2 text-sm select-none hover:cursor-pointer hover:underline",
-                )}
-                onClick={() => {
-                  setCurrentStep("EXCLUSION_SEED");
-                }}
-              >
-                Step 2: Exclusion
-              </div>
-            )}
-            <ArrowRight />
-            {currentStep === "OVERVIEW" ? (
-              <div className="p-2 bg-slate-800 text-white rounded-md text-sm select-none">
-                Overview
-              </div>
-            ) : (
-              <div
-                className={twMerge(
-                  classNames("stroke-slate-600 hover:cursor-pointer text-sm p-2 select-none", {
-                    "opacity-35 hover:cursor-not-allowed":
-                      selectedExclusionSeeds.length === 0 && selectedInclusionSeeds.length === 0,
-                  }),
-                )}
-                onClick={() => {
-                  if (!(selectedExclusionSeeds.length == 0 && selectedInclusionSeeds.length == 0)) {
-                    setCurrentStep("OVERVIEW");
+        <Stepper nonLinear activeStep={activeStep} alternativeLabel={fullScreen}>
+          {STEPS.map((label, index) => {
+            const count =
+              index === 0
+                ? selectedInclusionSeeds.length
+                : index === 1
+                  ? selectedExclusionSeeds.length
+                  : null;
+            return (
+              <Step key={label} completed={count != null && count > 0 && index !== activeStep}>
+                <StepButton
+                  data-testid={`few-shot-step-${index}`}
+                  onClick={() => setActiveStep(index)}
+                  disabled={index === 2 && !hasSeeds}
+                  optional={
+                    count != null && (
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        {count} selected
+                      </Typography>
+                    )
                   }
-                }}
-              >
-                Overview
-              </div>
-            )}
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="flex flex-row gap-2 items-center content-center">
-              {/* <Button variant="purple">Auto-select</Button>
-              <Tooltip
-                title="Automatically selects three papers that have the highest probability"
-                arrow
-              >
-                <InfoIcon size={20} />
-              </Tooltip> */}
-              {currentStep === "OVERVIEW" && (
-                <div className="flex flex-row gap-2 items-center content-center">
-                  <input
-                    type="checkbox"
-                    name="foo"
-                    id="foo"
-                    checked={rememberSelection}
-                    onChange={() => setRememberSelection(!rememberSelection)}
+                >
+                  {label}
+                </StepButton>
+              </Step>
+            );
+          })}
+        </Stepper>
+
+        {activeStep === 0 && (
+          <SeedList
+            papers={included}
+            selected={selectedInclusionSeeds}
+            onChange={setSelectedInclusionSeeds}
+            testId="few-shot-inclusion-list"
+            label={`included ${itemNamePlural}`}
+            emptyMessage={`No ${itemNamePlural} are labelled as included yet. Evaluate ${itemNamePlural} manually first.`}
+          />
+        )}
+        {activeStep === 1 && (
+          <SeedList
+            papers={excluded}
+            selected={selectedExclusionSeeds}
+            onChange={setSelectedExclusionSeeds}
+            testId="few-shot-exclusion-list"
+            label={`excluded ${itemNamePlural}`}
+            emptyMessage={`No ${itemNamePlural} are labelled as excluded yet. Evaluate ${itemNamePlural} manually first.`}
+          />
+        )}
+        {activeStep === 2 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            <Box
+              component="dl"
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "auto minmax(0, 1fr)",
+                columnGap: 2,
+                rowGap: 0.5,
+                m: 0,
+                typography: "body2",
+                "& dt": { color: "text.secondary" },
+                "& dd": { m: 0, overflowWrap: "anywhere" },
+              }}
+            >
+              <dt>Model</dt>
+              <dd data-testid="few-shot-model">
+                {llmConfig ? (
+                  `${llmConfig.model_name} (${llmConfig.provider_name})`
+                ) : llmConfigLoading ? (
+                  <Skeleton
+                    width={220}
+                    aria-label="Loading your model selection"
+                    sx={{ display: "inline-block", maxWidth: "100%" }}
                   />
-                  <label htmlFor="foo" className="text-sm select-none font-bold">
-                    Remember my selection for the current project
-                  </label>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-row gap-2">
-              {currentStep === "EXCLUSION_SEED" && (
-                <Button
-                  disabled={selectedInclusionSeeds.length === 0}
-                  variant="gray"
-                  onClick={() => setCurrentStep("INCLUSION_SEED")}
-                >
-                  <ArrowLeft /> Back
-                </Button>
-              )}
-              {currentStep === "OVERVIEW" && (
-                <Button
-                  disabled={selectedInclusionSeeds.length === 0}
-                  variant="gray"
-                  onClick={() => setCurrentStep("EXCLUSION_SEED")}
-                >
-                  <ArrowLeft /> Back
-                </Button>
-              )}
-              {currentStep === "OVERVIEW" && (
-                <Button
-                  disabled={
-                    selectedExclusionSeeds.length === 0 && selectedInclusionSeeds.length === 0
-                  }
-                  variant="purple"
-                  onClick={() => createFewShotJob()}
-                >
-                  <Sparkles />
-                  <div className="bg-white text-purple-700 pl-2 pr-2 rounded-md">FS</div>
-                  <span>Start Few-shot</span>
-                </Button>
-              )}
-              {currentStep === "INCLUSION_SEED" && (
-                <Button onClick={() => setCurrentStep("EXCLUSION_SEED")}>
-                  <ArrowRight /> Next: Exclusion seed papers
-                </Button>
-              )}
-              {currentStep === "EXCLUSION_SEED" && (
-                <Button
-                  disabled={
-                    selectedExclusionSeeds.length === 0 && selectedInclusionSeeds.length === 0
-                  }
-                  onClick={() => setCurrentStep("OVERVIEW")}
-                >
-                  <ArrowRight /> Next: Overview
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </DialogPanel>
+                ) : (
+                  <Box component="span" sx={{ color: "error.main" }}>
+                    Not selected
+                  </Box>
+                )}
+              </dd>
+              <dt>Screening mode</dt>
+              <dd data-testid="few-shot-screening-mode">
+                {screeningModeLabel(screeningMode, screeningTarget).value}
+              </dd>
+            </Box>
+            {!llmConfig && !llmConfigLoading && (
+              <Alert severity="warning" sx={{ borderRadius: 2 }} data-testid="few-shot-no-model">
+                No model is selected. Close this dialog, choose a provider and model in the task
+                form, and start few-shot screening from there.
+              </Alert>
+            )}
+            <SeedSummary
+              title="Inclusion examples"
+              papers={pick(selectedInclusionSeeds, included)}
+              emptyMessage="None selected."
+            />
+            <SeedSummary
+              title="Exclusion examples"
+              papers={pick(selectedExclusionSeeds, excluded)}
+              emptyMessage="None selected."
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={rememberSelection}
+                  onChange={(e) => setRememberSelection(e.target.checked)}
+                  slotProps={{ input: { "data-testid": "few-shot-remember-checkbox" } as object }}
+                />
+              }
+              label="Remember these examples for this project"
+            />
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        {activeStep > 0 && (
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => setActiveStep(activeStep - 1)}
+            data-testid="few-shot-back-button"
+          >
+            Back
+          </Button>
+        )}
+        <Box sx={{ flex: 1 }} />
+        {!isLastStep && (
+          <Button onClick={onClose} color="inherit">
+            Cancel
+          </Button>
+        )}
+        {isLastStep ? (
+          <Button
+            variant="contained"
+            startIcon={
+              starting ? <CircularProgress size={18} color="inherit" /> : <AutoAwesomeIcon />
+            }
+            disabled={!hasSeeds || !llmConfig || starting}
+            onClick={startFewShotJob}
+            data-testid="few-shot-start-button"
+          >
+            Start few-shot screening
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            disabled={activeStep === 1 && !hasSeeds}
+            onClick={() => setActiveStep(activeStep + 1)}
+            data-testid="few-shot-next-button"
+          >
+            {activeStep === 0 ? "Next: exclusion examples" : "Next: review"}
+          </Button>
+        )}
+      </DialogActions>
     </Dialog>
   );
 };

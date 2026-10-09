@@ -1,24 +1,61 @@
-import classNames from "classnames";
-import { ChevronDown, ChevronUp, X, CircleQuestionMark, Check, FileText } from "lucide-react";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
+import Box from "@mui/material/Box";
+import { alpha } from "@mui/material/styles";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Typography from "@mui/material/Typography";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
-import { JobTaskHumanResult } from "../state/types";
-import { Card, CardProps } from "./Card";
-import { Button } from "./Button";
+import { JobTaskHumanResult, ScreeningTarget } from "../state/types";
+import { PaperDetails } from "./paperList/PaperDetails";
+import { PaperRow } from "./paperList/PaperRow";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import { toast } from "react-toastify";
 import { attachPdfToPaper } from "../services/fileService";
 import { PaperReadWithAvgProbability } from "../services/api/client";
 
-type PaperCardProps = {
-  paper: PaperReadWithAvgProbability;
-  isGithubScreening: boolean;
+const DECISIONS = [
+  {
+    value: JobTaskHumanResult.EXCLUDE,
+    label: "Exclude",
+    color: "error",
+    icon: <CloseIcon fontSize="small" />,
+  },
+  {
+    value: JobTaskHumanResult.UNSURE,
+    label: "Unsure",
+    color: "warning",
+    icon: <HelpOutlineOutlinedIcon fontSize="small" />,
+  },
+  {
+    value: JobTaskHumanResult.INCLUDE,
+    label: "Include",
+    color: "success",
+    icon: <CheckIcon fontSize="small" />,
+  },
+] as const;
+
+const DECIDED_LABELS: Record<JobTaskHumanResult, string> = {
+  [JobTaskHumanResult.INCLUDE]: "Included",
+  [JobTaskHumanResult.EXCLUDE]: "Excluded",
+  [JobTaskHumanResult.UNSURE]: "Unsure",
 };
 
-export const PaperCard: React.FC<React.PropsWithChildren<CardProps> & PaperCardProps> = ({
+type PaperCardProps = {
+  paper: PaperReadWithAvgProbability;
+  screeningTarget: ScreeningTarget;
+  "data-testid"?: string;
+};
+
+/** A paper in the project's list, expandable to its details and the user's decision. */
+export const PaperCard: React.FC<PaperCardProps> = ({
   paper,
-  isGithubScreening,
-  ...rest
+  screeningTarget,
+  "data-testid": testId,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -50,184 +87,119 @@ export const PaperCard: React.FC<React.PropsWithChildren<CardProps> & PaperCardP
       e.target.value = "";
     }
   };
-  const hasErrors = (paper.error_messages?.length ?? 0) > 0;
+  const errorMessages = paper.error_messages ?? [];
+  const decision = DECISIONS.find((d) => d.value === paper.human_result);
 
   return (
-    <Card {...rest} padding="p-0">
-      <button
-        className={twMerge(
-          classNames(
-            "rounded-lg p-4 grid grid-cols-[60px_1fr_240px_30px] items-center content-center hover:cursor-pointer hover:bg-gray-50",
-          ),
-        )}
-        onClick={() => {
-          setOpen(!open);
-        }}
-      >
-        <div className="text-sm font-semibold select-none text-left">{paper.paper_id}</div>
-        <div
-          className="text-sm font-semibold select-none text-left flex items-center gap-1.5"
-          title={paper.title}
-        >
-          {paper.pdf_file_uuid && (
-            <FileText
-              size={14}
-              className="text-teal-600 shrink-0"
-              aria-label="Full text attached"
-            />
-          )}
-          <span className="truncate">
-            {paper.title.length > 80 ? paper.title.substring(0, 77) + "..." : paper.title}
-          </span>
-        </div>
-        <div
-          className={classNames("text-center text-sm select-none", {
-            "text-gray-400": paper.avg_probability_decision == null,
-          })}
-        >
-          {paper.avg_probability_decision != null
-            ? paper.avg_probability_decision.toFixed(3)
-            : hasErrors
-              ? "ERROR"
-              : "Pending"}
-        </div>
-        <div>
-          {!open && (
-            <ChevronDown
-              className="hover:cursor-pointer"
-              onClick={() => {
-                setOpen(true);
-              }}
-            />
-          )}
-          {open && (
-            <ChevronUp
-              className="hover:cursor-pointer"
-              onClick={() => {
-                setOpen(false);
-              }}
-            />
-          )}
-        </div>
-      </button>
-      {open && (
-        <div className="pl-4 pr-4 pb-4">
-          <div className="text-sm pt-2 pb-2">
-            {paper.doi && (
-              <>
-                <strong>{isGithubScreening ? "Repository URL" : "DOI"}:</strong>{" "}
-                <a
-                  href={
-                    isGithubScreening
-                      ? /^https?:\/\//i.test(paper.doi)
-                        ? paper.doi
-                        : undefined
-                      : `https://doi.org/${paper.doi}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline text-blue-600 hover:text-blue-800"
-                >
-                  {paper.doi}
-                </a>
-              </>
-            )}
-          </div>
-          {paper.pdf_file_uuid && paper.pdf_filename && (
-            <div className="text-sm pt-2 pb-2">
-              <strong>Full text:</strong>{" "}
-              <a
-                href={`/api/v1/files/${paper.pdf_file_uuid}/download`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline text-blue-600 hover:text-blue-800"
-              >
-                {paper.pdf_filename}
-              </a>
-            </div>
-          )}
-          {!isGithubScreening && (
-            <div className="flex items-center gap-2 pb-2">
+    <PaperRow
+      data-testid={testId}
+      paperId={paper.paper_id}
+      title={paper.title}
+      hasFullText={Boolean(paper.pdf_file_uuid)}
+      probability={paper.avg_probability_decision}
+      status={
+        errorMessages.length > 0
+          ? { label: "Error", tone: "error", tooltip: errorMessages.join("; ") }
+          : { label: "Not screened", shortLabel: "—" }
+      }
+      badge={
+        decision && (
+          <Chip
+            size="small"
+            variant="outlined"
+            color={decision.color}
+            label={DECIDED_LABELS[decision.value]}
+            sx={{ height: 22 }}
+          />
+        )
+      }
+      open={open}
+      onToggle={() => setOpen(!open)}
+    >
+      <PaperDetails
+        doi={paper.doi}
+        abstract={paper.abstract}
+        pdfFileUuid={paper.pdf_file_uuid}
+        pdfFilename={paper.pdf_filename}
+        screeningTarget={screeningTarget}
+        actions={
+          <>
+            {/* Only papers have full texts. */}
+            {screeningTarget === ScreeningTarget.PAPER && (
               <Button
-                variant="slate"
-                size="xs"
+                variant="outlined"
+                size="small"
+                startIcon={<UploadFileOutlinedIcon />}
                 disabled={uploadingPdf}
                 onClick={() => pdfInputRef.current?.click()}
               >
                 {uploadingPdf
-                  ? "Uploading..."
+                  ? "Uploading…"
                   : paper.pdf_file_uuid
                     ? "Replace full text"
                     : "Upload full text"}
               </Button>
-            </div>
-          )}
-          <input
-            type="file"
-            accept=".pdf"
-            ref={pdfInputRef}
-            onChange={handlePdfSelected}
-            className="hidden"
-          />
-          <div className="text-xs mb-4 bg-slate-200 rounded-md font-mono p-2">{paper.abstract}</div>
-          <div className="flex flex-wrap justify-center gap-2">
-            <Button
-              variant="red"
-              size="xs"
-              disabled={isPending}
-              invert={paper.human_result !== JobTaskHumanResult.EXCLUDE}
-              onClick={() => {
-                addHumanResult({
-                  projectUuid: paper.project_uuid,
-                  paperUuid: paper.uuid,
-                  humanResult: JobTaskHumanResult.EXCLUDE,
-                });
+            )}
+            <input
+              type="file"
+              accept=".pdf"
+              ref={pdfInputRef}
+              onChange={handlePdfSelected}
+              className="hidden"
+            />
+          </>
+        }
+      />
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1.5, mt: 2.5 }}>
+        <Typography variant="subtitle2" component="span" id={`decision-${paper.uuid}`}>
+          Your decision
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          aria-labelledby={`decision-${paper.uuid}`}
+          disabled={isPending}
+          value={paper.human_result ?? null}
+          onChange={(_, humanResult: JobTaskHumanResult | null) => {
+            // Clicking the current decision again keeps it.
+            if (humanResult !== null) {
+              addHumanResult({
+                projectUuid: paper.project_uuid,
+                paperUuid: paper.uuid,
+                humanResult,
+              });
+            }
+          }}
+        >
+          {DECISIONS.map(({ value, label, color, icon }) => (
+            <ToggleButton
+              key={value}
+              value={value}
+              sx={{
+                px: 2,
+                gap: 1,
+                // Always in the decision's colour; dimmed until chosen,
+                // filled once it is the paper's decision.
+                color: `${color}.main`,
+                opacity: 0.6,
+                "&:hover": {
+                  opacity: 1,
+                  bgcolor: (theme) => alpha(theme.palette[color].main, 0.08),
+                },
+                "&.Mui-selected": {
+                  opacity: 1,
+                  color: `${color}.contrastText`,
+                  bgcolor: `${color}.main`,
+                  "&:hover": { bgcolor: `${color}.dark` },
+                },
               }}
             >
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <X size={15} />
-                <span className="select-none">Exclude</span>
-              </div>
-            </Button>
-            <Button
-              variant="yellow"
-              size="xs"
-              disabled={isPending}
-              invert={paper.human_result !== JobTaskHumanResult.UNSURE}
-              onClick={() => {
-                addHumanResult({
-                  projectUuid: paper.project_uuid,
-                  paperUuid: paper.uuid,
-                  humanResult: JobTaskHumanResult.UNSURE,
-                });
-              }}
-            >
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <CircleQuestionMark size={15} />
-                <span className="select-none">Unsure</span>
-              </div>
-            </Button>
-            <Button
-              variant="green"
-              size="xs"
-              disabled={isPending}
-              invert={paper.human_result !== JobTaskHumanResult.INCLUDE}
-              onClick={() => {
-                addHumanResult({
-                  projectUuid: paper.project_uuid,
-                  paperUuid: paper.uuid,
-                  humanResult: JobTaskHumanResult.INCLUDE,
-                });
-              }}
-            >
-              <div className="flex flex-row gap-2 items-center font-semibold">
-                <Check size={15} />
-                <span className="select-none">Include</span>
-              </div>
-            </Button>
-          </div>
-        </div>
-      )}
-    </Card>
+              {icon}
+              {label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+    </PaperRow>
   );
 };

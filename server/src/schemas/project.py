@@ -83,6 +83,9 @@ class ProjectRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
+    # How many screening tasks (jobs) the project has, e.g. for sizing a
+    # loading placeholder before the jobs themselves are fetched.
+    job_count: int = 0
     inclusion_criteria_embedding: Optional[list[list[float]]] = None
     exclusion_criteria_embedding: Optional[list[list[float]]] = None
 

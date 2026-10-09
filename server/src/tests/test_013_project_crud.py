@@ -122,6 +122,42 @@ async def test_fetch_projects_returns_only_the_owners_projects(
     assert sorted(p["name"] for p in projects) == ["alice-1", "alice-2"]
 
 
+async def test_fetch_projects_counts_each_projects_jobs(
+    db_ctx: DBContext, factory: Factory
+):
+    owner = await factory.user()
+    with_jobs = await factory.project(owner, name="with-jobs")
+    await factory.project(owner, name="without-jobs")
+    await factory.job(with_jobs)
+    await factory.job(with_jobs)
+    # Another owner's jobs don't count, even on a project of the same name.
+    other = await factory.project(await factory.user(), name="with-jobs")
+    await factory.job(other)
+    crud = db_ctx.crud(ProjectCrud)
+
+    projects = await crud.fetch_projects(owner.uuid)
+
+    assert {p["name"]: p["job_count"] for p in projects} == {
+        "with-jobs": 2,
+        "without-jobs": 0,
+    }
+
+
+async def test_count_jobs_counts_only_the_projects_jobs(
+    db_ctx: DBContext, factory: Factory
+):
+    owner = await factory.user()
+    project = await factory.project(owner)
+    other = await factory.project(owner)
+    await factory.job(project)
+    await factory.job(project)
+    await factory.job(other)
+    crud = db_ctx.crud(ProjectCrud)
+
+    assert await crud.count_jobs(project.id) == 2
+    assert await crud.count_jobs(other.id) == 1
+
+
 async def test_fetch_projects_is_empty_for_owner_without_projects(
     db_ctx: DBContext, factory: Factory
 ):

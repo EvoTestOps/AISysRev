@@ -83,3 +83,8 @@ class JobTask(Base, TimestampMixin):
 
     status_metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     error: Mapped[str] = mapped_column(Text, nullable=True)
+
+    # The prompts sent to the model, as PromptRecord dicts: one for a standard
+    # job, one per criterion for a per-criteria job. NULL for tasks that ran
+    # before prompts were stored.
+    prompts: Mapped[list | None] = mapped_column(JSONB, nullable=True)

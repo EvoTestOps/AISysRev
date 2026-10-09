@@ -93,6 +93,16 @@ export namespace Schemas {
     ctx?: Record<string, unknown>;
   };
   export type HTTPValidationError = Partial<{ detail: Array<ValidationError> }>;
+  /**
+   * Decision from TypeSafe Jev, which answers with a probability only (no Likert).
+   */
+  export type JevDecision = { binary_decision: boolean; probability_decision: number; reason: string };
+  export type JevCriterion = { name: string; decision: JevDecision };
+  export type JevStructuredResponse = {
+    overall_decision: JevDecision;
+    inclusion_criteria: Array<JevCriterion>;
+    exclusion_criteria: Array<JevCriterion>;
+  };
   export type JobCancelResponse = { detail: string };
   export type ZeroShotPromptingConfig = Partial<{ screening_type: "ZERO_SHOT"; screening_target: ScreeningTarget }>;
   export type PerCriteriaPromptingConfig = Partial<{
@@ -134,8 +144,6 @@ export namespace Schemas {
     updated_at: Date;
     stats: JobStats;
   };
-  export type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
-  export type JobTaskHumanResultUpdate = { human_result: JobTaskHumanResult };
   export type JobTaskStatus = "NOT_STARTED" | "PENDING" | "RUNNING" | "DONE" | "ERROR" | "CANCELLED";
   export type StructuredResponse = {
     overall_decision: Decision;
@@ -150,6 +158,30 @@ export namespace Schemas {
     overall_probability: number | null;
     binary_decision: boolean | null;
   };
+  export type JobTaskHumanResult = "INCLUDE" | "EXCLUDE" | "UNSURE";
+  /**
+   * A prompt sent to the model for a job task, stored for inspection.
+   */
+  export type PromptRecord = { criterion?: string | null; system_prompt?: string | null; user_prompt: string };
+  export type JobTaskDetail = {
+    uuid: string;
+    job_id: number;
+    doi: string | null;
+    title: string;
+    abstract: string;
+    paper_uuid: string;
+    paper_id?: number | null;
+    status: JobTaskStatus;
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | null;
+    human_result?: JobTaskHumanResult | null;
+    status_metadata?: Record<string, unknown> | null;
+    error?: string | null;
+    llm_config: LLMModelConfig;
+    prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
+    screening_mode: JobScreeningMode;
+    prompts?: Array<PromptRecord> | null;
+  };
+  export type JobTaskHumanResultUpdate = { human_result: JobTaskHumanResult };
   export type JobTaskRead = {
     uuid: string;
     job_id: number;
@@ -157,8 +189,9 @@ export namespace Schemas {
     title: string;
     abstract: string;
     paper_uuid: string;
+    paper_id?: number | null;
     status: JobTaskStatus;
-    result: StructuredResponse | PerCriteriaResult | null;
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | null;
     human_result?: JobTaskHumanResult | null;
     status_metadata?: Record<string, unknown> | null;
     error?: string | null;
@@ -170,8 +203,9 @@ export namespace Schemas {
     title: string;
     abstract: string;
     paper_uuid: string;
+    paper_id?: number | null;
     status: JobTaskStatus;
-    result: StructuredResponse | PerCriteriaResult | null;
+    result: StructuredResponse | JevStructuredResponse | PerCriteriaResult | null;
     human_result?: JobTaskHumanResult | null;
     status_metadata?: Record<string, unknown> | null;
     error?: string | null;
@@ -235,6 +269,7 @@ export namespace Schemas {
     created_at: Date;
     updated_at: Date;
     screening_target?: ScreeningTarget;
+    job_count?: number;
     inclusion_criteria_embedding?: Array<Array<number>> | null;
     exclusion_criteria_embedding?: Array<Array<number>> | null;
   };
@@ -245,6 +280,8 @@ export namespace Schemas {
     provider_parameters_json_schema?: Record<string, unknown> | null;
     model_parameters_json_schema: Record<string, unknown>;
     config_parameters: Array<ConfigParameter>;
+    api_key_config_parameter?: ConfigParameter | null;
+    supports_per_criteria?: boolean;
   };
   export type ProviderConfigParamsResponse = {
     title: string;
@@ -435,6 +472,19 @@ export namespace Endpoints {
       path: { uuid: string };
     };
     responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+  };
+  /**
+   * One paper's task in a job: its result, error and the prompts sent.
+   */
+  export type get_Get_job_task_detail_api_v1_job__job_uuid__task__task_uuid__get = {
+    method: "GET";
+    path: "/api/v1/job/{job_uuid}/task/{task_uuid}";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      path: { job_uuid: string; task_uuid: string };
+    };
+    responses: { 200: Schemas.JobTaskDetail; 422: Schemas.HTTPValidationError };
   };
   export type post_Cancel_job_api_v1_job__uuid__cancel_post = {
     method: "POST";
@@ -748,6 +798,7 @@ export type EndpointByMethod = {
     "/api/v1/files/{file_uuid}/download": Endpoints.get_Download_file_api_v1_files__file_uuid__download_get;
     "/api/v1/job": Endpoints.get_Get_jobs_api_v1_job_get;
     "/api/v1/job/{uuid}": Endpoints.get_Get_single_job_api_v1_job__uuid__get;
+    "/api/v1/job/{job_uuid}/task/{task_uuid}": Endpoints.get_Get_job_task_detail_api_v1_job__job_uuid__task__task_uuid__get;
     "/api/v1/jobtask/{uuid}": Endpoints.get_Get_job_tasks_api_v1_jobtask__uuid__get;
     "/api/v1/jobtask": Endpoints.get_Get_job_tasks_by_paper_api_v1_jobtask_get;
     "/api/v1/paper/{project_uuid}": Endpoints.get_Get_papers_api_v1_paper__project_uuid__get;
