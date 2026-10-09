@@ -79,7 +79,7 @@ services:
         condition: service_started
 
   postgres:
-    image: pgvector/pgvector:pg14@sha256:fb27b00a92028f4749bf18f3d31b18fc62510258326486fb8900653ab2701252
+    image: pgvector/pgvector:pg14@sha256:1091ea8f64f5ffe0954dc4c90f196e0cc6ab906566b884a9ff210f0d24b83d12
     container_name: postgres_${APP_ENV:-dev}
     environment:
       POSTGRES_USER: your_username
@@ -99,7 +99,7 @@ services:
 
   adminer:
     container_name: adminer_${APP_ENV:-dev}
-    image: adminer:5.5.0@sha256:a1e730bf95a18f1d7c38b409ab58a39d57d07bdb090614b81f5c7b37c6021b96
+    image: adminer:6.1.1@sha256:74f29c416e148b98305e84446a18db7cd2c1038264dec464359d36774ef080ce
     restart: always
     ports:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
