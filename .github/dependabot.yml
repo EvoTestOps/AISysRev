@@ -8,9 +8,13 @@ updates:
       interval: weekly
     open-pull-requests-limit: 2
     groups:
-      all-updates:
+      client-npm:
         patterns:
           - "*"
+    ignore:
+      # No major version updates
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Server (FastAPI/Celery) Python dependencies, managed with uv
   - package-ecosystem: uv
@@ -19,9 +23,13 @@ updates:
       interval: weekly
     open-pull-requests-limit: 2
     groups:
-      all-updates:
+      server-python:
         patterns:
           - "*"
+    ignore:
+      # No major version updates
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Base images in Dockerfile and Dockerfile-dev.dockerfile, plus the image
   # references in the Kubernetes/OpenShift manifests. Images are pinned by
@@ -35,11 +43,14 @@ updates:
       interval: weekly
     open-pull-requests-limit: 1
     groups:
-      docker:
+      docker-images:
         update-types: [minor, patch]
     ignore:
       # Locally built images referenced by the manifests, not on a registry
       - dependency-name: aisysrev
+      # No major version updates
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Images in docker-compose.yml and docker-compose-dev.yml (postgres, redis, adminer)
   - package-ecosystem: docker-compose
@@ -48,9 +59,13 @@ updates:
       interval: weekly
     open-pull-requests-limit: 1
     groups:
-      all-updates:
+      compose-images:
         patterns:
           - "*"
+    ignore:
+      # No major version updates
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # Actions used in .github/workflows
   - package-ecosystem: github-actions
@@ -61,3 +76,7 @@ updates:
     groups:
       github-actions:
         update-types: [minor, patch]
+    ignore:
+      # No major version updates
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
