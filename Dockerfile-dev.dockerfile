@@ -22,9 +22,9 @@ COPY client/src ./src
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
-FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.24 AS uv
 
-FROM python:3.14.7-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS python-base
+FROM python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72 AS python-base
 
 FROM python-base AS server-builder
 ENV UV_LINK_MODE=copy
