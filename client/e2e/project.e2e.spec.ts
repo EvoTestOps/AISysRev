@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginAndConsentUI } from "./helpers/auth";
-import { seedProjects, uniqueName } from "./helpers/seed";
+import { seedProjectWithPapers, uniqueName } from "./helpers/seed";
 
 const prefix = "/api/v1";
 
@@ -38,15 +38,8 @@ test.describe("Project UI", () => {
   test("Create a project and attach PDFs via the Zotero import flow", async ({
     page,
   }) => {
-    const [project] = await seedProjects(page.request, [
-      {
-        name: uniqueName("PDF Project"),
-        criteria: {
-          inclusion_criteria: ["IC1"],
-          exclusion_criteria: ["EC1"],
-        },
-      },
-    ]);
+    // A project without papers opens on the welcome screen, which has no full-text import.
+    const { project } = await seedProjectWithPapers(page.request, uniqueName("PDF Project"), 1);
 
     await page.goto(`/project/${project.uuid}`);
 
