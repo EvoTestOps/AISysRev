@@ -50,21 +50,23 @@ class JobTaskService:
         )
 
         return [
-            JobTaskReadWithLLMConfig(
-                uuid=task.uuid,
-                job_id=task.job_id,
-                doi=task.doi,
-                title=task.title,
-                abstract=task.abstract,
-                paper_uuid=task.paper_uuid,
-                status=task.status,
-                result=task.result,
-                human_result=task.human_result,
-                status_metadata=task.status_metadata,
-                error=task.error,
-                llm_config=job.llm_config,
-                prompting_config=job.prompting_config,
-                screening_mode=job.screening_mode.value,
+            JobTaskReadWithLLMConfig.model_validate(
+                {
+                    "uuid": task.uuid,
+                    "job_id": task.job_id,
+                    "doi": task.doi,
+                    "title": task.title,
+                    "abstract": task.abstract,
+                    "paper_uuid": task.paper_uuid,
+                    "status": task.status,
+                    "result": task.result,
+                    "human_result": task.human_result,
+                    "status_metadata": task.status_metadata,
+                    "error": task.error,
+                    "llm_config": job.llm_config,
+                    "prompting_config": job.prompting_config,
+                    "screening_mode": job.screening_mode,
+                }
             )
             for task, job in job_tasks_with_jobs
         ]
