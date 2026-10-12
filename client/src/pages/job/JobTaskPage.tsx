@@ -1,0 +1,186 @@
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Skeleton from "@mui/material/Skeleton";
+import { Link, useParams } from "wouter";
+import { AlertMessage } from "../../components/AlertMessage";
+import { Card } from "../../components/Card";
+import { Layout } from "../../components/Layout";
+import { FadeIn } from "../../components/FadeIn";
+import { riseIn } from "../../components/motion";
+import {
+  BreadcrumbsSkeleton,
+  JobCardSkeleton,
+  SkeletonGroup,
+  TextCardSkeleton,
+} from "../../components/skeletons";
+import { PROJECTS_PARENT } from "../../components/PageHeader";
+import { PaperDetails } from "../../components/paperList/PaperDetails";
+import { H6 } from "../../components/Typography";
+import { ITEM_NAMES } from "../../helpers/screeningTarget";
+import { NotFoundPage } from "../NotFound";
+import { useJobTaskDetail } from "./hooks/useJobTaskDetail";
+import { useJobTasks } from "./hooks/useJobTasks";
+import { useProjectJob } from "./hooks/useProjectJob";
+import { JobBreadcrumbs } from "./JobBreadcrumbs";
+import { jobDisplayName } from "../project/jobLabels";
+import { JobSummaryCard } from "./JobSummaryCard";
+import { PromptList } from "./PromptList";
+import { TaskResultView } from "./result/TaskResultView";
+import { isErroredTask, taskStatusLabel } from "./taskResult";
+
+type StepButtonProps = {
+  href: string | null;
+  testId: string;
+  direction: "previous" | "next";
+};
+
+/** Previous / next paper; disabled at either end of the list. */
+const StepButton: React.FC<StepButtonProps> = ({ href, testId, direction }) => {
+  const icon =
+    direction === "previous"
+      ? { startIcon: <ChevronLeftIcon /> }
+      : { endIcon: <ChevronRightIcon /> };
+  const label = direction === "previous" ? "Previous" : "Next";
+  return href ? (
+    <Button component={Link} href={href} size="small" data-testid={testId} {...icon}>
+      {label}
+    </Button>
+  ) : (
+    <Button size="small" disabled data-testid={testId} {...icon}>
+      {label}
+    </Button>
+  );
+};
+
+/** Stands in for the paper, result and prompt cards while the result loads. */
+const ResultCardsSkeleton = () => (
+  <SkeletonGroup sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <TextCardSkeleton lines={4} />
+    <TextCardSkeleton lines={3} />
+    <TextCardSkeleton lines={2} />
+  </SkeletonGroup>
+);
+
+/** One paper's result in a screening task: decision, criteria, error and prompts. */
+export const JobTaskPage = () => {
+  const { projectUuid, jobUuid, taskUuid } = useParams<{
+    projectUuid: string;
+    jobUuid: string;
+    taskUuid: string;
+  }>();
+  const { loading, project, job, runNumber } = useProjectJob(projectUuid, jobUuid);
+  const { task, loading: loadingTask, notFound, error } = useJobTaskDetail(jobUuid, taskUuid);
+  // Same order as the job page, for previous / next.
+  const { tasks } = useJobTasks(jobUuid);
+
+  if (loading) {
+    return (
+      <Layout title={project?.name ?? ""} parent={PROJECTS_PARENT} loading={!project}>
+        <SkeletonGroup sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <BreadcrumbsSkeleton />
+          <JobCardSkeleton />
+          <ResultCardsSkeleton />
+        </SkeletonGroup>
+      </Layout>
+    );
+  }
+  if (!project || !job || notFound) {
+    return <NotFoundPage />;
+  }
+
+  const { singular: itemName, plural: itemNamePlural } = ITEM_NAMES[project.screening_target];
+  const jobPath = `/project/${projectUuid}/job/${jobUuid}`;
+  const index = tasks.findIndex((t) => t.uuid === taskUuid);
+  const neighbour = (offset: number) => {
+    const other = index === -1 ? undefined : tasks[index + offset];
+    return other ? `${jobPath}/task/${other.uuid}` : null;
+  };
+
+  return (
+    <Layout title={project.name} parent={PROJECTS_PARENT}>
+      <FadeIn className="flex flex-col gap-4" data-testid="job-task-page">
+        <div className="flex items-center justify-between gap-4">
+          <JobBreadcrumbs
+            backHref={jobPath}
+            backLabel={`Back to all ${itemNamePlural} in this task`}
+            crumbs={[
+              { label: "Screening tasks", href: `/project/${projectUuid}` },
+              { label: jobDisplayName(job, runNumber), href: jobPath, testId: "task-back" },
+              {
+                label:
+                  task && !loadingTask ? (
+                    `${task.paper_id != null ? `#${task.paper_id} ` : ""}${task.title}`
+                  ) : (
+                    <Skeleton width={200} sx={{ display: "inline-block" }} />
+                  ),
+              },
+            ]}
+          />
+          <div className="flex items-center gap-2 shrink-0">
+            <StepButton href={neighbour(-1)} testId="task-prev" direction="previous" />
+            {index !== -1 && (
+              <span className="text-xs text-slate-500">
+                {index + 1} / {tasks.length}
+              </span>
+            )}
+            <StepButton href={neighbour(1)} testId="task-next" direction="next" />
+          </div>
+        </div>
+        <JobSummaryCard job={job} runNumber={runNumber} itemName={itemName} />
+        {error && <AlertMessage className="p-4" message={error} />}
+        {loadingTask && <ResultCardsSkeleton />}
+        {!loadingTask && task && (
+          // Keyed by the task, so stepping to the next paper animates it in too.
+          <FadeIn key={task.uuid} className="flex flex-col gap-4">
+            <Box sx={riseIn(0)}>
+              <Card>
+                <H6>
+                  {task.paper_id != null && (
+                    <span className="text-slate-500 mr-2">#{task.paper_id}</span>
+                  )}
+                  <span data-testid="task-title">{task.title}</span>
+                </H6>
+                <PaperDetails
+                  doi={task.doi}
+                  abstract={task.abstract}
+                  screeningTarget={project.screening_target}
+                />
+              </Card>
+            </Box>
+            <Box sx={riseIn(1)}>
+              <Card>
+                <div className="flex items-center justify-between mb-2">
+                  <H6>Result</H6>
+                  <span className="text-xs text-slate-500" data-testid="task-status">
+                    Status: {taskStatusLabel(task.status)}
+                  </span>
+                </div>
+                {isErroredTask(task) && task.error && (
+                  <div
+                    className="text-sm text-red-700 bg-red-50 rounded-md p-2 mb-4 whitespace-pre-wrap"
+                    data-testid="task-error"
+                  >
+                    {task.error}
+                  </div>
+                )}
+                {task.result ? (
+                  <TaskResultView result={task.result} projectCriteria={project.criteria} />
+                ) : (
+                  !isErroredTask(task) && <p className="text-sm text-slate-500">No result yet.</p>
+                )}
+              </Card>
+            </Box>
+            <Box sx={riseIn(2)}>
+              <Card>
+                <H6>Prompt sent to the model</H6>
+                <PromptList prompts={task.prompts} />
+              </Card>
+            </Box>
+          </FadeIn>
+        )}
+      </FadeIn>
+    </Layout>
+  );
+};

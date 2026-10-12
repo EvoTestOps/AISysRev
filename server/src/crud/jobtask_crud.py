@@ -9,6 +9,7 @@ from src.db.models.jobtask import JobTask
 from src.db.models.paper import Paper
 from src.db.models.project import Project
 from src.schemas.jobtask import JobTaskCreate, JobTaskHumanResult, JobTaskStatus
+from src.schemas.llm import PromptRecord
 from src.schemas.paper import PaperCreate
 
 
@@ -45,6 +46,36 @@ class JobTaskCrud:
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def fetch_job_tasks_with_paper_id(
+        self, job_uuid: UUID, owner_uuid: UUID
+    ) -> Sequence[Row[Tuple[JobTask, int]]]:
+        """A job's tasks with their paper's display id, in paper id order."""
+        stmt = (
+            select(JobTask, Paper.paper_id)
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Job.project_id == Project.id)
+            .join(Paper, JobTask.paper_uuid == Paper.uuid)
+            .where(Job.uuid == job_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+            .order_by(Paper.paper_id, JobTask.id)
+        )
+        return (await self.db.execute(stmt)).all()
+
+    async def fetch_job_task_detail(
+        self, job_uuid: UUID, job_task_uuid: UUID, owner_uuid: UUID
+    ) -> Row[Tuple[JobTask, Job, int]] | None:
+        """One task of a job, with its job and paper id, if the owner owns it."""
+        stmt = (
+            select(JobTask, Job, Paper.paper_id)
+            .join(Job, JobTask.job_id == Job.id)
+            .join(Project, Job.project_id == Project.id)
+            .join(Paper, JobTask.paper_uuid == Paper.uuid)
+            .where(Job.uuid == job_uuid)
+            .where(JobTask.uuid == job_task_uuid)
+            .where(Project.owner_uuid == owner_uuid)
+        )
+        return (await self.db.execute(stmt)).one_or_none()
 
     async def fetch_job_task_by_id(self, job_task_id: int) -> JobTask | None:
         stmt = select(JobTask).where(JobTask.id == job_task_id)
@@ -181,6 +212,17 @@ class JobTaskCrud:
         )
         stmt = (
             update(JobTask).where(JobTask.id == job_task_id).values(result=result_data)
+        )
+        await self.db.execute(stmt)
+        await self.db.flush()
+
+    async def update_job_task_prompts(
+        self, job_task_id: int, prompts: Sequence[PromptRecord]
+    ):
+        stmt = (
+            update(JobTask)
+            .where(JobTask.id == job_task_id)
+            .values(prompts=[prompt.model_dump(mode="json") for prompt in prompts])
         )
         await self.db.execute(stmt)
         await self.db.flush()

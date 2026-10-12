@@ -7,10 +7,11 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { NewProject } from "./pages/NewProjectPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProjectPage } from "./pages/ProjectPage";
+import { JobPage } from "./pages/job/JobPage";
+import { JobTaskPage } from "./pages/job/JobTaskPage";
 import { SettingsPage } from "./pages/SettingPage";
 import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
-import "react-loading-skeleton/dist/skeleton.css";
 import { PapersPage } from "./pages/PapersPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
@@ -39,6 +40,13 @@ function App() {
         if (error instanceof TypedStatusError && error.status === 403) {
           setConsentRequired(true);
           setIsAuthenticated(false);
+          return;
+        }
+        // Only the server saying so logs the user out. A request that failed on
+        // the way, e.g. one the browser cancelled for a page refresh, says
+        // nothing about the session, and redirecting would interrupt the refresh.
+        if (!(error instanceof TypedStatusError && error.status === 401)) {
+          console.warn("Could not check the session:", error);
           return;
         }
         setConsentRequired(false);
@@ -81,7 +89,7 @@ function App() {
   if (!isAuthenticated) return <Layout title="Loading..." hideNavbar />;
 
   return (
-    <div className="flex flex-col bg-gray-200 font-roboto pb-32">
+    <div className="flex flex-col bg-gray-200 font-roboto">
       <ToastContainer autoClose={4000} />
       <EventStream />
       <Switch>
@@ -92,6 +100,8 @@ function App() {
         <Route path="/project/:projectUuid/papers/page/:page" component={PapersPage} />
         <Route path="/project/:projectUuid/evaluate" component={ProjectPage} />
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
+        <Route path="/project/:projectUuid/job/:jobUuid" component={JobPage} />
+        <Route path="/project/:projectUuid/job/:jobUuid/task/:taskUuid" component={JobTaskPage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />

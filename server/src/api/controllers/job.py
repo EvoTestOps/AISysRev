@@ -15,8 +15,10 @@ from src.schemas.job import (
     JobRead,
     JobReadWithStats,
 )
+from src.schemas.jobtask import JobTaskDetail
 from src.schemas.project import FewShotPreferences
 from src.services.job_service import create_job_service
+from src.services.jobtask_service import create_jobtask_service
 from src.services.project_service import ProjectPreferences, create_project_service
 
 router = APIRouter()
@@ -70,6 +72,29 @@ async def get_single_job(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch job: {str(e)}",
         )
+
+
+@router.get(
+    "/job/{job_uuid}/task/{task_uuid}",
+    status_code=status.HTTP_200_OK,
+    response_model=JobTaskDetail,
+    tags=["Job"],
+)
+async def get_job_task_detail(
+    job_uuid: UUID,
+    task_uuid: UUID,
+    db_ctx: DBContext = Depends(get_db_ctx),
+    current_user: User = Depends(get_current_user),
+):
+    """One paper's task in a job: its result, error and the prompts sent."""
+    detail = await create_jobtask_service(db_ctx).fetch_job_task_detail(
+        job_uuid, task_uuid, current_user.uuid
+    )
+    if detail is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job task not found"
+        )
+    return detail
 
 
 @router.post("/job", status_code=status.HTTP_201_CREATED, tags=["Job"])

@@ -2003,6 +2003,9 @@ retries = [
     { name = "httpx" },
     { name = "tenacity" },
 ]
+typesafe = [
+    { name = "typesafe-sdk" },
+]
 
 [[package]]
 name = "pydantic-core"
@@ -2459,7 +2462,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pgvector" },
     { name = "pydantic" },
-    { name = "pydantic-ai-slim", extra = ["openai", "openrouter", "retries"] },
+    { name = "pydantic-ai-slim", extra = ["openai", "openrouter", "retries", "typesafe"] },
     { name = "pypdf" },
     { name = "python-dotenv" },
     { name = "redis" },
@@ -2499,7 +2502,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.6" },
     { name = "pgvector", specifier = ">=0.5.0" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "pydantic-ai-slim", extras = ["openai", "openrouter", "retries"], specifier = ">=2.49.0" },
+    { name = "pydantic-ai-slim", extras = ["openai", "openrouter", "retries", "typesafe"], specifier = ">=2.49.0" },
     { name = "pypdf", specifier = ">=6.19.0" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "redis", specifier = ">=6.4.0" },
@@ -2662,6 +2665,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/ed/ef06584ccdd5c410df0837951ecd7e15d9a6144ea1bd4c73cecab1a89891/typer-0.26.7.tar.gz", hash = "sha256:e314a34c617e419c091b2830dda3ea1f257134ff593061a8f5b9717ab8dddb3a", size = 201709, upload-time = "2026-06-03T07:18:06.843Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/24/25/2201973529af2c954de0bb725323c3aaed6d7f0ceee8f550dec9185df013/typer-0.26.7-py3-none-any.whl", hash = "sha256:5c87cfbc5d34491c5346ebf49c23e18d56ccb863268d3a8d592b26087c2f5e58", size = 122456, upload-time = "2026-06-03T07:18:05.732Z" },
+]
+
+[[package]]
+name = "typesafe-sdk"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx2" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "tenacity" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/ac/8bad2c02c038b85039cdb198ba106650d54bade0c0c986c68dc6e9cef8c3/typesafe_sdk-0.7.2.tar.gz", hash = "sha256:2434f4af5cdfc45d6ab5ff27048e8b257207f786b60456e69995e345b32e77e1", size = 23169, upload-time = "2026-09-26T21:20:24.988Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/5e/2b97ba9b0b77612e3a480ddb60c0c0325b4809ef57a7b565341d65ef7bec/typesafe_sdk-0.7.2-py3-none-any.whl", hash = "sha256:0a961148187d52e18276ed7f2d02617cfac48e3b97673cb631a8749397d43d1e", size = 36448, upload-time = "2026-09-26T21:20:23.511Z" },
 ]
 
 [[package]]

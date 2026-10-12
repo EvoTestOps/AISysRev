@@ -1,14 +1,71 @@
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import KeyOutlinedIcon from "@mui/icons-material/KeyOutlined";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useEffect, useMemo, useState } from "react";
 import * as z from "zod";
-import Skeleton from "react-loading-skeleton";
-import { Button } from "../components/Button";
-import { Layout } from "../components/Layout";
-import { useConfig } from "../config/config";
-import { CircleX, Pencil, Save, KeyRound, Trash2 } from "lucide-react";
-import { Card } from "../components/Card";
-import { TabButton } from "../components/TabButton";
-import { H4 } from "../components/Typography";
 import { ConfirmationModal } from "../components/ConfirmationModal";
+import { Layout } from "../components/Layout";
+import { riseIn } from "../components/motion";
+import { SectionSkeleton, SkeletonGroup } from "../components/skeletons";
+import { NavTabs } from "../components/NavTabs";
+import { ToggleSwitch } from "../components/ToggleSwitch";
+import { useConfig } from "../config/config";
+import { SETTINGS_TABS } from "./settingsTabs";
+
+type SettingRowProps = {
+  title: string;
+  description: string | null;
+  loading: boolean;
+  /** Next to the title, e.g. a status chip. */
+  status?: React.ReactNode;
+  /** The row's controls, on the right (below on narrow screens). */
+  action: React.ReactNode;
+  testId?: string;
+};
+
+/** One setting: its title and description, and the controls to change it. */
+const SettingRow: React.FC<SettingRowProps> = ({
+  title,
+  description,
+  loading,
+  status,
+  action,
+  testId,
+}) => (
+  <ListItem
+    divider
+    data-testid={testId}
+    sx={{
+      py: 2,
+      gap: 2,
+      flexDirection: { xs: "column", sm: "row" },
+      alignItems: { xs: "stretch", sm: "center" },
+    }}
+  >
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="subtitle2">{loading ? <Skeleton width={160} /> : title}</Typography>
+        {!loading && status}
+      </Stack>
+      <Typography variant="body2" color="textSecondary">
+        {loading ? <Skeleton width={260} /> : (description ?? "")}
+      </Typography>
+    </Box>
+    <Box sx={{ flexShrink: 0 }}>{action}</Box>
+  </ListItem>
+);
 
 type SettingEntryProps = {
   config_key: string;
@@ -16,38 +73,8 @@ type SettingEntryProps = {
   description: string | null;
 };
 
-const StatusPill = ({
-  kind,
-  label,
-}: {
-  kind: "set" | "missing";
-  label: string;
-}) => {
-  const base =
-    "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ring-1";
-  if (kind === "set") {
-    return (
-      <span
-        className={`${base} bg-emerald-50 text-emerald-700 ring-emerald-200`}
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        {label}
-      </span>
-    );
-  }
-  return (
-    <span className={`${base} bg-amber-50 text-amber-700 ring-amber-200`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-      {label}
-    </span>
-  );
-};
-
-const SettingEntry: React.FC<SettingEntryProps> = ({
-  title,
-  config_key,
-  description,
-}) => {
+/** A secret setting, such as an API key: set, replace or remove it. */
+const SettingEntry: React.FC<SettingEntryProps> = ({ title, config_key, description }) => {
   const { setting, loading, refresh, update, remove } = useConfig(config_key);
 
   const [editMode, setEditMode] = useState(false);
@@ -57,166 +84,144 @@ const SettingEntry: React.FC<SettingEntryProps> = ({
   const isSet = !loading && setting !== null;
   const canSave = !loading && value.trim() !== "" && value !== setting?.value;
 
-  useEffect(() => {
-    if (editMode) setValue("");
-  }, [editMode]);
+  const startEditing = () => {
+    setValue("");
+    setEditMode(true);
+  };
+  const cancel = () => {
+    refresh();
+    setEditMode(false);
+    setValue("");
+  };
+  const save = () => {
+    if (!canSave) return;
+    update({ value: value.trim() });
+    setEditMode(false);
+    setValue("");
+    refresh();
+  };
+
+  const status = (
+    <Chip
+      size="small"
+      variant="outlined"
+      color={isSet ? "success" : "warning"}
+      label={isSet ? "Key set" : "Not set"}
+      data-testid={`setting-status-${config_key}`}
+    />
+  );
+
+  let action: React.ReactNode = null;
+  if (editMode) {
+    action = (
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <TextField
+          type="password"
+          size="small"
+          label={title}
+          placeholder="Paste or type value…"
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") save();
+            if (e.key === "Escape") cancel();
+          }}
+          sx={{ width: { xs: "100%", sm: 320 } }}
+          slotProps={{
+            htmlInput: {
+              "data-testid": `setting-value-input-${config_key}`,
+              "data-1p-ignore": true,
+              autoComplete: "off",
+            },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <KeyOutlinedIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <Button
+          variant="contained"
+          disabled={!canSave}
+          onClick={save}
+          data-testid={`setting-save-button-${config_key}`}
+        >
+          Save
+        </Button>
+        <Button onClick={cancel} data-testid={`setting-cancel-button-${config_key}`}>
+          Cancel
+        </Button>
+      </Stack>
+    );
+  } else if (setting !== null) {
+    action = (
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          sx={{ fontFamily: "monospace", letterSpacing: 2 }}
+          aria-label="Saved key (hidden)"
+        >
+          ••••••••
+        </Typography>
+        <Button
+          variant="outlined"
+          onClick={startEditing}
+          data-testid={`setting-update-button-${config_key}`}
+        >
+          Update
+        </Button>
+        <Tooltip title="Remove key">
+          <IconButton
+            aria-label={`Remove ${title}`}
+            onClick={() => setShowDeleteModal(true)}
+            data-testid={`setting-delete-button-${config_key}`}
+          >
+            <DeleteOutlinedIcon />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+    );
+  } else if (!loading) {
+    action = (
+      <Button
+        variant="outlined"
+        onClick={startEditing}
+        data-testid={`setting-set-value-button-${config_key}`}
+      >
+        Set value
+      </Button>
+    );
+  }
 
   return (
     <>
-    <div
-      data-testid={`setting-entry-${config_key}`}
-      className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-semibold text-slate-900">
-            {loading ? <Skeleton width={160} /> : title}
-          </span>
-          {!loading && (
-            <span data-testid={`setting-status-${config_key}`}>
-              <StatusPill
-                kind={isSet ? "set" : "missing"}
-                label={isSet ? "Key set" : "Not set"}
-              />
-            </span>
-          )}
-        </div>
-
-        <p className="mt-1 text-xs text-slate-500">
-          {loading ? (
-            <Skeleton width={260} />
-          ) : description !== null ? (
-            description
-          ) : (
-            ""
-          )}
-        </p>
-      </div>
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-105">
-        {!loading && !editMode && (
-          <div className="flex items-center gap-2">
-            {setting !== null ? (
-              <>
-                <div className="relative w-full">
-                  <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="password"
-                    disabled
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-10 py-2.5 text-sm text-slate-700 shadow-sm outline-none"
-                    value={setting.value}
-                    data-1p-ignore
-                  />
-                </div>
-
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setEditMode(true);
-                  }}
-                  variant="green"
-                  data-testid={`setting-update-button-${config_key}`}
-                >
-                  <div className="flex flex-row items-center gap-2 font-semibold">
-                    <Pencil />
-                    <span>Update</span>
-                  </div>
-                </Button>
-                <Button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowDeleteModal(true);
-                  }}
-                  variant="red"
-                  data-testid={`setting-delete-button-${config_key}`}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </>
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  setEditMode(true);
-                }}
-                variant="green"
-                data-testid={`setting-set-value-button-${config_key}`}
-              >
-                Set value
-              </Button>
-            )}
-          </div>
-        )}
-        {!loading && editMode && (
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative w-full">
-              <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="password"
-                data-testid={`setting-value-input-${config_key}`}
-                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-900 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 focus:ring-4 focus:ring-slate-200/60"
-                placeholder="Paste or type value..."
-                disabled={loading}
-                value={value}
-                data-1p-ignore
-                onChange={(e) => setValue(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="green"
-                disabled={!canSave}
-                data-testid={`setting-save-button-${config_key}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (value.trim() !== "") {
-                    update({ value: value.trim() });
-                    setEditMode(false);
-                    setValue("");
-                    refresh();
-                  }
-                }}
-              >
-                <div className="flex flex-row items-center gap-2 font-semibold">
-                  <Save />
-                  <span>Save</span>
-                </div>
-              </Button>
-              <Button
-                variant="red"
-                disabled={loading}
-                data-testid={`setting-cancel-button-${config_key}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  refresh();
-                  setEditMode(false);
-                  setValue("");
-                }}
-              >
-                <div className="flex flex-row items-center gap-2 font-semibold">
-                  <CircleX />
-                  <span>Cancel</span>
-                </div>
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-    <ConfirmationModal
-      open={showDeleteModal}
-      onClose={() => setShowDeleteModal(false)}
-      onConfirm={async () => {
-        await remove();
-        setShowDeleteModal(false);
-        refresh();
-      }}
-      title="Delete API key"
-      description={`Are you sure you want to delete the ${title} key? This action cannot be undone.`}
-      confirmButtonLabel="Delete"
-      confirmButtonVariant="red"
-      confirmButtonIcon={<Trash2 size={16} />}
-      confirmButtonTestId={`setting-confirm-delete-button-${config_key}`}
-    />
+      <SettingRow
+        testId={`setting-entry-${config_key}`}
+        title={title}
+        description={description}
+        loading={loading}
+        status={status}
+        action={action}
+      />
+      <ConfirmationModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          await remove();
+          setShowDeleteModal(false);
+          refresh();
+        }}
+        title="Remove API key?"
+        description={`The ${title} will be deleted. Screening tasks that need it can't run until you set it again.`}
+        confirmButtonLabel="Remove"
+        confirmColor="error"
+        confirmButtonIcon={<DeleteOutlinedIcon />}
+        confirmButtonTestId={`setting-confirm-delete-button-${config_key}`}
+      />
     </>
   );
 };
@@ -228,6 +233,7 @@ type SettingToggleEntryProps = {
   defaultValue: boolean;
 };
 
+/** An on/off setting; unset settings show their default. */
 const SettingToggleEntry: React.FC<SettingToggleEntryProps> = ({
   title,
   config_key,
@@ -235,43 +241,26 @@ const SettingToggleEntry: React.FC<SettingToggleEntryProps> = ({
   defaultValue,
 }) => {
   const { setting, loading, update } = useConfig(config_key);
-
   const enabled = (setting?.value ?? String(defaultValue)) === "true";
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border-0 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate text-sm font-semibold text-slate-900">
-            {loading ? <Skeleton width={160} /> : title}
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {loading ? <Skeleton width={260} /> : (description ?? "")}
-        </p>
-      </div>
-      {loading ? (
-        <Skeleton width={44} height={24} borderRadius={999} />
-      ) : (
-        <button
-          role="switch"
-          aria-checked={enabled}
-          data-testid={`setting_${config_key}_toggle`}
-          onClick={() => {
-            update({ value: enabled ? "false" : "true", secret: false });
-          }}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
-            enabled ? "bg-slate-800" : "bg-slate-300"
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              enabled ? "translate-x-6" : "translate-x-1"
-            }`}
+    <SettingRow
+      title={title}
+      description={description}
+      loading={loading}
+      action={
+        loading ? (
+          <Skeleton variant="rounded" width={58} height={38} />
+        ) : (
+          <ToggleSwitch
+            checked={enabled}
+            inputLabel={title}
+            testId={`setting_${config_key}_toggle`}
+            onChange={(checked) => update({ value: checked ? "true" : "false", secret: false })}
           />
-        </button>
-      )}
-    </div>
+        )
+      }
+    />
   );
 };
 
@@ -280,10 +269,7 @@ const ConfigParameterSchema = z.object({
   title: z.string(),
   description: z.string().nullable(),
   type: z.enum(["string", "number", "boolean"]).default("string"),
-  defaultValue: z
-    .union([z.string(), z.number(), z.boolean()])
-    .nullable()
-    .optional(),
+  defaultValue: z.union([z.string(), z.number(), z.boolean()]).nullable().optional(),
   secret: z.boolean(),
 });
 
@@ -293,86 +279,84 @@ const ProviderConfigParamsResponseSchema = z.object({
   config_parameters: z.array(ConfigParameterSchema),
 });
 
-const ProviderConfigParamsMapSchema = z.record(
-  z.string(),
-  ProviderConfigParamsResponseSchema,
-);
+const ProviderConfigParamsMapSchema = z.record(z.string(), ProviderConfigParamsResponseSchema);
 type ProviderConfigParamsMap = z.infer<typeof ProviderConfigParamsMapSchema>;
 
 export const SettingsPage = () => {
   const [entries, setEntries] = useState<ProviderConfigParamsMap>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/v1/llm/provider_config_params")
       .then((res) => res.json())
       .then((jsonData) => {
-        const contents = ProviderConfigParamsMapSchema.parse(jsonData);
-        setEntries(contents);
+        setEntries(ProviderConfigParamsMapSchema.parse(jsonData));
       })
-      .catch();
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const providerKeys = useMemo(() => Object.keys(entries), [entries]);
+  const providerKeys = useMemo(
+    () => Object.keys(entries).filter((key) => entries[key]?.config_parameters.length),
+    [entries],
+  );
 
   return (
     <Layout title="Settings">
-      <div className="flex flex-row mb-4">
-        <TabButton href="/settings" active>
-          LLM Settings
-        </TabButton>
-        <TabButton href="/settings/account">Account</TabButton>
-      </div>
-      <Card>
-        <div className="border-b border-slate-200 bg-white px-6 py-5">
-          <h1 className="text-xl font-semibold text-slate-900">Settings</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Manage settings related to AISysRev or LLM providers.
-          </p>
-        </div>
-        <div className="space-y-4 bg-slate-50 px-6 py-6">
-          {providerKeys.map((key) => {
-            const entry = entries[key];
-            if (!entry || entry.config_parameters.length === 0) return null;
-
-            return (
-              <section
-                key={`${key}_container`}
-                className="rounded-2xl border border-slate-200 bg-white shadow-sm"
-              >
-                <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <H4>{entry.title}</H4>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {entry.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 p-5">
-                  {entry.config_parameters.map((setting) =>
-                    setting.type === "boolean" ? (
-                      <SettingToggleEntry
-                        key={setting.key}
-                        title={setting.title}
-                        config_key={setting.key}
-                        description={setting.description}
-                        defaultValue={Boolean(setting.defaultValue)}
-                      />
-                    ) : (
-                      <SettingEntry
-                        key={setting.key}
-                        title={setting.title}
-                        config_key={setting.key}
-                        description={setting.description}
-                      />
-                    ),
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      </Card>
+      <NavTabs aria-label="Settings sections" active="/settings" tabs={SETTINGS_TABS} />
+      <Stack spacing={3} sx={{ maxWidth: 960 }}>
+        <Typography variant="body2" color="textSecondary">
+          API keys and options for the LLM providers. Keys are stored for your account only.
+        </Typography>
+        {loading && (
+          <SkeletonGroup>
+            <Stack spacing={3}>
+              <SectionSkeleton rows={1} />
+              <SectionSkeleton rows={2} />
+            </Stack>
+          </SkeletonGroup>
+        )}
+        {providerKeys.map((key, i) => {
+          const entry = entries[key];
+          return (
+            <Paper
+              key={key}
+              variant="outlined"
+              sx={{ borderRadius: 2, ...riseIn(i) }}
+              component="section"
+            >
+              <Box sx={{ px: 3, pt: 2.5, pb: 1 }}>
+                <Typography variant="h6" component="h2">
+                  {entry.title}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {entry.description}
+                </Typography>
+              </Box>
+              <List disablePadding sx={{ px: 1, "& > li:last-of-type": { borderBottom: 0 } }}>
+                {entry.config_parameters.map((setting) =>
+                  setting.type === "boolean" ? (
+                    <SettingToggleEntry
+                      key={setting.key}
+                      title={setting.title}
+                      config_key={setting.key}
+                      description={setting.description}
+                      defaultValue={Boolean(setting.defaultValue)}
+                    />
+                  ) : (
+                    <SettingEntry
+                      key={setting.key}
+                      title={setting.title}
+                      config_key={setting.key}
+                      description={setting.description}
+                    />
+                  ),
+                )}
+              </List>
+            </Paper>
+          );
+        })}
+      </Stack>
     </Layout>
   );
 };

@@ -1,14 +1,57 @@
-import { useEffect, useState, useCallback } from "react";
-import { useLocation } from "wouter";
-import { Trash2 } from "lucide-react";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Skeleton from "react-loading-skeleton";
-import { Button } from "../components/Button";
-import { Card } from "../components/Card";
+import { useLocation } from "wouter";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 import { Layout } from "../components/Layout";
-import { TabButton } from "../components/TabButton";
+import { riseIn } from "../components/motion";
+import { NavTabs } from "../components/NavTabs";
+import { ToggleSwitch } from "../components/ToggleSwitch";
 import { api } from "../services/api";
+import { SETTINGS_TABS } from "./settingsTabs";
+
+type SectionProps = {
+  title: string;
+  description: string;
+  /** Marks a section whose action can't be undone. */
+  danger?: boolean;
+  action: React.ReactNode;
+  /** Its place in the page's stagger of blocks rising in. */
+  index: number;
+};
+
+const Section: React.FC<SectionProps> = ({ title, description, danger = false, action, index }) => (
+  <Paper
+    variant="outlined"
+    component="section"
+    sx={{
+      borderRadius: 2,
+      p: 3,
+      display: "flex",
+      flexDirection: { xs: "column", sm: "row" },
+      alignItems: { xs: "stretch", sm: "center" },
+      gap: 2,
+      ...(danger && { borderColor: "error.light" }),
+      ...riseIn(index),
+    }}
+  >
+    <Box sx={{ flex: 1 }}>
+      <Typography variant="h6" component="h2" color={danger ? "error" : undefined}>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="textSecondary">
+        {description}
+      </Typography>
+    </Box>
+    <Box sx={{ flexShrink: 0 }}>{action}</Box>
+  </Paper>
+);
 
 export const AccountSettingsPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -53,74 +96,53 @@ export const AccountSettingsPage = () => {
 
   return (
     <Layout title="Settings">
-      <div className="flex flex-row mb-4">
-        <TabButton href="/settings">LLM Settings</TabButton>
-        <TabButton href="/settings/account" active>
-          Account
-        </TabButton>
-      </div>
-      <Card>
-        <div className="border-b border-slate-200 bg-white px-6 py-5">
-          <h1 className="text-xl font-semibold text-slate-900">Account</h1>
-          <p className="mt-1 text-sm text-slate-600">Manage your account settings.</p>
-        </div>
-        <div className="space-y-4 bg-slate-50 px-6 py-6">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-            <p className="text-sm font-semibold text-slate-900">Research data consent</p>
-            <p className="mt-1 text-sm text-slate-600 mb-4">
-              I consent to my anonymized usage data being used for academic research about this
-              tool. This is optional and will not affect your use of the application. You can change
-              your consent for this at any time.
-            </p>
-            {loadingUser ? (
-              <Skeleton width={44} height={24} borderRadius={999} />
+      <NavTabs aria-label="Settings sections" active="/settings/account" tabs={SETTINGS_TABS} />
+      <Stack spacing={3} sx={{ maxWidth: 960 }}>
+        <Section
+          index={0}
+          title="Research data consent"
+          description="I consent to my anonymized usage data being used for academic research about this tool. This is optional and will not affect your use of the application. You can change your consent at any time."
+          action={
+            loadingUser ? (
+              <Skeleton variant="rounded" width={58} height={38} />
             ) : (
-              <button
-                role="switch"
-                data-testid="research-consent-switch"
-                aria-checked={researchConsent}
-                onClick={handleSaveResearchConsent}
+              <ToggleSwitch
+                checked={researchConsent}
                 disabled={saving}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:cursor-not-allowed ${
-                  researchConsent ? "bg-slate-800" : "bg-slate-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    researchConsent ? "translate-x-6" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-red-200 bg-white shadow-sm p-5">
-            <p className="text-sm font-semibold text-slate-900">Delete account</p>
-            <p className="mt-1 text-sm text-slate-600 mb-4">
-              Permanently deletes your account and all your projects, papers and jobs. Note that
-              this action cannot be undone.
-            </p>
+                inputLabel="Research data consent"
+                testId="research-consent-switch"
+                onChange={handleSaveResearchConsent}
+              />
+            )
+          }
+        />
+        <Section
+          index={1}
+          danger
+          title="Delete account"
+          description="Permanently deletes your account and all your projects, papers and jobs. This cannot be undone."
+          action={
             <Button
-              variant="red"
-              size="sm"
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteOutlinedIcon />}
               onClick={() => setShowDeleteModal(true)}
               data-testid="delete-account-button"
             >
-              <Trash2 size={16} />
               Delete account
             </Button>
-          </div>
-        </div>
-      </Card>
+          }
+        />
+      </Stack>
       <ConfirmationModal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteAccount}
-        title="Delete account"
-        description="Are you sure you want to delete your account? All your projects, papers and jobs will be permanently deleted. This action cannot be undone."
+        title="Delete account?"
+        description="All your projects, papers and jobs will be permanently deleted. This cannot be undone."
         confirmButtonLabel="Delete account"
-        confirmButtonVariant="red"
-        confirmButtonIcon={<Trash2 size={16} />}
+        confirmColor="error"
+        confirmButtonIcon={<DeleteOutlinedIcon />}
         confirmButtonTestId="confirm-delete-account-button"
       />
     </Layout>

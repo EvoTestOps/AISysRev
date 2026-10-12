@@ -19,6 +19,7 @@ from src.schemas.job import (
     ZeroShotPromptingConfig,
 )
 from src.schemas.jobtask import JobTaskCreate, JobTaskStatus
+from src.schemas.llm import PromptRecord
 from src.schemas.paper import PaperCreate
 from src.schemas.project import Criteria, ProjectCreate
 from src.schemas.user import UserCreate
@@ -246,6 +247,9 @@ async def test_async_process_job_failure(
     call_count = {"count": 0}
 
     async def fail_on_second_call(*args, **kwargs):
+        # Like the real function, report the prompt before calling the model.
+        job_task = args[3]
+        kwargs["on_prompt"](PromptRecord(user_prompt=f"Screen {job_task.title}"))
         call_count["count"] += 1
         if call_count["count"] == 2:
             raise Exception("Simulated failure")
@@ -274,3 +278,12 @@ async def test_async_process_job_failure(
 
         assert done_count == 1
         assert error_count == 1
+        # The prompt is kept for the failed task as well as the finished one.
+        for t in tasks:
+            assert t.prompts == [
+                {
+                    "criterion": None,
+                    "system_prompt": None,
+                    "user_prompt": f"Screen {t.title}",
+                }
+            ]
