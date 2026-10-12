@@ -59,7 +59,7 @@ class JobTaskCrud:
 
     async def fetch_job_tasks_by_paper_uuid(
         self, paper_uuid: UUID, owner_uuid: UUID
-    ) -> Sequence[Row[Tuple[JobTask, Job]]]:
+    ) -> Sequence[Row[JobTask, Job]]:
         stmt = (
             select(JobTask, Job)
             .join(Job, JobTask.job_id == Job.id)
