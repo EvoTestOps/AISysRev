@@ -529,7 +529,7 @@ async def test_single_criterion_with_a_missing_api_key_fails_before_the_llm_call
 
 
 @pytest.mark.asyncio
-async def test_the_prompt_sent_is_recorded_with_the_system_prompt():
+async def test_the_prompt_sent_is_recorded_with_the_system_prompt() -> None:
     service, _ = _llm_service()
     recorded: list[PromptRecord] = []
 
@@ -555,7 +555,7 @@ async def test_the_prompt_sent_is_recorded_with_the_system_prompt():
 
 
 @pytest.mark.asyncio
-async def test_the_prompt_is_recorded_even_when_the_llm_call_fails():
+async def test_the_prompt_is_recorded_even_when_the_llm_call_fails() -> None:
     service, _ = _llm_service()
     service.call_llm = AsyncMock(side_effect=RuntimeError("provider down"))
     recorded: list[PromptRecord] = []
@@ -577,7 +577,7 @@ async def test_the_prompt_is_recorded_even_when_the_llm_call_fails():
 
 
 @pytest.mark.asyncio
-async def test_no_system_prompt_is_recorded_for_a_provider_that_sends_none():
+async def test_no_system_prompt_is_recorded_for_a_provider_that_sends_none() -> None:
     service, provider = _llm_service()
     provider.uses_system_prompt = False
     recorded: list[PromptRecord] = []
@@ -597,7 +597,7 @@ async def test_no_system_prompt_is_recorded_for_a_provider_that_sends_none():
 
 
 @pytest.mark.asyncio
-async def test_a_single_criterion_prompt_is_recorded_with_its_criterion_id():
+async def test_a_single_criterion_prompt_is_recorded_with_its_criterion_id() -> None:
     service, _ = _llm_service()
     recorded: list[PromptRecord] = []
 

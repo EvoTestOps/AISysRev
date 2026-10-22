@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Sequence
 from uuid import UUID
 
 from sqlalchemy import Row, case, func, select, update
@@ -49,7 +49,7 @@ class JobTaskCrud:
 
     async def fetch_job_tasks_with_paper_id(
         self, job_uuid: UUID, owner_uuid: UUID
-    ) -> Sequence[Row[Tuple[JobTask, int]]]:
+    ) -> Sequence[Row[JobTask, int]]:
         """A job's tasks with their paper's display id, in paper id order."""
         stmt = (
             select(JobTask, Paper.paper_id)
@@ -64,7 +64,7 @@ class JobTaskCrud:
 
     async def fetch_job_task_detail(
         self, job_uuid: UUID, job_task_uuid: UUID, owner_uuid: UUID
-    ) -> Row[Tuple[JobTask, Job, int]] | None:
+    ) -> Row[JobTask, Job, int] | None:
         """One task of a job, with its job and paper id, if the owner owns it."""
         stmt = (
             select(JobTask, Job, Paper.paper_id)
@@ -90,7 +90,7 @@ class JobTaskCrud:
 
     async def fetch_job_tasks_by_paper_uuid(
         self, paper_uuid: UUID, owner_uuid: UUID
-    ) -> Sequence[Row[Tuple[JobTask, Job]]]:
+    ) -> Sequence[Row[JobTask, Job]]:
         stmt = (
             select(JobTask, Job)
             .join(Job, JobTask.job_id == Job.id)
