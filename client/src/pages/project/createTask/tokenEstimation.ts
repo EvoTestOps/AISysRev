@@ -16,19 +16,19 @@ export const estimateTokens = ({
   screeningMethod: ScreeningMethod;
   promptingStrategy: PromptingStrategy;
 }): TokenEstimation => {
-  if (screeningMethod === ScreeningMethod.JEV) {
-    // One request per paper; Jev's output tokens are free.
-    return {
-      estimated_input_tokens: Math.round(paperCount * INPUT_TOKENS_PER_PAPER),
-      estimated_output_tokens: null,
-    };
-  }
   const inputMultiplier =
     promptingStrategy === JobPromptingType.PER_CRITERIA
       ? criteriaCount
       : promptingStrategy === JobPromptingType.FEW_SHOT
         ? FEW_SHOT_MULTIPLIER
         : 1;
+  if (screeningMethod === ScreeningMethod.JEV) {
+    // Jev's output tokens are free.
+    return {
+      estimated_input_tokens: Math.round(paperCount * INPUT_TOKENS_PER_PAPER * inputMultiplier),
+      estimated_output_tokens: null,
+    };
+  }
   return {
     estimated_input_tokens: Math.round(paperCount * INPUT_TOKENS_PER_PAPER * inputMultiplier),
     estimated_output_tokens: Math.round(paperCount * OUTPUT_TOKENS_PER_PAPER),

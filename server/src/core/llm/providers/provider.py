@@ -71,6 +71,8 @@ class LLMProvider(Generic[P, M], ABC):
     ] = StructuredResponse
     # Whether the PER_CRITERIA screening type (one call per criterion) can be used.
     supports_per_criteria: ClassVar[bool] = True
+    # Whether the FEW_SHOT screening type (examples in the prompt) can be used.
+    supports_few_shot: ClassVar[bool] = True
     # Whether the runtime system prompt is sent to the model.
     uses_system_prompt: ClassVar[bool] = True
 
@@ -159,3 +161,4 @@ class Provider(BaseModel):
     # provider (Jev uses OpenRouter's key).
     api_key_config_parameter: Optional[ConfigParameter] = None
     supports_per_criteria: bool = True
+    supports_few_shot: bool = True

@@ -468,6 +468,7 @@ export const Provider = z.strictObject({
   config_parameters: z.array(ConfigParameter),
   api_key_config_parameter: ConfigParameter.nullable().optional(),
   supports_per_criteria: z.boolean().default(true),
+  supports_few_shot: z.boolean().default(true),
 });
 
 export type ProviderConfigParamsResponse = __TypedOpenapi.Schemas.ProviderConfigParamsResponse;

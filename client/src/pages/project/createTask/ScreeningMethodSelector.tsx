@@ -25,7 +25,7 @@ export const ScreeningMethodSelector: React.FC<{ form: CreateTaskForm }> = ({ fo
         icon={<Gauge size={16} className="text-emerald-600" />}
         iconClassName="bg-emerald-100"
         title="Jev screening"
-        description="TypeSafe Jev returns a probability per criterion, all in one request."
+        description="TypeSafe Jev returns a calibrated probability per criterion."
       />
     </div>
   );

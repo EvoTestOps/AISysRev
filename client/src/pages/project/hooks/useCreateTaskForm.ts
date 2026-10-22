@@ -140,7 +140,8 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     setScreeningMethod(method);
     resetModel();
     if (method === ScreeningMethod.JEV && jevProvider) {
-      // Jev screens abstracts, asking all criteria in parallel in one request.
+      // Jev starts on abstracts with all criteria in one request, and can't do
+      // few-shot, so a few-shot choice left over from LLM screening is cleared.
       setSelectedProvider({ name: jevProvider.title, value: jevProvider.name });
       setIsProviderSelected(true);
       setPromptingStrategy(JobPromptingType.ZERO_SHOT);

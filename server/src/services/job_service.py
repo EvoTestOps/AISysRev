@@ -7,6 +7,7 @@ from src.crud.job_crud import JobCrud
 from src.db.db_context import DBContext
 from src.helpers.resolve_job_status import resolve_job_status
 from src.schemas.job import (
+    FewShotPromptingConfig,
     JobCreate,
     JobRead,
     JobReadWithStats,
@@ -121,6 +122,14 @@ class JobService:
         ):
             raise ValueError(
                 f"PER_CRITERIA prompting is not supported by {provider.provider_title}"
+            )
+        if (
+            provider is not None
+            and not provider.supports_few_shot
+            and isinstance(job_data.prompting_config, FewShotPromptingConfig)
+        ):
+            raise ValueError(
+                f"FEW_SHOT prompting is not supported by {provider.provider_title}"
             )
 
         new_job = await self.job_crud.create_job(job_data)

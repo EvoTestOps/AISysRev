@@ -103,6 +103,9 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
   const isPerCriterion = form.promptingStrategy === JobPromptingType.PER_CRITERIA;
   const isFewShot = form.promptingStrategy === JobPromptingType.FEW_SHOT;
   const hasMethodChoice = Boolean(form.jevProvider);
+  // Jev, for one, can't take examples, so it has no prompting strategy to pick.
+  const supportsFewShot = form.provider?.supports_few_shot !== false;
+  const supportsPerCriteria = form.provider?.supports_per_criteria !== false;
   // Only secrets (API keys) are required to be set; non-secret parameters such
   // as toggles fall back to their default.
   const requiredSettings = (form.configParameters ?? []).filter((param) => param.secret);
@@ -114,16 +117,14 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
     promptingStrategy: form.promptingStrategy,
   });
 
-  const optionChips = form.isJevScreening
-    ? ["Title+Abstract", "All criteria at once", "Zero-shot"]
-    : [
-        // Repositories have one screening mode, so it isn't worth a chip.
-        ...(screeningTarget === ScreeningTarget.PAPER
-          ? [screeningModeLabel(form.screeningMode, screeningTarget).value]
-          : []),
-        evaluationModeLabel(form.promptingStrategy).value,
-        promptingStrategyLabel(form.promptingStrategy).value,
-      ];
+  const optionChips = [
+    // Repositories have one screening mode, so it isn't worth a chip.
+    ...(screeningTarget === ScreeningTarget.PAPER
+      ? [screeningModeLabel(form.screeningMode, screeningTarget).value]
+      : []),
+    evaluationModeLabel(form.promptingStrategy).value,
+    promptingStrategyLabel(form.promptingStrategy).value,
+  ];
 
   const missing = !form.isProviderSelected
     ? "Choose a provider to continue."
@@ -167,7 +168,7 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
 
         <Section step={step(2)} title="Model">
           {form.isJevScreening ? (
-            <JevScreeningFields form={form} itemName={itemName} screeningTarget={screeningTarget} />
+            <JevScreeningFields form={form} />
           ) : (
             <>
               <TextField
@@ -182,7 +183,9 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
                   form.setIsProviderSelected(true);
                 }}
                 slotProps={{
-                  select: { SelectDisplayProps: { "data-testid": "llm-provider-dropdown" } as object },
+                  select: {
+                    SelectDisplayProps: { "data-testid": "llm-provider-dropdown" } as object,
+                  },
                 }}
               >
                 {form.llmProviders.map((provider) => (
@@ -204,38 +207,39 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
         <Section step={step(3)} title="Options">
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
             {optionChips.map((label) => (
-              <Chip key={label} label={label} variant="outlined" sx={{ bgcolor: "background.paper" }} />
+              <Chip
+                key={label}
+                label={label}
+                variant="outlined"
+                sx={{ bgcolor: "background.paper" }}
+              />
             ))}
-            {!form.isJevScreening && (
-              <Button
-                size="small"
-                startIcon={customizing ? <ExpandLessIcon /> : <TuneIcon />}
-                onClick={() => setCustomizing((open) => !open)}
-                aria-expanded={customizing}
-                data-testid="customize-task-options"
-              >
-                {customizing ? "Done" : "Customize"}
-              </Button>
-            )}
+            <Button
+              size="small"
+              startIcon={customizing ? <ExpandLessIcon /> : <TuneIcon />}
+              onClick={() => setCustomizing((open) => !open)}
+              aria-expanded={customizing}
+              data-testid="customize-task-options"
+            >
+              {customizing ? "Done" : "Customize"}
+            </Button>
           </Box>
-          {!form.isJevScreening && (
-            <Collapse in={customizing} unmountOnExit>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-                {screeningTarget === ScreeningTarget.PAPER && (
-                  <ScreeningModeSelector form={form} disabled={false} />
-                )}
-                <EvaluationModeSelector form={form} disabled={false} />
-                {isPerCriterion ? (
-                  <PerCriteriaLogic
-                    inclusionExpression={project.criteria.inclusion_expression}
-                    exclusionExpression={project.criteria.exclusion_expression}
-                  />
-                ) : (
-                  <PromptingStrategySelector form={form} disabled={false} />
-                )}
-              </Box>
-            </Collapse>
-          )}
+          <Collapse in={customizing} unmountOnExit>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+              {screeningTarget === ScreeningTarget.PAPER && (
+                <ScreeningModeSelector form={form} disabled={false} />
+              )}
+              {supportsPerCriteria && <EvaluationModeSelector form={form} disabled={false} />}
+              {isPerCriterion ? (
+                <PerCriteriaLogic
+                  inclusionExpression={project.criteria.inclusion_expression}
+                  exclusionExpression={project.criteria.exclusion_expression}
+                />
+              ) : (
+                supportsFewShot && <PromptingStrategySelector form={form} disabled={false} />
+              )}
+            </Box>
+          </Collapse>
         </Section>
       </Box>
 

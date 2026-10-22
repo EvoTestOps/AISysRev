@@ -32,8 +32,10 @@ export const EvaluationModeSelector: React.FC<EvaluationModeSelectorProps> = ({
         title="All criteria together"
         description={
           <>
-            <div>One LLM call evaluates all criteria.</div>
-            <div>Supports zero-shot and few-shot prompting.</div>
+            <div>One model call evaluates all criteria.</div>
+            {form.provider?.supports_few_shot !== false && (
+              <div>Supports zero-shot and few-shot prompting.</div>
+            )}
           </>
         }
       />
@@ -50,7 +52,7 @@ export const EvaluationModeSelector: React.FC<EvaluationModeSelectorProps> = ({
         title="One call per criterion"
         description={
           <>
-            <div>Runs one LLM call for each criterion.</div>
+            <div>Runs one model call for each criterion.</div>
             <div>Prompting strategy is fixed for this mode.</div>
           </>
         }

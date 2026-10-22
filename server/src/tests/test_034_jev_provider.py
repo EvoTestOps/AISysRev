@@ -7,8 +7,15 @@ import pytest
 from pydantic_ai.exceptions import ModelHTTPError
 
 from src.core.llm.providers.jev import JEV_MODELS, JevProvider
-from src.core.prompts import additional_instructions, zero_shot_task_prompt
+from src.core.llm.providers.openrouter import OpenRouterProvider
+from src.core.prompts import (
+    additional_instructions,
+    github_per_criteria_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+)
 from src.schemas.job import (
+    FewShotPromptingConfig,
     JobCreate,
     JobScreeningMode,
     LLMModelConfig,
@@ -135,22 +142,22 @@ async def test_sends_openrouter_provider_preferences(zdr, expected):
     assert server.body()["provider"] == expected
 
 
-# --- PER_CRITERIA is not supported -----------------------------------------
+# --- Supported prompting types -------------------------------------------
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("schema", [CriterionResponse, StructuredResponse])
-async def test_other_schemas_are_refused_before_any_request(schema):
+async def test_the_regular_structured_schema_is_refused_before_any_request():
     server = _JevServer()
 
-    with pytest.raises(ValueError, match=schema.__name__):
-        await _run(_provider(), server, schema, ZERO_SHOT_PROMPT)
+    with pytest.raises(ValueError, match=StructuredResponse.__name__):
+        await _run(_provider(), server, StructuredResponse, ZERO_SHOT_PROMPT)
 
     assert server.requests == []
 
 
-def test_per_criteria_is_not_offered():
-    assert JevProvider.supports_per_criteria is False
+def test_per_criteria_is_offered_but_few_shot_is_not():
+    assert JevProvider.supports_per_criteria is True
+    assert JevProvider.supports_few_shot is False
 
 
 def _job(provider_name: str, prompting_config) -> JobCreate:
@@ -169,26 +176,99 @@ def _job(provider_name: str, prompting_config) -> JobCreate:
 
 
 @pytest.mark.asyncio
-async def test_a_per_criteria_jev_job_is_rejected_before_it_is_created():
+async def test_a_few_shot_jev_job_is_rejected_before_it_is_created():
     job_crud = MagicMock()
     job_crud.create_job = AsyncMock()
     service = JobService(MagicMock(), job_crud)
 
-    with pytest.raises(ValueError, match="PER_CRITERIA"):
-        await service.create(_job("jev", PerCriteriaPromptingConfig()))
+    with pytest.raises(ValueError, match="FEW_SHOT"):
+        await service.create(
+            _job(
+                "jev",
+                FewShotPromptingConfig(
+                    seed_paper_inc=[], seed_paper_exc=[], remember_selection=False
+                ),
+            )
+        )
 
     job_crud.create_job.assert_not_awaited()
 
 
 @pytest.mark.asyncio
-async def test_a_zero_shot_jev_job_is_created():
+@pytest.mark.parametrize(
+    "prompting_config", [ZeroShotPromptingConfig(), PerCriteriaPromptingConfig()]
+)
+async def test_zero_shot_and_per_criteria_jev_jobs_are_created(prompting_config):
     job_crud = MagicMock()
     job_crud.create_job = AsyncMock(side_effect=RuntimeError("created"))
     service = JobService(MagicMock(), job_crud)
 
-    # Passing the guard reaches the CRUD call.
+    # Passing the guards reaches the CRUD call.
     with pytest.raises(RuntimeError, match="created"):
-        await service.create(_job("jev", ZeroShotPromptingConfig()))
+        await service.create(_job("jev", prompting_config))
+
+
+# --- Per-criteria -----------------------------------------------------------
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "template", [per_criteria_task_prompt, github_per_criteria_task_prompt]
+)
+async def test_a_criterion_is_asked_as_one_noul_question(template):
+    server = _JevServer({"applies": 0.3})
+    prompt = template.format("The title", "The abstract", "Is about testing")
+
+    result = await _run(_provider(), server, CriterionResponse, prompt)
+
+    assert len(server.requests) == 1
+    body = server.body()
+    assert body["state"] == prompt
+    questions = body["questions"]
+    assert list(questions) == ["applies"]
+    assert questions["applies"]["type"] == "noul"
+    instructions = json.dumps(questions["applies"]["instructions"])
+    assert "Is about testing" in instructions
+    # Only the criterion, not the instructions that follow it in the prompt.
+    assert "Provide a probability" not in instructions
+    assert "Do not assume" not in instructions
+
+    assert isinstance(result, CriterionResponse)
+    assert result.probability_decision == 0.3
+    assert "does not provide written reasoning" in result.reason
+
+
+@pytest.mark.asyncio
+async def test_a_prompt_without_a_criterion_is_refused_before_any_request():
+    server = _JevServer()
+
+    with pytest.raises(ValueError, match="criterion"):
+        await _run(_provider(), server, CriterionResponse, ZERO_SHOT_PROMPT)
+
+    assert server.requests == []
+
+
+# --- Embeddings (full-text screening) --------------------------------------
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("zdr", [False, True])
+async def test_embeddings_use_openrouter_with_the_same_key_and_zdr(monkeypatch, zdr):
+    calls = []
+
+    async def fake_embed(self, client, texts):
+        calls.append((self, texts))
+        return [[0.1, 0.2] for _ in texts]
+
+    monkeypatch.setattr(OpenRouterProvider, "embed_async", fake_embed)
+
+    embeddings = await _provider(zdr=zdr).embed_async(httpx2.AsyncClient(), ["a", "b"])
+
+    assert embeddings == [[0.1, 0.2], [0.1, 0.2]]
+    [(openrouter, texts)] = calls
+    assert texts == ["a", "b"]
+    assert openrouter.runtime_parameters.api_key == API_KEY
+    assert openrouter.provider_parameters.zdr is zdr
 
 
 # --- Zero-shot / few-shot ---------------------------------------------------

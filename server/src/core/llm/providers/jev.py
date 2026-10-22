@@ -16,6 +16,7 @@ from src.core.llm.providers.openrouter import (
 )
 from src.core.llm.providers.provider import ConfigParameter, LLMProvider, T
 from src.schemas.llm import (
+    CriterionResponse,
     JevCriterion,
     JevDecision,
     JevStructuredResponse,
@@ -37,10 +38,13 @@ REQUEST_TIMEOUT_SECONDS = 60.0
 _CRITERIA_RE = re.compile(
     r"^- ((?:IC|EC)\d+): (.*?)(?=\n- (?:IC|EC)\d+: |\n\n|\Z)", re.M | re.S
 )
+# The criterion line of the per-criteria prompts, e.g. "Criterion: <criterion>".
+_CRITERION_RE = re.compile(r"^Criterion: (.*?)(?=\n\n|\Z)", re.M | re.S)
 
 _GOAL = (
     "Screen the paper or repository described in the text for a systematic "
-    "review, judging only from its title and abstract (or README)."
+    "review, judging only from the text given: its title and abstract or "
+    "excerpts of its full text (or, for a repository, its README)."
 )
 
 
@@ -77,14 +81,31 @@ def _screening_answers_model(criteria: dict[str, str]) -> type[BaseModel]:
     return create_model("ScreeningAnswers", __doc__=_GOAL, **fields)
 
 
+def _criterion_answer_model(criterion: str) -> type[BaseModel]:
+    return create_model(
+        "CriterionAnswer",
+        __doc__=_GOAL,
+        applies=(
+            float,
+            _probability_field(
+                f"Does the paper or repository meet this criterion? {criterion}"
+            ),
+        ),
+    )
+
+
+def _reason(probability: float) -> str:
+    return (
+        f"TypeSafe Jev probability {probability:.3f}; "
+        "Jev does not provide written reasoning."
+    )
+
+
 def _decision(probability: float) -> JevDecision:
     return JevDecision(
         binary_decision=probability >= 0.5,
         probability_decision=probability,
-        reason=(
-            f"TypeSafe Jev probability {probability:.3f}; "
-            "Jev does not provide written reasoning."
-        ),
+        reason=_reason(probability),
     )
 
 
@@ -104,16 +125,15 @@ class JevProvider(LLMProvider[OpenRouterProviderParams, JevModelParams]):
     provider_name = "jev"
     provider_description = (
         "TypeSafe Jev, a decision model called through OpenRouter. Returns "
-        "calibrated probabilities only: no written reasoning, no Likert scale, "
-        "no PDF screening and no per-criterion evaluation (all criteria are "
-        "already asked in parallel in one request). Uses your OpenRouter API "
-        "key and ZDR settings."
+        "calibrated probabilities only: no written reasoning, no Likert scale "
+        "and no few-shot prompting. Uses your OpenRouter API key and ZDR "
+        "settings."
     )
     provider_parameters_schema = OpenRouterProviderParams
     model_parameters_schema = JevModelParams
     structured_response_schema = JevStructuredResponse
-    # Jev answers all criteria in parallel in one request.
-    supports_per_criteria = False
+    # Jev would judge the examples as part of the text.
+    supports_few_shot = False
     # Jev would judge a system prompt as part of the text.
     uses_system_prompt = False
 
@@ -160,6 +180,18 @@ class JevProvider(LLMProvider[OpenRouterProviderParams, JevModelParams]):
             ),
         )
 
+    async def _answer(
+        self, client: AsyncClient, answer_model: type[BaseModel], prompt: str
+    ) -> dict[str, Any]:
+        # No system prompt: Jev would judge it as part of the text.
+        agent = Agent(
+            self._build_model(client),
+            retries={"tools": 3, "output": 5},
+            output_type=answer_model,
+        )
+        result = await agent.run(prompt)
+        return result.output.model_dump()
+
     async def generate_answer_async(
         self,
         client: AsyncClient,
@@ -167,21 +199,23 @@ class JevProvider(LLMProvider[OpenRouterProviderParams, JevModelParams]):
         schema: Type[T],
         prompt: str,
     ) -> T:
+        if schema is CriterionResponse:
+            match = _CRITERION_RE.search(prompt)
+            if match is None:
+                raise ValueError("No criterion found in the per-criteria prompt")
+            answers = await self._answer(
+                client, _criterion_answer_model(match.group(1).strip()), prompt
+            )
+            return schema.model_validate(
+                CriterionResponse(
+                    probability_decision=answers["applies"],
+                    reason=_reason(answers["applies"]),
+                ).model_dump()
+            )
         if schema is not JevStructuredResponse:
             raise ValueError(f"Jev does not support the {schema.__name__} schema")
         criteria = _parse_criteria(prompt)
-        answer_model = _screening_answers_model(criteria)
-
-        model = self._build_model(client)
-
-        # No system prompt: Jev would judge it as part of the text.
-        agent = Agent(
-            model,
-            retries={"tools": 3, "output": 5},
-            output_type=answer_model,
-        )
-        result = await agent.run(prompt)
-        answers = result.output.model_dump()
+        answers = await self._answer(client, _screening_answers_model(criteria), prompt)
 
         return schema.model_validate(
             JevStructuredResponse(
@@ -198,6 +232,20 @@ class JevProvider(LLMProvider[OpenRouterProviderParams, JevModelParams]):
                 ],
             ).model_dump()
         )
+
+    async def embed_async(
+        self,
+        client: AsyncClient,
+        texts: list[str],
+    ) -> list[list[float]]:
+        # Full-text screening picks PDF excerpts by embedding similarity. Jev
+        # has no embeddings, so OpenRouter's are used with the same key and
+        # model, which keeps the cached criteria and chunk embeddings shared.
+        if self.provider_parameters is None:
+            raise RuntimeError("Provider parameters needs to be defined")
+        return await OpenRouterProvider(
+            self.provider_parameters.model_dump(), self.runtime_parameters
+        ).embed_async(client, texts)
 
     async def get_available_models(self) -> List[Model]:
         return [

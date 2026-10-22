@@ -282,6 +282,7 @@ export namespace Schemas {
     config_parameters: Array<ConfigParameter>;
     api_key_config_parameter?: ConfigParameter | null;
     supports_per_criteria?: boolean;
+    supports_few_shot?: boolean;
   };
   export type ProviderConfigParamsResponse = {
     title: string;

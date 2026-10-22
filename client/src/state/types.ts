@@ -197,6 +197,9 @@ export const ProviderSchema = z.object({
   provider_parameters_json_schema: z.object({}).catchall(z.any()).nullable(),
   config_parameters: z.array(ConfigParameterSchema),
   api_key_config_parameter: ConfigParameterSchema.nullable().optional(),
+  // Which prompting types the provider can be used with.
+  supports_per_criteria: z.boolean().default(true),
+  supports_few_shot: z.boolean().default(true),
 });
 
 export const ProviderResponse = z.array(ProviderSchema);
