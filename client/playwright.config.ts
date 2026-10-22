@@ -62,9 +62,10 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run your local dev server before starting the tests. Its output goes to
+   * client/playwright-webserver.log so it doesn't drown out the test output. */
   webServer: {
-    command: "make start-test",
+    command: "make start-test > client/playwright-webserver.log 2>&1",
     cwd: "../",
     url: "http://localhost:3002/api/v1/health",
     reuseExistingServer: !process.env.CI,
