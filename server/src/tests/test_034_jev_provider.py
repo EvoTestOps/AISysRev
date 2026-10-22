@@ -1,4 +1,5 @@
 import json
+from compression import zstd
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -61,7 +62,7 @@ class _JevServer:
             return httpx2.Response(
                 self.status, json={"error": {"message": "No auth", "code": 401}}
             )
-        questions = json.loads(request.content)["questions"]
+        questions = _request_json(request)["questions"]
         answers = {
             name: {"type": "noul", "noul": self.probabilities.get(name, 0.5)}
             for name in questions
@@ -78,7 +79,15 @@ class _JevServer:
         )
 
     def body(self, index: int = -1) -> dict:
-        return json.loads(self.requests[index].content)
+        return _request_json(self.requests[index])
+
+
+def _request_json(request: httpx2.Request) -> dict:
+    # The TypeSafe SDK zstd-compresses request bodies of 1 KiB or more.
+    content = request.content
+    if request.headers.get("content-encoding") == "zstd":
+        content = zstd.decompress(content)
+    return json.loads(content)
 
 
 def _provider(
