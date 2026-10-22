@@ -1,0 +1,33 @@
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import StopCircleOutlinedIcon from "@mui/icons-material/StopCircleOutlined";
+import { ConfirmationModal } from "../../components/ConfirmationModal";
+import { JobActions } from "./hooks/useJobActions";
+
+export const JobActionModals: React.FC<{ actions: JobActions }> = ({ actions }) => (
+  <>
+    {actions.jobToCancel && (
+      <ConfirmationModal
+        open={true}
+        onClose={actions.dismissCancel}
+        onConfirm={actions.confirmCancel}
+        title="Cancel screening task?"
+        description="This will cancel running and scheduled screening jobs."
+        confirmButtonLabel="Cancel task"
+        confirmColor="warning"
+        confirmButtonIcon={<StopCircleOutlinedIcon />}
+      />
+    )}
+    {actions.jobToDelete && (
+      <ConfirmationModal
+        open={true}
+        onClose={actions.dismissDelete}
+        onConfirm={actions.confirmDelete}
+        title="Delete screening task?"
+        description="This action cannot be undone. All data related to this task will be permanently deleted."
+        confirmButtonLabel="Delete"
+        confirmColor="error"
+        confirmButtonIcon={<DeleteOutlinedIcon />}
+      />
+    )}
+  </>
+);

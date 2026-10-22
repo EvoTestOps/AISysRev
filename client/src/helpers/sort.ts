@@ -1,5 +1,3 @@
-import { PaperReadWithAvgProbability } from "../services/api/client";
-
 export type SortOption =
   | "ID_ASC"
   | "ID_DESC"
@@ -8,60 +6,40 @@ export type SortOption =
   | "NAME_ASC"
   | "NAME_DESC";
 
-const sort_name_asc = (paperA: PaperReadWithAvgProbability, paperB: PaperReadWithAvgProbability) =>
-  paperA.title.localeCompare(paperB.title);
+/** Anything listed like a paper: by its display id and title. */
+export type PaperLike = { paper_id: number; title: string };
 
-const sort_name_desc = (paperA: PaperReadWithAvgProbability, paperB: PaperReadWithAvgProbability) =>
-  paperB.title.localeCompare(paperA.title);
+type Probability = number | null | undefined;
 
-const sort_id_asc = (paperA: PaperReadWithAvgProbability, paperB: PaperReadWithAvgProbability) =>
-  paperA.paper_id - paperB.paper_id;
-
-const sort_id_desc = (paperA: PaperReadWithAvgProbability, paperB: PaperReadWithAvgProbability) =>
-  paperB.paper_id - paperA.paper_id;
-
-const sort_include_asc = (
-  paperA: PaperReadWithAvgProbability,
-  paperB: PaperReadWithAvgProbability,
-) => {
-  const a = paperA.avg_probability_decision;
-  const b = paperB.avg_probability_decision;
-
+// A missing probability sorts last in both directions; null counts as 0.
+const compareProbability = (a: Probability, b: Probability, direction: 1 | -1) => {
   if (a === undefined && b === undefined) return 0;
   if (a === undefined) return 1;
   if (b === undefined) return -1;
-
-  return (a || 0) - (b || 0);
+  return direction * ((a || 0) - (b || 0));
 };
 
-const sort_include_desc = (
-  paperA: PaperReadWithAvgProbability,
-  paperB: PaperReadWithAvgProbability,
-) => {
-  const a = paperA.avg_probability_decision;
-  const b = paperB.avg_probability_decision;
-
-  if (a === undefined && b === undefined) return 0;
-  if (a === undefined) return 1;
-  if (b === undefined) return -1;
-
-  return (b || 0) - (a || 0);
-};
-
-export const getPaperSortFunction = (opt: SortOption) => {
+/**
+ * A comparator for `opt`. `probabilityOf` reads the value the probability
+ * columns sort by, e.g. a paper's average probability of inclusion.
+ */
+export const getPaperSortFunction = <T extends PaperLike>(
+  opt: SortOption,
+  probabilityOf: (item: T) => Probability,
+): ((a: T, b: T) => number) => {
   switch (opt) {
     case "ID_ASC":
-      return sort_id_asc;
+      return (a, b) => a.paper_id - b.paper_id;
     case "ID_DESC":
-      return sort_id_desc;
+      return (a, b) => b.paper_id - a.paper_id;
     case "INCLUDE_ASC":
-      return sort_include_asc;
+      return (a, b) => compareProbability(probabilityOf(a), probabilityOf(b), 1);
     case "INCLUDE_DESC":
-      return sort_include_desc;
+      return (a, b) => compareProbability(probabilityOf(a), probabilityOf(b), -1);
     case "NAME_ASC":
-      return sort_name_asc;
+      return (a, b) => a.title.localeCompare(b.title);
     case "NAME_DESC":
-      return sort_name_desc;
+      return (a, b) => b.title.localeCompare(a.title);
     default:
       throw new Error("Should not happen");
   }

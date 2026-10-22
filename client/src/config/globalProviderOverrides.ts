@@ -21,4 +21,10 @@ export const GLOBAL_PROVIDER_OVERRIDES: GlobalProviderOverride[] = [
     settingKey: "openrouter_force_zdr",
     providerParameterKey: "zdr",
   },
+  {
+    // Jev is called through OpenRouter and shares its Force ZDR setting.
+    providerName: "jev",
+    settingKey: "openrouter_force_zdr",
+    providerParameterKey: "zdr",
+  },
 ];

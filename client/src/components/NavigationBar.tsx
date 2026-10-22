@@ -1,66 +1,122 @@
-import { Link } from "wouter";
-import { H3 } from "./Typography";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import LogoutIcon from "@mui/icons-material/Logout";
+import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import AISysRevLogo from "../assets/images/aisysrev-logo-on-light.svg";
+import { EventLogButton } from "./EventLogButton";
 
-type NavigationBarProps = {
-  pageTitle: string;
-  navbarActionComponent?: React.ElementType;
+// Top-level destinations; everything about the user lives in the account menu.
+const DESTINATIONS = [
+  {
+    label: "Projects",
+    href: "/",
+    isActive: (path: string) =>
+      path === "/" ||
+      path.startsWith("/projects") ||
+      path.startsWith("/project/") ||
+      path === "/create",
+  },
+  { label: "About", href: "/about", isActive: (path: string) => path.startsWith("/about") },
+];
+
+const AccountMenu: React.FC = () => {
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const close = () => setAnchor(null);
+  return (
+    <>
+      <Tooltip title="Account">
+        <IconButton
+          aria-label="Account"
+          data-testid="account-menu-button"
+          onClick={(e) => setAnchor(e.currentTarget)}
+        >
+          <AccountCircleOutlinedIcon />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={anchor}
+        open={anchor !== null}
+        onClose={close}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem component={Link} href="/settings" onClick={close}>
+          <ListItemIcon>
+            <SettingsOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>LLM settings</ListItemText>
+        </MenuItem>
+        <MenuItem component={Link} href="/settings/account" onClick={close}>
+          <ListItemIcon>
+            <ManageAccountsOutlinedIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Account</ListItemText>
+        </MenuItem>
+        <Divider />
+        <MenuItem component="a" href="/api/v1/auth/logout">
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Log out</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
+  );
 };
 
-export const NavigationBar: React.FC<NavigationBarProps> = ({
-  pageTitle,
-  navbarActionComponent,
-}) => {
+/** The app bar: logo, top-level destinations and the account menu. */
+export const NavigationBar: React.FC = () => {
+  const [location] = useLocation();
   const appEnv = import.meta.env.VITE_APP_ENV;
-  const NavbarActionComponent = navbarActionComponent;
   return (
-    <nav className="bg-neutral-50 flex flex-col">
-      <div className="flex flex-col sm:flex-row justify-between p-8 relative">
-        <div>
-          <Link to="/" className="m-0">
-            <img src={AISysRevLogo} alt="AISysRev" className="h-10 w-auto" />
-          </Link>
-          {appEnv === "dev" && (
-            <div className="bg-red-500 text-white uppercase font-bold p-2 rounded-sm absolute top-2 left-2 opacity-40 select-none">
-              {appEnv}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-row h-16 gap-4 items-center content-center">
-          <Link
-            href="/"
-            className="text-xs sm:text-sm font-semibold text-gray-900"
-          >
-            Projects
-          </Link>
-          <Link
-            href="/settings"
-            className="text-xs sm:text-sm font-semibold text-gray-900"
-          >
-            Settings
-          </Link>
-          <Link
-            href="/about"
-            className="text-xs sm:text-sm font-semibold text-gray-900"
-          >
-            About
-          </Link>
-          <a
-            href="/api/v1/auth/logout"
-            className="text-xs sm:text-sm font-semibold text-gray-900"
-          >
-            Logout
-          </a>
-        </div>
-      </div>
-      <div className="flex justify-between items-center content-center h-18 pl-8 pr-8 lg:pl-0 lg:pr-0 w-full lg:w-4xl xl:w-6xl 2xl:w-7xl md:w-full mr-auto ml-auto">
-        <div>
-          <H3>{pageTitle}</H3>
-        </div>
-        <div className="flex items-center">
-          {NavbarActionComponent && <NavbarActionComponent />}
-        </div>
-      </div>
-    </nav>
+    <AppBar
+      position="static"
+      color="inherit"
+      elevation={0}
+      sx={{ borderBottom: 1, borderColor: "divider" }}
+    >
+      <Toolbar sx={{ gap: 1 }}>
+        <Link to="/" aria-label="AISysRev home" className="flex items-center">
+          <img src={AISysRevLogo} alt="AISysRev" className="h-8 w-auto" />
+        </Link>
+        {appEnv === "dev" && (
+          <Chip label="DEV" color="error" size="small" sx={{ fontWeight: 700, ml: 1 }} />
+        )}
+        <Box sx={{ flexGrow: 1 }} />
+        <Box component="nav" aria-label="Main" sx={{ display: "flex", gap: 0.5 }}>
+          {DESTINATIONS.map(({ label, href, isActive }) => {
+            const active = isActive(location);
+            return (
+              <Button
+                key={href}
+                component={Link}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                color={active ? "primary" : "inherit"}
+                sx={{ fontWeight: active ? 700 : 500 }}
+              >
+                {label}
+              </Button>
+            );
+          })}
+        </Box>
+        {appEnv === "dev" && <EventLogButton />}
+        <AccountMenu />
+      </Toolbar>
+    </AppBar>
   );
 };

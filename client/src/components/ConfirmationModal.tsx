@@ -1,11 +1,9 @@
-import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  Description,
-} from "@headlessui/react";
-import { X } from "lucide-react";
-import { Button } from "./Button";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
 type ConfirmationModalProps = {
   open: boolean;
@@ -14,11 +12,13 @@ type ConfirmationModalProps = {
   title: string;
   description: string;
   confirmButtonLabel: string;
-  confirmButtonVariant: "green" | "yellow" | "red" | "purple" | "gray" | "slate";
-  confirmButtonIcon: React.ReactNode;
+  /** error for destructive actions, warning for disruptive ones. */
+  confirmColor: "error" | "warning" | "primary";
+  confirmButtonIcon?: React.ReactNode;
   confirmButtonTestId?: string;
 };
 
+/** A dialog asking the user to confirm an action before it runs. */
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   open,
   onClose,
@@ -26,52 +26,33 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   title,
   description,
   confirmButtonLabel,
-  confirmButtonVariant,
+  confirmColor,
   confirmButtonIcon,
   confirmButtonTestId,
-}) => {
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-
-      <DialogPanel className="relative bg-white shadow-2xl rounded-xl w-full max-w-md p-8">
-        <X
-          onClick={onClose}
-          className="absolute top-4 right-4 h-5 w-5 cursor-pointer text-gray-500 hover:text-gray-700 transition duration-200"
-        />
-
-        <DialogTitle className="text-lg font-bold mb-3">
-          {title}
-        </DialogTitle>
-
-        <Description className="text-sm text-gray-600 mb-6 leading-relaxed">
-          {description}
-        </Description>
-
-        <div className="flex gap-3 justify-end">
-          <Button
-            variant="gray"
-            onClick={onClose}
-          >
-            Go back
-          </Button>
-          <Button
-            variant={confirmButtonVariant}
-            onClick={onConfirm}
-            data-testid={confirmButtonTestId}
-          >
-            <div className="flex items-center justify-center gap-2 font-semibold">
-              {confirmButtonIcon}
-              <span>{confirmButtonLabel}</span>
-            </div>
-          </Button>
-        </div>
-      </DialogPanel>
-    </Dialog >
-  )
-}
+}) => (
+  <Dialog
+    open={open}
+    onClose={onClose}
+    maxWidth="xs"
+    fullWidth
+    aria-labelledby="confirmation-dialog-title"
+    aria-describedby="confirmation-dialog-description"
+  >
+    <DialogTitle id="confirmation-dialog-title">{title}</DialogTitle>
+    <DialogContent>
+      <DialogContentText id="confirmation-dialog-description">{description}</DialogContentText>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Go back</Button>
+      <Button
+        variant="contained"
+        color={confirmColor}
+        startIcon={confirmButtonIcon}
+        onClick={onConfirm}
+        data-testid={confirmButtonTestId}
+      >
+        {confirmButtonLabel}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);

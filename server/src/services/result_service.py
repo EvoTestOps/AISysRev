@@ -8,10 +8,10 @@ from pydantic import TypeAdapter
 from src.crud.result_crud import ResultCrud
 from src.db.db_context import DBContext
 from src.db.models.paper import HumanResult
-from src.schemas.llm import Criterion
+from src.schemas.llm import Criterion, Decision, JevCriterion
 from src.schemas.project import ScreeningTarget
 
-criteria_adapter = TypeAdapter(List[Criterion])
+criteria_adapter = TypeAdapter(List[Criterion | JevCriterion])
 
 ALL_COLUMNS = [
     "title",
@@ -119,6 +119,13 @@ def create_dataframe(data: list[dict]) -> pd.DataFrame:
     return merged
 
 
+def _likert(criterion: Criterion | JevCriterion) -> str | None:
+    # Jev answers without a Likert value.
+    if isinstance(criterion.decision, Decision):
+        return criterion.decision.likert_decision.value
+    return None
+
+
 def _build_standard_pivot(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["inclusion_criteria"] = df["inclusion_criteria"].apply(
@@ -136,10 +143,7 @@ def _build_standard_pivot(df: pd.DataFrame) -> pd.DataFrame:
                 )
                 for c in crits
             }
-            | {
-                f"{c.name.split(':', 1)[0].strip()}.likert": c.decision.likert_decision.value
-                for c in crits
-            }
+            | {f"{c.name.split(':', 1)[0].strip()}.likert": _likert(c) for c in crits}
             | {
                 f"{c.name.split(':', 1)[0].strip()}.probability": c.decision.probability_decision
                 for c in crits
@@ -154,10 +158,7 @@ def _build_standard_pivot(df: pd.DataFrame) -> pd.DataFrame:
                 )
                 for c in crits
             }
-            | {
-                f"{c.name.split(':', 1)[0].strip()}.likert": c.decision.likert_decision.value
-                for c in crits
-            }
+            | {f"{c.name.split(':', 1)[0].strip()}.likert": _likert(c) for c in crits}
             | {
                 f"{c.name.split(':', 1)[0].strip()}.probability": c.decision.probability_decision
                 for c in crits

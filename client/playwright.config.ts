@@ -20,8 +20,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
+  /* Limit parallel tests on CI */
+  workers: process.env.CI ? 5 : undefined,
   /* Retry on CI only */
-  retries: 4,
+  retries: 2,
   /* 30 seconds */
   timeout: 30 * 1000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -62,9 +64,10 @@ export default defineConfig({
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run your local dev server before starting the tests. Its output goes to
+   * client/playwright-webserver.log so it doesn't drown out the test output. */
   webServer: {
-    command: "make start-test",
+    command: "make start-test > client/playwright-webserver.log 2>&1",
     cwd: "../",
     url: "http://localhost:3002/api/v1/health",
     reuseExistingServer: !process.env.CI,

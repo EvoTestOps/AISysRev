@@ -1,8 +1,9 @@
 from typing import Any, List, Type
+from urllib.parse import urlsplit, urlunsplit
 
 from httpx2 import AsyncClient
 from openai.types.model import Model
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIResponsesModel, OpenAIResponsesModelSettings
 from pydantic_ai.output import ToolOutput
@@ -15,6 +16,20 @@ class LocalOpenAISDKProviderParams(BaseModel):
     base_url: str = Field(
         title="Base URL", default="http://host.docker.internal:1234/v1"
     )
+
+    @field_validator("base_url")
+    @classmethod
+    def validate_base_url(cls, value: str) -> str:
+        value = value.strip()
+        parsed = urlsplit(value)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            raise ValueError("Base URL must be an http:// or https:// URL")
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("Base URL must not contain credentials")
+        # Raises ValueError for a non-numeric or out-of-range port
+        _ = parsed.port
+        # Drop any query string or fragment, they aren't part of the API base
+        return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
 
 
 class LocalOpenAISDKModelParams(BaseLLMParams):

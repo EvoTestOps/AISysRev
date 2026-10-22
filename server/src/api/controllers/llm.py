@@ -31,6 +31,9 @@ async def get_providers(
                 if provider.provider_parameters_schema is not None
                 else None
             ),
+            api_key_config_parameter=provider.api_key_config_parameter,
+            supports_per_criteria=provider.supports_per_criteria,
+            supports_few_shot=provider.supports_few_shot,
         )
         for provider in llm_providers
     ]
