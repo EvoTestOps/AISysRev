@@ -35,6 +35,12 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
+
+    /* Turn off the app's entrance animations (riseIn/fadeIn honour this). While
+     * the task form rises into place, an open MUI menu re-anchors to it on every
+     * re-render, so a menu option can move between mousedown and mouseup: the
+     * click is then lost although Playwright reports it done. */
+    reducedMotion: "reduce",
   },
 
   /* *.api.spec.ts tests only use the `request` fixture and never touch a
