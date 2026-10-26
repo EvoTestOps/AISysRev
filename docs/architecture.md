@@ -75,22 +75,8 @@ Every service has CPU and memory limits (`deploy.resources.limits`) in the compo
 
 ## Kubernetes / OpenShift
 
-The [manifests/](../manifests/) folder holds the staging and production deployments. They run the same `server` and `client` images that the [Dockerfile](../Dockerfile) builds and that the GitHub workflows push, plus Redis. PostgreSQL, Flower and Adminer are not defined there, so the database has to be provided separately.
+The staging and production deployments are not defined in this repository. Their Kubernetes/OpenShift manifests, together with the encrypted secrets and the deploy steps, live in a separate deployment repository. Look there to change resources, probes, the Redis image, routing or secrets.
 
-The manifests use [Kustomize](https://kustomize.io/), which is built into `oc` and `kubectl`:
+This repository only provides the images. The deployments run the same `server` and `client` images that the [Dockerfile](../Dockerfile) builds. [build-staging.yml](../.github/workflows/build-staging.yml) and [build-prod.yml](../.github/workflows/build-prod.yml) push them to Quay as `backend-staging` / `backend-production`. The cluster re-imports those tags on a schedule, and a new digest restarts the backend, Celery and frontend pods, so merging and building is enough to roll out a new version.
 
-- [manifests/base/](../manifests/base/) has everything the two environments share. Change resources, probes, the Redis image and so on here, once.
-- [manifests/overlays/staging/](../manifests/overlays/staging/) and [manifests/overlays/production/](../manifests/overlays/production/) add what differs: the Quay image tags the ImageStream imports (`backend-staging` / `backend-production`, pushed by [build-staging.yml](../.github/workflows/build-staging.yml) and [build-prod.yml](../.github/workflows/build-prod.yml)), `APP_ENV`, the public URL, and how traffic gets in (a Route in staging, an Ingress with a cert-manager certificate in production).
-
-To deploy, log in to the right cluster with `oc login`, then preview and apply:
-
-```sh
-oc diff -k manifests/overlays/staging
-oc apply -k manifests/overlays/staging
-```
-
-`oc kustomize manifests/overlays/staging` prints the rendered YAML without touching the cluster.
-
-Secrets are not part of the overlays, so applying one never overwrites them. The real values are kept encrypted with SOPS in a private repo, whose README has the deploy steps and how to edit them. `secret-example.yaml` in each overlay lists the keys the deployments expect in `aisysrev-secret`: when the app needs a new secret, add it there and to the encrypted file.
-
-The deployments are rolled out by OpenShift image triggers, not by applying the manifests: the ImageStream re-imports the Quay tags on a schedule, and a new digest restarts the backend, Celery and frontend pods.
+When the app needs a new environment variable or secret, add it to the deployment repository as well as to the compose files here.

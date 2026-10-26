@@ -345,7 +345,7 @@ The project includes a `Makefile` for common development and database operations
 
 ## Resource limits
 
-Each container started with Docker Compose has a CPU and memory limit (`deploy.resources.limits` in [docker-compose-dev.yml](docker-compose-dev.yml), [docker-compose.yml](docker-compose.yml) and [docker-compose-e2e.yml](docker-compose-e2e.yml)), so a local stack doesn't take over the whole machine. They are roughly sized to the 4-CPU GitHub runner the e2e tests run on. The Kubernetes deployments in [manifests/](manifests/) set their own resources.
+Each container started with Docker Compose has a CPU and memory limit (`deploy.resources.limits` in [docker-compose-dev.yml](docker-compose-dev.yml), [docker-compose.yml](docker-compose.yml) and [docker-compose-e2e.yml](docker-compose-e2e.yml)), so a local stack doesn't take over the whole machine. They are roughly sized to the 4-CPU GitHub runner the e2e tests run on. The Kubernetes deployments, defined in a separate deployment repository, set their own resources.
 
 | Service | CPU | Memory |
 | --- | --- | --- |

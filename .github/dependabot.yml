@@ -31,13 +31,10 @@ updates:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
 
-  # Base images in Dockerfile and Dockerfile-dev.dockerfile, plus the image
-  # references in the Kubernetes/OpenShift manifests. Images are pinned by
-  # digest, so without this they would never be updated.
+  # Base images in Dockerfile and Dockerfile-dev.dockerfile. Images are pinned
+  # by digest, so without this they would never be updated.
   - package-ecosystem: docker
-    directories:
-      - /
-      - /manifests/base
+    directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 1
@@ -45,8 +42,6 @@ updates:
       docker-images:
         update-types: [minor, patch]
     ignore:
-      # Locally built images referenced by the manifests, not on a registry
-      - dependency-name: aisysrev
       # No major version updates
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
