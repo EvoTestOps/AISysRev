@@ -21,10 +21,11 @@ async def check_database_connection():
             return res
     except SQLAlchemyError as e:
         print(f"Database connection failed: {e}")
+        raise
 
 
 async def wait_for_db():
-    max_retries = 3
+    max_retries = 5
     for i in range(max_retries):
         try:
             await check_database_connection()

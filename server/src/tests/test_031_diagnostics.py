@@ -228,14 +228,14 @@ async def test_database_check_succeeds_against_the_test_database(
 
 
 @pytest.mark.unit
-async def test_database_check_returns_none_when_the_connection_fails(
+async def test_database_check_reraises_when_the_connection_fails(
     capsys: pytest.CaptureFixture[str],
 ):
     engine = MagicMock()
     engine.connect.side_effect = OperationalError("SELECT 1", {}, Exception("refused"))
 
     with patch.object(db_check, "engine", engine):
-        rows = await db_check.check_database_connection()
+        with pytest.raises(OperationalError):
+            await db_check.check_database_connection()
 
-    assert rows is None
     assert "Database connection failed" in capsys.readouterr().out
