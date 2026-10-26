@@ -2,11 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aisysrev-celery-dep
-  namespace: aisysrev
   annotations:
     alpha.image.policy.openshift.io/resolve-names: "*"
     image.openshift.io/triggers: >-
-      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:backend-staging","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
+      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:backend","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
 spec:
   replicas: 1
   selector:
@@ -19,12 +18,12 @@ spec:
     spec:
       containers:
         - name: aisysrev
-          image: aisysrev:backend-staging
+          image: aisysrev:backend
           imagePullPolicy: Always
           command: ["/app/.venv/bin/celery", "-A", "src.worker", "worker", "--loglevel=info", "--concurrency=2"]
           env:
            - name: APP_ENV
-             value: staging
+             value: production
            - name: REDIS_URL
              valueFrom:
                configMapKeyRef:
@@ -45,4 +44,3 @@ spec:
             requests:
               memory: 512Mi
               cpu: 250m
-

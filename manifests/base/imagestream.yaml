@@ -3,14 +3,13 @@ apiVersion: image.openshift.io/v1
 
 metadata:
   name: aisysrev
-  namespace: aisysrev
   labels:
     app: aisysrev
 spec:
   lookupPolicy:
     local: false
   tags:
-    - name: backend-production
+    - name: backend
       from:
         kind: DockerImage
         name: quay.io/tike/aisysrev:backend-production
@@ -18,7 +17,7 @@ spec:
         scheduled: true
       referencePolicy:
         type: Local
-    - name: frontend-production
+    - name: frontend
       from:
         kind: DockerImage
         name: quay.io/tike/aisysrev:frontend-production

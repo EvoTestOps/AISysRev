@@ -37,8 +37,7 @@ updates:
   - package-ecosystem: docker
     directories:
       - /
-      - /manifests/staging
-      - /manifests/production
+      - /manifests/base
     schedule:
       interval: weekly
     open-pull-requests-limit: 1

@@ -2,7 +2,6 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: aisysrev-route
-  namespace: aisysrev
   labels:
     app: aisysrev
     type: external
