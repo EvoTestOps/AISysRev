@@ -4,9 +4,9 @@ import { APIRequestContext, expect } from "@playwright/test";
 const prefix = "/api/v1";
 
 /**
- * The dev-login user and its data persist for the whole test run (fixtures
- * are only reset once, in global setup/teardown), so names must be unique
- * per test to avoid colliding with leftover data from other tests.
+ * The dev-login user and its data persist for the whole test run (and across
+ * runs on a reused test stack), so names must be unique per test to avoid
+ * colliding with leftover data from other tests.
  */
 export function uniqueName(prefix: string): string {
   return `${prefix} ${randomUUID()}`;
@@ -27,11 +27,6 @@ export type SeededPaper = {
   title: string;
   abstract: string;
 };
-
-export async function resetFixtures(request: APIRequestContext): Promise<void> {
-  const res = await request.post(`${prefix}/fixtures/reset`);
-  expect(res.status(), "fixtures should reset").toBe(200);
-}
 
 export async function seedProjects(
   request: APIRequestContext,

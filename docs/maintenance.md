@@ -159,8 +159,7 @@ Full stack (from the repo root):
 ```sh
 make backend-unit     # unit tests in containers
 make backend-test     # all backend tests, including DB migrations
-make start-test       # start the test stack (frontend at :3002), leave it running
-cd client && npx playwright test    # e2e, in another terminal, requires the test stack
+cd client && npx playwright test    # e2e, starts the test stack itself (make start-test)
 ```
 
 Finally, smoke-test the images the way they get deployed with `make start-prod` (or at least build the images as shown above) and click through login, creating a project, importing papers and running a screening.

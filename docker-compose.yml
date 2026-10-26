@@ -6,6 +6,9 @@ x-backend-build: &backend-build
 services:
   frontend:
     container_name: frontend_prod
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128m }
     environment:
       VITE_APP_ENV: prod
     build:
@@ -24,6 +27,9 @@ services:
 
   backend:
     container_name: backend_prod
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 512m }
     build: *backend-build
     image: aisysrev-backend:prod
     ports: ["127.0.0.1:5678:5678"] # Debug port
@@ -48,6 +54,9 @@ services:
   postgres:
     image: pgvector/pgvector:pg14@sha256:1091ea8f64f5ffe0954dc4c90f196e0cc6ab906566b884a9ff210f0d24b83d12
     container_name: postgres_prod
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 1g }
     environment:
       POSTGRES_USER: your_username
       POSTGRES_PASSWORD: your_password
@@ -65,6 +74,9 @@ services:
 
   adminer:
     container_name: adminer_prod
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128m }
     image: adminer:5.5.1@sha256:e3a6b4942dd088a29cc8bbce22553429247c5c2b30b07d856ae49012b5c84a5b
     restart: always
     ports:
@@ -76,6 +88,9 @@ services:
   redis:
     image: redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
     container_name: redis_prod
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256m }
     ports:
       - "127.0.0.1:6379:6379"
     volumes: 
@@ -88,6 +103,9 @@ services:
 
   celery:
     container_name: celery_prod
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 1g }
     build: *backend-build
     image: aisysrev-backend:prod
     command: ["/bin/sh", "/app/start-celery.sh"]
@@ -99,6 +117,7 @@ services:
       DB_URL: "postgresql+asyncpg://your_username:your_password@postgres_prod:5432/your_database_prod"
       CELERY_BROKER_URL: redis://redis_prod:6379/0
       REDIS_URL: redis://redis_prod:6379/0
+      CELERY_CONCURRENCY: 4
     depends_on:
       redis:
         condition: service_healthy
@@ -109,6 +128,9 @@ services:
 
   flower:
     container_name: flower_prod
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256m }
     build: *backend-build
     image: aisysrev-backend:prod
     command: /app/.venv/bin/celery -A src.worker flower --port=5555

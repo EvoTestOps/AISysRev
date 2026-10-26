@@ -1,0 +1,109 @@
+# The e2e test stack: the production images (the Dockerfile's client and
+# server targets) with APP_ENV=test for the dev login and the test fixture
+# endpoints. `make start-test` starts it, and Playwright runs against
+# https://localhost:3002, served by the image's own Caddyfile.
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: server
+  image: aisysrev-backend:e2e
+  environment: &backend-env
+    PYTHONPATH: /app
+    APP_ENV: test
+    SECRET_KEY: yoursecretkey
+    DB_URL: "postgresql+asyncpg://your_username:your_password@postgres:5432/your_database_test"
+    CELERY_BROKER_URL: redis://redis:6379/0
+    REDIS_URL: redis://redis:6379/0
+    FRONTEND_URL: https://localhost:3002
+  volumes:
+    - pdf_data:/app/data/pdfs
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: client
+    image: aisysrev-frontend:e2e
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128m }
+    ports:
+      - "127.0.0.1:3002:9443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_started
+
+  backend:
+    <<: *backend
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 512m }
+    networks:
+      default:
+        # The image's Caddyfile proxies the API to backend_prod.
+        aliases: [backend_prod]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      celery:
+        condition: service_started
+
+  celery:
+    <<: *backend
+    command: ["/bin/sh", "/app/start-celery.sh"]
+    environment:
+      <<: *backend-env
+      CELERY_CONCURRENCY: 4
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 1g }
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg14@sha256:1091ea8f64f5ffe0954dc4c90f196e0cc6ab906566b884a9ff210f0d24b83d12
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 1g }
+    environment:
+      POSTGRES_USER: your_username
+      POSTGRES_PASSWORD: your_password
+      POSTGRES_DB: your_database_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  redis:
+    image: redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 256m }
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
+  pdf_data:

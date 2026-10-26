@@ -12,7 +12,6 @@ from src.api.controllers.auth import router as auth_router
 from src.api.controllers.e2e_support import router as e2e_support_router
 from src.api.controllers.event_queue import router as event_queue_router
 from src.api.controllers.file import router as file_router
-from src.api.controllers.fixture import router as fixture_router
 from src.api.controllers.health_check import router as health_check_router
 from src.api.controllers.job import router as job_router
 from src.api.controllers.jobtask import router as jobtask_router
@@ -74,7 +73,6 @@ templates = Jinja2Templates(directory="templates")
 v1_router = APIRouter(prefix="/api/v1")
 
 if settings.APP_ENV == "test":
-    v1_router.include_router(fixture_router)
     # Must come before the project/paper/file routers so that e.g.
     # DELETE /project/batch isn't matched by DELETE /project/{uuid}
     v1_router.include_router(e2e_support_router)

@@ -55,8 +55,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH"
 
+# The PDF directory exists in the image so that a fresh volume mounted on it
+# starts out writable by the app user, not owned by root.
 RUN addgroup -S app && adduser -S app -G app \
-    && mkdir /app && chown app:0 /app
+    && mkdir -p /app/data/pdfs && chown -R app:0 /app && chmod -R g=u /app/data
 
 WORKDIR /app
 COPY --from=server-builder --chown=app:0 /app/.venv /app/.venv

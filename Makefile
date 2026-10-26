@@ -7,12 +7,14 @@ start-dev-debug:
 	DEBUG=true FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
 	DEBUG=true FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev up --watch --build
 # TEST
+# The e2e test stack: the production images with APP_ENV=test, at https://localhost:3002.
 start-test:
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=http://localhost:3002 docker compose -f docker-compose-dev.yml -p test down -v
-	FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=http://localhost:3002 docker compose -f docker-compose-dev.yml -p test up --build
+	docker compose -f docker-compose-e2e.yml -p e2e down -v
+	docker compose -f docker-compose-e2e.yml -p e2e up --build
+# The dev stack with APP_ENV=test and the backend debugger, also at :3002.
 start-test-debug:
-	DEBUG=true FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=http://localhost:3002 docker compose -f docker-compose-dev.yml -p test down -v
-	DEBUG=true FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=http://localhost:3002 docker compose -f docker-compose-dev.yml -p test up --build
+	DEBUG=true FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=https://localhost:3002 docker compose -f docker-compose-dev.yml -p test down -v
+	DEBUG=true FRONTEND_PORT=3002 FLOWER_PORT=5557 ADMINER_PORT=8082 APP_ENV=test FRONTEND_URL=https://localhost:3002 docker compose -f docker-compose-dev.yml -p test up --build
 # PROD
 start-prod:
 	FRONTEND_PORT=3000 FLOWER_PORT=5555 ADMINER_PORT=8080 APP_ENV=prod docker compose -f docker-compose.yml -p prod down
