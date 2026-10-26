@@ -204,7 +204,7 @@ async def test_wait_for_db_retries_with_growing_delays():
 
 
 @pytest.mark.unit
-async def test_wait_for_db_gives_up_after_three_attempts():
+async def test_wait_for_db_gives_up_after_attempts():
     check = AsyncMock(side_effect=Exception("down"))
 
     with patch.object(db_check, "check_database_connection", check):
@@ -212,7 +212,7 @@ async def test_wait_for_db_gives_up_after_three_attempts():
             with pytest.raises(Exception, match="Database failed to become ready"):
                 await db_check.wait_for_db()
 
-    assert check.await_count == 3
+    assert check.await_count == 5
 
 
 # This one uses the real engine, so it needs the database (backend-test job)
