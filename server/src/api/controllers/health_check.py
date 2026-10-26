@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
@@ -7,6 +9,13 @@ from src.tools.diagnostics.db_check import check_database_connection
 from src.tools.diagnostics.redis_check import check_redis_connection
 
 router = APIRouter()
+
+
+READINESS_CHECKS = ("db", "redis")
+
+@router.get("/health/live", include_in_schema=False)
+async def liveness():
+    return {"status": "ok"}
 
 
 @router.get("/health", tags=["Health check"])
@@ -20,28 +29,19 @@ async def health_check():
             },
         )
 
+    outcomes = await asyncio.gather(
+        check_database_connection(),
+        check_redis_connection(),
+        check_celery_worker(),
+        return_exceptions=True,
+    )
+
     results = {
-        "db": "ok",
-        "redis": "ok",
-        "celery": "ok",
+        name: f"error: {outcome}" if isinstance(outcome, BaseException) else "ok"
+        for name, outcome in zip(("db", "redis", "celery"), outcomes)
     }
 
-    try:
-        await check_database_connection()
-    except Exception as e:
-        results["db"] = f"error: {e}"
-
-    try:
-        await check_redis_connection()
-    except Exception as e:
-        results["redis"] = f"error: {e}"
-
-    try:
-        await check_celery_worker()
-    except Exception as e:
-        results["celery"] = f"error: {e}"
-
-    is_healthy = all(v == "ok" for v in results.values())
+    is_healthy = all(results[name] == "ok" for name in READINESS_CHECKS)
 
     payload = {
         "status": "ok" if is_healthy else "error",

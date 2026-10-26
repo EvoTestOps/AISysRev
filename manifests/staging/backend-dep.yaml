@@ -45,6 +45,13 @@ spec:
           envFrom:
             - secretRef:
                 name: aisysrev-secret
+          # Covers migrations + FastAPI lifespan (up to 3 min) before liveness kicks in
+          startupProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 36
           readinessProbe:
             httpGet:
               path: /api/v1/health
@@ -54,11 +61,11 @@ spec:
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /openapi.json
+              path: /api/v1/health/live
               port: 8080
-            initialDelaySeconds: 60
             timeoutSeconds: 3
             periodSeconds: 15
+            failureThreshold: 3
           resources:
             limits:
               memory: 512Mi
