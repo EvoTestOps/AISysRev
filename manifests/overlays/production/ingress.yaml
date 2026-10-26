@@ -6,7 +6,6 @@ metadata:
   labels:
     type: external
   name: aisysrev-helsinki-fi-ingress
-  namespace: aisysrev
 spec:
   ingressClassName: openshift-default
   tls:

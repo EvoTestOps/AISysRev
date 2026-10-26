@@ -2,11 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aisysrev-frontend-dep
-  namespace: aisysrev
   annotations:
     alpha.image.policy.openshift.io/resolve-names: "*"
     image.openshift.io/triggers: >-
-      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:frontend-production","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
+      [{"from":{"kind":"ImageStreamTag","name":"aisysrev:frontend","namespace":"aisysrev"},"fieldPath":"spec.template.spec.containers[?(@.name==\"aisysrev\")].image","pause":"false"}]
 spec:
   replicas: 1
   selector:
@@ -19,7 +18,7 @@ spec:
     spec:
       containers:
         - name: aisysrev
-          image: aisysrev:frontend-production
+          image: aisysrev:frontend
           imagePullPolicy: Always
           ports:
             - containerPort: 9080

@@ -2,9 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: aisysrev-redis-dep
-  namespace: aisysrev
 spec:
   replicas: 1
+  # The PVC is ReadWriteOnce, so the old pod must release it before the new one starts
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: aisysrev-redis

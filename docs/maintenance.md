@@ -16,7 +16,7 @@ General rules:
 | Python | `server/.python-version`, `requires-python` and `[tool.mypy] python_version` / `[tool.ruff] target-version` in `server/pyproject.toml`, `FROM python:` in both Dockerfiles (3 stages each), README |
 | uv | `COPY --from=ghcr.io/astral-sh/uv:<version>` in both Dockerfiles (several stages), `astral-sh/setup-uv` `version:` in `.github/workflows/tests.yml` (several jobs), README |
 | Caddy | `FROM caddy:` in `Dockerfile` |
-| Postgres, Redis, Adminer | `image:` in `docker-compose.yml`, `docker-compose-dev.yml`; Redis also in `manifests/*/redis-dep.yaml` |
+| Postgres, Redis, Adminer | `image:` in `docker-compose.yml`, `docker-compose-dev.yml`; Redis also in `manifests/base/redis-dep.yaml` |
 | GitHub Actions | `uses:` lines in `.github/workflows/*.yml` |
 | Client packages | `client/package.json` + `client/package-lock.json` |
 | Server packages | `server/pyproject.toml` + `server/uv.lock` |
@@ -31,7 +31,7 @@ Configured in [.github/dependabot.yml](../.github/dependabot.yml). Every week it
 | --- | --- | --- |
 | `npm` | `/client` | `package.json`, `package-lock.json` |
 | `uv` | `/server` | `pyproject.toml`, `uv.lock` |
-| `docker` | `/`, `/manifests/staging`, `/manifests/production` | `FROM` lines in the Dockerfiles (tag and digest), image references in the manifests (the locally built `aisysrev` images are ignored) |
+| `docker` | `/`, `/manifests/base` | `FROM` lines in the Dockerfiles (tag and digest), image references in the manifests (the locally built `aisysrev` images are ignored) |
 | `docker-compose` | `/` | `image:` in `docker-compose.yml` and `docker-compose-dev.yml` |
 | `github-actions` | `/` | `uses:` in `.github/workflows/*.yml` |
 
@@ -116,7 +116,7 @@ Per image:
 - **uv** (`ghcr.io/astral-sh/uv:<version>`): pinned to an exact version (not `latest`) in the `uv` stage of both Dockerfiles. Update both, plus the `setup-uv` `version:` in every job in `tests.yml`, plus the "UV vX or later" line in the README. Release notes: https://github.com/astral-sh/uv/releases. A new uv can change lockfile formatting, so run `uv lock` and commit any diff.
 - **Caddy** (`caddy:*-alpine`): the `client` stage of `Dockerfile`. The `Caddyfile` in the repo root is copied in, so check it still loads (`docker run --rm -v $PWD/Caddyfile:/etc/caddy/Caddyfile caddy:<ver> caddy validate --config /etc/caddy/Caddyfile`).
 - **Postgres** (`pgvector/pgvector:pg14`): a **major** version change (pg14 to pg15+) cannot reuse an existing data directory. It needs a dump/restore or `pg_upgrade`, and the manifests/volumes in production must be planned separately. Only bump the digest for the same major. In dev, `postgres-init-scripts/` is mounted on first init (`docker-compose-dev.yml`), so check they still work.
-- **Redis** (`redis:7.4.x-alpine`): used by Celery. Update all three places (`docker-compose.yml`, `docker-compose-dev.yml`, `manifests/{staging,production}/redis-dep.yaml`) together.
+- **Redis** (`redis:7.4.x-alpine`): used by Celery. Update all three places (`docker-compose.yml`, `docker-compose-dev.yml`, `manifests/base/redis-dep.yaml`) together.
 - **Adminer**: dev/admin tool, low risk.
 
 After changing a Dockerfile, build every target that the workflows build. The `server` image also runs the Celery worker and Flower (compose and the Kubernetes manifests override the command):
