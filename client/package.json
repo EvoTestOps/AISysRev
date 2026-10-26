@@ -56,13 +56,13 @@
     "@vitest/browser-playwright": "^4.0.17",
     "@vitest/coverage-v8": "^4.0.17",
     "msw": "^2.15.0",
-    "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
-    "postcss": "^8.5.30",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "postcss": "^8.5.31",
     "tailwindcss": "^4.0.0",
     "typed-openapi": "^4.1.0",
     "typescript": "~5.9.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vitest": "^4.1.11",
     "vitest-browser-react": "^2.3.0"
   }
