@@ -8,7 +8,8 @@ const appEnv = process.env.VITE_APP_ENV;
 export default defineConfig({
   plugins: [
     react(),
-    ...(appEnv === "dev" ? [basicSsl()] : []),
+    // HTTPS like the production Caddy, also for e2e runs against the dev stack.
+    ...(appEnv === "dev" || appEnv === "test" ? [basicSsl()] : []),
   ],
   build: {
     chunkSizeWarningLimit: 1000,

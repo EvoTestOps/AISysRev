@@ -47,6 +47,7 @@
   * [Makefile Commands](#makefile-commands)
     + [Development](#development)
     + [Database Migrations (Alembic)](#database-migrations-alembic)
+  * [Resource limits](#resource-limits)
   * [Supported LLMs](#supported-llms)
   * [BibTeX Citation](#bibtex-citation)
   * [AI disclaimer](#ai-disclaimer)
@@ -322,8 +323,8 @@ The project includes a `Makefile` for common development and database operations
 | ----------------- | ----------------------------------------------------------------------------- |
 | `make start-dev`  | Start dev containers with live reloading and build on startup (default setup) |
 | `make start-dev-debug` | Same as `start-dev`, with the backend debugger enabled                   |
-| `make start-test` | Start test containers and rebuild images (isolated test environment)          |
-| `make start-test-debug` | Same as `start-test`, with the backend debugger enabled                 |
+| `make start-test` | Start the e2e test stack: the production images with `APP_ENV=test`, at https://localhost:3002 |
+| `make start-test-debug` | Start the dev stack with `APP_ENV=test` and the backend debugger, at https://localhost:3002 |
 | `make start-prod` | Start production container and rebuild images                                 |
 | `make backend-unit` | Run backend unit tests                                                      |
 | `make backend-test` | Run all backend tests                                                       |
@@ -341,6 +342,23 @@ The project includes a `Makefile` for common development and database operations
 | `make m-up`                 | Apply all pending migrations (upgrade to latest)                      |
 | `make m-hist`               | Show the full migration history with details                          |
 | `make m-current`            | Display the current migration version in the database                 |
+
+## Resource limits
+
+Each container started with Docker Compose has a CPU and memory limit (`deploy.resources.limits` in [docker-compose-dev.yml](docker-compose-dev.yml), [docker-compose.yml](docker-compose.yml) and [docker-compose-e2e.yml](docker-compose-e2e.yml)), so a local stack doesn't take over the whole machine. They are roughly sized to the 4-CPU GitHub runner the e2e tests run on. The Kubernetes deployments in [manifests/](manifests/) set their own resources.
+
+| Service | CPU | Memory |
+| --- | --- | --- |
+| Frontend (dev, Vite) | 1 | 1 GiB |
+| Frontend (prod and test, Caddy) | 0.5 | 128 MiB |
+| Backend | 1 | 512 MiB |
+| Celery | 1 | 1 GiB |
+| PostgreSQL | 0.5 | 1 GiB |
+| Redis | 0.25 | 256 MiB |
+| Flower | 0.25 | 256 MiB |
+| Adminer | 0.25 | 128 MiB |
+
+Celery runs 4 worker processes (`CELERY_CONCURRENCY`) instead of one per CPU, to stay within its memory limit. The e2e test stack has no Flower or Adminer.
 
 ## Supported LLMs
 

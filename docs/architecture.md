@@ -55,21 +55,23 @@ graph TD
 
 ## Port mapping
 
-All host ports are bound to `127.0.0.1` only. Containers are named with the environment as a suffix (for example `backend_dev`), and the dev and test stacks use the same compose file with different Docker Compose project names.
+All host ports are bound to `127.0.0.1` only. Containers are named with the environment as a suffix (for example `backend_dev`). The test stack (`make start-test`, [docker-compose-e2e.yml](../docker-compose-e2e.yml)) runs the production images with `APP_ENV=test` and publishes only the frontend. `make start-test-debug` instead runs the dev stack with test settings, on the dev stack's other ports.
 
 | Service | Container port | Prod | Dev | Test |
 | --- | --- | --- | --- | --- |
-| Frontend (HTTPS) | 9443 (prod) / 3000 (dev, test) | 3000 | 3001 | 3002 |
+| Frontend (HTTPS) | 9443 (prod, test) / 3000 (dev) | 3000 | 3001 | 3002 |
 | Frontend HTTP redirect to HTTPS | 9080 | 3080 | - | - |
-| Backend API | 8080 | not published | 8090 | 8090 |
-| Backend debugger | 5678 | 5678 | 5678 | 5678 |
-| Celery debugger | 5679 | 5679 | 5679 | 5679 |
-| Flower | 5555 | 5555 | 5556 | 5557 |
-| Adminer | 8080 | 8080 | 8081 | 8082 |
-| PostgreSQL | 5432 | 5432 | 5432 | 5432 |
-| Redis | 6379 | 6379 | 6379 | 6379 |
+| Backend API | 8080 | not published | 8090 | not published |
+| Backend debugger | 5678 | 5678 | 5678 | not published |
+| Celery debugger | 5679 | 5679 | 5679 | not published |
+| Flower | 5555 | 5555 | 5556 | - |
+| Adminer | 8080 | 8080 | 8081 | - |
+| PostgreSQL | 5432 | 5432 | 5432 | not published |
+| Redis | 6379 | 6379 | 6379 | not published |
 
-The prod, dev and test columns are the defaults set by `make start-prod`, `make start-dev` and `make start-test` (the frontend, Flower and Adminer ports can be overridden with `FRONTEND_PORT`, `FLOWER_PORT` and `ADMINER_PORT`). PostgreSQL, Redis and the debugger and backend ports are fixed in the compose files, so only one stack can run at a time.
+The prod, dev and test columns are the defaults set by `make start-prod`, `make start-dev` and `make start-test` (the prod and dev frontend, Flower and Adminer ports can be overridden with `FRONTEND_PORT`, `FLOWER_PORT` and `ADMINER_PORT`). PostgreSQL, Redis and the debugger and backend ports are fixed in the prod and dev compose files, so only one of those stacks can run at a time. The test stack only needs port 3002 free.
+
+Every service has CPU and memory limits (`deploy.resources.limits`) in the compose files, so a local stack doesn't take over the whole machine.
 
 ## Kubernetes / OpenShift
 

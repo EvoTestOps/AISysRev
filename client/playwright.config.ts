@@ -13,15 +13,12 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
-  /* Reset fixtures once before the run and once after, instead of per-test */
-  globalSetup: "./e2e/global-setup.ts",
-  globalTeardown: "./e2e/global-teardown.ts",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Limit parallel tests on CI */
-  workers: process.env.CI ? 5 : undefined,
+  workers: process.env.CI ? 3 : undefined,
   /* Retry on CI only */
   retries: 2,
   /* 30 seconds */
@@ -31,7 +28,9 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3002",
+    baseURL: "https://localhost:3002",
+    /* The test stack's Caddy serves a certificate from its own internal CA. */
+    ignoreHTTPSErrors: true,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -66,16 +65,22 @@ export default defineConfig({
     {
       name: "webkit",
       testMatch: /.*\.e2e\.spec\.ts/,
-      use: { ...devices["Desktop Safari"] },
+      /* Desktop Safari defaults to a 2x device scale factor. Headless WebKit on
+       * Linux paints in software, so at 2x it renders about one frame a second
+       * on CI. Playwright's "stable" check waits for animation frames, so each
+       * click then takes seconds and long flows (few-shot, ZDR) time out. */
+      use: { ...devices["Desktop Safari"], deviceScaleFactor: 1 },
     },
   ],
 
-  /* Run your local dev server before starting the tests. Its output goes to
+  /* Start the test stack (the production images, see docker-compose-e2e.yml)
+   * before the tests, unless one is already running locally. Its output goes to
    * client/playwright-webserver.log so it doesn't drown out the test output. */
   webServer: {
     command: "make start-test > client/playwright-webserver.log 2>&1",
     cwd: "../",
-    url: "http://localhost:3002/api/v1/health",
+    url: "https://localhost:3002/api/v1/health",
+    ignoreHTTPSErrors: true,
     reuseExistingServer: !process.env.CI,
     timeout: 240 * 1000,
     gracefulShutdown: {
