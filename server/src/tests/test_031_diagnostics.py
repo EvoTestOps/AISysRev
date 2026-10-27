@@ -231,10 +231,12 @@ async def test_database_check_succeeds_against_the_test_database(
 async def test_database_check_reraises_when_the_connection_fails(
     capsys: pytest.CaptureFixture[str],
 ):
-    engine = MagicMock()
-    engine.connect.side_effect = OperationalError("SELECT 1", {}, Exception("refused"))
+    session = AsyncMock()
+    session.execute.side_effect = OperationalError("SELECT 1", {}, Exception("refused"))
+    session_factory = MagicMock()
+    session_factory.return_value.__aenter__.return_value = session
 
-    with patch.object(db_check, "engine", engine):
+    with patch.object(db_check, "AsyncSessionLocal", session_factory):
         with pytest.raises(OperationalError):
             await db_check.check_database_connection()
 

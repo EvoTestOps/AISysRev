@@ -4,18 +4,16 @@ import os
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
-from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.db.engine import engine
-
-url = make_url(engine.url)
+from src.db.session import AsyncSessionLocal
 
 
 async def check_database_connection():
     try:
-        async with engine.connect() as conn:
-            result = await conn.execute(text("SELECT 1"))
+        # A session, not the engine, so that the API's health check uses its connection pool
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(text("SELECT 1"))
             res = result.fetchall()
             print("Database check successful.")
             return res

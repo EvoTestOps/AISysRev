@@ -22,6 +22,7 @@ from src.api.controllers.result import router as result_router
 from src.api.controllers.setting import router as setting_router
 from src.core.config import settings
 from src.core.readiness import startup_complete
+from src.db.session import connection_pool
 from src.redis_client.client import close_shared_redis_client
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
@@ -45,10 +46,11 @@ async def lifespan(app: FastAPI):
     print("Checking storage backend...")
     await check_storage_backend()
 
-    print("Application startup complete!")
-    startup_complete.set()
+    async with connection_pool():
+        print("Application startup complete!")
+        startup_complete.set()
 
-    yield
+        yield
 
     await close_shared_redis_client()
 
