@@ -23,6 +23,10 @@ class Settings:
             raise ValueError("Database URL not set in environment")
         # print(f"Using APP_ENV: {self.APP_ENV}")
         # print(f"Using DB_URL: {self.DB_URL}")
+        # Connection pool of each API process (see src/db/session.py). The API
+        # holds at most DB_POOL_SIZE + DB_POOL_MAX_OVERFLOW connections.
+        self.DB_POOL_SIZE: int = int(get_env("DB_POOL_SIZE", "10"))
+        self.DB_POOL_MAX_OVERFLOW: int = int(get_env("DB_POOL_MAX_OVERFLOW", "10"))
 
         self.SECRET_KEY: str = get_env("SECRET_KEY", "yoursecretkey")
         self.ALGORITHM: str = "HS256"
