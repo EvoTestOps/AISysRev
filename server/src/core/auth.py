@@ -9,6 +9,18 @@ from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.redis_client.client import get_shared_redis_client
+from src.services.user_service import create_user_service
+
+
+async def _resolve_local_user(db_ctx: DBContext) -> User:
+    """LOCAL_ENV mode: every request acts as the mock user. It is created at
+    startup, and again here if it has since been removed from the database."""
+    user = await db_ctx.crud(UserCrud).get_user_by_sub(settings.LOCAL_USER_SUB)
+    if user:
+        return user
+    user = await create_user_service(db_ctx).ensure_local_user()
+    await db_ctx.commit()
+    return user
 
 
 async def _resolve_current_user(
@@ -16,6 +28,9 @@ async def _resolve_current_user(
     request: Request,
     redis_client: redis.Redis,
 ) -> User:
+    if settings.LOCAL_ENV:
+        return await _resolve_local_user(db_ctx)
+
     session_id = request.cookies.get("session_id")
     if not session_id:
         raise HTTPException(

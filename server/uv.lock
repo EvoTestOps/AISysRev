@@ -365,6 +365,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cachetools"
+version = "7.2.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/40/3a/bce69b9ecf4658dcd3599abe5122a9031386f8f94bd85c6525fca9109db7/cachetools-7.2.7.tar.gz", hash = "sha256:e2154c809ce9e1247120258c36821467597b5663d44c3255a9790785f23c2b1e", size = 47240, upload-time = "2026-10-28T22:15:17.189Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dc/68/211287b89b122a6842b3f078ffecc5a2abd3c0e4362748586f765e2fb3c5/cachetools-7.2.7-py3-none-any.whl", hash = "sha256:88e6b53373a96786d20894fed9ce623ae5b73cbc07421b7a73098db088be69ae", size = 19654, upload-time = "2026-10-28T22:15:15.555Z" },
+]
+
+[[package]]
 name = "celery"
 version = "5.6.3"
 source = { registry = "https://pypi.org/simple" }
@@ -2847,6 +2856,7 @@ dependencies = [
     { name = "asyncpg" },
     { name = "authlib" },
     { name = "boto3" },
+    { name = "cachetools" },
     { name = "celery", extra = ["redis"] },
     { name = "charset-normalizer" },
     { name = "fastapi", extra = ["standard"] },
@@ -2864,7 +2874,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-ai-slim", extra = ["openai", "openrouter", "retries", "typesafe"] },
     { name = "pypdf" },
-    { name = "python-dotenv" },
     { name = "redis" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "uvicorn" },
@@ -2887,6 +2896,7 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "authlib", specifier = ">=1.8.0" },
     { name = "boto3", specifier = ">=1.43.118" },
+    { name = "cachetools", specifier = ">=7.2.7" },
     { name = "celery", extras = ["redis"], specifier = ">=5.6.3" },
     { name = "charset-normalizer", specifier = ">=3.5.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.162.0" },
@@ -2904,7 +2914,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.5" },
     { name = "pydantic-ai-slim", extras = ["openai", "openrouter", "retries", "typesafe"], specifier = ">=2.60.0" },
     { name = "pypdf", specifier = ">=6.21.1" },
-    { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "redis", specifier = ">=6.4.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.1.6" },
     { name = "uvicorn", specifier = ">=0.54.0" },

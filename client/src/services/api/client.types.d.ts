@@ -294,7 +294,12 @@ export namespace Schemas {
   /**
    * Current user as returned by /auth/me; omits the identity provider subject.
    */
-  export type UserMe = { uuid: string; email?: string | null; consent_anonymized_research_usage?: boolean | null };
+  export type UserMe = {
+    uuid: string;
+    email?: string | null;
+    consent_anonymized_research_usage?: boolean | null;
+    local_mode?: boolean;
+  };
   export type UserRead = {
     uuid: string;
     sub: string;

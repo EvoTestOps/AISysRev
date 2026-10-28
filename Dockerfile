@@ -3,6 +3,9 @@ ARG APP_VERSION=dev
 FROM node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS client-build
 ARG APP_VERSION
 ENV VITE_APP_VERSION=$APP_VERSION
+# Local mode (LOCAL_ENV): Vite inlines it into the bundle at build time
+ARG VITE_LOCAL_ENV=false
+ENV VITE_LOCAL_ENV=$VITE_LOCAL_ENV
 
 WORKDIR /app
 
@@ -27,6 +30,9 @@ RUN npm run build
 
 FROM caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f AS client
 RUN apk add --no-cache libcap && setcap -r /usr/bin/caddy && apk del libcap
+# Local mode: the Caddyfile shows a startup page until the backend answers
+ARG VITE_LOCAL_ENV=false
+ENV LOCAL_ENV=$VITE_LOCAL_ENV
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv

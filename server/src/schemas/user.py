@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class UserCreate(BaseModel):
+    uuid: Optional[UUID] = None
     sub: str
     email: Optional[str] = None
     terms_version_accepted: Optional[str] = None
@@ -41,5 +42,7 @@ class UserMe(BaseModel):
     uuid: UUID
     email: Optional[str] = None
     consent_anonymized_research_usage: Optional[bool] = None
+    # True when the server runs with LOCAL_ENV (no login, mock user)
+    local_mode: bool = False
 
     model_config = ConfigDict(from_attributes=True)

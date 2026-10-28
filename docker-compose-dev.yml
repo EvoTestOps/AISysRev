@@ -11,6 +11,7 @@ services:
         limits: { cpus: "1", memory: 1g }
     environment:
       VITE_APP_ENV: ${APP_ENV:-dev}
+      VITE_LOCAL_ENV: ${LOCAL_ENV:-false}
     build:
       context: .
       dockerfile: Dockerfile-dev.dockerfile
@@ -55,6 +56,7 @@ services:
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-https://login.helsinki.fi}
       OIDC_REDIRECT_URI: "https://localhost:3001/api/v1/auth/callback"
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost:3001}
+      LOCAL_ENV: ${LOCAL_ENV:-false}
     volumes:
       - ./server/migrations:/app/migrations
       - pdf_data:/app/data/pdfs

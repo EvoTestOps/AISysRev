@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -22,9 +22,11 @@ from src.api.controllers.result import router as result_router
 from src.api.controllers.setting import router as setting_router
 from src.core.config import settings
 from src.core.readiness import startup_complete
+from src.db.db_context import DBContext
 from src.db.session import connection_pool
 from src.logger import configure_logging
 from src.redis_client.client import close_shared_redis_client
+from src.services.user_service import create_user_service
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.tools.diagnostics.db_check import (
     check_database_connection,
@@ -58,6 +60,15 @@ async def lifespan(app: FastAPI):
     await check_storage_backend()
 
     async with connection_pool():
+        if settings.LOCAL_ENV:
+            logger.warning(
+                "LOCAL_ENV enabled: authentication is disabled, all requests act as mock user %s",
+                settings.LOCAL_USER_SUB,
+            )
+            async with DBContext() as db_ctx:
+                await create_user_service(db_ctx).ensure_local_user()
+                await db_ctx.commit()
+
         logger.info("Application startup complete!")
         startup_complete.set()
 
@@ -122,6 +133,8 @@ async def terms_and_conditions_page():
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
+    if settings.LOCAL_ENV:
+        return RedirectResponse(url=settings.FRONTEND_URL)
     return templates.TemplateResponse(
         request,
         "login.html",

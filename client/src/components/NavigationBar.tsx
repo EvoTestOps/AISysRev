@@ -33,6 +33,9 @@ const DESTINATIONS = [
   { label: "About", href: "/about", isActive: (path: string) => path.startsWith("/about") },
 ];
 
+// Local mode: no login, every request acts as a mock user (LOCAL_ENV on the server)
+const localEnv = import.meta.env.VITE_LOCAL_ENV === "true";
+
 const AccountMenu: React.FC = () => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const close = () => setAnchor(null);
@@ -66,13 +69,16 @@ const AccountMenu: React.FC = () => {
           </ListItemIcon>
           <ListItemText>Account</ListItemText>
         </MenuItem>
-        <Divider />
-        <MenuItem component="a" href="/api/v1/auth/logout">
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Log out</ListItemText>
-        </MenuItem>
+        {/* MUI Menu doesn't accept fragments as children, hence two conditionals */}
+        {!localEnv && <Divider />}
+        {!localEnv && (
+          <MenuItem component="a" href="/api/v1/auth/logout">
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Log out</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
     </>
   );
@@ -93,7 +99,7 @@ export const NavigationBar: React.FC = () => {
         <Link to="/" aria-label="AISysRev home" className="flex items-center">
           <img src={AISysRevLogo} alt="AISysRev" className="h-8 w-auto" />
         </Link>
-        {appEnv === "dev" && (
+        {appEnv === "dev" && !localEnv && (
           <Chip label="DEV" color="error" size="small" sx={{ fontWeight: 700, ml: 1 }} />
         )}
         <Box sx={{ flexGrow: 1 }} />

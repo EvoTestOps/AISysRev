@@ -10,7 +10,7 @@ Install the [development requirements](README.md#development-requirements) (Node
 make start-dev
 ```
 
-The app is then at https://localhost:3001. Changes to `client/` and `server/` are synced into the containers, so the app reloads as you edit. See [Running in development mode](README.md#running-in-development-mode) for the other URLs (API docs, Adminer) and the debug mode.
+The app is then at https://localhost:3001. Changes to `client/` and `server/` are synced into the containers, so the app reloads as you edit. See [Running in development mode](README.md#running-in-development-mode) for the other URLs (API docs, Adminer) and the debug mode. To skip the login, run `LOCAL_ENV=true make start-dev`. `make start` runs local mode on the production build instead, the way users run the app.
 
 ## Workflow
 
