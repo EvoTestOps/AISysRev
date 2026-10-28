@@ -48,9 +48,9 @@ logger = logging.getLogger(__name__)
 def test_task(name: str):
     import time
 
-    print(f"Task started for {name}")
+    logger.info("Task started for %s", name)
     time.sleep(3)
-    print(f"Task done for {name}")
+    logger.info("Task done for %s", name)
     return f"Hello, {name}!"
 
 

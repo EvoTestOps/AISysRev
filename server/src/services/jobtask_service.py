@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 from uuid import UUID
 
@@ -15,6 +16,8 @@ from src.schemas.jobtask import (
 from src.schemas.project import Criteria
 from src.services.paper_service import PaperService, create_paper_service
 from src.tools.per_criteria_stats import compute_criterion_irr
+
+logger = logging.getLogger(__name__)
 
 
 class JobTaskService:
@@ -156,7 +159,7 @@ class JobTaskService:
 
     async def start_job_tasks(self, job_id: int, job_data: dict):
         # job_data is of type JobCreate
-        print(f"start_job_tasks: Processing job {job_id}")
+        logger.info("start_job_tasks: Processing job %s", job_id)
         return process_job_task.delay(job_id, job_data)
 
     async def compute_per_criteria_agreement(

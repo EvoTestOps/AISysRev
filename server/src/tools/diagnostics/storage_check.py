@@ -1,9 +1,12 @@
 import asyncio
+import logging
 
 from botocore.exceptions import ClientError
 
 from src.core.config import settings
 from src.tools.pdf_storage import _client
+
+logger = logging.getLogger(__name__)
 
 
 def _check_and_create_bucket() -> None:
@@ -18,14 +21,16 @@ def _check_and_create_bucket() -> None:
 
 async def check_storage_backend() -> None:
     if settings.STORAGE_BACKEND != "s3":
-        print(f"Storage backend: local ({settings.PDF_STORAGE_PATH})")
+        logger.info("Storage backend: local (%s)", settings.PDF_STORAGE_PATH)
         return
 
     try:
         await asyncio.to_thread(_check_and_create_bucket)
     except Exception as e:
-        print(f"Storage backend check failed: {e}")
+        logger.error("Storage backend check failed: %s", e)
         raise
-    print(
-        f"Storage backend: s3 ({settings.S3_ENDPOINT_URL}, bucket={settings.S3_BUCKET})"
+    logger.info(
+        "Storage backend: s3 (%s, bucket=%s)",
+        settings.S3_ENDPOINT_URL,
+        settings.S3_BUCKET,
     )

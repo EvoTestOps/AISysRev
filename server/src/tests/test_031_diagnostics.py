@@ -1,9 +1,10 @@
 """Startup checks in src/tools/diagnostics.
 
-These only print and raise, so the tests check what they print and that they
+These only log and raise, so the tests check what they log and that they
 re-raise. `check_database_connection` needs the real database.
 """
 
+import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,6 +18,12 @@ from src.worker import celery_app
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.fixture(autouse=True)
+def capture_info_logs(caplog: pytest.LogCaptureFixture):
+    # The root logger is at WARNING in the tests, which would drop the INFO messages
+    caplog.set_level(logging.INFO)
+
+
 def _client_error(code: str) -> ClientError:
     return ClientError({"Error": {"Code": code, "Message": code}}, "HeadBucket")
 
@@ -26,7 +33,7 @@ def _client_error(code: str) -> ClientError:
 
 @pytest.mark.unit
 async def test_local_storage_check_reports_the_storage_path(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
     monkeypatch.setattr(settings, "STORAGE_BACKEND", "local")
     monkeypatch.setattr(settings, "PDF_STORAGE_PATH", "/data/pdfs")
@@ -34,7 +41,7 @@ async def test_local_storage_check_reports_the_storage_path(
     with patch.object(storage_check, "_client") as client:
         await storage_check.check_storage_backend()
 
-    assert "Storage backend: local (/data/pdfs)" in capsys.readouterr().out
+    assert "Storage backend: local (/data/pdfs)" in caplog.text
     client.assert_not_called()
 
 
@@ -47,7 +54,7 @@ def s3_settings(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.unit
 async def test_s3_storage_check_passes_when_the_bucket_exists(
-    s3_settings, capsys: pytest.CaptureFixture[str]
+    s3_settings, caplog: pytest.LogCaptureFixture
 ):
     client = MagicMock()
 
@@ -56,10 +63,7 @@ async def test_s3_storage_check_passes_when_the_bucket_exists(
 
     client.head_bucket.assert_called_once_with(Bucket="the-bucket")
     client.create_bucket.assert_not_called()
-    assert (
-        "Storage backend: s3 (http://minio:9000, bucket=the-bucket)"
-        in capsys.readouterr().out
-    )
+    assert "Storage backend: s3 (http://minio:9000, bucket=the-bucket)" in caplog.text
 
 
 @pytest.mark.unit
@@ -75,7 +79,7 @@ async def test_s3_storage_check_creates_a_missing_bucket(s3_settings):
 
 @pytest.mark.unit
 async def test_s3_storage_check_fails_on_other_errors(
-    s3_settings, capsys: pytest.CaptureFixture[str]
+    s3_settings, caplog: pytest.LogCaptureFixture
 ):
     client = MagicMock()
     client.head_bucket.side_effect = _client_error("403")
@@ -85,7 +89,7 @@ async def test_s3_storage_check_fails_on_other_errors(
             await storage_check.check_storage_backend()
 
     client.create_bucket.assert_not_called()
-    assert "Storage backend check failed" in capsys.readouterr().out
+    assert "Storage backend check failed" in caplog.text
 
 
 # --- redis_check ------------------------------------------------------------
@@ -104,7 +108,7 @@ def _redis_client(ping=True):
 
 @pytest.mark.unit
 async def test_redis_check_reports_a_working_connection(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     client = _redis_client(ping=True)
 
@@ -112,7 +116,7 @@ async def test_redis_check_reports_a_working_connection(
         await redis_check.check_redis_connection()
 
     make.assert_called_once_with(settings.REDIS_URL, decode_responses=True)
-    assert "Redis connection OK" in capsys.readouterr().out
+    assert "Redis connection OK" in caplog.text
     client.close.assert_awaited_once()
 
 
@@ -129,7 +133,7 @@ async def test_redis_check_fails_when_ping_is_not_answered():
 
 @pytest.mark.unit
 async def test_redis_check_reraises_connection_errors_and_still_closes(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     client = _redis_client(ping=OSError("connection refused"))
 
@@ -137,7 +141,7 @@ async def test_redis_check_reraises_connection_errors_and_still_closes(
         with pytest.raises(OSError, match="connection refused"):
             await redis_check.check_redis_connection()
 
-    assert "Redis connection failed: connection refused" in capsys.readouterr().out
+    assert "Redis connection failed: connection refused" in caplog.text
     client.close.assert_awaited_once()
 
 
@@ -146,7 +150,7 @@ async def test_redis_check_reraises_connection_errors_and_still_closes(
 
 @pytest.mark.unit
 async def test_celery_check_passes_when_a_worker_answers(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     with patch.object(
         celery_app.control, "ping", return_value=[{"worker@host": {"ok": "pong"}}]
@@ -154,7 +158,7 @@ async def test_celery_check_passes_when_a_worker_answers(
         await celery_check.check_celery_worker()
 
     ping.assert_called_once_with(timeout=2)
-    assert "Celery worker connection OK" in capsys.readouterr().out
+    assert "Celery worker connection OK" in caplog.text
 
 
 @pytest.mark.unit
@@ -167,13 +171,13 @@ async def test_celery_check_fails_when_no_worker_answers(answer):
 
 @pytest.mark.unit
 async def test_celery_check_reraises_broker_errors(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     with patch.object(celery_app.control, "ping", side_effect=OSError("no broker")):
         with pytest.raises(OSError, match="no broker"):
             await celery_check.check_celery_worker()
 
-    assert "Celery worker connection failed: no broker" in capsys.readouterr().out
+    assert "Celery worker connection failed: no broker" in caplog.text
 
 
 # --- db_check ---------------------------------------------------------------
@@ -219,17 +223,17 @@ async def test_wait_for_db_gives_up_after_attempts():
 
 
 async def test_database_check_succeeds_against_the_test_database(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     rows = await db_check.check_database_connection()
 
     assert rows == [(1,)]
-    assert "Database check successful." in capsys.readouterr().out
+    assert "Database check successful." in caplog.text
 
 
 @pytest.mark.unit
 async def test_database_check_reraises_when_the_connection_fails(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ):
     session = AsyncMock()
     session.execute.side_effect = OperationalError("SELECT 1", {}, Exception("refused"))
@@ -240,4 +244,55 @@ async def test_database_check_reraises_when_the_connection_fails(
         with pytest.raises(OperationalError):
             await db_check.check_database_connection()
 
-    assert "Database connection failed" in capsys.readouterr().out
+    assert "Database connection failed" in caplog.text
+
+
+# This one needs the database too (backend-test job)
+
+
+async def test_max_connections_check_reads_the_test_databases_limit(
+    caplog: pytest.LogCaptureFixture,
+):
+    max_connections = await db_check.check_max_connections()
+
+    assert max_connections is not None and max_connections > 0
+    assert f"PostgreSQL max_connections: {max_connections}" in caplog.text
+
+
+@pytest.mark.unit
+async def test_max_connections_check_warns_when_the_pool_can_use_every_connection(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(settings, "DB_POOL_SIZE", 10)
+    monkeypatch.setattr(settings, "DB_POOL_MAX_OVERFLOW", 10)
+    session = AsyncMock()
+    session.execute.return_value = MagicMock(scalar_one=MagicMock(return_value="15"))
+    session_factory = MagicMock()
+    session_factory.return_value.__aenter__.return_value = session
+
+    with patch.object(db_check, "AsyncSessionLocal", session_factory):
+        max_connections = await db_check.check_max_connections()
+
+    assert max_connections == 15
+    assert (
+        "PostgreSQL max_connections: 15 (this API process pools up to 20)"
+        in caplog.text
+    )
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+@pytest.mark.unit
+async def test_max_connections_check_does_not_fail_the_startup(
+    caplog: pytest.LogCaptureFixture,
+):
+    session = AsyncMock()
+    session.execute.side_effect = OperationalError(
+        "SHOW max_connections", {}, Exception("refused")
+    )
+    session_factory = MagicMock()
+    session_factory.return_value.__aenter__.return_value = session
+
+    with patch.object(db_check, "AsyncSessionLocal", session_factory):
+        assert await db_check.check_max_connections() is None
+
+    assert "Could not read max_connections" in caplog.text

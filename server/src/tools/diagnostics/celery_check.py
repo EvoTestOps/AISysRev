@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from celery.result import AsyncResult
 from fastapi import APIRouter
@@ -8,17 +9,19 @@ from src.worker import celery_app
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 
 async def check_celery_worker():
     try:
         # ping() blocks for up to the timeout; keep it off the event loop
         res = await asyncio.to_thread(celery_app.control.ping, timeout=2)
         if res and isinstance(res, list) and len(res) > 0:
-            print("Celery worker connection OK")
+            logger.info("Celery worker connection OK")
         else:
             raise ConnectionError("No Celery workers responded")
     except Exception as e:
-        print(f"Celery worker connection failed: {e}")
+        logger.error("Celery worker connection failed: %s", e)
         raise
 
 

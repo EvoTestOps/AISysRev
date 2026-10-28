@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -9,6 +10,8 @@ from src.event_queue import event_channel
 from src.redis_client.client import get_redis_client
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 KEEPALIVE_INTERVAL = 10
 
@@ -28,7 +31,7 @@ async def event_bus(
             yield ": connected\n\n"
             while True:
                 if await request.is_disconnected():
-                    print("Client disconnected")
+                    logger.info("Client disconnected")
                     break
 
                 message = await pubsub.get_message(
@@ -39,7 +42,7 @@ async def event_bus(
                 else:
                     yield "event: ping\ndata: keepalive\n\n"
         except asyncio.CancelledError:
-            print("CancelledError: streaming task was cancelled")
+            logger.info("CancelledError: streaming task was cancelled")
             raise  # important: re-raise so Uvicorn cleans up properly
         finally:
             try:

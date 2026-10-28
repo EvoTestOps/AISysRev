@@ -27,7 +27,8 @@ config = context.config
 config.set_main_option("sqlalchemy.url", settings.DB_URL)
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Keep the app's loggers working when the migrations run in-process (the tests do)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

@@ -1,9 +1,9 @@
+import logging
 import re
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import APIRouter, FastAPI, Request
-from fastapi.logger import logger
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -23,31 +23,42 @@ from src.api.controllers.setting import router as setting_router
 from src.core.config import settings
 from src.core.readiness import startup_complete
 from src.db.session import connection_pool
+from src.logger import configure_logging
 from src.redis_client.client import close_shared_redis_client
 from src.tools.diagnostics.celery_check import router as celery_test_router
-from src.tools.diagnostics.db_check import check_database_connection, wait_for_db
+from src.tools.diagnostics.db_check import (
+    check_database_connection,
+    check_max_connections,
+    wait_for_db,
+)
 from src.tools.diagnostics.redis_check import check_redis_connection
 from src.tools.diagnostics.storage_check import check_storage_backend
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"Starting AISysRev version {settings.APP_VERSION}")
+    logger.info("Starting AISysRev version %s", settings.APP_VERSION)
 
-    print("Waiting for database connection...")
+    logger.info("Waiting for database connection...")
     await wait_for_db()
 
-    print("Checking database connection...")
+    logger.info("Checking database connection...")
     await check_database_connection()
 
-    print("Checking Redis connection...")
+    logger.info("Checking database connection limit...")
+    await check_max_connections()
+
+    logger.info("Checking Redis connection...")
     await check_redis_connection()
 
-    print("Checking storage backend...")
+    logger.info("Checking storage backend...")
     await check_storage_backend()
 
     async with connection_pool():
-        print("Application startup complete!")
+        logger.info("Application startup complete!")
         startup_complete.set()
 
         yield

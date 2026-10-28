@@ -1,8 +1,11 @@
+import logging
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 # Remember to keep the client-side file in sync (client/src/components/EventStream.tsx)
@@ -54,4 +57,4 @@ async def publish_event(owner_uuid: UUID, event: QueueItem, redis_client=None):
     try:
         await client.publish(event_channel(owner_uuid), item.model_dump_json())
     except Exception:
-        print("An error occurred while publishing event to Redis")
+        logger.exception("An error occurred while publishing event to Redis")
