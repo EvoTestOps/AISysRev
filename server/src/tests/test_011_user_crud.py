@@ -166,3 +166,31 @@ async def test_delete_user_cascades_to_their_projects(
         await projects.fetch_project_by_uuid(other_project.uuid, other_user.uuid)
         is not None
     )
+
+
+async def test_upsert_user_creates_then_updates_same_user(db_ctx: DBContext):
+    crud = db_ctx.crud(UserCrud)
+    sub = f"sub-{uuid4()}"
+
+    created = await crud.upsert_user(
+        UserCreate(sub=sub, email="a@b.c", terms_version_accepted="1")
+    )
+    updated = await crud.upsert_user(
+        UserCreate(sub=sub, email="a@b.c", terms_version_accepted="2")
+    )
+
+    assert updated.uuid == created.uuid
+    assert updated.terms_version_accepted == "2"
+    found = await crud.get_user_by_sub(sub)
+    assert found is not None
+    assert found.terms_version_accepted == "2"
+
+
+async def test_upsert_user_keeps_uuid_of_existing_user(db_ctx: DBContext):
+    crud = db_ctx.crud(UserCrud)
+    sub = f"sub-{uuid4()}"
+
+    created = await crud.upsert_user(UserCreate(uuid=uuid4(), sub=sub))
+    updated = await crud.upsert_user(UserCreate(uuid=uuid4(), sub=sub))
+
+    assert updated.uuid == created.uuid

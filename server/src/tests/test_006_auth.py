@@ -6,8 +6,9 @@ from fastapi import HTTPException
 from starlette.datastructures import Headers
 from starlette.requests import Request
 
+from src.api.controllers.auth import delete_account, logout, me
 from src.core.auth import get_current_user
-from src.core.config import settings
+from src.core.config import Settings, settings
 from src.crud.project_crud import ProjectCrud
 from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
@@ -148,3 +149,84 @@ async def test_users_only_see_their_own_projects(db_ctx: DBContext):
     uuids_a = {p.uuid for p in projects_a}
     uuids_b = {p.uuid for p in projects_b}
     assert uuids_a.isdisjoint(uuids_b)
+
+
+@pytest.mark.asyncio
+async def test_local_env_returns_mock_user_without_session(
+    db_ctx: DBContext, monkeypatch
+):
+    monkeypatch.setattr(settings, "LOCAL_ENV", True)
+    request = make_request()
+
+    user = await get_current_user(request, db_ctx, get_redis_client())
+
+    assert user.sub == settings.LOCAL_USER_SUB
+    assert user.uuid == settings.LOCAL_USER_UUID
+    assert user.terms_version_accepted == settings.CURRENT_TERMS_VERSION
+    assert (
+        user.privacy_policy_version_accepted == settings.CURRENT_PRIVACY_POLICY_VERSION
+    )
+    again = await get_current_user(request, db_ctx, get_redis_client())
+    assert again.uuid == user.uuid
+
+
+@pytest.mark.asyncio
+async def test_local_env_recreates_deleted_mock_user_with_same_uuid(
+    db_ctx: DBContext, monkeypatch
+):
+    monkeypatch.setattr(settings, "LOCAL_ENV", True)
+    request = make_request()
+    user = await get_current_user(request, db_ctx, get_redis_client())
+
+    await create_user_service(db_ctx).delete_user(str(user.uuid))
+    await db_ctx.commit()
+
+    recreated = await get_current_user(request, db_ctx, get_redis_client())
+    assert recreated.sub == settings.LOCAL_USER_SUB
+    assert recreated.uuid == settings.LOCAL_USER_UUID
+
+
+@pytest.mark.unit
+def test_local_env_is_rejected_on_staging(monkeypatch):
+    monkeypatch.setenv("LOCAL_ENV", "true")
+    monkeypatch.setenv("APP_ENV", "staging")
+
+    with pytest.raises(Exception, match="LOCAL_ENV"):
+        Settings()
+
+
+@pytest.mark.unit
+def test_local_env_is_allowed_in_production(monkeypatch):
+    monkeypatch.setenv("LOCAL_ENV", "true")
+    monkeypatch.setenv("APP_ENV", "prod")
+
+    assert Settings().LOCAL_ENV is True
+
+
+@pytest.mark.asyncio
+async def test_local_env_me_reports_local_mode(db_ctx: DBContext, monkeypatch):
+    monkeypatch.setattr(settings, "LOCAL_ENV", True)
+    user = await get_current_user(make_request(), db_ctx, get_redis_client())
+
+    result = await me(user)
+
+    assert result.local_mode is True
+
+
+@pytest.mark.asyncio
+async def test_local_env_disables_account_deletion_and_logout(
+    db_ctx: DBContext, monkeypatch
+):
+    monkeypatch.setattr(settings, "LOCAL_ENV", True)
+    request = make_request()
+    redis_client = get_redis_client()
+    user = await get_current_user(request, db_ctx, redis_client)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_account(request, db_ctx, user, redis_client)
+    assert exc_info.value.status_code == 403
+    assert await db_ctx.crud(UserCrud).get_user_by_uuid(str(user.uuid)) is not None
+
+    with pytest.raises(HTTPException) as exc_info:
+        await logout(request, redis_client)
+    assert exc_info.value.status_code == 403

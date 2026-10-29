@@ -9,7 +9,9 @@ from src.core.llm.providers.openrouter import OpenRouterProvider
 from src.core.llm.providers.provider import LLMProvider
 
 # The local OpenAI SDK provider makes the backend call an arbitrary
-# user-supplied URL, so it is only offered when running locally.
+# user-supplied URL, so it is only offered when running locally: outside
+# production, or in local mode (LOCAL_ENV), which is production on the user's
+# own machine.
 LOCAL_PROVIDER_DISABLED_ENVS = ("production", "prod", "staging")
 
 llm_providers: List[type[LLMProvider]] = [
@@ -17,7 +19,7 @@ llm_providers: List[type[LLMProvider]] = [
     OpenAIProvider,
     *(
         [LocalOpenAISDKProvider]
-        if settings.APP_ENV not in LOCAL_PROVIDER_DISABLED_ENVS
+        if settings.LOCAL_ENV or settings.APP_ENV not in LOCAL_PROVIDER_DISABLED_ENVS
         else []
     ),
     JevProvider,

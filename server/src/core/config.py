@@ -1,8 +1,5 @@
 from typing import Optional
-
-from dotenv import load_dotenv
-
-load_dotenv()
+from uuid import UUID
 
 
 def get_env(name: str, default: Optional[str] = None) -> str:
@@ -50,6 +47,22 @@ class Settings:
             "true",
             "yes",
         ]
+        # Local mode: the app runs on the user's own machine, so authentication
+        # is skipped and every request acts as a hardcoded mock user (see
+        # src/core/auth.py). Never on staging, which is publicly reachable.
+        self.LOCAL_ENV: bool = get_env("LOCAL_ENV", "false").lower() in [
+            "y",
+            "1",
+            "true",
+            "yes",
+        ]
+        if self.LOCAL_ENV and self.APP_ENV == "staging":
+            raise Exception("FATAL: LOCAL_ENV=true is not allowed with APP_ENV=staging")
+        self.LOCAL_USER_SUB: str = "local-user"
+        # Fixed, so the mock user keeps the same UUID even if the database is
+        # recreated (e.g. after its Docker volume is removed)
+        self.LOCAL_USER_UUID: UUID = UUID("00000000-0000-4000-8000-000000000001")
+        self.LOCAL_USER_EMAIL: str = "local@local.dev"
         self.PDF_STORAGE_PATH: str = get_env("PDF_STORAGE_PATH", "/app/data/pdfs")
         self.MAX_PDF_UPLOAD_MB: int = int(get_env("MAX_PDF_UPLOAD_MB", "50"))
         self.STORAGE_BACKEND: str = get_env(

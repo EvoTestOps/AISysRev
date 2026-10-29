@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from src.api.controllers.llm import get_available_models
+from src.api.controllers.llm import get_available_models, models_cache
 from src.core.llm.providers.openrouter import (
     OpenRouterProvider,
     OpenRouterProviderParams,
@@ -284,6 +284,15 @@ async def test_resolve_provider_parameters_stored_setting_beats_default():
 
 # --- /llm/{provider}/models: the force-ZDR setting is read on every request ----
 
+
+@pytest.fixture(autouse=True)
+def _empty_models_cache():
+    # Each test lists models afresh, instead of getting an earlier test's list
+    models_cache.clear()
+    yield
+    models_cache.clear()
+
+
 _REQUIRED_PARAMETERS = ["structured_outputs", "response_format", "temperature", "top_p"]
 
 # Satisfies both OpenRouter listings: /models (id) and /endpoints/zdr (model_id).
@@ -413,3 +422,25 @@ async def test_models_endpoint_honours_per_job_zdr_when_not_forced():
     session, _ = await _list_models_via_endpoint("false", {"zdr": True})
 
     assert _used_zdr_listing(session)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_caches_the_listing():
+    first, _ = await _list_models_via_endpoint("true", {})
+    second, keys_read = await _list_models_via_endpoint("true", {})
+
+    assert len(first.requested_urls) == 1
+    assert second.requested_urls == []
+    # The settings are still read, as they decide which cached listing applies
+    assert "openrouter_force_zdr" in keys_read
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_models_endpoint_caches_each_zdr_setting_separately():
+    await _list_models_via_endpoint("true", {})
+    session, _ = await _list_models_via_endpoint("false", {"zdr": False})
+
+    assert len(session.requested_urls) == 1
+    assert not _used_zdr_listing(session)

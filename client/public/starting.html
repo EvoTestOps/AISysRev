@@ -1,0 +1,103 @@
+<!doctype html>
+<!--
+  Served by Caddy (see Caddyfile) while the backend isn't answering yet, e.g.
+  during startup. Reloads itself until the app is up. Self-contained: the app's
+  own bundle can't be used, as it needs the backend.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta http-equiv="refresh" content="3" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <title>AISysRev is starting</title>
+    <style>
+      :root {
+        --bg: #f3f4f6;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --track: #e5e7eb;
+        --accent: #1976d2;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111827;
+          --card: #1f2937;
+          --text: #f9fafb;
+          --muted: #9ca3af;
+          --track: #374151;
+          --accent: #90caf9;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Roboto,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        width: 100%;
+        max-width: 420px;
+        padding: 32px 24px;
+        border-radius: 8px;
+        background: var(--card);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        text-align: center;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 20px;
+        border: 4px solid var(--track);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation-duration: 3s;
+        }
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>AISysRev is starting</h1>
+      <p>
+        This can take a minute on the first start. The page opens automatically when the app is
+        ready. If nothing is happening, try to refresh the page.
+      </p>
+    </main>
+  </body>
+</html>

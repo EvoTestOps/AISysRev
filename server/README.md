@@ -31,13 +31,13 @@ make typecheck    # mypy src
 
 ## Configuration
 
-Settings are read from environment variables. `.env.example` (for the Docker setup) and `.env.local.example` (for running outside Docker) list the required ones: `APP_ENV`, `SECRET_KEY`, `DB_URL`, `CELERY_BROKER_URL` and `REDIS_URL`.
+The server only runs in containers. Settings are read from environment variables, which the compose files in the repository root set for each service; there are no dotenv files. The required ones are `APP_ENV`, `SECRET_KEY`, `DB_URL`, `CELERY_BROKER_URL` and `REDIS_URL`; the rest are optional, with defaults in [src/core/config.py](src/core/config.py).
 
 ### Database connections
 
 The API keeps a connection pool: each API process holds at most `DB_POOL_SIZE` + `DB_POOL_MAX_OVERFLOW` connections (default 10 + 10), and a request that finds the pool full waits for a free connection. Celery workers, migrations and the tests don't pool and open a new connection per session, because each Celery job runs in its own event loop and an asyncpg connection can't move between event loops (see [src/db/session.py](src/db/session.py)).
 
-All of them share PostgreSQL's `max_connections` (100 by default). Keep the number of API processes (Kubernetes replicas, uvicorn workers) × 20, plus Celery's connections, below it. Celery uses up to one connection per running screening task, and a worker process runs at most 20 tasks at a time.
+All of them share PostgreSQL's `max_connections`: 50 in the production and local stack ([docker-compose.yml](../docker-compose.yml)), PostgreSQL's default of 100 in the others. Keep the number of API processes (Kubernetes replicas, uvicorn workers) × 20, plus Celery's connections, below it. Celery uses up to one connection per running screening task, and a worker process runs at most 20 tasks at a time.
 
 ## Dependencies
 

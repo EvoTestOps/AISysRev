@@ -1,48 +1,88 @@
 {
-	http_port  9080
+	http_port 9080
 	https_port 9443
 	auto_https disable_redirects
 }
 
 localhost:9080 {
-    redir https://localhost:3000{uri} permanent
+	redir https://localhost:3000{uri} permanent
 }
 
 localhost:9443 {
 	tls internal
 
-	handle /api* {
-		reverse_proxy backend_prod:8080
-	}
+	# Local mode (LOCAL_ENV, set in the image at build time, see Dockerfile).
+	# Only it shows the startup page while the backend isn't answering.
+	@local expression `"{$LOCAL_ENV:false}" == "true"`
 
-	handle /login {
-		reverse_proxy backend_prod:8080
-	}
-
-	handle /logout {
-		reverse_proxy backend_prod:8080
-	}
-
-	handle /register-and-privacy-policy {
-		reverse_proxy backend_prod:8080
-	}
-
-	handle /terms-and-conditions {
-		reverse_proxy backend_prod:8080
-	}
-
-	handle /openapi.json {
-		reverse_proxy backend_prod:8080
-	}
-
-	handle /docs {
+	# Routes served by the backend
+	@backend path /api* /login /register-and-privacy-policy /terms-and-conditions /openapi.json /docs
+	handle @backend {
 		reverse_proxy backend_prod:8080
 	}
 
 	handle {
 		root * /srv
-		try_files {path} /index.html
-		file_server
+		# Only the static files are compressed: the proxied routes include the
+		# event stream, which must not be buffered
+		encode zstd gzip
+
+		# Built assets (JS, CSS, images) are served as they are. Browsers keep
+		# them, but revalidate them with their ETag on every load (304 when
+		# unchanged).
+		@asset {
+			not path /
+			file
+		}
+		handle @asset {
+			header /assets/* Cache-Control no-cache
+			file_server
+		}
+
+		# Local mode: the app's pages need the backend, so they are served only
+		# once it answers. Until then (e.g. during startup), handle_errors below
+		# shows the startup page instead.
+		handle @local {
+			reverse_proxy backend_prod:8080 {
+				method GET
+				rewrite /api/v1/health/live
+				@up status 2xx
+				handle_response @up {
+					rewrite * /index.html
+					# Revalidated on every load, so an updated app is picked up
+					header Cache-Control no-cache
+					file_server
+				}
+				handle_response {
+					error 503
+				}
+			}
+		}
+
+		# Production: the app's pages are always served, without the startup page
+		handle {
+			rewrite * /index.html
+			# Revalidated on every load, so an updated app is picked up
+			header Cache-Control no-cache
+			file_server
+		}
+	}
+
+	# Local mode, the backend isn't answering: pages get a startup page that
+	# reloads itself until it does. API calls keep the plain error status.
+	handle_errors 502 503 504 {
+		@page {
+			not path /api*
+			expression `"{$LOCAL_ENV:false}" == "true"`
+		}
+		handle @page {
+			root * /srv
+			rewrite * /starting.html
+			header Cache-Control no-store
+			file_server {
+				status 503
+			}
+		}
 	}
 
 	log {

@@ -1,7 +1,8 @@
 import datetime
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models.user import User
@@ -28,6 +29,26 @@ class UserCrud:
         await self.db.flush()
         await self.db.refresh(user)
         return user
+
+    async def upsert_user(self, user_data: UserCreate) -> User:
+        """Creates the user, or updates its fields if a user with the same sub
+        exists. A single statement, so concurrent calls can't race. The uuid of
+        an existing user is kept, as other tables reference it."""
+        values = user_data.model_dump(exclude_none=True)
+        updates = {k: v for k, v in values.items() if k != "uuid"}
+        stmt = (
+            insert(User)
+            .values(**values)
+            .on_conflict_do_update(
+                index_elements=[User.sub],
+                set_={**updates, "updated_at": func.now()},
+            )
+            .returning(User)
+        )
+        result = await self.db.scalars(
+            stmt, execution_options={"populate_existing": True}
+        )
+        return result.one()
 
     async def update_research_consent(
         self, user_uuid: str, value: bool
