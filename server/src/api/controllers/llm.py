@@ -5,12 +5,17 @@ from openai.types.model import Model
 from pydantic import BaseModel
 
 from src.core.auth import get_current_user
+from src.core.cache import TTLCache, hash_key
 from src.core.llm.providers import llm_providers
 from src.core.llm.providers.provider import ConfigParameter, LLMProvider, Provider
 from src.db.db_context import DBContext, get_db_ctx
 from src.db.models.user import User
 from src.schemas.llm import ProviderRuntimeParameters
 from src.services.llm_service import create_llm_service
+
+# Listing models calls the provider's API, which is slow and the result rarely
+# changes. Kept for the provider's models_cache_ttl_seconds.
+models_cache: TTLCache[List[Model]] = TTLCache()
 
 router = APIRouter()
 
@@ -107,14 +112,27 @@ async def get_available_models(
         resolved_provider_parameters = await llm_service.resolve_provider_parameters(
             llm_class, provider_parameters, current_user.uuid
         )
-        try:
-            llm_instance = llm_class(resolved_provider_parameters, runtime_params)
-        except Exception as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid provider parameters: {str(e)}",
-            )
     else:
-        llm_instance = llm_class({}, runtime_params)
+        resolved_provider_parameters = {}
 
-    return await llm_instance.get_available_models()
+    ttl_seconds = llm_class.models_cache_ttl_seconds
+    # The models depend on the provider's parameters (e.g. ZDR only) and on what
+    # the API key's account can access
+    cache_key = hash_key(provider, resolved_provider_parameters, api_key)
+    if ttl_seconds is not None:
+        cached = models_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+    try:
+        llm_instance = llm_class(resolved_provider_parameters, runtime_params)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid provider parameters: {str(e)}",
+        )
+
+    models = await llm_instance.get_available_models()
+    if ttl_seconds is not None:
+        models_cache.put(cache_key, models, ttl_seconds)
+    return models

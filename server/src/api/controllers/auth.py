@@ -196,7 +196,9 @@ async def dev_login(
     response_model=UserMe,
 )
 async def me(current_user: User = Depends(get_current_user)):
-    return UserMe.model_validate(current_user)
+    return UserMe.model_validate(current_user).model_copy(
+        update={"local_mode": settings.LOCAL_ENV}
+    )
 
 
 @router.patch(
@@ -222,6 +224,12 @@ async def delete_account(
     current_user: User = Depends(get_current_user),
     redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
+    if settings.LOCAL_ENV:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account deletion is disabled in local mode",
+        )
+
     session_id = request.cookies.get("session_id")
     if session_id:
         await redis_client.delete(f"session:{session_id}")
@@ -240,6 +248,12 @@ async def logout(
     request: Request,
     redis_client: redis.Redis = Depends(get_shared_redis_client),
 ):
+    if settings.LOCAL_ENV:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Logout is disabled in local mode",
+        )
+
     session_id = request.cookies.get("session_id")
     if session_id:
         await redis_client.delete(f"session:{session_id}")

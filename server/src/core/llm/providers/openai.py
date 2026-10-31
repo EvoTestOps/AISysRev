@@ -36,6 +36,7 @@ class OpenAIProvider(LLMProvider[EmptyProviderParams, OpenAIModelParams]):
     provider_description = "Access all OpenAI models from the OpenAI API & SDK."
 
     model_parameters_schema = OpenAIModelParams
+    models_cache_ttl_seconds = 60 * 60
     api_key_config_parameter = ConfigParameter(
         key="openai_api_key",
         title="OpenAI API key",

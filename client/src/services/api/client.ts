@@ -493,6 +493,7 @@ export const UserMe = z.strictObject({
   uuid: z.uuid(),
   email: z.string().nullable().optional(),
   consent_anonymized_research_usage: z.boolean().nullable().optional(),
+  local_mode: z.boolean().default(false),
 });
 
 export type UserRead = __TypedOpenapi.Schemas.UserRead;

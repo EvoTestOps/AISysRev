@@ -156,8 +156,9 @@ LLM calls are parallelized, and you should achieve a screening speed exceeding 1
 
 ## System and software requirements
 
+AISysRev runs entirely in Docker containers: the frontend, backend, database, Redis and the Celery workers. Docker is the only software you need to install to run it; there is nothing to install or configure on the host.
+
 - Docker, with Compose and buildx plugins installed.
-- `uv` Python package and project manager: https://docs.astral.sh/uv/getting-started/installation/
 - Enough RAM (At least 8GB recommended)
 - Enough disk space (Around 8GB)
 - Network connection
@@ -189,31 +190,31 @@ move to correct directory
 cd AISysRev
 ```
 
+The default way to run AISysRev on your own machine is **local mode**: the production build of the app, running on your machine. It needs no login or account: the app runs as a single local user, and all data stays on your machine.
+
 #### MacOS, Linux and Windows (WSL)
-Start the application in production mode:
 ```bash
-make start-prod
-``` 
-If you want to develop the app, run:
-```bash
-make start-dev
+make start
 ```
-> [!NOTE]
-> The startup of the app may take a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
-
-After startup, open the application:
-
-If you ran `start-prod`, navigate to [https://localhost:3000](https://localhost:3000) (the Caddy server's root CA is by default untrusted. You can bypass the browser warning).
-
-If you used `make start-dev`, navigate to [https://localhost:3001](https://localhost:3001) (the dev server uses a self-signed certificate, so you can bypass the browser warning).
-
 
 #### Windows (non-WSL)
 
-If you do not have Windows Subsystem for Linux (WSL), start the application with 
+If you do not have Windows Subsystem for Linux (WSL), run:
 ```bash
-./start-prod.bat
+./start.bat
 ```
+
+> [!NOTE]
+> The startup of the app may take a while due to the download of corresponding Docker images & services, application dependencies and building of the application.
+
+The app opens in your browser at [https://localhost:3000](https://localhost:3000) as soon as it is reachable, and shows a startup page until it is ready (set `NO_BROWSER=1` to skip opening it). The Caddy server's root CA is by default untrusted, so you can bypass the browser warning.
+
+Stopping the app keeps your data: it is stored in Docker volumes, which are only removed if you remove them yourself (e.g. `docker compose -p local down -v`).
+
+#### Other modes
+
+- `make start-prod` (`./start-prod.bat` on Windows) runs the same production build with login (OIDC), as deployed on a server, also at [https://localhost:3000](https://localhost:3000).
+- `make start-dev` (`./start-dev.bat` on Windows) runs the development stack, see [Running in development mode](#running-in-development-mode).
 
 ## Technology
 
@@ -232,6 +233,9 @@ Python, FastAPI, PostgreSQL, SQLAlchemy, Alembic
 See [architecture.md](docs/architecture.md)
 
 ## Development requirements
+
+Development also happens in containers: `make start-dev` runs the whole stack in Docker and syncs your edits into it, and the tests and migrations run in containers too. The host tools below are only needed for linting, type checking and generating the API client.
+
 - Node.js v24 LTS
 - Python 3.14
 - Docker, with Compose plugin installed
@@ -244,9 +248,15 @@ See [architecture.md](docs/architecture.md)
 
 `make start-dev`
 
+To skip the login, as in local mode: `LOCAL_ENV=true make start-dev`
+
 ### Windows (non-WSL)
 
 `./start-dev.bat`
+
+### Local mode
+
+Local mode is the environment variable `LOCAL_ENV=true`. `make start` sets it on the production stack, and it can be added to the development stack too. The backend then skips the login: every request acts as a hardcoded mock user (`local-user`, with a fixed UUID) who has accepted the terms and privacy policy, so no OIDC credentials are needed. Logging out and deleting the account are disabled, and the local OpenAI-compatible model provider is available, as the app runs on the user's own machine. The backend refuses to start with `LOCAL_ENV=true` if `APP_ENV` is `staging`.
 
 ### Getting started with development
 
@@ -311,7 +321,7 @@ Run in repository root:
 - `make backend-test` for all backend tests
 - `make backend-test-html` for all backend tests and an HTML coverage report
 
-Windows (non-WSL) users need to run the equivalent `docker compose` commands from the [Makefile](Makefile) manually, since only `start-dev.bat` and `start-prod.bat` are provided.
+Windows (non-WSL) users need to run the equivalent `docker compose` commands from the [Makefile](Makefile) manually, since only `start.bat`, `start-dev.bat` and `start-prod.bat` are provided.
 
 ## Makefile Commands
 
@@ -321,7 +331,8 @@ The project includes a `Makefile` for common development and database operations
 
 | Command           | Description                                                                   |
 | ----------------- | ----------------------------------------------------------------------------- |
-| `make start-dev`  | Start dev containers with live reloading and build on startup (default setup) |
+| `make start`      | Run the production build locally without login (local mode, the default setup), at https://localhost:3000 |
+| `make start-dev`  | Start dev containers with live reloading and build on startup (add `LOCAL_ENV=true` to skip the login) |
 | `make start-dev-debug` | Same as `start-dev`, with the backend debugger enabled                   |
 | `make start-test` | Start the e2e test stack: the production images with `APP_ENV=test`, at https://localhost:3002 |
 | `make start-test-debug` | Start the dev stack with `APP_ENV=test` and the backend debugger, at https://localhost:3002 |

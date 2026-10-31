@@ -4,6 +4,7 @@ from typing import Optional
 from src.core.config import settings
 from src.crud.user_crud import UserCrud
 from src.db.db_context import DBContext
+from src.db.models.user import User
 from src.schemas.user import ConsentAccept, UserCreate, UserRead
 
 
@@ -51,6 +52,22 @@ class UserService:
             )
         )
         return UserRead.model_validate(user)
+
+    async def ensure_local_user(self) -> User:
+        """Creates or refreshes the mock user of LOCAL_ENV mode, with the
+        current terms and privacy policy accepted."""
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return await self.user_crud.upsert_user(
+            UserCreate(
+                uuid=settings.LOCAL_USER_UUID,
+                sub=settings.LOCAL_USER_SUB,
+                email=settings.LOCAL_USER_EMAIL,
+                terms_version_accepted=settings.CURRENT_TERMS_VERSION,
+                terms_accepted_at=now,
+                privacy_policy_version_accepted=settings.CURRENT_PRIVACY_POLICY_VERSION,
+                privacy_policy_accepted_at=now,
+            )
+        )
 
 
 def create_user_service(db_ctx: DBContext) -> UserService:

@@ -58,6 +58,7 @@ export const AccountSettingsPage = () => {
   const [researchConsent, setResearchConsent] = useState<boolean>(false);
   const [loadingUser, setLoadingUser] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [localMode, setLocalMode] = useState(false);
   const [, navigate] = useLocation();
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export const AccountSettingsPage = () => {
       try {
         const res = await api.get("/api/v1/auth/me", { overrides: { signal: controller.signal } });
         setResearchConsent(res.consent_anonymized_research_usage ?? false);
+        setLocalMode(res.local_mode ?? false);
         setLoadingUser(false);
       } catch (e) {
         if (!controller.signal.aborted) throw e;
@@ -98,34 +100,42 @@ export const AccountSettingsPage = () => {
     <Layout title="Settings">
       <NavTabs aria-label="Settings sections" active="/settings/account" tabs={SETTINGS_TABS} />
       <Stack spacing={3} sx={{ maxWidth: 960 }}>
+        {/* The mock user of local mode has no real usage data to consent to sharing */}
+        {!localMode && (
+          <Section
+            index={0}
+            title="Research data consent"
+            description="I consent to my anonymized usage data being used for academic research about this tool. This is optional and will not affect your use of the application. You can change your consent at any time."
+            action={
+              loadingUser ? (
+                <Skeleton variant="rounded" width={58} height={38} />
+              ) : (
+                <ToggleSwitch
+                  checked={researchConsent}
+                  disabled={saving}
+                  inputLabel="Research data consent"
+                  testId="research-consent-switch"
+                  onChange={handleSaveResearchConsent}
+                />
+              )
+            }
+          />
+        )}
         <Section
-          index={0}
-          title="Research data consent"
-          description="I consent to my anonymized usage data being used for academic research about this tool. This is optional and will not affect your use of the application. You can change your consent at any time."
-          action={
-            loadingUser ? (
-              <Skeleton variant="rounded" width={58} height={38} />
-            ) : (
-              <ToggleSwitch
-                checked={researchConsent}
-                disabled={saving}
-                inputLabel="Research data consent"
-                testId="research-consent-switch"
-                onChange={handleSaveResearchConsent}
-              />
-            )
-          }
-        />
-        <Section
-          index={1}
+          index={localMode ? 0 : 1}
           danger
           title="Delete account"
-          description="Permanently deletes your account and all your projects, papers and jobs. This cannot be undone."
+          description={
+            localMode
+              ? "Account deletion is disabled in local mode."
+              : "Permanently deletes your account and all your projects, papers and jobs. This cannot be undone."
+          }
           action={
             <Button
               variant="outlined"
               color="error"
               startIcon={<DeleteOutlinedIcon />}
+              disabled={loadingUser || localMode}
               onClick={() => setShowDeleteModal(true)}
               data-testid="delete-account-button"
             >

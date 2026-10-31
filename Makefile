@@ -1,5 +1,13 @@
+# LOCAL (default)
+# Run the production build on this machine without login: every request acts
+# as a mock user (LOCAL_ENV). At https://localhost:3000, which opens in the
+# browser once it answers (NO_BROWSER=1 to skip).
+start:
+	LOCAL_ENV=true FLOWER_PORT=5555 ADMINER_PORT=8080 docker compose -f docker-compose.yml -p local down
+	./scripts/open-when-ready.sh https://localhost:3000 & LOCAL_ENV=true FLOWER_PORT=5555 ADMINER_PORT=8080 docker compose -f docker-compose.yml -p local up --build
 # DEV
-# Start dev containers with live reloading and build on startup (default development setup)
+# Start dev containers with live reloading and build on startup (default development setup).
+# Add LOCAL_ENV=true to skip the login.
 start-dev:
 	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev down
 	FRONTEND_PORT=3001 FLOWER_PORT=5556 ADMINER_PORT=8081 APP_ENV=dev docker compose -f docker-compose-dev.yml -p dev up --watch --build

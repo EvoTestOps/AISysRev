@@ -2,7 +2,6 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -19,8 +18,6 @@ from src.db.models import (  # noqa: F401
     Setting,
 )
 from src.db.session import Base
-
-load_dotenv()
 
 config = context.config
 

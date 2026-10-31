@@ -59,6 +59,7 @@ class OpenRouterProvider(LLMProvider[OpenRouterProviderParams, OpenRouterModelPa
     provider_parameters_schema = OpenRouterProviderParams
 
     model_parameters_schema = OpenRouterModelParams
+    models_cache_ttl_seconds = 60 * 60
 
     api_key_config_parameter = ConfigParameter(
         key="openrouter_api_key",

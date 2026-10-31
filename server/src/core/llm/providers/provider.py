@@ -76,6 +76,10 @@ class LLMProvider(Generic[P, M], ABC):
     # Whether the runtime system prompt is sent to the model.
     uses_system_prompt: ClassVar[bool] = True
 
+    # How long the model list is cached (models_cache in src/api/controllers/llm.py).
+    # None: listed on every request, e.g. when it is static or local.
+    models_cache_ttl_seconds: ClassVar[int | None] = None
+
     # Config-specific - e.g. what needs to be configured in the UI.
     config_parameters: ClassVar[list[ConfigParameter]]
     api_key_config_parameter: ClassVar[ConfigParameter | None] = None

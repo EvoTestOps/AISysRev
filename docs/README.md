@@ -19,7 +19,6 @@ For an overview of the project and how to run it, see the [main README](../READM
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Development workflow, checks and documentation rules |
 | [maintenance.md](maintenance.md) | Upgrading dependencies and Docker images, Dependabot |
 | [releasing.md](releasing.md) | Creating a tag and a GitHub release |
-| [manual-installation.md](manual-installation.md) | Running the client and server without Docker |
 | [../server/README.md](../server/README.md) | Server layout and commands |
 | [../fuzzing/README.md](../fuzzing/README.md) | API fuzzing tools |
 
