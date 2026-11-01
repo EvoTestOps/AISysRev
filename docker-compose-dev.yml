@@ -113,13 +113,13 @@ services:
     deploy:
       resources:
         limits: { cpus: "0.25", memory: 128m }
-    image: adminer:5.5.1@sha256:87f9aeeef91638f5bc150bb6490a4fd85d071f458f38dcc8171a640e1751d29b
+    image: adminer:5.5.1@sha256:d4ce3a057bbc391168b0b88266b7904b06bd8f7797f9107b9cd9a561d8b7f66d
     restart: always
     ports:
       - 127.0.0.1:${ADMINER_PORT:-8080}:8080
 
   redis:
-    image: redis:8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+    image: redis:8.10.3-alpine@sha256:21090af93f8324db2f0f0f4f38a7c60369d47d917e000c3423d89d2ae2883537
     container_name: redis_${APP_ENV:-dev}
     deploy:
       resources:
