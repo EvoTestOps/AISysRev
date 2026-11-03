@@ -27,6 +27,7 @@ import { ProviderSettings } from "./ProviderSettings";
 import { ScreeningMethodSelector } from "./ScreeningMethodSelector";
 import { TokenEstimate } from "./TokenEstimate";
 import { estimateTokens } from "./tokenEstimation";
+import { promptVersionLabel } from "../../prompts/promptLabels";
 
 const Section: React.FC<
   React.PropsWithChildren<{ step: number; title: string; tooltip?: string }>
@@ -127,7 +128,9 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
     promptingStrategyLabel(form.promptingStrategy).value,
     // Jev always gets the built-in prompt, so there is nothing to choose.
     ...(!form.isJevScreening && form.selectedPrompt && !form.selectedPrompt.is_default
-      ? [`Prompt: ${form.selectedPrompt.name} · v${form.selectedPrompt.latest_version.version}`]
+      ? [
+          `Prompt: ${promptVersionLabel(form.selectedPrompt.name, form.selectedPrompt.latest_version.version)}`,
+        ]
       : []),
   ];
 

@@ -365,32 +365,6 @@ Provide a probability and a brief reason for your estimate.
 
 
 @dataclass(frozen=True)
-class PromptSource:
-    """The publication a built-in prompt comes from."""
-
-    # Short form for chips, e.g. "ESEM '25".
-    label: str
-    citation: str
-    doi: str
-    # The version of the built-in prompt whose text is the published one. A
-    # later change to the text adds a version that is no longer that prompt.
-    version: int
-
-
-SESR_EVAL = PromptSource(
-    label="ESEM '25",
-    citation=(
-        "A. Huotala, M. Kuutila, and M. Mäntylä. SESR-Eval: Dataset for Evaluating "
-        "LLMs in the Title-Abstract Screening of Systematic Reviews. In Proceedings of "
-        "the 19th ACM/IEEE International Symposium on Empirical Software Engineering "
-        "and Measurement (ESEM '25), 2025."
-    ),
-    doi="10.48550/arXiv.2507.19027",
-    version=1,
-)
-
-
-@dataclass(frozen=True)
 class DefaultPrompt:
     """A built-in prompt, shared by every account and read-only to them."""
 
@@ -400,68 +374,60 @@ class DefaultPrompt:
     description: str
     prompting_type: JobPromptingType
     screening_target: ScreeningTarget
-    system_prompt: str
     user_prompt: str
-    source: PromptSource | None = None
+    system_prompt: str = default_system_prompt
 
 
 # Synced to the database at startup (PromptService.sync_default_prompts): a
 # change to any text here becomes a new version of that default prompt.
 DEFAULT_PROMPTS: list[DefaultPrompt] = [
     DefaultPrompt(
-        slug="paper-zero-shot",
-        name="Papers: zero-shot",
-        description="Judges a paper against all criteria at once, without examples.",
-        prompting_type=JobPromptingType.ZERO_SHOT,
-        screening_target=ScreeningTarget.PAPER,
-        system_prompt=default_system_prompt,
-        user_prompt=zero_shot_task_prompt,
-        source=SESR_EVAL,
+        "paper-zero-shot",
+        "Papers: zero-shot",
+        "Judges a paper against all criteria at once, without examples. Published in SESR-Eval (ESEM '25), doi:10.48550/arXiv.2507.19027.",
+        JobPromptingType.ZERO_SHOT,
+        ScreeningTarget.PAPER,
+        zero_shot_task_prompt,
     ),
     DefaultPrompt(
-        slug="paper-few-shot",
-        name="Papers: few-shot",
-        description="Judges a paper against all criteria at once, with seed papers as examples.",
-        prompting_type=JobPromptingType.FEW_SHOT,
-        screening_target=ScreeningTarget.PAPER,
-        system_prompt=default_system_prompt,
-        user_prompt=few_shot_task_prompt,
+        "paper-few-shot",
+        "Papers: few-shot",
+        "Judges a paper against all criteria at once, with seed papers as examples.",
+        JobPromptingType.FEW_SHOT,
+        ScreeningTarget.PAPER,
+        few_shot_task_prompt,
     ),
     DefaultPrompt(
-        slug="paper-per-criteria",
-        name="Papers: per criterion",
-        description="Asks for the probability of one criterion at a time.",
-        prompting_type=JobPromptingType.PER_CRITERIA,
-        screening_target=ScreeningTarget.PAPER,
-        system_prompt=default_system_prompt,
-        user_prompt=per_criteria_task_prompt,
+        "paper-per-criteria",
+        "Papers: per criterion",
+        "Asks for the probability of one criterion at a time.",
+        JobPromptingType.PER_CRITERIA,
+        ScreeningTarget.PAPER,
+        per_criteria_task_prompt,
     ),
     DefaultPrompt(
-        slug="github-zero-shot",
-        name="GitHub repositories: zero-shot",
-        description="Judges a repository against all criteria at once, without examples.",
-        prompting_type=JobPromptingType.ZERO_SHOT,
-        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
-        system_prompt=default_system_prompt,
-        user_prompt=github_zero_shot_task_prompt,
+        "github-zero-shot",
+        "GitHub repositories: zero-shot",
+        "Judges a repository against all criteria at once, without examples.",
+        JobPromptingType.ZERO_SHOT,
+        ScreeningTarget.GITHUB_REPOSITORY,
+        github_zero_shot_task_prompt,
     ),
     DefaultPrompt(
-        slug="github-few-shot",
-        name="GitHub repositories: few-shot",
-        description="Judges a repository against all criteria at once, with seed repositories as examples.",
-        prompting_type=JobPromptingType.FEW_SHOT,
-        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
-        system_prompt=default_system_prompt,
-        user_prompt=github_few_shot_task_prompt,
+        "github-few-shot",
+        "GitHub repositories: few-shot",
+        "Judges a repository against all criteria at once, with seed repositories as examples.",
+        JobPromptingType.FEW_SHOT,
+        ScreeningTarget.GITHUB_REPOSITORY,
+        github_few_shot_task_prompt,
     ),
     DefaultPrompt(
-        slug="github-per-criteria",
-        name="GitHub repositories: per criterion",
-        description="Asks for the probability of one criterion at a time.",
-        prompting_type=JobPromptingType.PER_CRITERIA,
-        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
-        system_prompt=default_system_prompt,
-        user_prompt=github_per_criteria_task_prompt,
+        "github-per-criteria",
+        "GitHub repositories: per criterion",
+        "Asks for the probability of one criterion at a time.",
+        JobPromptingType.PER_CRITERIA,
+        ScreeningTarget.GITHUB_REPOSITORY,
+        github_per_criteria_task_prompt,
     ),
 ]
 

@@ -4,6 +4,7 @@ import {
   JobWithStats,
   ScreeningTarget,
 } from "../../state/types";
+import { promptVersionLabel } from "../prompts/promptLabels";
 
 /** One labelled fact about how a job screens, e.g. "Evaluation mode: All criteria together". */
 export type JobField = {
@@ -113,7 +114,7 @@ const promptLabel = (job: JobWithStats): FieldValue => {
     return { value: "Built-in", tooltip: "The built-in prompt of this prompting strategy." };
   }
   return {
-    value: ref.version ? `${ref.name} · v${ref.version}` : ref.name,
+    value: promptVersionLabel(ref.name, ref.version),
     tooltip: "The prompt, and the version of it the task ran with.",
   };
 };

@@ -492,14 +492,6 @@ export const PromptCreateRequest = z.strictObject({
   screening_target: ScreeningTarget.optional(),
 });
 
-export type PromptSourceRead = __TypedOpenapi.Schemas.PromptSourceRead;
-export const PromptSourceRead = z.strictObject({
-  label: z.string(),
-  citation: z.string(),
-  doi: z.string(),
-  version: z.number().int(),
-});
-
 export type PromptVersionRead = __TypedOpenapi.Schemas.PromptVersionRead;
 export const PromptVersionRead = z.strictObject({
   uuid: z.uuid(),
@@ -522,7 +514,6 @@ export const PromptDetail = z.strictObject({
   prompting_type: JobPromptingType,
   screening_target: ScreeningTarget,
   is_default: z.boolean(),
-  source: PromptSourceRead.nullable().optional(),
   archived: z.boolean(),
   created_at: z.iso.datetime().transform((s) => {
     const d = new Date(s);
@@ -546,7 +537,6 @@ export const PromptRead = z.strictObject({
   prompting_type: JobPromptingType,
   screening_target: ScreeningTarget,
   is_default: z.boolean(),
-  source: PromptSourceRead.nullable().optional(),
   archived: z.boolean(),
   created_at: z.iso.datetime().transform((s) => {
     const d = new Date(s);
@@ -561,6 +551,13 @@ export const PromptRead = z.strictObject({
   latest_version: PromptVersionRead,
 });
 
+export type PromptText = __TypedOpenapi.Schemas.PromptText;
+export const PromptText = z.strictObject({
+  system_prompt: z.string().max(10000),
+  user_prompt: z.string().min(1).max(50000),
+  change_note: z.string().max(500).nullable().optional(),
+});
+
 export type PromptTypeVariables = __TypedOpenapi.Schemas.PromptTypeVariables;
 export const PromptTypeVariables = z.strictObject({
   prompting_type: JobPromptingType,
@@ -569,30 +566,13 @@ export const PromptTypeVariables = z.strictObject({
   requires_criteria: z.boolean(),
 });
 
-export type PromptUpdateRequest = __TypedOpenapi.Schemas.PromptUpdateRequest;
-export const PromptUpdateRequest = z
-  .strictObject({ name: z.string().min(1).max(255).nullable(), description: z.string().max(2000).nullable() })
-  .partial();
-
 export type PromptVariableRead = __TypedOpenapi.Schemas.PromptVariableRead;
-export const PromptVariableRead = z.strictObject({
-  name: z.string(),
-  label: z.string(),
-  description: z.string(),
-  example: z.string(),
-});
+export const PromptVariableRead = z.strictObject({ name: z.string(), label: z.string(), description: z.string() });
 
 export type PromptVariablesResponse = __TypedOpenapi.Schemas.PromptVariablesResponse;
 export const PromptVariablesResponse = z.strictObject({
   variables: z.array(PromptVariableRead),
   types: z.array(PromptTypeVariables),
-});
-
-export type PromptVersionCreateRequest = __TypedOpenapi.Schemas.PromptVersionCreateRequest;
-export const PromptVersionCreateRequest = z.strictObject({
-  system_prompt: z.string().max(10000),
-  user_prompt: z.string().min(1).max(50000),
-  change_note: z.string().max(500).nullable().optional(),
 });
 
 export type Provider = __TypedOpenapi.Schemas.Provider;
@@ -1006,17 +986,6 @@ export const get_Get_prompt_api_v1_prompt__uuid__get = {
   responses: { 200: PromptDetail, 422: HTTPValidationError },
 };
 
-export type patch_Update_prompt_api_v1_prompt__uuid__patch =
-  __TypedOpenapi.Endpoints.patch_Update_prompt_api_v1_prompt__uuid__patch;
-export const patch_Update_prompt_api_v1_prompt__uuid__patch = {
-  method: z.literal("PATCH"),
-  path: z.literal("/api/v1/prompt/{uuid}"),
-  requestFormat: z.literal("json"),
-  responseFormat: z.literal("json"),
-  parameters: { path: z.strictObject({ uuid: z.uuid() }), body: PromptUpdateRequest },
-  responses: { 200: PromptDetail, 422: HTTPValidationError },
-};
-
 export type delete_Delete_prompt_api_v1_prompt__uuid__delete =
   __TypedOpenapi.Endpoints.delete_Delete_prompt_api_v1_prompt__uuid__delete;
 export const delete_Delete_prompt_api_v1_prompt__uuid__delete = {
@@ -1035,7 +1004,7 @@ export const post_Create_prompt_version_api_v1_prompt__uuid__version_post = {
   path: z.literal("/api/v1/prompt/{uuid}/version"),
   requestFormat: z.literal("json"),
   responseFormat: z.literal("json"),
-  parameters: { path: z.strictObject({ uuid: z.uuid() }), body: PromptVersionCreateRequest },
+  parameters: { path: z.strictObject({ uuid: z.uuid() }), body: PromptText },
   responses: { 201: PromptDetail, 422: HTTPValidationError },
 };
 
@@ -1306,7 +1275,6 @@ export const EndpointByMethod = {
   patch: {
     "/api/v1/jobtask/{uuid}": patch_Add_job_task_human_result_api_v1_jobtask__uuid__patch,
     "/api/v1/paper/{uuid}": patch_Add_paper_human_result_api_v1_paper__uuid__patch,
-    "/api/v1/prompt/{uuid}": patch_Update_prompt_api_v1_prompt__uuid__patch,
     "/api/v1/auth/me/research-consent": patch_Update_research_consent_api_v1_auth_me_research_consent_patch,
   },
 } satisfies {
@@ -1428,7 +1396,6 @@ export const endpointParameterStyles = {
   patch: {
     "/api/v1/jobtask/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
     "/api/v1/paper/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
-    "/api/v1/prompt/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
   },
 } as Partial<Record<string, Partial<Record<string, EndpointParameterStyles>>>>;
 // </EndpointParameterStyles>

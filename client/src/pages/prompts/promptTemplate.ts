@@ -9,12 +9,6 @@ export const findVariables = (template: string): string[] => {
   return [...new Set(names)];
 };
 
-/** Substitutes each {{variable}} once; unknown variables are left as they are. */
-export const renderTemplate = (template: string, values: Record<string, string>): string =>
-  template.replace(new RegExp(VARIABLE_SOURCE, "g"), (match, name: string) =>
-    Object.prototype.hasOwnProperty.call(values, name) ? values[name] : match,
-  );
-
 export type TemplateIssue = { kind: "error" | "missing"; message: string };
 
 /** What stops the prompt from working, in the server's words; empty when it's valid. */

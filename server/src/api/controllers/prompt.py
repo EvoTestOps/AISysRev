@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import AsyncGenerator, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -12,13 +12,13 @@ from src.schemas.prompt import (
     PromptCreateRequest,
     PromptDetail,
     PromptRead,
-    PromptUpdateRequest,
+    PromptText,
     PromptVariablesResponse,
-    PromptVersionCreateRequest,
 )
 from src.services.prompt_service import (
     PromptNotFoundError,
     PromptReadOnlyError,
+    PromptService,
     create_prompt_service,
     prompt_variables,
 )
@@ -26,14 +26,20 @@ from src.services.prompt_service import (
 router = APIRouter()
 
 
-def _http_error(e: ValueError) -> HTTPException:
-    if isinstance(e, PromptNotFoundError):
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    if isinstance(e, PromptReadOnlyError):
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    return HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
-    )
+async def prompt_service(
+    db_ctx: DBContext = Depends(get_db_ctx),
+) -> AsyncGenerator[PromptService, None]:
+    """The service, with its errors turned into HTTP errors."""
+    try:
+        yield create_prompt_service(db_ctx)
+    except PromptNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except PromptReadOnlyError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        )
 
 
 @router.get(
@@ -45,11 +51,11 @@ def _http_error(e: ValueError) -> HTTPException:
 async def list_prompts(
     prompting_type: Optional[JobPromptingType] = None,
     screening_target: Optional[ScreeningTarget] = None,
-    db_ctx: DBContext = Depends(get_db_ctx),
+    service: PromptService = Depends(prompt_service),
     current_user: User = Depends(get_current_user),
 ):
     """The built-in prompts and the user's own, the built-in ones first."""
-    return await create_prompt_service(db_ctx).list_prompts(
+    return await service.list_prompts(
         current_user.uuid, prompting_type, screening_target
     )
 
@@ -73,13 +79,10 @@ async def get_prompt_variables(current_user: User = Depends(get_current_user)):
 )
 async def get_prompt(
     uuid: UUID,
-    db_ctx: DBContext = Depends(get_db_ctx),
+    service: PromptService = Depends(prompt_service),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        return await create_prompt_service(db_ctx).get_prompt(uuid, current_user.uuid)
-    except ValueError as e:
-        raise _http_error(e)
+    return await service.get_prompt(uuid, current_user.uuid)
 
 
 @router.post(
@@ -90,33 +93,11 @@ async def get_prompt(
 )
 async def create_prompt(
     data: PromptCreateRequest,
+    service: PromptService = Depends(prompt_service),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
-    detail = await create_prompt_service(db_ctx).create_prompt(current_user.uuid, data)
-    await db_ctx.commit()
-    return detail
-
-
-@router.patch(
-    "/prompt/{uuid}",
-    status_code=status.HTTP_200_OK,
-    response_model=PromptDetail,
-    tags=["Prompts"],
-)
-async def update_prompt(
-    uuid: UUID,
-    data: PromptUpdateRequest,
-    db_ctx: DBContext = Depends(get_db_ctx),
-    current_user: User = Depends(get_current_user),
-):
-    """Renames a prompt or changes its description; neither makes a new version."""
-    try:
-        detail = await create_prompt_service(db_ctx).update_prompt(
-            uuid, current_user.uuid, data
-        )
-    except ValueError as e:
-        raise _http_error(e)
+    detail = await service.create_prompt(current_user.uuid, data)
     await db_ctx.commit()
     return detail
 
@@ -129,17 +110,13 @@ async def update_prompt(
 )
 async def create_prompt_version(
     uuid: UUID,
-    data: PromptVersionCreateRequest,
+    data: PromptText,
+    service: PromptService = Depends(prompt_service),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     """Saves a new version of the prompt's text."""
-    try:
-        detail = await create_prompt_service(db_ctx).add_version(
-            uuid, current_user.uuid, data
-        )
-    except ValueError as e:
-        raise _http_error(e)
+    detail = await service.add_version(uuid, current_user.uuid, data)
     await db_ctx.commit()
     return detail
 
@@ -147,13 +124,11 @@ async def create_prompt_version(
 @router.delete("/prompt/{uuid}", status_code=status.HTTP_200_OK, tags=["Prompts"])
 async def delete_prompt(
     uuid: UUID,
+    service: PromptService = Depends(prompt_service),
     db_ctx: DBContext = Depends(get_db_ctx),
     current_user: User = Depends(get_current_user),
 ):
     """Hides the prompt; jobs that used it keep their record of it."""
-    try:
-        await create_prompt_service(db_ctx).archive_prompt(uuid, current_user.uuid)
-    except ValueError as e:
-        raise _http_error(e)
+    await service.archive_prompt(uuid, current_user.uuid)
     await db_ctx.commit()
     return {"detail": "Deleted successfully"}

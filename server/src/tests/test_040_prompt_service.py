@@ -13,11 +13,7 @@ from src.schemas.job import (
     PerCriteriaPromptingConfig,
 )
 from src.schemas.project import ScreeningTarget
-from src.schemas.prompt import (
-    PromptCreateRequest,
-    PromptUpdateRequest,
-    PromptVersionCreateRequest,
-)
+from src.schemas.prompt import PromptCreateRequest, PromptText
 from src.services.job_service import JobService
 from src.services.prompt_service import (
     PromptNotFoundError,
@@ -44,112 +40,63 @@ def _create(name="Mine", **kwargs) -> PromptCreateRequest:
 
 
 def _version(user_prompt=USER_PROMPT, system_prompt="Be careful.", note=None):
-    return PromptVersionCreateRequest(
+    return PromptText(
         system_prompt=system_prompt, user_prompt=user_prompt, change_note=note
     )
 
 
-# --- versions ---------------------------------------------------------------
+# --- versions and ownership ------------------------------------------------
 
 
-async def test_a_new_prompt_starts_at_version_one(db_ctx: DBContext, factory: Factory):
+async def test_a_prompts_versions(db_ctx: DBContext, factory: Factory):
     owner = await factory.user()
     service = create_prompt_service(db_ctx)
 
-    detail = await service.create_prompt(owner.uuid, _create(change_note="First"))
+    created = await service.create_prompt(
+        owner.uuid, _create(name=" Mine ", change_note="First")
+    )
+    assert (created.name, created.is_default) == ("Mine", False)
+    assert created.latest_version.change_note == "First"
 
-    assert detail.is_default is False
-    assert [v.version for v in detail.versions] == [1]
-    assert detail.latest_version.user_prompt == USER_PROMPT
-    assert detail.latest_version.change_note == "First"
-
-
-async def test_saving_new_text_adds_a_version_and_keeps_the_old_one(
-    db_ctx: DBContext, factory: Factory
-):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    created = await service.create_prompt(owner.uuid, _create())
-
+    # Unchanged text adds no version; new text adds one and keeps the old.
+    await service.add_version(created.uuid, owner.uuid, _version())
     detail = await service.add_version(
         created.uuid, owner.uuid, _version(USER_PROMPT + "\nThink.", note="Tweak")
     )
-
     assert [v.version for v in detail.versions] == [2, 1]
-    assert detail.latest_version.user_prompt.endswith("Think.")
-    assert detail.versions[1].user_prompt == USER_PROMPT
     assert detail.versions[0].change_note == "Tweak"
+    assert detail.versions[1].user_prompt == USER_PROMPT
 
-
-async def test_saving_the_same_text_adds_no_version(
-    db_ctx: DBContext, factory: Factory
-):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    created = await service.create_prompt(owner.uuid, _create())
-
-    detail = await service.add_version(created.uuid, owner.uuid, _version())
-
-    assert [v.version for v in detail.versions] == [1]
-
-
-async def test_a_version_is_checked_against_the_prompts_type(
-    db_ctx: DBContext, factory: Factory
-):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    created = await service.create_prompt(owner.uuid, _create())
-
+    # The text is checked against the prompt's type.
     with pytest.raises(ValueError, match="criterion"):
         await service.add_version(
             created.uuid, owner.uuid, _version("{{title}} {{abstract}} {{criterion}}")
         )
+    with pytest.raises(ValueError, match="Unknown variable"):
+        await service.create_prompt(owner.uuid, _create(user_prompt="{{bogus}}"))
 
 
-async def test_renaming_does_not_add_a_version(db_ctx: DBContext, factory: Factory):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    created = await service.create_prompt(owner.uuid, _create())
-
-    detail = await service.update_prompt(
-        created.uuid, owner.uuid, PromptUpdateRequest(name=" Renamed ")
-    )
-
-    assert detail.name == "Renamed"
-    assert len(detail.versions) == 1
-
-
-# --- ownership --------------------------------------------------------------
-
-
-async def test_other_users_prompts_are_invisible(db_ctx: DBContext, factory: Factory):
+async def test_other_users_and_deleted_prompts(db_ctx: DBContext, factory: Factory):
     alice = await factory.user()
     bob = await factory.user()
     service = create_prompt_service(db_ctx)
     created = await service.create_prompt(alice.uuid, _create())
 
     assert created.uuid not in [p.uuid for p in await service.list_prompts(bob.uuid)]
-    with pytest.raises(PromptNotFoundError):
-        await service.get_prompt(created.uuid, bob.uuid)
-    with pytest.raises(PromptNotFoundError):
-        await service.add_version(created.uuid, bob.uuid, _version())
-    with pytest.raises(PromptNotFoundError):
-        await service.archive_prompt(created.uuid, bob.uuid)
+    for call in (
+        service.get_prompt(created.uuid, bob.uuid),
+        service.add_version(created.uuid, bob.uuid, _version()),
+        service.archive_prompt(created.uuid, bob.uuid),
+    ):
+        with pytest.raises(PromptNotFoundError):
+            await call
 
+    await service.archive_prompt(created.uuid, alice.uuid)
 
-async def test_a_deleted_prompt_is_hidden_and_read_only(
-    db_ctx: DBContext, factory: Factory
-):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    created = await service.create_prompt(owner.uuid, _create())
-
-    await service.archive_prompt(created.uuid, owner.uuid)
-
-    assert created.uuid not in [p.uuid for p in await service.list_prompts(owner.uuid)]
-    assert (await service.get_prompt(created.uuid, owner.uuid)).archived is True
+    assert created.uuid not in [p.uuid for p in await service.list_prompts(alice.uuid)]
+    assert (await service.get_prompt(created.uuid, alice.uuid)).archived is True
     with pytest.raises(PromptReadOnlyError):
-        await service.add_version(created.uuid, owner.uuid, _version("x {{title}}"))
+        await service.add_version(created.uuid, alice.uuid, _version("x {{title}}"))
 
 
 async def test_the_list_is_filtered_by_type_and_target(
@@ -190,25 +137,6 @@ async def test_default_prompts_are_synced_once_and_read_only(
         await service.archive_prompt(defaults[0].uuid, owner.uuid)
 
 
-async def test_only_published_default_prompts_have_a_source(
-    db_ctx: DBContext, factory: Factory
-):
-    owner = await factory.user()
-    service = create_prompt_service(db_ctx)
-    await service.sync_default_prompts()
-    mine = await service.create_prompt(owner.uuid, _create())
-
-    sources = {p.name: p.source for p in await service.list_prompts(owner.uuid)}
-
-    published = sources.pop("Papers: zero-shot")
-    assert published is not None
-    assert published.label == "ESEM '25"
-    assert published.doi == "10.48550/arXiv.2507.19027"
-    assert published.version == 1
-    assert mine.source is None
-    assert all(source is None for source in sources.values())
-
-
 async def test_a_changed_default_prompt_gets_a_new_version(
     db_ctx: DBContext, monkeypatch
 ):
@@ -242,7 +170,7 @@ async def test_a_job_without_a_choice_gets_the_latest_default(
     service = create_prompt_service(db_ctx)
     await service.sync_default_prompts()
 
-    resolved = await service.resolve_for_new_job(owner.uuid, ZERO, PAPER, None)
+    resolved = await service.resolve(owner.uuid, ZERO, PAPER, None)
 
     assert resolved.version == 1
     assert resolved.version_uuid is not None
@@ -258,7 +186,7 @@ async def test_a_job_can_pin_its_owners_prompt_version(
     v1 = created.latest_version.uuid
     await service.add_version(created.uuid, owner.uuid, _version(USER_PROMPT + "!"))
 
-    resolved = await service.resolve_for_new_job(owner.uuid, ZERO, PAPER, v1)
+    resolved = await service.resolve(owner.uuid, ZERO, PAPER, v1)
 
     # The version asked for, not the newest one.
     assert resolved.version == 1
@@ -281,7 +209,7 @@ async def test_a_job_cannot_use_a_prompt_written_for_another_type_or_target(
     created = await service.create_prompt(owner.uuid, _create())
 
     with pytest.raises(ValueError, match=error):
-        await service.resolve_for_new_job(
+        await service.resolve(
             owner.uuid, prompting_type, target, created.latest_version.uuid
         )
 
@@ -296,15 +224,15 @@ async def test_a_job_cannot_use_another_users_or_a_deleted_prompt(
     version = created.latest_version.uuid
 
     with pytest.raises(PromptNotFoundError):
-        await service.resolve_for_new_job(bob.uuid, ZERO, PAPER, version)
+        await service.resolve(bob.uuid, ZERO, PAPER, version)
     with pytest.raises(PromptNotFoundError):
-        await service.resolve_for_new_job(alice.uuid, ZERO, PAPER, uuid4())
+        await service.resolve(alice.uuid, ZERO, PAPER, uuid4())
 
     await service.archive_prompt(created.uuid, alice.uuid)
     with pytest.raises(ValueError, match="deleted"):
-        await service.resolve_for_new_job(alice.uuid, ZERO, PAPER, version)
+        await service.resolve(alice.uuid, ZERO, PAPER, version)
     # ...but a job that already pinned it still runs with it.
-    resolved = await service.resolve_for_run(alice.uuid, ZERO, PAPER, version)
+    resolved = await service.resolve(alice.uuid, ZERO, PAPER, version, new_job=False)
     assert resolved.user_prompt == USER_PROMPT
 
 
@@ -317,8 +245,8 @@ async def test_an_unsynced_default_falls_back_to_the_code(
         service.prompt_crud, "fetch_default_prompt", AsyncMock(return_value=None)
     )
 
-    resolved = await service.resolve_for_run(
-        owner.uuid, JobPromptingType.PER_CRITERIA, PAPER, None
+    resolved = await service.resolve(
+        owner.uuid, JobPromptingType.PER_CRITERIA, PAPER, None, new_job=False
     )
 
     assert resolved.version is None

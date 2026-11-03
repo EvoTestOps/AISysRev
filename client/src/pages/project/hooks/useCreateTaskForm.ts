@@ -97,7 +97,7 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
   const [promptVersionUuid, setPromptVersionUuid] = useState<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
-    fetchPrompts({ screeningTarget }, controller.signal)
+    fetchPrompts(screeningTarget, controller.signal)
       .then((loaded) => {
         if (!controller.signal.aborted) setPrompts(loaded);
       })

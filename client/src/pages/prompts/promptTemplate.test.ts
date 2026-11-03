@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { JobPromptingType } from "../../state/types";
 import type { PromptTypeVariables } from "../../state/types/prompt";
-import { findVariables, insertVariable, renderTemplate, validateTemplate } from "./promptTemplate";
+import { findVariables, insertVariable, validateTemplate } from "./promptTemplate";
 
 const ZERO_SHOT: PromptTypeVariables = {
   prompting_type: JobPromptingType.ZERO_SHOT,
@@ -20,20 +20,6 @@ const ZERO_SHOT: PromptTypeVariables = {
 
 const messages = (system: string, user: string) =>
   validateTemplate(ZERO_SHOT, system, user).map((i) => i.message);
-
-describe("renderTemplate", () => {
-  it("fills in variables, with or without whitespace inside the braces", () => {
-    expect(renderTemplate("{{title}} | {{ abstract }}", { title: "T", abstract: "A" })).toBe(
-      "T | A",
-    );
-  });
-
-  it("substitutes each value once and leaves unknown variables alone", () => {
-    expect(renderTemplate("{{title}} {{nope}}", { title: "{{abstract}}", abstract: "x" })).toBe(
-      "{{abstract}} {{nope}}",
-    );
-  });
-});
 
 describe("findVariables", () => {
   it("lists each variable once, in order of first use", () => {

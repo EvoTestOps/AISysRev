@@ -1,10 +1,10 @@
 import Chip from "@mui/material/Chip";
 import Link from "@mui/material/Link";
-import ListItemText from "@mui/material/ListItemText";
 import MenuItem from "@mui/material/MenuItem";
 import Skeleton from "@mui/material/Skeleton";
 import TextField from "@mui/material/TextField";
 import { Link as RouterLink } from "wouter";
+import { promptVersionLabel } from "../../../prompts/promptLabels";
 import { CreateTaskForm } from "../../hooks/useCreateTaskForm";
 import { FieldGroup, FieldLabel } from "../controls";
 
@@ -41,34 +41,16 @@ export const PromptSelector: React.FC<PromptSelectorProps> = ({ form, disabled }
           }}
           slotProps={{
             select: {
-              SelectDisplayProps: { "data-testid": "prompt-select" } as object,
               renderValue: () =>
                 selectedPrompt
-                  ? `${selectedPrompt.name} · v${selectedPrompt.latest_version.version}`
+                  ? promptVersionLabel(selectedPrompt.name, selectedPrompt.latest_version.version)
                   : "Built-in prompt",
             },
           }}
         >
           {strategyPrompts.map((prompt) => (
-            <MenuItem
-              key={prompt.uuid}
-              value={prompt.latest_version.uuid}
-              data-testid={`prompt-option-${prompt.uuid}`}
-            >
-              <ListItemText
-                primary={`${prompt.name} · v${prompt.latest_version.version}`}
-                secondary={prompt.description}
-                slotProps={{ secondary: { noWrap: true } }}
-              />
-              {prompt.source && (
-                <Chip
-                  label={prompt.source.label}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                  sx={{ ml: 1 }}
-                />
-              )}
+            <MenuItem key={prompt.uuid} value={prompt.latest_version.uuid}>
+              {promptVersionLabel(prompt.name, prompt.latest_version.version)}
               {prompt.is_default && (
                 <Chip label="Built-in" size="small" variant="outlined" sx={{ ml: 1 }} />
               )}

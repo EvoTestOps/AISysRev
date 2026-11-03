@@ -1,64 +1,28 @@
 from datetime import datetime
-from typing import Optional
+from typing import Annotated, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from src.core.prompt_template import PROMPT_TYPES, validate_template
 from src.schemas.job import JobPromptingType
 from src.schemas.project import ScreeningTarget
 
-MAX_SYSTEM_PROMPT_LENGTH = 10_000
-MAX_USER_PROMPT_LENGTH = 50_000
-
 
 class PromptText(BaseModel):
-    system_prompt: str = Field(max_length=MAX_SYSTEM_PROMPT_LENGTH)
-    user_prompt: str = Field(min_length=1, max_length=MAX_USER_PROMPT_LENGTH)
+    """The template is checked against the prompt's type in the service."""
+
+    system_prompt: str = Field(max_length=10_000)
+    user_prompt: str = Field(min_length=1, max_length=50_000)
     change_note: Optional[str] = Field(default=None, max_length=500)
 
 
 class PromptCreateRequest(PromptText):
-    name: str = Field(min_length=1, max_length=255)
+    name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)
+    ]
     description: Optional[str] = Field(default=None, max_length=2000)
     prompting_type: JobPromptingType
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
-
-    @field_validator("name")
-    @classmethod
-    def name_not_blank(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("name must be a non-empty string")
-        return v.strip()
-
-    @model_validator(mode="after")
-    def check_template(self):
-        if self.prompting_type not in PROMPT_TYPES:
-            raise ValueError(
-                f"Prompts can't be written for {self.prompting_type.value} prompting"
-            )
-        errors = validate_template(
-            self.prompting_type, self.system_prompt, self.user_prompt
-        )
-        if errors:
-            raise ValueError("; ".join(errors))
-        return self
-
-
-class PromptVersionCreateRequest(PromptText):
-    """The template is checked against the prompt's type in the service."""
-
-
-class PromptUpdateRequest(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    description: Optional[str] = Field(default=None, max_length=2000)
-
-    @field_validator("name")
-    @classmethod
-    def name_not_blank(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and not v.strip():
-            raise ValueError("name must be a non-empty string")
-        return v.strip() if v is not None else v
 
 
 class PromptVersionRead(BaseModel):
@@ -72,16 +36,6 @@ class PromptVersionRead(BaseModel):
     created_at: datetime
 
 
-class PromptSourceRead(BaseModel):
-    """The publication a built-in prompt comes from."""
-
-    label: str
-    citation: str
-    doi: str
-    # The version whose text is the published prompt.
-    version: int
-
-
 class PromptRead(BaseModel):
     uuid: UUID
     name: str
@@ -90,7 +44,6 @@ class PromptRead(BaseModel):
     screening_target: ScreeningTarget
     # Built-in prompts are shared by every account and can't be changed.
     is_default: bool
-    source: Optional[PromptSourceRead] = None
     archived: bool
     created_at: datetime
     updated_at: datetime
@@ -106,7 +59,6 @@ class PromptVariableRead(BaseModel):
     name: str
     label: str
     description: str
-    example: str
 
 
 class PromptTypeVariables(BaseModel):

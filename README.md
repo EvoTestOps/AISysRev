@@ -144,10 +144,10 @@ When creating a project, you can set how per-criterion answers are combined into
 
 The **Prompts** page lists the prompts used for screening. They are shared by all of your projects, and you pick one when you create a screening task.
 
-- **Built-in prompts** - the prompts AISysRev screens with by default, one for each prompting strategy (zero-shot, few-shot, per criterion) and screening target (papers, GitHub repositories). They can't be changed, but you can duplicate them. **Papers: zero-shot** is the prompt published in our ESEM '25 paper [2](#references), marked **Published · ESEM '25**; its page shows the citation and a **Cite** button that copies it.
-- **My prompts** - prompts you have written or duplicated. Only you can see them.
+- **Built-in prompts** - the prompts AISysRev screens with by default, one for each prompting strategy (zero-shot, few-shot, per criterion) and screening target (papers, GitHub repositories). They can't be changed; a new prompt starts from the built-in text of its strategy and target. **Papers: zero-shot** is the prompt published in our ESEM '25 paper [2](#references).
+- **My prompts** - prompts you have written. Only you can see them.
 
-A prompt has a system prompt, which sets the model's role, and a user prompt, which is a template with variables such as `{{title}}`, `{{abstract}}`, `{{criteria}}` (or `{{inclusion_criteria}}` and `{{exclusion_criteria}}`), `{{additional_instructions}}` and, for few-shot prompts, `{{few_shot_examples}}`. Variables are filled in for each paper when the task runs, and the **Preview** tab shows the filled-in prompt. Every save is kept as a new version, and each task records the exact prompt version it ran with.
+A prompt has a system prompt, which sets the model's role, and a user prompt, which is a template with variables such as `{{title}}`, `{{abstract}}`, `{{criteria}}` (or `{{inclusion_criteria}}` and `{{exclusion_criteria}}`), `{{additional_instructions}}` and, for few-shot prompts, `{{few_shot_examples}}`. Variables are filled in for each paper when the task runs. Every save is kept as a new version, and each task records the exact prompt version it ran with.
 
 ### Reviewing results
 
@@ -181,7 +181,7 @@ A prompt has a system prompt, which sets the model's role, and a user prompt, wh
 
 <p align="left">
   <img src="docs/images/prompts.png" width="700"><br>
-  <em><b>Figure 5:</b> Prompts view: built-in prompts, including the one published in ESEM '25, can be duplicated and edited into your own versioned prompts.</em>
+  <em><b>Figure 5:</b> Prompts view: the built-in prompts, including the one published in ESEM '25, and your own versioned prompts.</em>
 </p>
 
 

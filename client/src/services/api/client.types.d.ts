@@ -299,10 +299,6 @@ export namespace Schemas {
     prompting_type: JobPromptingType;
     screening_target?: ScreeningTarget;
   };
-  /**
-   * The publication a built-in prompt comes from.
-   */
-  export type PromptSourceRead = { label: string; citation: string; doi: string; version: number };
   export type PromptVersionRead = {
     uuid: string;
     version: number;
@@ -318,7 +314,6 @@ export namespace Schemas {
     prompting_type: JobPromptingType;
     screening_target: ScreeningTarget;
     is_default: boolean;
-    source?: PromptSourceRead | null;
     archived: boolean;
     created_at: Date;
     updated_at: Date;
@@ -332,25 +327,23 @@ export namespace Schemas {
     prompting_type: JobPromptingType;
     screening_target: ScreeningTarget;
     is_default: boolean;
-    source?: PromptSourceRead | null;
     archived: boolean;
     created_at: Date;
     updated_at: Date;
     latest_version: PromptVersionRead;
   };
+  /**
+   * The template is checked against the prompt's type in the service.
+   */
+  export type PromptText = { system_prompt: string; user_prompt: string; change_note?: string | null };
   export type PromptTypeVariables = {
     prompting_type: JobPromptingType;
     allowed: Array<string>;
     required: Array<string>;
     requires_criteria: boolean;
   };
-  export type PromptUpdateRequest = Partial<{ name: string | null; description: string | null }>;
-  export type PromptVariableRead = { name: string; label: string; description: string; example: string };
+  export type PromptVariableRead = { name: string; label: string; description: string };
   export type PromptVariablesResponse = { variables: Array<PromptVariableRead>; types: Array<PromptTypeVariables> };
-  /**
-   * The template is checked against the prompt's type in the service.
-   */
-  export type PromptVersionCreateRequest = { system_prompt: string; user_prompt: string; change_note?: string | null };
   export type Provider = {
     name: string;
     title: string;
@@ -732,21 +725,6 @@ export namespace Endpoints {
     responses: { 200: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
   };
   /**
-   * Renames a prompt or changes its description; neither makes a new version.
-   */
-  export type patch_Update_prompt_api_v1_prompt__uuid__patch = {
-    method: "PATCH";
-    path: "/api/v1/prompt/{uuid}";
-    requestFormat: "json";
-    responseFormat: "json";
-    parameters: {
-      path: { uuid: string };
-
-      body: Schemas.PromptUpdateRequest;
-    };
-    responses: { 200: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
-  };
-  /**
    * Hides the prompt; jobs that used it keep their record of it.
    */
   export type delete_Delete_prompt_api_v1_prompt__uuid__delete = {
@@ -770,7 +748,7 @@ export namespace Endpoints {
     parameters: {
       path: { uuid: string };
 
-      body: Schemas.PromptVersionCreateRequest;
+      body: Schemas.PromptText;
     };
     responses: { 201: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
   };
@@ -1010,7 +988,6 @@ export type EndpointByMethod = {
   patch: {
     "/api/v1/jobtask/{uuid}": Endpoints.patch_Add_job_task_human_result_api_v1_jobtask__uuid__patch;
     "/api/v1/paper/{uuid}": Endpoints.patch_Add_paper_human_result_api_v1_paper__uuid__patch;
-    "/api/v1/prompt/{uuid}": Endpoints.patch_Update_prompt_api_v1_prompt__uuid__patch;
     "/api/v1/auth/me/research-consent": Endpoints.patch_Update_research_consent_api_v1_auth_me_research_consent_patch;
   };
 };

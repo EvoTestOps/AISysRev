@@ -34,7 +34,7 @@ type PromptTemplateEditorProps = {
   required?: string[];
   readOnly?: boolean;
   minRows?: number;
-  helperText?: React.ReactNode;
+  helperText?: string;
   error?: boolean;
   testId?: string;
 };
@@ -235,15 +235,9 @@ export const PromptTemplateEditor: React.FC<PromptTemplateEditorProps> = ({
         }}
       />
       {helperText && (
-        <Box id={helpId}>
-          {typeof helperText === "string" ? (
-            <Typography variant="caption" color={error ? "error" : "textSecondary"}>
-              {helperText}
-            </Typography>
-          ) : (
-            helperText
-          )}
-        </Box>
+        <Typography id={helpId} variant="caption" color={error ? "error" : "textSecondary"}>
+          {helperText}
+        </Typography>
       )}
     </Box>
   );

@@ -2,6 +2,8 @@ import logging
 from typing import Optional
 from uuid import UUID
 
+from sqlalchemy import func
+
 from src.core.prompt_template import (
     ALLOWED_VARIABLES,
     NEEDS_CRITERIA,
@@ -20,12 +22,10 @@ from src.schemas.prompt import (
     PromptCreateRequest,
     PromptDetail,
     PromptRead,
-    PromptSourceRead,
+    PromptText,
     PromptTypeVariables,
-    PromptUpdateRequest,
     PromptVariableRead,
     PromptVariablesResponse,
-    PromptVersionCreateRequest,
     PromptVersionRead,
     ResolvedPrompt,
 )
@@ -41,14 +41,6 @@ class PromptReadOnlyError(ValueError):
     """Built-in and archived prompts can't be changed."""
 
 
-def _source(prompt: Prompt) -> Optional[PromptSourceRead]:
-    # Only built-in prompts come from a publication, which is kept in the code.
-    default = next((d for d in DEFAULT_PROMPTS if d.slug == prompt.slug), None)
-    if default is None or default.source is None:
-        return None
-    return PromptSourceRead(**default.source.__dict__)
-
-
 def _read(prompt: Prompt, latest: PromptVersion) -> PromptRead:
     return PromptRead(
         uuid=prompt.uuid,
@@ -57,7 +49,6 @@ def _read(prompt: Prompt, latest: PromptVersion) -> PromptRead:
         prompting_type=JobPromptingType(prompt.prompting_type),
         screening_target=ScreeningTarget(prompt.screening_target),
         is_default=prompt.owner_uuid is None,
-        source=_source(prompt),
         archived=prompt.archived_at is not None,
         created_at=prompt.created_at,
         updated_at=prompt.updated_at,
@@ -79,9 +70,7 @@ def _resolved(prompt: Prompt, version: PromptVersion) -> ResolvedPrompt:
 def prompt_variables() -> PromptVariablesResponse:
     return PromptVariablesResponse(
         variables=[
-            PromptVariableRead(
-                name=v.name, label=v.label, description=v.description, example=v.example
-            )
+            PromptVariableRead(name=v.name, label=v.label, description=v.description)
             for v in VARIABLES.values()
         ],
         types=[
@@ -94,6 +83,12 @@ def prompt_variables() -> PromptVariablesResponse:
             for t in PROMPT_TYPES
         ],
     )
+
+
+def _check_template(prompting_type: JobPromptingType, text: PromptText) -> None:
+    errors = validate_template(prompting_type, text.system_prompt, text.user_prompt)
+    if errors:
+        raise ValueError("; ".join(errors))
 
 
 class PromptService:
@@ -120,6 +115,7 @@ class PromptService:
     async def create_prompt(
         self, owner_uuid: UUID, data: PromptCreateRequest
     ) -> PromptDetail:
+        _check_template(data.prompting_type, data)
         prompt = await self.prompt_crud.create_prompt(
             owner_uuid=owner_uuid,
             name=data.name,
@@ -127,72 +123,46 @@ class PromptService:
             prompting_type=data.prompting_type.value,
             screening_target=data.screening_target.value,
         )
-        await self.prompt_crud.add_version(
-            prompt,
-            system_prompt=data.system_prompt,
-            user_prompt=data.user_prompt,
-            change_note=data.change_note,
-        )
+        await self._add_version_if_changed(prompt, data)
         return await self._detail(prompt)
 
     async def add_version(
-        self, uuid: UUID, owner_uuid: UUID, data: PromptVersionCreateRequest
+        self, uuid: UUID, owner_uuid: UUID, data: PromptText
     ) -> PromptDetail:
         """Saves the text as the next version; saving an unchanged text is a no-op."""
         prompt = await self._own_prompt(uuid, owner_uuid)
-        errors = validate_template(
-            JobPromptingType(prompt.prompting_type),
-            data.system_prompt,
-            data.user_prompt,
-        )
-        if errors:
-            raise ValueError("; ".join(errors))
-
-        latest = await self.prompt_crud.fetch_latest_version(prompt.id)
-        if (
-            latest is None
-            or latest.system_prompt != data.system_prompt
-            or latest.user_prompt != data.user_prompt
-        ):
-            await self.prompt_crud.add_version(
-                prompt,
-                system_prompt=data.system_prompt,
-                user_prompt=data.user_prompt,
-                change_note=data.change_note,
-            )
-        return await self._detail(prompt)
-
-    async def update_prompt(
-        self, uuid: UUID, owner_uuid: UUID, data: PromptUpdateRequest
-    ) -> PromptDetail:
-        prompt = await self._own_prompt(uuid, owner_uuid)
-        values = data.model_dump(exclude_unset=True)
-        if values:
-            await self.prompt_crud.update_prompt(prompt, **values)
+        _check_template(JobPromptingType(prompt.prompting_type), data)
+        await self._add_version_if_changed(prompt, data)
         return await self._detail(prompt)
 
     async def archive_prompt(self, uuid: UUID, owner_uuid: UUID) -> None:
         prompt = await self._own_prompt(uuid, owner_uuid)
-        await self.prompt_crud.archive_prompt(prompt)
+        await self.prompt_crud.update_prompt(prompt, archived_at=func.now())
 
-    async def resolve_for_new_job(
+    async def resolve(
         self,
         owner_uuid: UUID,
         prompting_type: JobPromptingType,
         screening_target: ScreeningTarget,
         version_uuid: Optional[UUID],
+        *,
+        new_job: bool = True,
     ) -> ResolvedPrompt:
         """
-        The version a new job pins: the given one, after checking that the job
-        may use it, or the latest version of the matching built-in prompt.
+        The version a job runs with: the given one, or the latest version of the
+        matching built-in prompt (also for jobs created before prompts were
+        stored). A new job may only pin a live prompt of its type and target; a
+        running job keeps its version even if the prompt was deleted since.
         """
         if version_uuid is None:
             return await self.default_prompt(prompting_type, screening_target)
 
         row = await self.prompt_crud.fetch_version_with_prompt(version_uuid, owner_uuid)
         if row is None:
-            raise PromptNotFoundError("Prompt version not found")
+            raise PromptNotFoundError(f"Prompt version {version_uuid} not found")
         prompt, version = row
+        if not new_job:
+            return _resolved(prompt, version)
         if prompt.archived_at is not None:
             raise ValueError(f"Prompt '{prompt.name}' has been deleted")
         if prompt.prompting_type != prompting_type.value:
@@ -206,26 +176,6 @@ class PromptService:
                 f"screening, not {screening_target.value}"
             )
         return _resolved(prompt, version)
-
-    async def resolve_for_run(
-        self,
-        owner_uuid: UUID,
-        prompting_type: JobPromptingType,
-        screening_target: ScreeningTarget,
-        version_uuid: Optional[UUID],
-    ) -> ResolvedPrompt:
-        """
-        The prompt a running job sends. Jobs created before prompts were stored
-        have no version and get the built-in prompt; a deleted prompt still runs.
-        """
-        if version_uuid is not None:
-            row = await self.prompt_crud.fetch_version_with_prompt(
-                version_uuid, owner_uuid
-            )
-            if row is None:
-                raise PromptNotFoundError(f"Prompt version {version_uuid} not found")
-            return _resolved(*row)
-        return await self.default_prompt(prompting_type, screening_target)
 
     async def default_prompt(
         self, prompting_type: JobPromptingType, screening_target: ScreeningTarget
@@ -249,6 +199,7 @@ class PromptService:
         await self.prompt_crud.lock_default_prompt_sync()
         for default in DEFAULT_PROMPTS:
             prompt = await self.prompt_crud.fetch_default_prompt(default.slug)
+            change_note = "Updated in a new release" if prompt else None
             if prompt is None:
                 prompt = await self.prompt_crud.create_prompt(
                     owner_uuid=None,
@@ -259,30 +210,17 @@ class PromptService:
                     screening_target=default.screening_target.value,
                 )
                 logger.info("Created default prompt %s", default.slug)
-            elif (prompt.name, prompt.description) != (
-                default.name,
-                default.description,
-            ):
-                await self.prompt_crud.update_prompt(
-                    prompt, name=default.name, description=default.description
-                )
-
-            latest = await self.prompt_crud.fetch_latest_version(prompt.id)
-            if (
-                latest is None
-                or latest.system_prompt != default.system_prompt
-                or latest.user_prompt != default.user_prompt
-            ):
-                version = await self.prompt_crud.add_version(
-                    prompt,
+            version = await self._add_version_if_changed(
+                prompt,
+                PromptText.model_construct(
                     system_prompt=default.system_prompt,
                     user_prompt=default.user_prompt,
-                    change_note=None if latest is None else "Updated in a new release",
-                )
+                    change_note=change_note,
+                ),
+            )
+            if version is not None:
                 logger.info(
-                    "Default prompt %s is now version %s",
-                    default.slug,
-                    version.version,
+                    "Default prompt %s is now version %s", default.slug, version.version
                 )
 
     async def _visible_prompt(self, uuid: UUID, owner_uuid: UUID) -> Prompt:
@@ -294,12 +232,26 @@ class PromptService:
     async def _own_prompt(self, uuid: UUID, owner_uuid: UUID) -> Prompt:
         prompt = await self._visible_prompt(uuid, owner_uuid)
         if prompt.owner_uuid is None:
-            raise PromptReadOnlyError(
-                "Built-in prompts can't be changed; duplicate it to edit"
-            )
+            raise PromptReadOnlyError("Built-in prompts can't be changed")
         if prompt.archived_at is not None:
             raise PromptReadOnlyError("Deleted prompts can't be changed")
         return prompt
+
+    async def _add_version_if_changed(
+        self, prompt: Prompt, text: PromptText
+    ) -> Optional[PromptVersion]:
+        latest = await self.prompt_crud.fetch_latest_version(prompt.id)
+        if latest and (latest.system_prompt, latest.user_prompt) == (
+            text.system_prompt,
+            text.user_prompt,
+        ):
+            return None
+        return await self.prompt_crud.add_version(
+            prompt,
+            system_prompt=text.system_prompt,
+            user_prompt=text.user_prompt,
+            change_note=text.change_note,
+        )
 
     async def _detail(self, prompt: Prompt) -> PromptDetail:
         versions = await self.prompt_crud.fetch_versions(prompt.id)

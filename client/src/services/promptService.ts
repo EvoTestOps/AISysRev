@@ -1,5 +1,5 @@
 import z from "zod";
-import { JobPromptingType, ScreeningTarget } from "../state/types";
+import { ScreeningTarget } from "../state/types";
 import {
   Prompt,
   PromptCreate,
@@ -8,24 +8,17 @@ import {
   PromptModel,
   PromptText,
   PromptVariables,
-  PromptVariablesModel,
 } from "../state/types/prompt";
 import { api } from "./api";
-import { TypedStatusError } from "./api/client";
+import { PromptVariablesResponse, TypedStatusError } from "./api/client";
 
 /** The built-in prompts and the user's own, the built-in ones first. */
 export const fetchPrompts = async (
-  filter?: {
-    promptingType?: JobPromptingType;
-    screeningTarget?: ScreeningTarget;
-  },
+  screeningTarget?: ScreeningTarget,
   signal?: AbortSignal,
 ): Promise<Prompt[]> => {
   const res = await api.get("/api/v1/prompt", {
-    query: {
-      prompting_type: filter?.promptingType,
-      screening_target: filter?.screeningTarget,
-    },
+    query: { screening_target: screeningTarget },
     overrides: { signal },
   });
   return z.array(PromptModel).parse(res);
@@ -38,7 +31,7 @@ export const fetchPrompt = async (uuid: string): Promise<PromptDetail> => {
 
 export const fetchPromptVariables = async (): Promise<PromptVariables> => {
   const res = await api.get("/api/v1/prompt/variables");
-  return PromptVariablesModel.parse(res);
+  return PromptVariablesResponse.parse(res);
 };
 
 export const createPrompt = async (body: PromptCreate): Promise<PromptDetail> => {
@@ -49,14 +42,6 @@ export const createPrompt = async (body: PromptCreate): Promise<PromptDetail> =>
 /** Saves the text as the prompt's next version (unless it is unchanged). */
 export const savePromptVersion = async (uuid: string, body: PromptText): Promise<PromptDetail> => {
   const res = await api.post("/api/v1/prompt/{uuid}/version", { path: { uuid }, body });
-  return PromptDetailModel.parse(res);
-};
-
-export const updatePrompt = async (
-  uuid: string,
-  body: { name?: string; description?: string | null },
-): Promise<PromptDetail> => {
-  const res = await api.patch("/api/v1/prompt/{uuid}", { path: { uuid }, body });
   return PromptDetailModel.parse(res);
 };
 

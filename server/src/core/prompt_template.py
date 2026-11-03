@@ -26,15 +26,7 @@ class PromptVariable:
     name: str
     label: str
     description: str
-    # Shown in the editor's preview in place of real data.
-    example: str
 
-
-_EXAMPLE_INCLUSION = (
-    "- IC1: The study evaluates a software testing technique\n"
-    "- IC2: The study reports an empirical evaluation\n"
-)
-_EXAMPLE_EXCLUSION = "- EC1: The study is a secondary study\n"
 
 VARIABLES: dict[str, PromptVariable] = {
     v.name: v
@@ -43,64 +35,52 @@ VARIABLES: dict[str, PromptVariable] = {
             "title",
             "Title",
             "The paper's title. For a GitHub repository, its name and description.",
-            "Search-based test generation for microservices",
         ),
         PromptVariable(
             "abstract",
             "Abstract",
             "The paper's abstract. In PDF screening, excerpts of the full text "
             "instead; for a GitHub repository, its README.",
-            "We present a search-based approach for generating API tests...",
         ),
         PromptVariable(
             "content_label",
             "Content label",
             'What {{abstract}} holds: "Abstract", or "Excerpts from the paper" '
             "in PDF screening.",
-            "Abstract",
         ),
         PromptVariable(
             "criteria",
             "All criteria",
             "The inclusion criteria (IC1, IC2, ...) followed by the exclusion "
             "criteria (EC1, EC2, ...), each under its own heading.",
-            f"\nInclusion criteria:\n\n{_EXAMPLE_INCLUSION}"
-            f"\nExclusion criteria:\n\n{_EXAMPLE_EXCLUSION}",
         ),
         PromptVariable(
             "inclusion_criteria",
             "Inclusion criteria",
             "The project's inclusion criteria, one per line as IC1, IC2, ...",
-            _EXAMPLE_INCLUSION,
         ),
         PromptVariable(
             "exclusion_criteria",
             "Exclusion criteria",
             "The project's exclusion criteria, one per line as EC1, EC2, ...",
-            _EXAMPLE_EXCLUSION,
         ),
         PromptVariable(
             "additional_instructions",
             "Additional instructions",
             "Built-in decision rules for the screening target, e.g. that a paper "
             "is excluded if it matches any exclusion criterion.",
-            "The paper is included, if all inclusion criteria match. If the paper "
-            "matches any exclusion criteria, it is excluded.",
         ),
         PromptVariable(
             "few_shot_examples",
             "Few-shot examples",
             "The seed papers picked for the task, each with its title, abstract "
             "and the Include/Exclude decision.",
-            'Title: Mutation testing at scale\nAbstract: "We study..."\n'
-            "Decision: Include\n",
         ),
         PromptVariable(
             "criterion",
             "Criterion",
             "The one criterion being evaluated. Per-criteria prompts are sent "
             "once for each criterion.",
-            "The study evaluates a software testing technique",
         ),
     ]
 }

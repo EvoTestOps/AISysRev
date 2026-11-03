@@ -4,6 +4,18 @@ from uuid import uuid4
 
 import pytest
 
+from src.core.prompt_template import render_template
+from src.core.prompts import (
+    additional_instructions,
+    default_system_prompt,
+    few_shot_task_prompt,
+    github_additional_instructions,
+    github_few_shot_task_prompt,
+    github_per_criteria_task_prompt,
+    github_zero_shot_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+)
 from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
@@ -23,20 +35,6 @@ from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import ScreeningTarget
 from src.schemas.prompt import ResolvedPrompt
 from src.schemas.setting import SettingRead
-
-# The templates as they were before prompts became editable: the built-in
-# prompts must still render to exactly these texts.
-from src.tests.fixtures.legacy_prompts import (
-    additional_instructions,
-    default_system_prompt,
-    few_shot_task_prompt,
-    github_additional_instructions,
-    github_few_shot_task_prompt,
-    github_per_criteria_task_prompt,
-    github_zero_shot_task_prompt,
-    per_criteria_task_prompt,
-    zero_shot_task_prompt,
-)
 from src.tools.llm_decision_creator import (
     create_criteria,
     create_few_shot_examples,
@@ -51,6 +49,21 @@ EXCLUSION = ["Is a survey"]
 CRITERIA_DICT = {"inclusion_criteria": INCLUSION, "exclusion_criteria": EXCLUSION}
 CRITERIA_TEXT = create_criteria(INCLUSION, EXCLUSION)
 API_KEY_NAME = "openai_api_key"
+
+
+def _render(template: str, **values: str) -> str:
+    return render_template(
+        template, {"title": "The title", "abstract": "The abstract", **values}
+    )
+
+
+def _zero_shot(template=zero_shot_task_prompt, instructions=additional_instructions):
+    return _render(
+        template,
+        criteria=CRITERIA_TEXT,
+        additional_instructions=instructions,
+        content_label="Abstract",
+    )
 
 
 # --- helpers ----------------------------------------------------------------
@@ -202,9 +215,7 @@ async def test_zero_shot_sends_the_paper_prompt_to_the_llm():
     assert kwargs["client"] is client
     assert kwargs["provider_parameters"] == {"base_url": "http://llm"}
     assert kwargs["model_parameters"] == {"temperature": 0.3}
-    assert kwargs["user_prompt"] == zero_shot_task_prompt.format(
-        "The title", "The abstract", CRITERIA_TEXT, additional_instructions, "Abstract"
-    )
+    assert kwargs["user_prompt"] == _zero_shot()
     for part in ("The title", "The abstract", "IC1: Is empirical", "EC1: Is a survey"):
         assert part in kwargs["user_prompt"]
 
@@ -266,16 +277,10 @@ async def test_github_screening_uses_the_github_prompt_and_instructions():
     await _structured(service, _job_data(_github_config()))
 
     prompt = service.call_llm.await_args.kwargs["user_prompt"]
-    assert prompt == github_zero_shot_task_prompt.format(
-        "The title",
-        "The abstract",
-        CRITERIA_TEXT,
-        github_additional_instructions,
-        "Abstract",
+    assert prompt == _zero_shot(
+        github_zero_shot_task_prompt, github_additional_instructions
     )
-    assert prompt != zero_shot_task_prompt.format(
-        "The title", "The abstract", CRITERIA_TEXT, additional_instructions, "Abstract"
-    )
+    assert prompt != _zero_shot()
 
 
 # --- get_structured_response: few-shot --------------------------------------
@@ -304,13 +309,12 @@ async def test_few_shot_looks_up_the_seed_papers_and_includes_them():
         [include_uuid, exclude_uuid], job_data.owner_uuid
     )
     prompt = service.call_llm.await_args.kwargs["user_prompt"]
-    assert prompt == few_shot_task_prompt.format(
-        "The title",
-        "The abstract",
-        CRITERIA_TEXT,
-        additional_instructions,
-        create_few_shot_examples(seeds),
-        "Abstract",
+    assert prompt == _render(
+        few_shot_task_prompt,
+        criteria=CRITERIA_TEXT,
+        additional_instructions=additional_instructions,
+        few_shot_examples=create_few_shot_examples(seeds),
+        content_label="Abstract",
     )
     assert "Seed in" in prompt and "Seed out" in prompt
 
@@ -330,13 +334,12 @@ async def test_github_few_shot_uses_the_github_few_shot_prompt():
     await _structured(service, _job_data(config), paper_service=paper_service)
 
     prompt = service.call_llm.await_args.kwargs["user_prompt"]
-    assert prompt == github_few_shot_task_prompt.format(
-        "The title",
-        "The abstract",
-        CRITERIA_TEXT,
-        github_additional_instructions,
-        "",
-        "Abstract",
+    assert prompt == _render(
+        github_few_shot_task_prompt,
+        criteria=CRITERIA_TEXT,
+        additional_instructions=github_additional_instructions,
+        few_shot_examples="",
+        content_label="Abstract",
     )
 
 
@@ -384,12 +387,12 @@ async def test_pdf_mode_screens_excerpts_instead_of_the_abstract():
         EXCLUSION,
     )
     prompt = service.call_llm.await_args.kwargs["user_prompt"]
-    assert prompt == zero_shot_task_prompt.format(
-        "The title",
-        "Relevant excerpt from the PDF",
-        CRITERIA_TEXT,
-        additional_instructions,
-        "Excerpts from the paper",
+    assert prompt == _render(
+        zero_shot_task_prompt,
+        abstract="Relevant excerpt from the PDF",
+        criteria=CRITERIA_TEXT,
+        additional_instructions=additional_instructions,
+        content_label="Excerpts from the paper",
     )
     assert "The abstract" not in prompt
 
@@ -484,8 +487,8 @@ async def test_single_criterion_sends_the_per_criteria_prompt():
     assert kwargs["provider_parameters"] == {"base_url": "http://llm"}
     assert kwargs["model_parameters"] == {"temperature": 0.3}
     assert kwargs["runtime_parameters"].model == "test-model"
-    assert kwargs["user_prompt"] == per_criteria_task_prompt.format(
-        "The title", "The abstract", "Is empirical"
+    assert kwargs["user_prompt"] == _render(
+        per_criteria_task_prompt, criterion="Is empirical"
     )
 
 
@@ -499,9 +502,7 @@ async def test_single_criterion_uses_the_github_prompt_for_github_screening():
     await _single(service, _job_data(config))
 
     prompt = service.call_llm.await_args.kwargs["user_prompt"]
-    assert prompt == github_per_criteria_task_prompt.format(
-        "The title", "The abstract", "Is empirical"
-    )
+    assert prompt == _render(github_per_criteria_task_prompt, criterion="Is empirical")
 
 
 @pytest.mark.asyncio
@@ -617,8 +618,8 @@ async def test_a_single_criterion_prompt_is_recorded_with_its_criterion_id() -> 
     )
 
     assert [r.criterion for r in recorded] == ["IC1"]
-    assert recorded[0].user_prompt == per_criteria_task_prompt.format(
-        "The title", "The abstract", "Is empirical"
+    assert recorded[0].user_prompt == _render(
+        per_criteria_task_prompt, criterion="Is empirical"
     )
 
 

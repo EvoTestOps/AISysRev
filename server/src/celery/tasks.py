@@ -385,11 +385,12 @@ async def process_job(
         project_criteria = project.criteria
 
         cfg = job_data.prompting_config
-        prompt = await create_prompt_service(db_ctx).resolve_for_run(
+        prompt = await create_prompt_service(db_ctx).resolve(
             job_data.owner_uuid,
             JobPromptingType(cfg.screening_type),
             cfg.screening_target,
             cfg.prompt_version_uuid,
+            new_job=False,
         )
         logger.info(
             "Job %s screens with prompt %s version %s",

@@ -176,7 +176,7 @@ class JobService:
             if job_data.llm_config.provider_name in PROVIDERS_WITH_FIXED_PROMPTS
             else cfg.prompt_version_uuid
         )
-        resolved = await self.prompt_service.resolve_for_new_job(
+        resolved = await self.prompt_service.resolve(
             job_data.owner_uuid, cfg.screening_type, cfg.screening_target, requested
         )
         pinned = cfg.model_copy(

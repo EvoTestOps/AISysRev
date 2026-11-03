@@ -9,6 +9,13 @@ from pydantic_ai.exceptions import ModelHTTPError
 
 from src.core.llm.providers.jev import JEV_MODELS, JevProvider
 from src.core.llm.providers.openrouter import OpenRouterProvider
+from src.core.prompt_template import render_template
+from src.core.prompts import (
+    additional_instructions,
+    github_per_criteria_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+)
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
@@ -29,23 +36,22 @@ from src.schemas.setting import SettingRead
 from src.services.job_service import JobService
 from src.services.llm_service import LLMService
 from src.services.result_service import create_dataframe
-from src.tests.fixtures.legacy_prompts import (
-    additional_instructions,
-    github_per_criteria_task_prompt,
-    per_criteria_task_prompt,
-    zero_shot_task_prompt,
-)
 from src.tools.llm_decision_creator import create_criteria
 
 pytestmark = pytest.mark.unit
 
 API_KEY = "sk-or-test"
-ZERO_SHOT_PROMPT = zero_shot_task_prompt.format(
-    "The title",
-    "The abstract",
-    create_criteria(["Is empirical", "Is about testing"], ["Is a survey"]),
-    additional_instructions,
-    "Abstract",
+ZERO_SHOT_PROMPT = render_template(
+    zero_shot_task_prompt,
+    {
+        "title": "The title",
+        "abstract": "The abstract",
+        "criteria": create_criteria(
+            ["Is empirical", "Is about testing"], ["Is a survey"]
+        ),
+        "additional_instructions": additional_instructions,
+        "content_label": "Abstract",
+    },
 )
 
 
@@ -187,7 +193,7 @@ def _job(provider_name: str, prompting_config) -> JobCreate:
 
 def _job_service(job_crud) -> JobService:
     prompt_service = MagicMock()
-    prompt_service.resolve_for_new_job = AsyncMock(
+    prompt_service.resolve = AsyncMock(
         return_value=ResolvedPrompt(system_prompt="S", user_prompt="U")
     )
     return JobService(MagicMock(), job_crud, prompt_service)
@@ -238,7 +244,7 @@ async def test_a_jev_job_always_gets_the_built_in_prompt():
             _job("jev", ZeroShotPromptingConfig(prompt_version_uuid=custom_version))
         )
 
-    args = service.prompt_service.resolve_for_new_job.await_args.args
+    args = service.prompt_service.resolve.await_args.args
     # Jev reads the criteria out of the prompt, so a custom one is ignored.
     assert args[-1] is None
 
@@ -252,7 +258,14 @@ async def test_a_jev_job_always_gets_the_built_in_prompt():
 )
 async def test_a_criterion_is_asked_as_one_noul_question(template):
     server = _JevServer({"applies": 0.3})
-    prompt = template.format("The title", "The abstract", "Is about testing")
+    prompt = render_template(
+        template,
+        {
+            "title": "The title",
+            "abstract": "The abstract",
+            "criterion": "Is about testing",
+        },
+    )
 
     result = await _run(_provider(), server, CriterionResponse, prompt)
 

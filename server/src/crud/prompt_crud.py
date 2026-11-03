@@ -97,24 +97,8 @@ class PromptCrud:
         row = result.one_or_none()
         return (row[0], row[1]) if row else None
 
-    async def create_prompt(
-        self,
-        *,
-        owner_uuid: Optional[UUID],
-        name: str,
-        description: Optional[str],
-        prompting_type: str,
-        screening_target: str,
-        slug: Optional[str] = None,
-    ) -> Prompt:
-        prompt = Prompt(
-            owner_uuid=owner_uuid,
-            slug=slug,
-            name=name,
-            description=description,
-            prompting_type=prompting_type,
-            screening_target=screening_target,
-        )
+    async def create_prompt(self, **fields) -> Prompt:
+        prompt = Prompt(**fields)
         self.db.add(prompt)
         await self.db.flush()
         await self.db.refresh(prompt)
@@ -153,9 +137,6 @@ class PromptCrud:
         await self.db.flush()
         await self.db.refresh(prompt)
         return prompt
-
-    async def archive_prompt(self, prompt: Prompt) -> None:
-        await self.update_prompt(prompt, archived_at=func.now())
 
     async def lock_default_prompt_sync(self) -> None:
         """Held until the transaction ends, so API workers sync one at a time."""
