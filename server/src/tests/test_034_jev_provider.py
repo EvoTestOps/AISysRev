@@ -9,12 +9,6 @@ from pydantic_ai.exceptions import ModelHTTPError
 
 from src.core.llm.providers.jev import JEV_MODELS, JevProvider
 from src.core.llm.providers.openrouter import OpenRouterProvider
-from src.core.prompts import (
-    additional_instructions,
-    github_per_criteria_task_prompt,
-    per_criteria_task_prompt,
-    zero_shot_task_prompt,
-)
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
@@ -30,10 +24,17 @@ from src.schemas.llm import (
     ProviderRuntimeParameters,
     StructuredResponse,
 )
+from src.schemas.prompt import ResolvedPrompt
 from src.schemas.setting import SettingRead
 from src.services.job_service import JobService
 from src.services.llm_service import LLMService
 from src.services.result_service import create_dataframe
+from src.tests.fixtures.legacy_prompts import (
+    additional_instructions,
+    github_per_criteria_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+)
 from src.tools.llm_decision_creator import create_criteria
 
 pytestmark = pytest.mark.unit
@@ -184,11 +185,19 @@ def _job(provider_name: str, prompting_config) -> JobCreate:
     )
 
 
+def _job_service(job_crud) -> JobService:
+    prompt_service = MagicMock()
+    prompt_service.resolve_for_new_job = AsyncMock(
+        return_value=ResolvedPrompt(system_prompt="S", user_prompt="U")
+    )
+    return JobService(MagicMock(), job_crud, prompt_service)
+
+
 @pytest.mark.asyncio
 async def test_a_few_shot_jev_job_is_rejected_before_it_is_created():
     job_crud = MagicMock()
     job_crud.create_job = AsyncMock()
-    service = JobService(MagicMock(), job_crud)
+    service = _job_service(job_crud)
 
     with pytest.raises(ValueError, match="FEW_SHOT"):
         await service.create(
@@ -210,11 +219,28 @@ async def test_a_few_shot_jev_job_is_rejected_before_it_is_created():
 async def test_zero_shot_and_per_criteria_jev_jobs_are_created(prompting_config):
     job_crud = MagicMock()
     job_crud.create_job = AsyncMock(side_effect=RuntimeError("created"))
-    service = JobService(MagicMock(), job_crud)
+    service = _job_service(job_crud)
 
     # Passing the guards reaches the CRUD call.
     with pytest.raises(RuntimeError, match="created"):
         await service.create(_job("jev", prompting_config))
+
+
+@pytest.mark.asyncio
+async def test_a_jev_job_always_gets_the_built_in_prompt():
+    job_crud = MagicMock()
+    job_crud.create_job = AsyncMock(side_effect=RuntimeError("created"))
+    service = _job_service(job_crud)
+    custom_version = uuid4()
+
+    with pytest.raises(RuntimeError, match="created"):
+        await service.create(
+            _job("jev", ZeroShotPromptingConfig(prompt_version_uuid=custom_version))
+        )
+
+    args = service.prompt_service.resolve_for_new_job.await_args.args
+    # Jev reads the criteria out of the prompt, so a custom one is ignored.
+    assert args[-1] is None
 
 
 # --- Per-criteria -----------------------------------------------------------

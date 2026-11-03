@@ -4,17 +4,6 @@ from uuid import uuid4
 
 import pytest
 
-from src.core.prompts import (
-    additional_instructions,
-    default_system_prompt,
-    few_shot_task_prompt,
-    github_additional_instructions,
-    github_few_shot_task_prompt,
-    github_per_criteria_task_prompt,
-    github_zero_shot_task_prompt,
-    per_criteria_task_prompt,
-    zero_shot_task_prompt,
-)
 from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
@@ -32,7 +21,22 @@ from src.schemas.llm import (
 )
 from src.schemas.paper import PaperHumanResult, PaperRead
 from src.schemas.project import ScreeningTarget
+from src.schemas.prompt import ResolvedPrompt
 from src.schemas.setting import SettingRead
+
+# The templates as they were before prompts became editable: the built-in
+# prompts must still render to exactly these texts.
+from src.tests.fixtures.legacy_prompts import (
+    additional_instructions,
+    default_system_prompt,
+    few_shot_task_prompt,
+    github_additional_instructions,
+    github_few_shot_task_prompt,
+    github_per_criteria_task_prompt,
+    github_zero_shot_task_prompt,
+    per_criteria_task_prompt,
+    zero_shot_task_prompt,
+)
 from src.tools.llm_decision_creator import (
     create_criteria,
     create_few_shot_examples,
@@ -616,3 +620,89 @@ async def test_a_single_criterion_prompt_is_recorded_with_its_criterion_id() -> 
     assert recorded[0].user_prompt == per_criteria_task_prompt.format(
         "The title", "The abstract", "Is empirical"
     )
+
+
+# --- custom prompts ---------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_a_custom_prompt_is_rendered_and_its_system_prompt_sent() -> None:
+    service, _ = _llm_service()
+    recorded: list[PromptRecord] = []
+    prompt = ResolvedPrompt(
+        system_prompt="You screen papers.",
+        user_prompt=(
+            "T={{title}}\nA={{ abstract }}\nI:\n{{inclusion_criteria}}"
+            "E:\n{{exclusion_criteria}}R={{additional_instructions}}"
+        ),
+    )
+
+    await get_structured_response(
+        service,
+        MagicMock(),
+        MagicMock(),
+        _job_task(),
+        _job_data(),
+        CRITERIA_DICT,
+        MagicMock(),
+        prompt=prompt,
+        on_prompt=recorded.append,
+    )
+
+    kwargs = service.call_llm.await_args.kwargs
+    assert kwargs["user_prompt"] == (
+        "T=The title\nA=The abstract\n"
+        "I:\n- IC1: Is empirical\n- IC2: Is peer reviewed\n"
+        "E:\n- EC1: Is a survey\n"
+        f"R={additional_instructions}"
+    )
+    assert kwargs["runtime_parameters"].system_prompt == "You screen papers."
+    assert recorded[0].system_prompt == "You screen papers."
+
+
+@pytest.mark.asyncio
+async def test_braces_in_the_paper_do_not_break_a_custom_prompt() -> None:
+    service, _ = _llm_service()
+    task = _job_task()
+    task.abstract = "Uses {0} and {{title}} literally"
+
+    await get_structured_response(
+        service,
+        MagicMock(),
+        MagicMock(),
+        task,
+        _job_data(),
+        CRITERIA_DICT,
+        MagicMock(),
+        prompt=ResolvedPrompt(
+            system_prompt="S", user_prompt="{{abstract}} / {{criteria}}"
+        ),
+    )
+
+    prompt = service.call_llm.await_args.kwargs["user_prompt"]
+    # Values are substituted once, never rendered again.
+    assert prompt.startswith("Uses {0} and {{title}} literally / ")
+
+
+@pytest.mark.asyncio
+async def test_a_custom_per_criteria_prompt_is_used_for_each_criterion() -> None:
+    service, _ = _llm_service()
+
+    await get_single_criterion_response(
+        service,
+        _job_data(PerCriteriaPromptingConfig()),
+        "The title",
+        "The abstract",
+        "Is empirical",
+        MagicMock(),
+        prompt=ResolvedPrompt(
+            system_prompt="Sys",
+            user_prompt="Does '{{criterion}}' hold for {{title}}? {{abstract}}",
+        ),
+    )
+
+    kwargs = service.call_llm.await_args.kwargs
+    assert kwargs["user_prompt"] == (
+        "Does 'Is empirical' hold for The title? The abstract"
+    )
+    assert kwargs["runtime_parameters"].system_prompt == "Sys"

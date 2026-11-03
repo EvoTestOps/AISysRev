@@ -73,6 +73,8 @@ export const ModelPicker: React.FC<{ form: CreateTaskForm }> = ({ form }) => {
         modelFormValues={form.modelFormValues}
         modelParametersSchema={form.modelParametersSchema}
         setModelFormValue={form.setModelFormValues}
+        maxParallelCalls={form.maxParallelCalls}
+        setMaxParallelCalls={form.setMaxParallelCalls}
       />
     </>
   );

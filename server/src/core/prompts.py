@@ -1,3 +1,8 @@
+from dataclasses import dataclass
+
+from src.schemas.job import JobPromptingType
+from src.schemas.project import ScreeningTarget
+
 # A. Huotala, M. Kuutila, and M. Mäntylä, SESR-Eval: Dataset for Evaluating LLMs in the Title-Abstract Screening of Systematic Reviews (ESEM "25), September 2025
 
 default_system_prompt = "You are an expert research assistant."
@@ -41,7 +46,8 @@ json_instruct_prompt = """Output **ONLY JSON**. You should include **EVERY FIELD
   ]
 }"""
 
-# Task prompts
+# Task prompts: the user prompts of the built-in default prompts (DEFAULT_PROMPTS
+# below), in the {{variable}} language of src/core/prompt_template.py.
 
 zero_shot_task_prompt = """Role: You are a software engineering researcher conducting a systematic literature review (SLR).
 
@@ -81,31 +87,31 @@ b) Each individual inclusion or exclusion criterion
 
 ### Inclusion and exclusion criteria:
 
-{2}
+{{criteria}}
 
 ### Additional instructions:
 
-{3}
+{{additional_instructions}}
 
 ### Primary study:
 
 **Title:**
 \"\"\"
-{0}
+{{title}}
 \"\"\"
 
-**{4}:**
+**{{content_label}}:**
 \"\"\"
-{1}
+{{abstract}}
 \"\"\""""
 
 per_criteria_task_prompt = """You are an expert research assistant conducting a systematic literature review.
 
-TITLE: {0}
-ABSTRACT: {1}
+TITLE: {{title}}
+ABSTRACT: {{abstract}}
 
 Does the following criterion apply to this paper?
-Criterion: {2}
+Criterion: {{criterion}}
 
 Provide a probability and a brief reason for your estimate.
 
@@ -153,28 +159,28 @@ b) Each individual inclusion or exclusion criterion
 
 ### Inclusion and exclusion criteria:
 
-{2}
+{{criteria}}
 
 ### Additional instructions:
 
-{3}
+{{additional_instructions}}
 
 ### Examples
 
 Here are a few examples to aid in your decision making:
 
-{4}
+{{few_shot_examples}}
 
 ### Primary study:
 
 **Title:**
 \"\"\"
-{0}
+{{title}}
 \"\"\"
 
-**{5}:**
+**{{content_label}}:**
 \"\"\"
-{1}
+{{abstract}}
 \"\"\""""
 
 
@@ -241,22 +247,22 @@ If the README is missing, short, or ambiguous, reflect this uncertainty in the p
 
 ### Inclusion and exclusion criteria:
 
-{2}
+{{criteria}}
 
 ### Additional instructions:
 
-{3}
+{{additional_instructions}}
 
 ### GitHub repository:
 
 **Repository name and description:**
 \"\"\"
-{0}
+{{title}}
 \"\"\"
 
 **README.md:**
 \"\"\"
-{1}
+{{abstract}}
 \"\"\""""
 
 
@@ -307,28 +313,28 @@ Use the examples to understand how the criteria should be applied, but do not co
 
 ### Inclusion and exclusion criteria:
 
-{2}
+{{criteria}}
 
 ### Additional instructions:
 
-{3}
+{{additional_instructions}}
 
 ### Examples
 
 Here are a few labeled repository examples to aid in your decision making:
 
-{4}
+{{few_shot_examples}}
 
 ### GitHub repository:
 
 **Repository name and description:**
 \"\"\"
-{0}
+{{title}}
 \"\"\"
 
 **README.md:**
 \"\"\"
-{1}
+{{abstract}}
 \"\"\""""
 
 
@@ -339,11 +345,11 @@ The title field contains the repository name and GitHub description.
 The abstract field contains the README.md.
 
 
-TITLE: {0}
-ABSTRACT: {1}
+TITLE: {{title}}
+ABSTRACT: {{abstract}}
 
 Does the following criterion apply to this GitHub repository?
-Criterion: {2}
+Criterion: {{criterion}}
 
 Do not assume features that are not mentioned in the README or description.
 Exclude collection repositories and text-only repositories.
@@ -356,3 +362,119 @@ Provide a probability and a brief reason for your estimate.
         - A value closer to `1.000` means that it is extremely likely (very strong match)
         - A value closer to `0.000` means it is extremely unlikely (very weak or no match)
         - You are encouraged to use intermediate values (e.g. `0.100`, `0.250`, `0.350`, `0.700`, `0.950`, `0.999` etc.), not just `0.000` or `1.000`"""
+
+
+@dataclass(frozen=True)
+class PromptSource:
+    """The publication a built-in prompt comes from."""
+
+    # Short form for chips, e.g. "ESEM '25".
+    label: str
+    citation: str
+    doi: str
+    # The version of the built-in prompt whose text is the published one. A
+    # later change to the text adds a version that is no longer that prompt.
+    version: int
+
+
+SESR_EVAL = PromptSource(
+    label="ESEM '25",
+    citation=(
+        "A. Huotala, M. Kuutila, and M. Mäntylä. SESR-Eval: Dataset for Evaluating "
+        "LLMs in the Title-Abstract Screening of Systematic Reviews. In Proceedings of "
+        "the 19th ACM/IEEE International Symposium on Empirical Software Engineering "
+        "and Measurement (ESEM '25), 2025."
+    ),
+    doi="10.48550/arXiv.2507.19027",
+    version=1,
+)
+
+
+@dataclass(frozen=True)
+class DefaultPrompt:
+    """A built-in prompt, shared by every account and read-only to them."""
+
+    # Identifies the prompt across releases; never rename one.
+    slug: str
+    name: str
+    description: str
+    prompting_type: JobPromptingType
+    screening_target: ScreeningTarget
+    system_prompt: str
+    user_prompt: str
+    source: PromptSource | None = None
+
+
+# Synced to the database at startup (PromptService.sync_default_prompts): a
+# change to any text here becomes a new version of that default prompt.
+DEFAULT_PROMPTS: list[DefaultPrompt] = [
+    DefaultPrompt(
+        slug="paper-zero-shot",
+        name="Papers: zero-shot",
+        description="Judges a paper against all criteria at once, without examples.",
+        prompting_type=JobPromptingType.ZERO_SHOT,
+        screening_target=ScreeningTarget.PAPER,
+        system_prompt=default_system_prompt,
+        user_prompt=zero_shot_task_prompt,
+        source=SESR_EVAL,
+    ),
+    DefaultPrompt(
+        slug="paper-few-shot",
+        name="Papers: few-shot",
+        description="Judges a paper against all criteria at once, with seed papers as examples.",
+        prompting_type=JobPromptingType.FEW_SHOT,
+        screening_target=ScreeningTarget.PAPER,
+        system_prompt=default_system_prompt,
+        user_prompt=few_shot_task_prompt,
+    ),
+    DefaultPrompt(
+        slug="paper-per-criteria",
+        name="Papers: per criterion",
+        description="Asks for the probability of one criterion at a time.",
+        prompting_type=JobPromptingType.PER_CRITERIA,
+        screening_target=ScreeningTarget.PAPER,
+        system_prompt=default_system_prompt,
+        user_prompt=per_criteria_task_prompt,
+    ),
+    DefaultPrompt(
+        slug="github-zero-shot",
+        name="GitHub repositories: zero-shot",
+        description="Judges a repository against all criteria at once, without examples.",
+        prompting_type=JobPromptingType.ZERO_SHOT,
+        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
+        system_prompt=default_system_prompt,
+        user_prompt=github_zero_shot_task_prompt,
+    ),
+    DefaultPrompt(
+        slug="github-few-shot",
+        name="GitHub repositories: few-shot",
+        description="Judges a repository against all criteria at once, with seed repositories as examples.",
+        prompting_type=JobPromptingType.FEW_SHOT,
+        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
+        system_prompt=default_system_prompt,
+        user_prompt=github_few_shot_task_prompt,
+    ),
+    DefaultPrompt(
+        slug="github-per-criteria",
+        name="GitHub repositories: per criterion",
+        description="Asks for the probability of one criterion at a time.",
+        prompting_type=JobPromptingType.PER_CRITERIA,
+        screening_target=ScreeningTarget.GITHUB_REPOSITORY,
+        system_prompt=default_system_prompt,
+        user_prompt=github_per_criteria_task_prompt,
+    ),
+]
+
+
+def default_prompt_for(
+    prompting_type: JobPromptingType, screening_target: ScreeningTarget
+) -> DefaultPrompt:
+    for prompt in DEFAULT_PROMPTS:
+        if (
+            prompt.prompting_type == prompting_type
+            and prompt.screening_target == screening_target
+        ):
+            return prompt
+    raise ValueError(
+        f"No default prompt for {prompting_type.value} / {screening_target.value}"
+    )

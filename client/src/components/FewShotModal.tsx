@@ -32,7 +32,7 @@ import { useParams } from "wouter";
 import { ITEM_NAMES } from "../helpers/screeningTarget";
 import { screeningModeLabel } from "../pages/project/jobLabels";
 import { PaperReadWithAvgProbability } from "../services/api/client";
-import { createJob } from "../services/jobService";
+import { createJob, JobRunOptions } from "../services/jobService";
 import { useTypedStoreState } from "../state/store";
 import {
   createFewShotPromptingConfig,
@@ -50,6 +50,8 @@ type FewShotModalProps = {
   /** The form is still restoring its provider and model, e.g. after a refresh. */
   llmConfigLoading: boolean;
   screeningMode: JobScreeningMode;
+  /** The prompt and parallelism chosen in the task form. */
+  runOptions: JobRunOptions;
 };
 
 const STEPS = ["Inclusion examples", "Exclusion examples", "Review"] as const;
@@ -212,6 +214,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
   llmConfig,
   llmConfigLoading,
   screeningMode,
+  runOptions,
 }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
@@ -262,6 +265,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
           screeningTarget,
         ),
         screeningMode,
+        runOptions,
       );
       onClose();
     } catch (e) {
@@ -277,6 +281,7 @@ export const FewShotModal: React.FC<FewShotModalProps> = ({
     rememberSelection,
     screeningTarget,
     screeningMode,
+    runOptions,
     onClose,
   ]);
 

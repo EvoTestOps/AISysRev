@@ -9,6 +9,7 @@ from src.helpers.resolve_job_status import resolve_job_status
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
+    JobPromptRef,
     JobRead,
     JobReadWithStats,
     JobScreeningMode,
@@ -17,6 +18,11 @@ from src.schemas.job import (
     PerCriteriaPromptingConfig,
 )
 from src.services.jobtask_service import JobTaskService, create_jobtask_service
+from src.services.prompt_service import PromptService, create_prompt_service
+
+# Jev reads the criteria out of the prompt by its layout, so it always gets the
+# built-in prompts.
+PROVIDERS_WITH_FIXED_PROMPTS = {"jev"}
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +32,11 @@ class JobService:
         self,
         jobtask_service: JobTaskService,
         job_crud: JobCrud,
+        prompt_service: PromptService,
     ):
         self.job_crud = job_crud
         self.jobtask_service = jobtask_service
+        self.prompt_service = prompt_service
 
     async def fetch_all(self, owner_uuid: UUID) -> list[JobReadWithStats]:
         rows = await self.job_crud.fetch_jobs(owner_uuid)
@@ -94,6 +102,7 @@ class JobService:
             prompting_config=job.prompting_config,
             llm_config=job.llm_config,
             screening_mode=job.screening_mode,
+            max_parallel_calls=job.max_parallel_calls,
             created_at=job.created_at,
             updated_at=job.updated_at,
         )
@@ -132,6 +141,7 @@ class JobService:
                 f"FEW_SHOT prompting is not supported by {provider.provider_title}"
             )
 
+        job_data = await self._pin_prompt_version(job_data)
         new_job = await self.job_crud.create_job(job_data)
         await self.jobtask_service.bulk_create(
             new_job.id,
@@ -146,6 +156,7 @@ class JobService:
             llm_config=job_data.llm_config,
             prompting_config=job_data.prompting_config,
             screening_mode=new_job.screening_mode,
+            max_parallel_calls=new_job.max_parallel_calls,
             created_at=new_job.created_at,
             updated_at=new_job.updated_at,
         )
@@ -156,6 +167,29 @@ class JobService:
         await self.job_crud.update_celery_task_id(new_job.uuid, UUID(task.id))
 
         return job_read
+
+    async def _pin_prompt_version(self, job_data: JobCreate) -> JobCreate:
+        """The job data with the prompt version it runs with filled in."""
+        cfg = job_data.prompting_config
+        requested = (
+            None
+            if job_data.llm_config.provider_name in PROVIDERS_WITH_FIXED_PROMPTS
+            else cfg.prompt_version_uuid
+        )
+        resolved = await self.prompt_service.resolve_for_new_job(
+            job_data.owner_uuid, cfg.screening_type, cfg.screening_target, requested
+        )
+        pinned = cfg.model_copy(
+            update={
+                "prompt_version_uuid": resolved.version_uuid,
+                "prompt_ref": JobPromptRef(
+                    prompt_uuid=resolved.prompt_uuid,
+                    name=resolved.prompt_name,
+                    version=resolved.version,
+                ),
+            }
+        )
+        return job_data.model_copy(update={"prompting_config": pinned})
 
     async def delete_job(self, job_uuid: UUID, owner_uuid: UUID):
         job = await self.job_crud.fetch_job_by_uuid_with_ids(job_uuid, owner_uuid)
@@ -206,4 +240,4 @@ class JobService:
 def create_job_service(db_ctx: DBContext) -> JobService:
     jobtask_service = create_jobtask_service(db_ctx)
     job_crud = db_ctx.crud(JobCrud)
-    return JobService(jobtask_service, job_crud)
+    return JobService(jobtask_service, job_crud, create_prompt_service(db_ctx))

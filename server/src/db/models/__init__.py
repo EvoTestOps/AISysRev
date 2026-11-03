@@ -5,11 +5,14 @@ from .mixins import TimestampMixin
 from .paper import Paper
 from .pdf_chunk_embedding import PdfChunkEmbedding
 from .project import Project
+from .prompt import Prompt, PromptVersion
 from .setting import Setting
 from .user import User
 
 __all__ = [
     "Project",
+    "Prompt",
+    "PromptVersion",
     "File",
     "Job",
     "JobTask",

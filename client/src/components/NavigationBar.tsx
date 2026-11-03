@@ -30,6 +30,11 @@ const DESTINATIONS = [
       path.startsWith("/project/") ||
       path === "/create",
   },
+  {
+    label: "Prompts",
+    href: "/prompts",
+    isActive: (path: string) => path.startsWith("/prompts"),
+  },
   { label: "About", href: "/about", isActive: (path: string) => path.startsWith("/about") },
 ];
 

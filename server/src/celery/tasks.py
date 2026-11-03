@@ -18,7 +18,12 @@ from src.db.db_context import DBContext
 from src.event_queue import EventName, QueueItem, publish_event
 from src.helpers.resolve_job_status import resolve_job_status
 from src.redis_client.client import get_redis_client
-from src.schemas.job import JobCreate, JobScreeningMode, PerCriteriaPromptingConfig
+from src.schemas.job import (
+    JobCreate,
+    JobPromptingType,
+    JobScreeningMode,
+    PerCriteriaPromptingConfig,
+)
 from src.schemas.jobtask import JobTaskStatus
 from src.schemas.llm import (
     CriterionError,
@@ -27,9 +32,11 @@ from src.schemas.llm import (
     PromptRecord,
     ProviderRuntimeParameters,
 )
+from src.schemas.prompt import ResolvedPrompt
 from src.services.llm_service import create_llm_service
 from src.services.paper_service import create_paper_service
 from src.services.pdf_screening_service import create_pdf_screening_service
+from src.services.prompt_service import create_prompt_service
 from src.tools.boolean_parser import (
     build_criteria_tree_with_expressions,
     compute_overall,
@@ -139,6 +146,7 @@ async def _process_standard_task(
     counter_lock: asyncio.Lock,
     client: AsyncClient,
     update_interval: int = 5,
+    prompt: ResolvedPrompt | None = None,
 ):
     prompts: list[PromptRecord] = []
     async with semaphore:
@@ -164,6 +172,7 @@ async def _process_standard_task(
                     job_data,
                     project_criteria,
                     client,
+                    prompt=prompt,
                     on_prompt=prompts.append,
                 )
 
@@ -236,6 +245,7 @@ async def _process_per_criteria_task(
     counter_lock: asyncio.Lock,
     client: AsyncClient,
     update_interval: int = 5,
+    prompt: ResolvedPrompt | None = None,
 ):
     prompts: list[PromptRecord] = []
     async with semaphore:
@@ -267,6 +277,7 @@ async def _process_per_criteria_task(
                             leaf["description"],
                             client,
                             criterion_id=crit_id,
+                            prompt=prompt,
                             on_prompt=prompts.append,
                         )
                         criterion_results[crit_id] = response
@@ -352,7 +363,7 @@ async def process_job(
     celery_task: Task,
     job_id: int,
     job_data: JobCreate,
-    max_concurrent_tasks: int = 20,
+    max_concurrent_tasks: int | None = None,
     max_retries: int = 3,
     update_interval: int = 5,
 ):
@@ -372,6 +383,20 @@ async def process_job(
             raise RuntimeError("Project not found")
 
         project_criteria = project.criteria
+
+        cfg = job_data.prompting_config
+        prompt = await create_prompt_service(db_ctx).resolve_for_run(
+            job_data.owner_uuid,
+            JobPromptingType(cfg.screening_type),
+            cfg.screening_target,
+            cfg.prompt_version_uuid,
+        )
+        logger.info(
+            "Job %s screens with prompt %s version %s",
+            job_id,
+            prompt.prompt_name,
+            prompt.version,
+        )
 
         criteria_tree: dict | None = None
         if isinstance(job_data.prompting_config, PerCriteriaPromptingConfig):
@@ -426,7 +451,7 @@ async def process_job(
         job_tasks = await jobtask_crud.fetch_job_tasks_by_job_id(job_id)
         job_task_ids = [jt.id for jt in job_tasks]
 
-    semaphore = asyncio.Semaphore(max_concurrent_tasks)
+    semaphore = asyncio.Semaphore(max_concurrent_tasks or job_data.max_parallel_calls)
     counter_lock = asyncio.Lock()
     counter = {"completed": 0, "success": 0, "failed": 0, "total": len(job_task_ids)}
 
@@ -446,6 +471,7 @@ async def process_job(
                 counter_lock=counter_lock,
                 client=client,
                 update_interval=update_interval,
+                prompt=prompt,
             )
             for jt_id in job_task_ids
         ]
@@ -463,6 +489,7 @@ async def process_job(
                 counter_lock=counter_lock,
                 client=client,
                 update_interval=update_interval,
+                prompt=prompt,
             )
             for jt_id in job_task_ids
         ]

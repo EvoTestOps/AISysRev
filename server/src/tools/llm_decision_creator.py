@@ -3,20 +3,17 @@ from typing import Callable
 from httpx2 import AsyncClient
 
 from src.core.llm.providers.provider import LLMProvider
+from src.core.prompt_template import render_template
 from src.core.prompts import (
     additional_instructions,
-    few_shot_task_prompt,
+    default_prompt_for,
     github_additional_instructions,
-    github_few_shot_task_prompt,
-    github_per_criteria_task_prompt,
-    github_zero_shot_task_prompt,
-    per_criteria_task_prompt,
-    zero_shot_task_prompt,
 )
 from src.db.models.jobtask import JobTask
 from src.schemas.job import (
     FewShotPromptingConfig,
     JobCreate,
+    JobPromptingType,
     JobScreeningMode,
     ZeroShotPromptingConfig,
 )
@@ -28,6 +25,8 @@ from src.schemas.llm import (
     StructuredResponse,
 )
 from src.schemas.paper import PaperHumanResult, PaperRead
+from src.schemas.project import ScreeningTarget
+from src.schemas.prompt import ResolvedPrompt
 from src.schemas.setting import SettingRead
 from src.services.llm_service import LLMService
 from src.services.paper_service import PaperService
@@ -39,6 +38,7 @@ PromptRecorder = Callable[[PromptRecord], None]
 def _record_prompt(
     on_prompt: PromptRecorder | None,
     llm: type[LLMProvider],
+    system_prompt: str,
     user_prompt: str,
     criterion: str | None = None,
 ) -> None:
@@ -48,13 +48,26 @@ def _record_prompt(
     on_prompt(
         PromptRecord(
             criterion=criterion,
-            system_prompt=(
-                ProviderRuntimeParameters().system_prompt
-                if llm.uses_system_prompt
-                else None
-            ),
+            system_prompt=system_prompt if llm.uses_system_prompt else None,
             user_prompt=user_prompt,
         )
+    )
+
+
+def _prompt_or_default(
+    prompt: ResolvedPrompt | None, job_data: JobCreate
+) -> ResolvedPrompt:
+    """The given prompt, or the built-in one for the job's prompting type and target."""
+    if prompt is not None:
+        return prompt
+    default = default_prompt_for(
+        JobPromptingType(job_data.prompting_config.screening_type),
+        ScreeningTarget(job_data.prompting_config.screening_target),
+    )
+    return ResolvedPrompt(
+        prompt_name=default.name,
+        system_prompt=default.system_prompt,
+        user_prompt=default.user_prompt,
     )
 
 
@@ -70,16 +83,20 @@ Decision: {"Include" if paper.human_result == PaperHumanResult.INCLUDE else "Exc
     return "\n\n".join(txt_parts)
 
 
+def create_criteria_list(prefix: str, criteria: list[str]) -> str:
+    """One line per criterion, e.g. "- IC1: <criterion>"."""
+    return "".join(f"- {prefix}{i + 1}: {c}\n" for i, c in enumerate(criteria))
+
+
 def create_criteria(
     inclusion_criteria: list[str], exclusion_criteria: list[str]
 ) -> str:
-    criteria = "\nInclusion criteria:\n\n"
-    for i, criterion in enumerate(inclusion_criteria):
-        criteria += f"- IC{i + 1}: {criterion}\n"
-    criteria += "\nExclusion criteria:\n\n"
-    for i, criterion in enumerate(exclusion_criteria):
-        criteria += f"- EC{i + 1}: {criterion}\n"
-    return criteria
+    return (
+        "\nInclusion criteria:\n\n"
+        + create_criteria_list("IC", inclusion_criteria)
+        + "\nExclusion criteria:\n\n"
+        + create_criteria_list("EC", exclusion_criteria)
+    )
 
 
 async def get_structured_response(
@@ -91,12 +108,10 @@ async def get_structured_response(
     inc_exc_criteria: dict,
     client: AsyncClient,
     *,
+    prompt: ResolvedPrompt | None = None,
     on_prompt: PromptRecorder | None = None,
 ) -> StructuredResponse | JevStructuredResponse:
-    criteria = create_criteria(
-        inc_exc_criteria["inclusion_criteria"],
-        inc_exc_criteria["exclusion_criteria"],
-    )
+    prompt = _prompt_or_default(prompt, job_data)
     inclusion_criteria = inc_exc_criteria["inclusion_criteria"]
     exclusion_criteria = inc_exc_criteria["exclusion_criteria"]
 
@@ -108,13 +123,10 @@ async def get_structured_response(
 
     is_github_screening = screening_target == "GITHUB_REPOSITORY"
 
-    used_additional_instructions = (
-        github_additional_instructions
-        if is_github_screening
-        else additional_instructions
-    )
     api_key: SettingRead | None = None
     cfg = job_data.prompting_config
+    if not isinstance(cfg, (ZeroShotPromptingConfig, FewShotPromptingConfig)):
+        raise RuntimeError("Unknown prompting type.")
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
     if llm.api_key_config_parameter is not None:
         api_key = await llm_service.setting_service.get_setting(
@@ -130,6 +142,11 @@ async def get_structured_response(
     provider_parameters = await llm_service.resolve_provider_parameters(
         llm, job_data.llm_config.provider_parameters, job_data.owner_uuid
     )
+    runtime_parameters = ProviderRuntimeParameters(
+        model=job_data.llm_config.model_name,
+        api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+        system_prompt=prompt.system_prompt,
+    )
 
     abstract = job_task_data.abstract
     content_label = "Abstract"
@@ -143,10 +160,7 @@ async def get_structured_response(
         abstract = await pdf_screening_service.get_pdf_chunks_for_screening(
             llm,
             provider_parameters,
-            ProviderRuntimeParameters(
-                model=job_data.llm_config.model_name,
-                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
-            ),
+            runtime_parameters,
             client,
             job_data.project_uuid,
             job_data.owner_uuid,
@@ -155,67 +169,37 @@ async def get_structured_response(
             exclusion_criteria,
         )
 
-    if isinstance(cfg, ZeroShotPromptingConfig):
-        prompt_template = (
-            github_zero_shot_task_prompt
+    values = {
+        "title": job_task_data.title,
+        "abstract": abstract,
+        "content_label": content_label,
+        "criteria": create_criteria(inclusion_criteria, exclusion_criteria),
+        "inclusion_criteria": create_criteria_list("IC", inclusion_criteria),
+        "exclusion_criteria": create_criteria_list("EC", exclusion_criteria),
+        "additional_instructions": (
+            github_additional_instructions
             if is_github_screening
-            else zero_shot_task_prompt
-        )
-        prompt_text = prompt_template.format(
-            job_task_data.title,
-            abstract,
-            criteria,
-            used_additional_instructions,
-            content_label,
-        )
-        _record_prompt(on_prompt, llm, prompt_text)
-        result = await llm_service.call_llm(
-            llm,
-            provider_parameters=provider_parameters,
-            model_parameters=job_data.llm_config.model_parameters,
-            runtime_parameters=ProviderRuntimeParameters(
-                model=job_data.llm_config.model_name,
-                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
-            ),
-            response_schema=llm.structured_response_schema,
-            user_prompt=prompt_text,
-            client=client,
-        )
-        return result
-    elif isinstance(cfg, FewShotPromptingConfig):
+            else additional_instructions
+        ),
+    }
+    if isinstance(cfg, FewShotPromptingConfig):
         seed_paper_uuids = list(cfg.seed_paper_inc + cfg.seed_paper_exc)
         seed_papers = await paper_service.fetch_papers_by_paper_uuids(
             seed_paper_uuids, job_data.owner_uuid
         )
-        seed_paper_txt = create_few_shot_examples(seed_papers)
-        prompt_template = (
-            github_few_shot_task_prompt if is_github_screening else few_shot_task_prompt
-        )
+        values["few_shot_examples"] = create_few_shot_examples(seed_papers)
 
-        prompt_text = prompt_template.format(
-            job_task_data.title,
-            abstract,
-            criteria,
-            used_additional_instructions,
-            seed_paper_txt,
-            content_label,
-        )
-        _record_prompt(on_prompt, llm, prompt_text)
-        result = await llm_service.call_llm(
-            llm,
-            provider_parameters=provider_parameters,
-            model_parameters=job_data.llm_config.model_parameters,
-            runtime_parameters=ProviderRuntimeParameters(
-                model=job_data.llm_config.model_name,
-                api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
-            ),
-            response_schema=llm.structured_response_schema,
-            user_prompt=prompt_text,
-            client=client,
-        )
-        return result
-    else:
-        raise RuntimeError("Unknown prompting type.")
+    prompt_text = render_template(prompt.user_prompt, values)
+    _record_prompt(on_prompt, llm, prompt.system_prompt, prompt_text)
+    return await llm_service.call_llm(
+        llm,
+        provider_parameters=provider_parameters,
+        model_parameters=job_data.llm_config.model_parameters,
+        runtime_parameters=runtime_parameters,
+        response_schema=llm.structured_response_schema,
+        user_prompt=prompt_text,
+        client=client,
+    )
 
 
 async def get_single_criterion_response(
@@ -227,8 +211,10 @@ async def get_single_criterion_response(
     client: AsyncClient,
     *,
     criterion_id: str | None = None,
+    prompt: ResolvedPrompt | None = None,
     on_prompt: PromptRecorder | None = None,
 ) -> CriterionResponse:
+    prompt = _prompt_or_default(prompt, job_data)
     llm = llm_service.get_llm(job_data.llm_config.provider_name)
 
     api_key: SettingRead | None = None
@@ -246,18 +232,13 @@ async def get_single_criterion_response(
     provider_parameters = await llm_service.resolve_provider_parameters(
         llm, job_data.llm_config.provider_parameters, job_data.owner_uuid
     )
-    screening_target = getattr(
-        job_data.prompting_config,
-        "screening_target",
-        "PAPER",
+    prompt_text = render_template(
+        prompt.user_prompt,
+        {"title": title, "abstract": abstract, "criterion": criterion_description},
     )
-    prompt_template = (
-        github_per_criteria_task_prompt
-        if screening_target == "GITHUB_REPOSITORY"
-        else per_criteria_task_prompt
+    _record_prompt(
+        on_prompt, llm, prompt.system_prompt, prompt_text, criterion=criterion_id
     )
-    prompt_text = prompt_template.format(title, abstract, criterion_description)
-    _record_prompt(on_prompt, llm, prompt_text, criterion=criterion_id)
     return await llm_service.call_llm(
         llm,
         provider_parameters=provider_parameters,
@@ -265,6 +246,7 @@ async def get_single_criterion_response(
         runtime_parameters=ProviderRuntimeParameters(
             model=job_data.llm_config.model_name,
             api_key=api_key.value if api_key is not None else "Mock",  # type: ignore
+            system_prompt=prompt.system_prompt,
         ),
         response_schema=CriterionResponse,
         user_prompt=prompt_text,

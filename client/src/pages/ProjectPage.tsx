@@ -15,6 +15,7 @@ import { PROJECTS_PARENT } from "../components/PageHeader";
 import { ManualEvaluationModal } from "../components/ManualEvaluationModal";
 import { PerCriteriaStatsModal } from "../components/PerCriteriaStatsModal";
 import { ProjectTabs } from "../components/ProjectTabs";
+import type { JobRunOptions } from "../services/jobService";
 import { fetchPerCriteriaStats } from "../services/resultService";
 import { useTypedStoreActions, useTypedStoreState } from "../state/store";
 import {
@@ -64,6 +65,16 @@ const DEFAULT_TASK_SKELETONS = 3;
 const fewShotScreeningMode = (search: string): JobScreeningMode | undefined => {
   const mode = new URLSearchParams(search).get("mode");
   return Object.values(JobScreeningMode).find((value) => value === mode);
+};
+
+/** The prompt and parallelism the task form passed to the few-shot modal in its URL. */
+const fewShotRunOptions = (search: string): JobRunOptions => {
+  const params = new URLSearchParams(search);
+  const parallel = Number(params.get("parallel"));
+  return {
+    promptVersionUuid: params.get("prompt"),
+    maxParallelCalls: Number.isInteger(parallel) && parallel > 0 ? parallel : undefined,
+  };
 };
 
 export const ProjectPage = () => {
@@ -303,6 +314,7 @@ export const ProjectPage = () => {
               (taskForm.isProviderSelected && !taskForm.modelsLoaded))
           }
           screeningMode={fewShotScreeningMode(search) ?? taskForm.screeningMode}
+          runOptions={fewShotRunOptions(search)}
           screeningTarget={screeningTarget}
           onClose={() => {
             loadProjects();

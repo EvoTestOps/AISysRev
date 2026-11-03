@@ -1,10 +1,13 @@
-import { Provider } from "../../../state/types";
+import { MAX_PARALLEL_CALLS_LIMIT, Provider } from "../../../state/types";
 
 type ModelConfigurationProps = {
   isLlmSelected: boolean;
   modelParametersSchema?: Provider["model_parameters_json_schema"];
   modelFormValues: Record<string, unknown>;
   setModelFormValue: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
+  /** How many papers are sent to the model at the same time. */
+  maxParallelCalls: number;
+  setMaxParallelCalls: (value: number) => void;
 };
 
 export const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
@@ -12,21 +15,19 @@ export const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
   modelParametersSchema,
   modelFormValues,
   setModelFormValue,
+  maxParallelCalls,
+  setMaxParallelCalls,
 }) => {
-  if (
-    modelParametersSchema === undefined ||
-    Object.keys(modelParametersSchema.properties).length === 0
-  ) {
-    return null;
-  }
-  return isLlmSelected && modelParametersSchema ? (
+  // Every model has the parallelism setting, even one without parameters of its own.
+  const properties = modelParametersSchema?.properties ?? {};
+  return isLlmSelected ? (
     <details className="border border-slate-200 rounded-lg p-4 flex flex-col bg-slate-50 shadow-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between">
         <div>
           <div className="text-sm font-medium text-slate-900">Advanced</div>
           <div className="mt-0.5 text-xs text-slate-500 flex gap-2">
-            {Object.keys(modelParametersSchema.properties).map((key) => {
-              const property = modelParametersSchema.properties[key];
+            {Object.keys(properties).map((key) => {
+              const property = properties[key];
               return (
                 <span key={`property_${property.title}`}>{`${property.title}: ${
                   modelFormValues[key] !== undefined &&
@@ -35,6 +36,7 @@ export const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
                 }`}</span>
               );
             })}
+            <span>{`Max parallel calls: ${maxParallelCalls}`}</span>
           </div>
         </div>
         <svg
@@ -51,8 +53,8 @@ export const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
         </svg>
       </summary>
       <div className="mt-4">
-        {Object.keys(modelParametersSchema.properties).map((key) => {
-          const property = modelParametersSchema.properties[key];
+        {Object.keys(properties).map((key) => {
+          const property = properties[key];
           return (
             <div className="flex flex-col justify-between gap-1" key={`property_${key}`}>
               <div className="flex items-center justify-between">
@@ -102,6 +104,33 @@ export const ModelConfiguration: React.FC<ModelConfigurationProps> = ({
             </div>
           );
         })}
+        <div className="flex flex-col justify-between gap-1">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-slate-700" htmlFor="max-parallel-calls">
+              Max parallel calls
+            </label>
+            <span className="text-sm font-medium text-slate-600">{maxParallelCalls}</span>
+          </div>
+          <input
+            id="max-parallel-calls"
+            type="number"
+            className="p-2 rounded-lg border-gray-400 border-2 accent-slate-800"
+            data-testid="max-parallel-calls-input"
+            min={1}
+            max={MAX_PARALLEL_CALLS_LIMIT}
+            step={1}
+            value={maxParallelCalls}
+            onChange={(e) => {
+              const value = Math.round(Number(e.target.value));
+              if (Number.isFinite(value)) {
+                setMaxParallelCalls(Math.min(MAX_PARALLEL_CALLS_LIMIT, Math.max(1, value)));
+              }
+            }}
+          />
+          <p className="text-xs text-gray-500">
+            {`How many papers are sent to the model at the same time (1–${MAX_PARALLEL_CALLS_LIMIT}). Lower it if the provider rate-limits you.`}
+          </p>
+        </div>
       </div>
     </details>
   ) : null;

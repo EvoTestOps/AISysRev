@@ -13,6 +13,8 @@ import { SettingsPage } from "./pages/SettingPage";
 import { AccountSettingsPage } from "./pages/AccountSettingsPage";
 import { ResultPage } from "./pages/ResultPage";
 import { PapersPage } from "./pages/PapersPage";
+import { PromptsPage } from "./pages/PromptsPage";
+import { PromptEditorPage } from "./pages/prompts/PromptEditorPage";
 import { useTypedStoreActions } from "./state/store";
 import { api } from "./services/api";
 import { TypedStatusError } from "./services/api/client";
@@ -102,6 +104,9 @@ function App() {
         <Route path="/project/:projectUuid/few_shot" component={ProjectPage} />
         <Route path="/project/:projectUuid/job/:jobUuid" component={JobPage} />
         <Route path="/project/:projectUuid/job/:jobUuid/task/:taskUuid" component={JobTaskPage} />
+        <Route path="/prompts" component={PromptsPage} />
+        <Route path="/prompts/new" component={PromptEditorPage} />
+        <Route path="/prompts/:promptUuid" component={PromptEditorPage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/settings" component={SettingsPage} />
         <Route path="/settings/account" component={AccountSettingsPage} />

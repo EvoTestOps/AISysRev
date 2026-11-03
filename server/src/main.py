@@ -18,6 +18,7 @@ from src.api.controllers.jobtask import router as jobtask_router
 from src.api.controllers.llm import router as llm_router
 from src.api.controllers.paper import router as paper_router
 from src.api.controllers.project import router as project_router
+from src.api.controllers.prompt import router as prompt_router
 from src.api.controllers.result import router as result_router
 from src.api.controllers.setting import router as setting_router
 from src.core.config import settings
@@ -26,6 +27,7 @@ from src.db.db_context import DBContext
 from src.db.session import connection_pool
 from src.logger import configure_logging
 from src.redis_client.client import close_shared_redis_client
+from src.services.prompt_service import create_prompt_service
 from src.services.user_service import create_user_service
 from src.tools.diagnostics.celery_check import router as celery_test_router
 from src.tools.diagnostics.db_check import (
@@ -69,6 +71,11 @@ async def lifespan(app: FastAPI):
                 await create_user_service(db_ctx).ensure_local_user()
                 await db_ctx.commit()
 
+        logger.info("Syncing default prompts...")
+        async with DBContext() as db_ctx:
+            await create_prompt_service(db_ctx).sync_default_prompts()
+            await db_ctx.commit()
+
         logger.info("Application startup complete!")
         startup_complete.set()
 
@@ -111,6 +118,7 @@ v1_router.include_router(job_router)
 v1_router.include_router(jobtask_router)
 v1_router.include_router(paper_router)
 v1_router.include_router(setting_router)
+v1_router.include_router(prompt_router)
 v1_router.include_router(llm_router)
 v1_router.include_router(result_router)
 v1_router.include_router(event_queue_router)

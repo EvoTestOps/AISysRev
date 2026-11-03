@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, List, Literal, Union
+from typing import Annotated, Any, List, Literal, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -44,15 +44,35 @@ class LLMModelConfig(BaseModel):
     model_parameters: dict[str, Any]  # These will be type-checked run-time
 
 
+DEFAULT_MAX_PARALLEL_CALLS = 20
+MAX_PARALLEL_CALLS_LIMIT = 50
+
+
+class JobPromptRef(BaseModel):
+    """Which prompt version a job runs with, as it was named when the job started."""
+
+    prompt_uuid: Optional[UUID] = None
+    name: Optional[str] = None
+    version: Optional[int] = None
+
+
 # Define different configs for prompting strategies
 
 
-class ZeroShotPromptingConfig(BaseModel):
+class PromptSelection(BaseModel):
+    # The prompt version to screen with; None picks the built-in prompt. Set to
+    # the resolved version when the job is created, so every job pins one.
+    prompt_version_uuid: Optional[UUID] = None
+    # Filled in by the server when the job is created.
+    prompt_ref: Optional[JobPromptRef] = None
+
+
+class ZeroShotPromptingConfig(PromptSelection):
     screening_type: Literal[JobPromptingType.ZERO_SHOT] = JobPromptingType.ZERO_SHOT
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
 
 
-class FewShotPromptingConfig(BaseModel):
+class FewShotPromptingConfig(PromptSelection):
     screening_type: Literal[JobPromptingType.FEW_SHOT] = JobPromptingType.FEW_SHOT
     screening_target: ScreeningTarget = ScreeningTarget.PAPER
     seed_paper_inc: List[str]
@@ -60,7 +80,7 @@ class FewShotPromptingConfig(BaseModel):
     remember_selection: bool
 
 
-class PerCriteriaPromptingConfig(BaseModel):
+class PerCriteriaPromptingConfig(PromptSelection):
     screening_type: Literal[JobPromptingType.PER_CRITERIA] = (
         JobPromptingType.PER_CRITERIA
     )
@@ -78,6 +98,9 @@ class JobCreateRequest(BaseModel):
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
     screening_mode: JobScreeningMode = JobScreeningMode.TEXT
+    max_parallel_calls: int = Field(
+        default=DEFAULT_MAX_PARALLEL_CALLS, ge=1, le=MAX_PARALLEL_CALLS_LIMIT
+    )
     # Ignore all other fields
     model_config = ConfigDict(extra="ignore")
 
@@ -92,6 +115,7 @@ class JobRead(BaseModel):
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
     screening_mode: JobScreeningMode
+    max_parallel_calls: int = DEFAULT_MAX_PARALLEL_CALLS
     created_at: datetime
     updated_at: datetime
 
@@ -105,6 +129,7 @@ class JobReadWithStats(BaseModel):
     prompting_config: PromptingConfig
     llm_config: LLMModelConfig
     screening_mode: JobScreeningMode
+    max_parallel_calls: int = DEFAULT_MAX_PARALLEL_CALLS
     created_at: datetime
     updated_at: datetime
 
