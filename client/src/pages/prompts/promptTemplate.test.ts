@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { JobPromptingType } from "../../state/types";
 import type { PromptTypeVariables } from "../../state/types/prompt";
-import {
-  findVariables,
-  insertVariable,
-  renderTemplate,
-  tokenizeTemplate,
-  validateTemplate,
-  variableQueryAt,
-} from "./promptTemplate";
+import { findVariables, insertVariable, renderTemplate, validateTemplate } from "./promptTemplate";
 
 const ZERO_SHOT: PromptTypeVariables = {
   prompting_type: JobPromptingType.ZERO_SHOT,
@@ -72,49 +65,36 @@ describe("validateTemplate", () => {
   });
 });
 
-describe("tokenizeTemplate", () => {
-  it("splits text and variables, marking unknown ones", () => {
-    expect(tokenizeTemplate("A {{title}} B {{x}}", ["title"])).toEqual([
-      { kind: "text", text: "A " },
-      { kind: "variable", text: "{{title}}", name: "title", known: true },
-      { kind: "text", text: " B " },
-      { kind: "variable", text: "{{x}}", name: "x", known: false },
-    ]);
-  });
-});
-
-describe("variableQueryAt", () => {
-  it("finds the partial name typed after an unclosed {{", () => {
-    expect(variableQueryAt("Title: {{ti", 11)).toBe("ti");
-    expect(variableQueryAt("Title: {{", 9)).toBe("");
-  });
-
-  it("is null outside a variable", () => {
-    expect(variableQueryAt("Title: {{title}} ", 17)).toBeNull();
-    expect(variableQueryAt("plain text", 5)).toBeNull();
-  });
-});
-
 describe("insertVariable", () => {
   it("inserts at the cursor, replacing a selection", () => {
     expect(insertVariable("Hello world", 6, 11, "title")).toEqual({
-      text: "Hello {{title}}",
-      cursor: 15,
+      from: 6,
+      to: 11,
+      insert: "{{title}}",
     });
   });
 
   it("completes a partly typed variable", () => {
     expect(insertVariable("A {{ab B", 6, 6, "abstract")).toEqual({
-      text: "A {{abstract}} B",
-      cursor: 14,
+      from: 2,
+      to: 6,
+      insert: "{{abstract}}",
     });
   });
 
   it("doesn't double the closing braces the user already typed", () => {
-    expect(insertVariable("A {{ab}} B", 6, 6, "abstract").text).toBe("A {{abstract}} B");
+    expect(insertVariable("A {{ab}} B", 6, 6, "abstract")).toEqual({
+      from: 2,
+      to: 8,
+      insert: "{{abstract}}",
+    });
   });
 
   it("leaves following braces alone when not completing a variable", () => {
-    expect(insertVariable("A }} B", 2, 2, "title").text).toBe("A {{title}}}} B");
+    expect(insertVariable("A }} B", 2, 2, "title")).toEqual({
+      from: 2,
+      to: 2,
+      insert: "{{title}}",
+    });
   });
 });

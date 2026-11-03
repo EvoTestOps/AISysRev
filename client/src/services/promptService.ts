@@ -14,15 +14,19 @@ import { api } from "./api";
 import { TypedStatusError } from "./api/client";
 
 /** The built-in prompts and the user's own, the built-in ones first. */
-export const fetchPrompts = async (filter?: {
-  promptingType?: JobPromptingType;
-  screeningTarget?: ScreeningTarget;
-}): Promise<Prompt[]> => {
+export const fetchPrompts = async (
+  filter?: {
+    promptingType?: JobPromptingType;
+    screeningTarget?: ScreeningTarget;
+  },
+  signal?: AbortSignal,
+): Promise<Prompt[]> => {
   const res = await api.get("/api/v1/prompt", {
     query: {
       prompting_type: filter?.promptingType,
       screening_target: filter?.screeningTarget,
     },
+    overrides: { signal },
   });
   return z.array(PromptModel).parse(res);
 };

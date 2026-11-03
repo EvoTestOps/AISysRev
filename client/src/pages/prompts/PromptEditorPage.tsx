@@ -40,6 +40,7 @@ import {
   PromptDetail,
   PromptSource,
   PromptType,
+  PromptVariable,
   PromptVariables,
   PromptVersion,
 } from "../../state/types/prompt";
@@ -54,6 +55,8 @@ import { PromptSourceNotice } from "./PromptSource";
 import { PromptTemplateEditor } from "./PromptTemplateEditor";
 
 const PROMPTS_PARENT = { label: "Prompts", href: "/prompts" };
+// The system prompt takes no variables; one array so its editor isn't reconfigured on every render.
+const NO_VARIABLES: PromptVariable[] = [];
 
 type Draft = {
   name: string;
@@ -606,7 +609,7 @@ export const PromptEditorPage = () => {
                       label="System prompt"
                       value={shown.systemPrompt}
                       onChange={(systemPrompt) => update({ systemPrompt })}
-                      variables={[]}
+                      variables={NO_VARIABLES}
                       readOnly={readOnly}
                       minRows={2}
                       helperText="Sets the model's role. Plain text: variables are only filled in in the user prompt. Some providers, such as Jev, don't use it."

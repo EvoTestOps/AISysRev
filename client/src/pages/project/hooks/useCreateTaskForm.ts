@@ -96,16 +96,17 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
   // The chosen prompt version for the current strategy; null for the built-in one.
   const [promptVersionUuid, setPromptVersionUuid] = useState<string | null>(null);
   useEffect(() => {
-    let cancelled = false;
-    fetchPrompts({ screeningTarget })
-      .then((loaded) => !cancelled && setPrompts(loaded))
+    const controller = new AbortController();
+    fetchPrompts({ screeningTarget }, controller.signal)
+      .then((loaded) => {
+        if (!controller.signal.aborted) setPrompts(loaded);
+      })
       .catch((error) => {
+        if (controller.signal.aborted) return;
         console.error("Failed to fetch prompts", error);
-        if (!cancelled) setPrompts([]);
+        setPrompts([]);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [screeningTarget]);
   const strategyPrompts = useMemo(
     () => (prompts ?? []).filter((p) => p.prompting_type === promptingStrategy),
