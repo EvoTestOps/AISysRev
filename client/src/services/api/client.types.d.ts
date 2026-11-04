@@ -67,7 +67,13 @@ export namespace Schemas {
     reason: string;
   };
   export type FewShotPreferences = { inc_seed_papers: Array<string>; exc_seed_papers: Array<string> };
+  /**
+   * Which prompt version a job runs with, as it was named when the job started.
+   */
+  export type JobPromptRef = Partial<{ prompt_uuid: string | null; name: string | null; version: number | null }>;
   export type FewShotPromptingConfig = {
+    prompt_version_uuid?: string | null;
+    prompt_ref?: JobPromptRef | null;
     screening_type?: "FEW_SHOT";
     screening_target?: ScreeningTarget;
     seed_paper_inc: Array<string>;
@@ -104,8 +110,15 @@ export namespace Schemas {
     exclusion_criteria: Array<JevCriterion>;
   };
   export type JobCancelResponse = { detail: string };
-  export type ZeroShotPromptingConfig = Partial<{ screening_type: "ZERO_SHOT"; screening_target: ScreeningTarget }>;
+  export type ZeroShotPromptingConfig = Partial<{
+    prompt_version_uuid: string | null;
+    prompt_ref: JobPromptRef | null;
+    screening_type: "ZERO_SHOT";
+    screening_target: ScreeningTarget;
+  }>;
   export type PerCriteriaPromptingConfig = Partial<{
+    prompt_version_uuid: string | null;
+    prompt_ref: JobPromptRef | null;
     screening_type: "PER_CRITERIA";
     screening_target: ScreeningTarget;
   }>;
@@ -121,13 +134,16 @@ export namespace Schemas {
     prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
     llm_config: LLMModelConfig;
     screening_mode?: JobScreeningMode;
+    max_parallel_calls?: number;
   };
+  export type JobPromptingType = "ZERO_SHOT" | "ONE_SHOT" | "FEW_SHOT" | "PER_CRITERIA";
   export type JobRead = {
     uuid: string;
     project_uuid: string;
     prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
     llm_config: LLMModelConfig;
     screening_mode: JobScreeningMode;
+    max_parallel_calls?: number;
     created_at: Date;
     updated_at: Date;
   };
@@ -140,6 +156,7 @@ export namespace Schemas {
     prompting_config: ZeroShotPromptingConfig | FewShotPromptingConfig | PerCriteriaPromptingConfig;
     llm_config: LLMModelConfig;
     screening_mode: JobScreeningMode;
+    max_parallel_calls?: number;
     created_at: Date;
     updated_at: Date;
     stats: JobStats;
@@ -273,6 +290,60 @@ export namespace Schemas {
     inclusion_criteria_embedding?: Array<Array<number>> | null;
     exclusion_criteria_embedding?: Array<Array<number>> | null;
   };
+  export type PromptCreateRequest = {
+    system_prompt: string;
+    user_prompt: string;
+    change_note?: string | null;
+    name: string;
+    description?: string | null;
+    prompting_type: JobPromptingType;
+    screening_target?: ScreeningTarget;
+  };
+  export type PromptVersionRead = {
+    uuid: string;
+    version: number;
+    system_prompt: string;
+    user_prompt: string;
+    change_note?: string | null;
+    created_at: Date;
+  };
+  export type PromptDetail = {
+    uuid: string;
+    name: string;
+    description?: string | null;
+    prompting_type: JobPromptingType;
+    screening_target: ScreeningTarget;
+    is_default: boolean;
+    archived: boolean;
+    created_at: Date;
+    updated_at: Date;
+    latest_version: PromptVersionRead;
+    versions: Array<PromptVersionRead>;
+  };
+  export type PromptRead = {
+    uuid: string;
+    name: string;
+    description?: string | null;
+    prompting_type: JobPromptingType;
+    screening_target: ScreeningTarget;
+    is_default: boolean;
+    archived: boolean;
+    created_at: Date;
+    updated_at: Date;
+    latest_version: PromptVersionRead;
+  };
+  /**
+   * The template is checked against the prompt's type in the service.
+   */
+  export type PromptText = { system_prompt: string; user_prompt: string; change_note?: string | null };
+  export type PromptTypeVariables = {
+    prompting_type: JobPromptingType;
+    allowed: Array<string>;
+    required: Array<string>;
+    requires_criteria: boolean;
+  };
+  export type PromptVariableRead = { name: string; label: string; description: string };
+  export type PromptVariablesResponse = { variables: Array<PromptVariableRead>; types: Array<PromptTypeVariables> };
   export type Provider = {
     name: string;
     title: string;
@@ -606,6 +677,81 @@ export namespace Endpoints {
     };
     responses: { 201: unknown; 422: Schemas.HTTPValidationError };
   };
+  /**
+   * The built-in prompts and the user's own, the built-in ones first.
+   */
+  export type get_List_prompts_api_v1_prompt_get = {
+    method: "GET";
+    path: "/api/v1/prompt";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      query?: Partial<{
+        prompting_type: Schemas.JobPromptingType | null;
+        screening_target: Schemas.ScreeningTarget | null;
+      }>;
+    };
+    responses: { 200: Array<Schemas.PromptRead>; 422: Schemas.HTTPValidationError };
+  };
+  export type post_Create_prompt_api_v1_prompt_post = {
+    method: "POST";
+    path: "/api/v1/prompt";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      body: Schemas.PromptCreateRequest;
+    };
+    responses: { 201: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
+  };
+  /**
+   * The {{variables}} a prompt can use, and which each prompting type needs.
+   */
+  export type get_Get_prompt_variables_api_v1_prompt_variables_get = {
+    method: "GET";
+    path: "/api/v1/prompt/variables";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: never;
+    responses: { 200: Schemas.PromptVariablesResponse };
+  };
+  export type get_Get_prompt_api_v1_prompt__uuid__get = {
+    method: "GET";
+    path: "/api/v1/prompt/{uuid}";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      path: { uuid: string };
+    };
+    responses: { 200: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
+  };
+  /**
+   * Hides the prompt; jobs that used it keep their record of it.
+   */
+  export type delete_Delete_prompt_api_v1_prompt__uuid__delete = {
+    method: "DELETE";
+    path: "/api/v1/prompt/{uuid}";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      path: { uuid: string };
+    };
+    responses: { 200: unknown; 422: Schemas.HTTPValidationError };
+  };
+  /**
+   * Saves a new version of the prompt's text.
+   */
+  export type post_Create_prompt_version_api_v1_prompt__uuid__version_post = {
+    method: "POST";
+    path: "/api/v1/prompt/{uuid}/version";
+    requestFormat: "json";
+    responseFormat: "json";
+    parameters: {
+      path: { uuid: string };
+
+      body: Schemas.PromptText;
+    };
+    responses: { 201: Schemas.PromptDetail; 422: Schemas.HTTPValidationError };
+  };
   export type get_Get_providers_api_v1_llm_providers_get = {
     method: "GET";
     path: "/api/v1/llm/providers";
@@ -792,6 +938,8 @@ export type EndpointByMethod = {
     "/api/v1/job": Endpoints.post_Create_job_api_v1_job_post;
     "/api/v1/job/{uuid}/cancel": Endpoints.post_Cancel_job_api_v1_job__uuid__cancel_post;
     "/api/v1/setting": Endpoints.post_Upsert_setting_api_v1_setting_post;
+    "/api/v1/prompt": Endpoints.post_Create_prompt_api_v1_prompt_post;
+    "/api/v1/prompt/{uuid}/version": Endpoints.post_Create_prompt_version_api_v1_prompt__uuid__version_post;
     "/api/v1/llm/{provider}/models": Endpoints.post_Get_available_models_api_v1_llm__provider__models_post;
     "/api/v1/auth/consent": Endpoints.post_Accept_consent_api_v1_auth_consent_post;
   };
@@ -811,6 +959,9 @@ export type EndpointByMethod = {
     "/api/v1/paper/{project_uuid}/with_model_evaluations": Endpoints.get_Get_project_papers_with_model_evals_api_v1_paper__project_uuid__with_model_evaluations_get;
     "/api/v1/paper/{project_uuid}/missing_fulltext_ris": Endpoints.get_Download_missing_fulltext_ris_api_v1_paper__project_uuid__missing_fulltext_ris_get;
     "/api/v1/setting": Endpoints.get_Get_setting_api_v1_setting_get;
+    "/api/v1/prompt": Endpoints.get_List_prompts_api_v1_prompt_get;
+    "/api/v1/prompt/variables": Endpoints.get_Get_prompt_variables_api_v1_prompt_variables_get;
+    "/api/v1/prompt/{uuid}": Endpoints.get_Get_prompt_api_v1_prompt__uuid__get;
     "/api/v1/llm/providers": Endpoints.get_Get_providers_api_v1_llm_providers_get;
     "/api/v1/llm/provider_config_params": Endpoints.get_Get_provider_config_params_api_v1_llm_provider_config_params_get;
     "/api/v1/result/download_result_csv": Endpoints.get_Download_result_csv_api_v1_result_download_result_csv_get;
@@ -831,6 +982,7 @@ export type EndpointByMethod = {
     "/api/v1/project/{uuid}": Endpoints.delete_Delete_project_api_v1_project__uuid__delete;
     "/api/v1/job/{uuid}": Endpoints.delete_Delete_job_api_v1_job__uuid__delete;
     "/api/v1/setting": Endpoints.delete_Delete_setting_api_v1_setting_delete;
+    "/api/v1/prompt/{uuid}": Endpoints.delete_Delete_prompt_api_v1_prompt__uuid__delete;
     "/api/v1/auth/me": Endpoints.delete_Delete_account_api_v1_auth_me_delete;
   };
   patch: {

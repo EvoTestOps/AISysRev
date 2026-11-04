@@ -20,12 +20,14 @@ import { JevScreeningFields } from "./jev/JevScreeningFields";
 import { EvaluationModeSelector } from "./llm/EvaluationModeSelector";
 import { PerCriteriaLogic } from "./llm/PerCriteriaLogic";
 import { PromptingStrategySelector } from "./llm/PromptingStrategySelector";
+import { PromptSelector } from "./llm/PromptSelector";
 import { ScreeningModeSelector } from "./llm/ScreeningModeSelector";
 import { ModelPicker } from "./ModelPicker";
 import { ProviderSettings } from "./ProviderSettings";
 import { ScreeningMethodSelector } from "./ScreeningMethodSelector";
 import { TokenEstimate } from "./TokenEstimate";
 import { estimateTokens } from "./tokenEstimation";
+import { promptVersionLabel } from "../../prompts/promptLabels";
 
 const Section: React.FC<
   React.PropsWithChildren<{ step: number; title: string; tooltip?: string }>
@@ -124,6 +126,12 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
       : []),
     evaluationModeLabel(form.promptingStrategy).value,
     promptingStrategyLabel(form.promptingStrategy).value,
+    // Jev always gets the built-in prompt, so there is nothing to choose.
+    ...(!form.isJevScreening && form.selectedPrompt && !form.selectedPrompt.is_default
+      ? [
+          `Prompt: ${promptVersionLabel(form.selectedPrompt.name, form.selectedPrompt.latest_version.version)}`,
+        ]
+      : []),
   ];
 
   const missing = !form.isProviderSelected
@@ -238,6 +246,7 @@ export const TaskSetupForm: React.FC<TaskSetupFormProps> = ({
               ) : (
                 supportsFewShot && <PromptingStrategySelector form={form} disabled={false} />
               )}
+              {!form.isJevScreening && <PromptSelector form={form} disabled={false} />}
             </Box>
           </Collapse>
         </Section>

@@ -4,10 +4,11 @@ import {
   JobWithStats,
   ScreeningTarget,
 } from "../../state/types";
+import { promptVersionLabel } from "../prompts/promptLabels";
 
 /** One labelled fact about how a job screens, e.g. "Evaluation mode: All criteria together". */
 export type JobField = {
-  key: "llm" | "evaluation" | "prompting" | "screening";
+  key: "llm" | "evaluation" | "prompting" | "prompt" | "screening";
   label: string;
   value: string;
   /** A second line under the value, e.g. the LLM's provider. */
@@ -103,7 +104,20 @@ export const jobFields = (job: JobWithStats, providerTitle?: string): JobField[]
     label: "Screening mode",
     ...screeningModeLabel(job.screening_mode, job.prompting_config.screening_target),
   },
+  { key: "prompt", label: "Prompt", ...promptLabel(job) },
 ];
+
+/** The prompt version a job ran with; tasks from before prompts were versioned have none. */
+const promptLabel = (job: JobWithStats): FieldValue => {
+  const ref = job.prompting_config.prompt_ref;
+  if (!ref?.name) {
+    return { value: "Built-in", tooltip: "The built-in prompt of this prompting strategy." };
+  }
+  return {
+    value: promptVersionLabel(ref.name, ref.version),
+    tooltip: "The prompt, and the version of it the task ran with.",
+  };
+};
 
 const createdTime = (job: JobWithStats) =>
   job.created_at ? new Date(job.created_at).getTime() : Number.POSITIVE_INFINITY;

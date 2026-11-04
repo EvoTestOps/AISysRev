@@ -25,7 +25,24 @@ export enum ScreeningTarget {
   GITHUB_REPOSITORY = "GITHUB_REPOSITORY",
 }
 
-export type ZeroShotPromptingConfig = {
+/** Which prompt version a job runs with, as it was named when the job started. */
+export type JobPromptRef = {
+  prompt_uuid?: string | null;
+  name?: string | null;
+  version?: number | null;
+};
+
+/** The prompt a job screens with; set by the server when the job is created. */
+type PromptSelection = {
+  /** None picks the built-in prompt. */
+  prompt_version_uuid?: string | null;
+  prompt_ref?: JobPromptRef | null;
+};
+
+export const DEFAULT_MAX_PARALLEL_CALLS = 20;
+export const MAX_PARALLEL_CALLS_LIMIT = 50;
+
+export type ZeroShotPromptingConfig = PromptSelection & {
   screening_type: JobPromptingType.ZERO_SHOT;
   screening_target: ScreeningTarget,
 };
@@ -35,7 +52,7 @@ export const createZeroShotPromptingConfig = (screeningTarget = ScreeningTarget.
   screening_target: screeningTarget,
 });
 
-export type FewShotPromptingConfig = {
+export type FewShotPromptingConfig = PromptSelection & {
   screening_type: JobPromptingType.FEW_SHOT;
   screening_target: ScreeningTarget,
   seed_paper_inc: string[];
@@ -56,7 +73,7 @@ export const createFewShotPromptingConfig = (
   remember_selection,
 });
 
-export type PerCriteriaPromptingConfig = {
+export type PerCriteriaPromptingConfig = PromptSelection & {
   screening_type: JobPromptingType.PER_CRITERIA;
   screening_target: ScreeningTarget;
 };
@@ -73,6 +90,7 @@ export type CreatedJob = {
   prompting_config: PromptingConfig;
   llm_config: LlmConfig;
   screening_mode: JobScreeningMode;
+  max_parallel_calls?: number;
   created_at: string;
   updated_at: string;
 };
@@ -142,6 +160,7 @@ export type JobWithStats = {
   prompting_config: PromptingConfig;
   llm_config: LlmConfig;
   screening_mode: JobScreeningMode;
+  max_parallel_calls?: number;
   created_at: Date | null;
   updated_at: Date | null;
   stats: JobStats;

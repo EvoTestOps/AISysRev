@@ -1,19 +1,37 @@
 import { api } from "../services/api";
-import { LlmConfig, PromptingConfig, JobScreeningMode, JobWithStats } from "../state/types";
+import {
+  DEFAULT_MAX_PARALLEL_CALLS,
+  LlmConfig,
+  PromptingConfig,
+  JobScreeningMode,
+  JobWithStats,
+} from "../state/types";
+
+/** The prompt and parallelism a task runs with; unset ones take the defaults. */
+export type JobRunOptions = {
+  /** None screens with the built-in prompt. */
+  promptVersionUuid?: string | null;
+  maxParallelCalls?: number;
+};
 
 export const createJob = async (
   projectUuid: string,
   llmConfig: LlmConfig,
   promptingConfig: PromptingConfig,
   screeningMode: JobScreeningMode,
+  options: JobRunOptions = {},
 ) => {
   try {
     const res = await api.post("/api/v1/job", {
       body: {
         project_uuid: projectUuid,
         llm_config: llmConfig,
-        prompting_config: promptingConfig,
+        prompting_config: {
+          ...promptingConfig,
+          prompt_version_uuid: options.promptVersionUuid ?? null,
+        },
         screening_mode: screeningMode,
+        max_parallel_calls: options.maxParallelCalls ?? DEFAULT_MAX_PARALLEL_CALLS,
       },
     });
     // console.log("Job created successfully:", res);

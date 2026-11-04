@@ -1,8 +1,10 @@
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
 
+from src.celery import tasks as tasks_module
 from src.celery.tasks import process_job
 from src.crud.file_crud import FileCrud
 from src.crud.job_crud import JobCrud
@@ -173,8 +175,19 @@ async def test_async_process_job(
 
     celery_task = MagicMock()
     celery_task.update_state = MagicMock()
+    job_data = test_job_data.model_copy(update={"max_parallel_calls": 2})
 
-    await process_job(celery_task, job.id, test_job_data, update_interval=1)
+    with patch.object(
+        tasks_module.asyncio, "Semaphore", wraps=asyncio.Semaphore
+    ) as semaphore:
+        await process_job(celery_task, job.id, job_data, update_interval=1)
+
+    # The job's own limit on parallel LLM calls is used.
+    semaphore.assert_called_once_with(2)
+    # Without a pinned version the job screens with the built-in prompt.
+    prompt = mock_get_structured_response.await_args.kwargs["prompt"]
+    assert "{{title}}" in prompt.user_prompt
+    assert prompt.system_prompt == "You are an expert research assistant."
 
     calls = celery_task.update_state.call_args_list
     progress_calls = [c for c in calls if c[1].get("state") == "PROGRESS"]

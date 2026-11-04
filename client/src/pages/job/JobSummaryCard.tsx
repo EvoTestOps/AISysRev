@@ -29,6 +29,8 @@ export const JobSummaryCard: React.FC<JobSummaryCardProps> = ({ job, runNumber, 
           <Typography variant="caption" color="textSecondary">
             {startedAt && `Started ${startedAt} · `}
             {success} done, {failed} failed of {total}
+            {job.max_parallel_calls !== undefined &&
+              ` · up to ${job.max_parallel_calls} parallel calls`}
           </Typography>
         </Box>
         <JobFields job={job} />

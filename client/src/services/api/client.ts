@@ -86,8 +86,15 @@ export const FewShotPreferences = z.strictObject({
   exc_seed_papers: z.array(z.string()),
 });
 
+export type JobPromptRef = __TypedOpenapi.Schemas.JobPromptRef;
+export const JobPromptRef = z
+  .strictObject({ prompt_uuid: z.uuid().nullable(), name: z.string().nullable(), version: z.number().int().nullable() })
+  .partial();
+
 export type FewShotPromptingConfig = __TypedOpenapi.Schemas.FewShotPromptingConfig;
 export const FewShotPromptingConfig = z.strictObject({
+  prompt_version_uuid: z.uuid().nullable().optional(),
+  prompt_ref: JobPromptRef.nullable().optional(),
   screening_type: z.literal("FEW_SHOT").optional(),
   screening_target: ScreeningTarget.optional(),
   seed_paper_inc: z.array(z.string()),
@@ -151,12 +158,22 @@ export const JobCancelResponse = z.strictObject({ detail: z.string() });
 
 export type ZeroShotPromptingConfig = __TypedOpenapi.Schemas.ZeroShotPromptingConfig;
 export const ZeroShotPromptingConfig = z
-  .strictObject({ screening_type: z.literal("ZERO_SHOT"), screening_target: ScreeningTarget })
+  .strictObject({
+    prompt_version_uuid: z.uuid().nullable(),
+    prompt_ref: JobPromptRef.nullable(),
+    screening_type: z.literal("ZERO_SHOT"),
+    screening_target: ScreeningTarget,
+  })
   .partial();
 
 export type PerCriteriaPromptingConfig = __TypedOpenapi.Schemas.PerCriteriaPromptingConfig;
 export const PerCriteriaPromptingConfig = z
-  .strictObject({ screening_type: z.literal("PER_CRITERIA"), screening_target: ScreeningTarget })
+  .strictObject({
+    prompt_version_uuid: z.uuid().nullable(),
+    prompt_ref: JobPromptRef.nullable(),
+    screening_type: z.literal("PER_CRITERIA"),
+    screening_target: ScreeningTarget,
+  })
   .partial();
 
 export type LLMModelConfig = __TypedOpenapi.Schemas.LLMModelConfig;
@@ -180,7 +197,11 @@ export const JobCreateRequest = z.strictObject({
   ]),
   llm_config: LLMModelConfig,
   screening_mode: JobScreeningMode.optional(),
+  max_parallel_calls: z.number().int().min(1).max(50).default(20),
 });
+
+export type JobPromptingType = __TypedOpenapi.Schemas.JobPromptingType;
+export const JobPromptingType = z.enum(["ZERO_SHOT", "ONE_SHOT", "FEW_SHOT", "PER_CRITERIA"]);
 
 export type JobRead = __TypedOpenapi.Schemas.JobRead;
 export const JobRead = z.strictObject({
@@ -193,6 +214,7 @@ export const JobRead = z.strictObject({
   ]),
   llm_config: LLMModelConfig,
   screening_mode: JobScreeningMode,
+  max_parallel_calls: z.number().int().default(20),
   created_at: z.iso.datetime().transform((s) => {
     const d = new Date(s);
     if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
@@ -228,6 +250,7 @@ export const JobReadWithStats = z.strictObject({
   ]),
   llm_config: LLMModelConfig,
   screening_mode: JobScreeningMode,
+  max_parallel_calls: z.number().int().default(20),
   created_at: z.iso.datetime().transform((s) => {
     const d = new Date(s);
     if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
@@ -456,6 +479,100 @@ export const ProjectRead = z.strictObject({
   job_count: z.number().int().default(0),
   inclusion_criteria_embedding: z.array(z.array(z.number())).nullable().optional(),
   exclusion_criteria_embedding: z.array(z.array(z.number())).nullable().optional(),
+});
+
+export type PromptCreateRequest = __TypedOpenapi.Schemas.PromptCreateRequest;
+export const PromptCreateRequest = z.strictObject({
+  system_prompt: z.string().max(10000),
+  user_prompt: z.string().min(1).max(50000),
+  change_note: z.string().max(500).nullable().optional(),
+  name: z.string().min(1).max(255),
+  description: z.string().max(2000).nullable().optional(),
+  prompting_type: JobPromptingType,
+  screening_target: ScreeningTarget.optional(),
+});
+
+export type PromptVersionRead = __TypedOpenapi.Schemas.PromptVersionRead;
+export const PromptVersionRead = z.strictObject({
+  uuid: z.uuid(),
+  version: z.number().int(),
+  system_prompt: z.string(),
+  user_prompt: z.string(),
+  change_note: z.string().nullable().optional(),
+  created_at: z.iso.datetime().transform((s) => {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+    return d;
+  }),
+});
+
+export type PromptDetail = __TypedOpenapi.Schemas.PromptDetail;
+export const PromptDetail = z.strictObject({
+  uuid: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  prompting_type: JobPromptingType,
+  screening_target: ScreeningTarget,
+  is_default: z.boolean(),
+  archived: z.boolean(),
+  created_at: z.iso.datetime().transform((s) => {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+    return d;
+  }),
+  updated_at: z.iso.datetime().transform((s) => {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+    return d;
+  }),
+  latest_version: PromptVersionRead,
+  versions: z.array(PromptVersionRead),
+});
+
+export type PromptRead = __TypedOpenapi.Schemas.PromptRead;
+export const PromptRead = z.strictObject({
+  uuid: z.uuid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  prompting_type: JobPromptingType,
+  screening_target: ScreeningTarget,
+  is_default: z.boolean(),
+  archived: z.boolean(),
+  created_at: z.iso.datetime().transform((s) => {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+    return d;
+  }),
+  updated_at: z.iso.datetime().transform((s) => {
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) throw new Error("Invalid Date");
+    return d;
+  }),
+  latest_version: PromptVersionRead,
+});
+
+export type PromptText = __TypedOpenapi.Schemas.PromptText;
+export const PromptText = z.strictObject({
+  system_prompt: z.string().max(10000),
+  user_prompt: z.string().min(1).max(50000),
+  change_note: z.string().max(500).nullable().optional(),
+});
+
+export type PromptTypeVariables = __TypedOpenapi.Schemas.PromptTypeVariables;
+export const PromptTypeVariables = z.strictObject({
+  prompting_type: JobPromptingType,
+  allowed: z.array(z.string()),
+  required: z.array(z.string()),
+  requires_criteria: z.boolean(),
+});
+
+export type PromptVariableRead = __TypedOpenapi.Schemas.PromptVariableRead;
+export const PromptVariableRead = z.strictObject({ name: z.string(), label: z.string(), description: z.string() });
+
+export type PromptVariablesResponse = __TypedOpenapi.Schemas.PromptVariablesResponse;
+export const PromptVariablesResponse = z.strictObject({
+  variables: z.array(PromptVariableRead),
+  types: z.array(PromptTypeVariables),
 });
 
 export type Provider = __TypedOpenapi.Schemas.Provider;
@@ -823,6 +940,74 @@ export const post_Upsert_setting_api_v1_setting_post = {
   responses: { 201: z.unknown(), 422: HTTPValidationError },
 };
 
+export type get_List_prompts_api_v1_prompt_get = __TypedOpenapi.Endpoints.get_List_prompts_api_v1_prompt_get;
+export const get_List_prompts_api_v1_prompt_get = {
+  method: z.literal("GET"),
+  path: z.literal("/api/v1/prompt"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: {
+    query: z
+      .strictObject({ prompting_type: JobPromptingType.nullable(), screening_target: ScreeningTarget.nullable() })
+      .partial()
+      .optional(),
+  },
+  responses: { 200: z.array(PromptRead), 422: HTTPValidationError },
+};
+
+export type post_Create_prompt_api_v1_prompt_post = __TypedOpenapi.Endpoints.post_Create_prompt_api_v1_prompt_post;
+export const post_Create_prompt_api_v1_prompt_post = {
+  method: z.literal("POST"),
+  path: z.literal("/api/v1/prompt"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: { body: PromptCreateRequest },
+  responses: { 201: PromptDetail, 422: HTTPValidationError },
+};
+
+export type get_Get_prompt_variables_api_v1_prompt_variables_get =
+  __TypedOpenapi.Endpoints.get_Get_prompt_variables_api_v1_prompt_variables_get;
+export const get_Get_prompt_variables_api_v1_prompt_variables_get = {
+  method: z.literal("GET"),
+  path: z.literal("/api/v1/prompt/variables"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: z.never(),
+  responses: { 200: PromptVariablesResponse },
+};
+
+export type get_Get_prompt_api_v1_prompt__uuid__get = __TypedOpenapi.Endpoints.get_Get_prompt_api_v1_prompt__uuid__get;
+export const get_Get_prompt_api_v1_prompt__uuid__get = {
+  method: z.literal("GET"),
+  path: z.literal("/api/v1/prompt/{uuid}"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: { path: z.strictObject({ uuid: z.uuid() }) },
+  responses: { 200: PromptDetail, 422: HTTPValidationError },
+};
+
+export type delete_Delete_prompt_api_v1_prompt__uuid__delete =
+  __TypedOpenapi.Endpoints.delete_Delete_prompt_api_v1_prompt__uuid__delete;
+export const delete_Delete_prompt_api_v1_prompt__uuid__delete = {
+  method: z.literal("DELETE"),
+  path: z.literal("/api/v1/prompt/{uuid}"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: { path: z.strictObject({ uuid: z.uuid() }) },
+  responses: { 200: z.unknown(), 422: HTTPValidationError },
+};
+
+export type post_Create_prompt_version_api_v1_prompt__uuid__version_post =
+  __TypedOpenapi.Endpoints.post_Create_prompt_version_api_v1_prompt__uuid__version_post;
+export const post_Create_prompt_version_api_v1_prompt__uuid__version_post = {
+  method: z.literal("POST"),
+  path: z.literal("/api/v1/prompt/{uuid}/version"),
+  requestFormat: z.literal("json"),
+  responseFormat: z.literal("json"),
+  parameters: { path: z.strictObject({ uuid: z.uuid() }), body: PromptText },
+  responses: { 201: PromptDetail, 422: HTTPValidationError },
+};
+
 export type get_Get_providers_api_v1_llm_providers_get =
   __TypedOpenapi.Endpoints.get_Get_providers_api_v1_llm_providers_get;
 export const get_Get_providers_api_v1_llm_providers_get = {
@@ -1038,6 +1223,8 @@ export const EndpointByMethod = {
     "/api/v1/job": post_Create_job_api_v1_job_post,
     "/api/v1/job/{uuid}/cancel": post_Cancel_job_api_v1_job__uuid__cancel_post,
     "/api/v1/setting": post_Upsert_setting_api_v1_setting_post,
+    "/api/v1/prompt": post_Create_prompt_api_v1_prompt_post,
+    "/api/v1/prompt/{uuid}/version": post_Create_prompt_version_api_v1_prompt__uuid__version_post,
     "/api/v1/llm/{provider}/models": post_Get_available_models_api_v1_llm__provider__models_post,
     "/api/v1/auth/consent": post_Accept_consent_api_v1_auth_consent_post,
   },
@@ -1059,6 +1246,9 @@ export const EndpointByMethod = {
     "/api/v1/paper/{project_uuid}/missing_fulltext_ris":
       get_Download_missing_fulltext_ris_api_v1_paper__project_uuid__missing_fulltext_ris_get,
     "/api/v1/setting": get_Get_setting_api_v1_setting_get,
+    "/api/v1/prompt": get_List_prompts_api_v1_prompt_get,
+    "/api/v1/prompt/variables": get_Get_prompt_variables_api_v1_prompt_variables_get,
+    "/api/v1/prompt/{uuid}": get_Get_prompt_api_v1_prompt__uuid__get,
     "/api/v1/llm/providers": get_Get_providers_api_v1_llm_providers_get,
     "/api/v1/llm/provider_config_params": get_Get_provider_config_params_api_v1_llm_provider_config_params_get,
     "/api/v1/result/download_result_csv": get_Download_result_csv_api_v1_result_download_result_csv_get,
@@ -1079,6 +1269,7 @@ export const EndpointByMethod = {
     "/api/v1/project/{uuid}": delete_Delete_project_api_v1_project__uuid__delete,
     "/api/v1/job/{uuid}": delete_Delete_job_api_v1_job__uuid__delete,
     "/api/v1/setting": delete_Delete_setting_api_v1_setting_delete,
+    "/api/v1/prompt/{uuid}": delete_Delete_prompt_api_v1_prompt__uuid__delete,
     "/api/v1/auth/me": delete_Delete_account_api_v1_auth_me_delete,
   },
   patch: {
@@ -1163,6 +1354,13 @@ export const endpointParameterStyles = {
       path: { project_uuid: { style: "simple", explode: false, allowReserved: false } },
     },
     "/api/v1/setting": { query: { name: { style: "form", explode: true, allowReserved: false } } },
+    "/api/v1/prompt": {
+      query: {
+        prompting_type: { style: "form", explode: true, allowReserved: false },
+        screening_target: { style: "form", explode: true, allowReserved: false },
+      },
+    },
+    "/api/v1/prompt/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
     "/api/v1/result/download_result_csv": {
       query: {
         project_uuid: { style: "form", explode: true, allowReserved: false },
@@ -1185,12 +1383,14 @@ export const endpointParameterStyles = {
     "/api/v1/project/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
     "/api/v1/job/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
     "/api/v1/setting": { query: { name: { style: "form", explode: true, allowReserved: false } } },
+    "/api/v1/prompt/{uuid}": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
   },
   post: {
     "/api/v1/files/{paper_uuid}/attach-pdf": {
       path: { paper_uuid: { style: "simple", explode: false, allowReserved: false } },
     },
     "/api/v1/job/{uuid}/cancel": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
+    "/api/v1/prompt/{uuid}/version": { path: { uuid: { style: "simple", explode: false, allowReserved: false } } },
     "/api/v1/llm/{provider}/models": { path: { provider: { style: "simple", explode: false, allowReserved: false } } },
   },
   patch: {

@@ -2,7 +2,7 @@ import uuid
 from uuid import UUID as PyUUID
 
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -29,4 +29,7 @@ class Job(Base, TimestampMixin):
         SAEnum(JobScreeningMode, name="jobscreeningmode"),
         default=JobScreeningMode.TEXT,
         nullable=False,
+    )
+    max_parallel_calls: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=20, server_default="20"
     )

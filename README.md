@@ -20,6 +20,10 @@
     + [Full-text screening](#full-text-screening)
       - [Uploading PDFs](#uploading-pdfs)
       - [Screening modes](#screening-modes)
+    + [Screening tasks](#screening-tasks)
+      - [Per-criteria logic](#per-criteria-logic)
+    + [Custom prompts](#custom-prompts)
+    + [Reviewing results](#reviewing-results)
   * [Showcase](#showcase)
   * [Getting started](#getting-started)
     + [Data](#data)
@@ -85,10 +89,10 @@ The application is based on our research papers on this topic. Please consider c
 The application allows you to:
 - Import a CSV file with paper titles and abstracts. You can also use our [Demo CSV file](data/Demo_TimePressure_5_papers.csv)
 - Specify include/exclude criteria for paper screening
-- Evaluate papers against the criteria using multiple LLMs
+- Evaluate papers against the criteria using multiple LLMs, zero-shot or few-shot, with built-in or your own prompts
 - Receive LLM evaluations as binary decisions (include/exclude), ordinal ratings (1-7), or inclusion probabilities (0–1)
 - Perform manual evaluation of titles and abstracts alongside LLM evaluations
-- Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc.
+- Export evaluation results to CSV for further analysis in Microsoft Excel, Google Sheets, R, Python, etc., or view them as an HTML report
 All of the above steps are also done for Github repositories. 
 
 ### Full-text screening
@@ -116,21 +120,68 @@ When creating a screening task, choose which screening mode to use:
 
 See [pdf-screening.md](docs/pdf-screening.md) for details on how **PDF** screening mode works, including its limitations.
 
+### Screening tasks
+
+A screening task runs one model over all papers of a project. Click **New task** on the project page, then choose:
+
+- **Screening method**
+  - **LLM screening** - a language model judges each criterion and explains its decision.
+  - **Jev screening** - TypeSafe Jev returns a calibrated probability and an include/exclude decision per criterion, without written reasoning. Jev screens zero-shot only and is called through OpenRouter with your OpenRouter API key.
+- **Model** - the provider (OpenRouter, OpenAI or a [local model](docs/local-models.md)) and the model. Under **Advanced** you can set the temperature, top_p and the number of parallel calls (20 by default, at most 50). For OpenRouter you can require Zero Data Retention (ZDR) for a task, or force it for all tasks in **Settings** > **LLM Settings**.
+- **Options** (under **Customize**)
+  - **Screening mode** - see [Screening modes](#screening-modes).
+  - **Evaluation mode** - **All criteria together** evaluates all criteria in one model call. **One call per criterion** evaluates each criterion in its own call and combines the answers with the project's per-criteria logic (see below).
+  - **Prompting strategy** - **Zero-shot** gives the model only the criteria. **Few-shot** adds papers you have already labelled as examples: you pick the included and excluded seed papers when you start the task.
+  - **Prompt** - the prompt the task sends to the model, see [Custom prompts](#custom-prompts).
+
+The summary next to the form shows an estimate of the input and output tokens the task will use before you start it. Tasks run in the background, and can be cancelled or deleted from the task's menu.
+
+#### Per-criteria logic
+
+When creating a project, you can set how per-criterion answers are combined into a decision, as an expression of the criterion IDs, e.g. `IC1 AND IC2` for inclusion and `EC1 OR EC2` for exclusion. By default, all inclusion criteria must be met (AND), and meeting any exclusion criterion excludes the paper (OR). The logic is used by tasks run with **One call per criterion**.
+
+### Custom prompts
+
+The **Prompts** page lists the prompts used for screening. They are shared by all of your projects, and you pick one when you create a screening task.
+
+- **Built-in prompts** - the prompts AISysRev screens with by default, one for each prompting strategy (zero-shot, few-shot, per criterion) and screening target (papers, GitHub repositories). They can't be changed; a new prompt starts from the built-in text of its strategy and target. **Papers: zero-shot** is the prompt published in our ESEM '25 paper [2](#references).
+- **My prompts** - prompts you have written. Only you can see them.
+
+A prompt has a system prompt, which sets the model's role, and a user prompt, which is a template with variables such as `{{title}}`, `{{abstract}}`, `{{criteria}}` (or `{{inclusion_criteria}}` and `{{exclusion_criteria}}`), `{{additional_instructions}}` and, for few-shot prompts, `{{few_shot_examples}}`. Variables are filled in for each paper when the task runs. Every save is kept as a new version, and each task records the exact prompt version it ran with.
+
+### Reviewing results
+
+- **Task details** - open a screening task to see each paper's decisions, the model's reasoning per criterion, and the prompts that were sent to the model.
+- **Manual evaluation** - **Start manual evaluation** shows one paper at a time with every model's suggestions and the average likelihood of each criterion. Decide with the buttons or the keyboard shortcuts (Y/I include, N/E exclude, U unsure).
+- **List of papers** - all papers with their average inclusion probability over all tasks, sortable and with evaluated papers hidden if you want. Expand a paper to read its abstract, upload its full text and make a decision.
+- **Per-criteria agreement** - with at least two completed per-criterion tasks, the project's menu shows agreement statistics (percent agreement and Gwet's AC1) between the tasks for each criterion.
+- **Export** - download the results as CSV, or open them as an HTML report.
+
 ## Showcase
 
 <p align="left">
-  <img src="https://github.com/user-attachments/assets/e0d5aaf2-8c67-4991-bfa4-460fa9e06bfc" width="700"><br>
-  <em><b>Figure 1:</b> Main view shows LLM screening tasks.</em>
+  <img src="docs/images/project-view.png" width="700"><br>
+  <em><b>Figure 1:</b> Project view shows the LLM screening tasks of a project.</em>
 </p>
 
 <p align="left">
-  <img src="https://github.com/user-attachments/assets/03a9ea35-e1f6-4489-9e85-2e0efce829f9" width="700"><br>
-  <em><b>Figure 2:</b> Manual evaluation view, with LLM evaluations (binary, ordinal, probability) alongside manual review.</em>
+  <img src="docs/images/new-task-dialog.png" width="700"><br>
+  <em><b>Figure 2:</b> Creating a screening task: pick the screening method and the model, and customize the options, such as the prompt.</em>
 </p>
 
 <p align="left">
-  <img src="https://github.com/user-attachments/assets/d8e3de7d-7ccd-41a4-8af0-b2c7ca3a65e7" width="700"><br>
-  <em><b>Figure 3:</b> Manual evaluation list view, with papers sorted by inclusion probability according to all executed LLMs.</em>
+  <img src="docs/images/manual-evaluation.png" width="700"><br>
+  <em><b>Figure 3:</b> Manual evaluation view, with LLM evaluations (binary, ordinal, probability) alongside manual review, and the average likelihood of each criterion.</em>
+</p>
+
+<p align="left">
+  <img src="docs/images/paper-list.png" width="700"><br>
+  <em><b>Figure 4:</b> List of papers, sorted by inclusion probability according to all executed LLMs, with manual decisions.</em>
+</p>
+
+<p align="left">
+  <img src="docs/images/prompts.png" width="700"><br>
+  <em><b>Figure 5:</b> Prompts view: the built-in prompts, including the one published in ESEM '25, and your own versioned prompts.</em>
 </p>
 
 

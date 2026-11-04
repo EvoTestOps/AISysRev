@@ -22,6 +22,7 @@ class JobCrud:
                 Job.llm_config,
                 Job.prompting_config,
                 Job.screening_mode,
+                Job.max_parallel_calls,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -42,6 +43,7 @@ class JobCrud:
                 Job.llm_config,
                 Job.prompting_config,
                 Job.screening_mode,
+                Job.max_parallel_calls,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -60,6 +62,7 @@ class JobCrud:
                 Job.llm_config,
                 Job.prompting_config,
                 Job.screening_mode,
+                Job.max_parallel_calls,
                 Job.created_at,
                 Job.updated_at,
             )
@@ -83,6 +86,7 @@ class JobCrud:
                 Job.llm_config,
                 Job.prompting_config,
                 Job.screening_mode,
+                Job.max_parallel_calls,
                 Job.created_at,
                 Job.updated_at,
                 Job.celery_task_id,
@@ -138,8 +142,9 @@ class JobCrud:
         new_job = Job(
             project_id=project.id,
             llm_config=job_data.llm_config.model_dump(),
-            prompting_config=job_data.prompting_config.model_dump(),
+            prompting_config=job_data.prompting_config.model_dump(mode="json"),
             screening_mode=job_data.screening_mode.value,
+            max_parallel_calls=job_data.max_parallel_calls,
         )
         self.db.add(new_job)
         await self.db.flush()

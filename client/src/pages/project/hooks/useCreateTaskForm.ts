@@ -4,11 +4,14 @@ import { useLocation } from "wouter";
 import { useConfig } from "../../../config/config";
 import { GLOBAL_PROVIDER_OVERRIDES } from "../../../config/globalProviderOverrides";
 import { createJob } from "../../../services/jobService";
+import { fetchPrompts } from "../../../services/promptService";
 import { retrieve_models } from "../../../services/llmService";
 import { useTypedStoreActions, useTypedStoreState } from "../../../state/store";
+import type { Prompt } from "../../../state/types/prompt";
 import {
   createPerCriteriaPromptingConfig,
   createZeroShotPromptingConfig,
+  DEFAULT_MAX_PARALLEL_CALLS,
   JobPromptingType,
   JobScreeningMode,
   LlmConfig,
@@ -85,6 +88,37 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     JobPromptingType.ZERO_SHOT,
   );
   const [screeningMode, setScreeningMode] = useState<JobScreeningMode>(JobScreeningMode.TEXT);
+  const [maxParallelCalls, setMaxParallelCalls] = useState(DEFAULT_MAX_PARALLEL_CALLS);
+
+  // The prompts this project's tasks can use; null until loaded. Without them
+  // (e.g. the request failed) a task runs with the built-in prompt.
+  const [prompts, setPrompts] = useState<Prompt[] | null>(null);
+  // The chosen prompt version for the current strategy; null for the built-in one.
+  const [promptVersionUuid, setPromptVersionUuid] = useState<string | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchPrompts(screeningTarget, controller.signal)
+      .then((loaded) => {
+        if (!controller.signal.aborted) setPrompts(loaded);
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("Failed to fetch prompts", error);
+        setPrompts([]);
+      });
+    return () => controller.abort();
+  }, [screeningTarget]);
+  const strategyPrompts = useMemo(
+    () => (prompts ?? []).filter((p) => p.prompting_type === promptingStrategy),
+    [prompts, promptingStrategy],
+  );
+  // A prompt is written for one strategy, so changing the strategy goes back to its built-in one.
+  useEffect(() => {
+    setPromptVersionUuid(null);
+  }, [promptingStrategy]);
+  const selectedPrompt =
+    strategyPrompts.find((p) => p.latest_version.uuid === promptVersionUuid) ??
+    strategyPrompts.find((p) => p.is_default);
 
   const [selectedProvider, setSelectedProvider] = useState<DropdownOption | undefined>(undefined);
   const [isProviderSelected, setIsProviderSelected] = useState(false);
@@ -287,11 +321,23 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
       provider: llmConfig.provider_name,
       model: llmConfig.model_name,
     };
+    // Jev reads the criteria out of the built-in prompts, so it always gets those.
+    const runOptions = {
+      promptVersionUuid: isJevScreening ? null : promptVersionUuid,
+      maxParallelCalls,
+    };
     if (promptingStrategy === JobPromptingType.FEW_SHOT) {
       // The few-shot modal collects the seed papers and creates the job.
       saveLastSetup(setup);
-      // The screening mode rides along in the URL, so a refresh of the modal keeps it.
-      navigate(`/project/${projectUuid}/few_shot?mode=${screeningMode}`);
+      // The options ride along in the URL, so a refresh of the modal keeps them.
+      const params = new URLSearchParams({
+        mode: screeningMode,
+        parallel: String(maxParallelCalls),
+      });
+      if (runOptions.promptVersionUuid) {
+        params.set("prompt", runOptions.promptVersionUuid);
+      }
+      navigate(`/project/${projectUuid}/few_shot?${params.toString()}`);
       return true;
     }
     const promptingConfig =
@@ -299,7 +345,7 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
         ? createPerCriteriaPromptingConfig(screeningTarget)
         : createZeroShotPromptingConfig(screeningTarget);
     try {
-      await createJob(projectUuid, llmConfig, promptingConfig, screeningMode);
+      await createJob(projectUuid, llmConfig, promptingConfig, screeningMode, runOptions);
       saveLastSetup(setup);
       fetchJobsForProject(projectUuid);
       return true;
@@ -310,6 +356,9 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     }
   }, [
     screeningMethod,
+    isJevScreening,
+    promptVersionUuid,
+    maxParallelCalls,
     promptingStrategy,
     navigate,
     projectUuid,
@@ -355,6 +404,14 @@ export const useCreateTaskForm = (projectUuid: string, screeningTarget: Screenin
     setPromptingStrategy,
     screeningMode,
     setScreeningMode,
+    maxParallelCalls,
+    setMaxParallelCalls,
+
+    /** The prompts written for the current strategy, or null while loading. */
+    strategyPrompts: prompts === null ? null : strategyPrompts,
+    /** The prompt the task will use: the chosen one, or the built-in one. */
+    selectedPrompt,
+    setPromptVersionUuid,
 
     createTask,
   };

@@ -23,12 +23,16 @@
     "node": ">=24"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@headlessui/react": "^2.2.10",
     "@mui/icons-material": "^9.5.0",
     "@mui/material": "^9.4.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "@uiw/react-codemirror": "^4.25.12",
     "axios": "^1.20.0",
     "classnames": "^2.5.1",
     "easy-peasy": "^6.1.1",
