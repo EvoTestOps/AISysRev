@@ -71,7 +71,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: pgvector/pgvector:pg14@sha256:1091ea8f64f5ffe0954dc4c90f196e0cc6ab906566b884a9ff210f0d24b83d12
+    image: pgvector/pgvector:pg14@sha256:ffb60737442caac42305621859cba8f674b1a89f70526a9167df868c88e08cbf
     deploy:
       resources:
         limits: { cpus: "0.5", memory: 1g }
@@ -89,7 +89,7 @@ services:
       start_period: 10s
 
   redis:
-    image: redis:8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+    image: redis:8.10.2-alpine@sha256:9f8d2d789b9a1d1e3f283f979aa9cbf393373806472e1ccd460e2f9c869b833b
     deploy:
       resources:
         limits: { cpus: "0.25", memory: 256m }
