@@ -28,7 +28,7 @@ COPY client/src ./src
 
 RUN npm run build
 
-FROM caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f AS client
+FROM caddy:2.11.9-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0 AS client
 RUN apk add --no-cache libcap && setcap -r /usr/bin/caddy && apk del libcap
 # Local mode: the Caddyfile shows a startup page until the backend answers
 ARG VITE_LOCAL_ENV=false
@@ -38,9 +38,9 @@ COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/dist /srv
 RUN chgrp -R 0 /srv /etc/caddy && chmod -R g=rX /srv /etc/caddy
 
-FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.9 AS uv
 
-FROM python:3.14.8-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72 AS python-base
+FROM python:3.15.2-alpine@sha256:0f9552bb28711333da16915ec146f5e6bb44a7fdac9ced15dc17c2e0206346dd AS python-base
 
 FROM python-base AS server-builder
 ENV UV_LINK_MODE=copy
