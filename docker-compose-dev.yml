@@ -87,7 +87,7 @@ services:
         condition: service_started
 
   postgres:
-    image: pgvector/pgvector:pg14@sha256:ffb60737442caac42305621859cba8f674b1a89f70526a9167df868c88e08cbf
+    image: pgvector/pgvector:pg14@sha256:191aad5c6a538ab0d596b8bc43e15a10f447a4788b274b7f680399ad9c4028d9
     container_name: postgres_${APP_ENV:-dev}
     deploy:
       resources:
